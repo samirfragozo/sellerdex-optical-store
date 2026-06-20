@@ -9,6 +9,7 @@ return [
         'expense' => ['label' => 'Gasto', 'plural' => 'Gastos', 'nav' => 'Gastos'],
         'expense_category' => ['label' => 'Categoría de gasto', 'plural' => 'Categorías de gasto', 'nav' => 'Categorías de gasto'],
         'prescription' => ['label' => 'Prescripción', 'plural' => 'Prescripciones', 'nav' => 'Prescripciones'],
+        'sale' => ['label' => 'Venta', 'plural' => 'Ventas', 'nav' => 'Ventas'],
     ],
 
     'fields' => [
@@ -56,6 +57,27 @@ return [
         'add' => 'ADD',
         'va' => 'AV',
         'pd' => 'DP',
+        'number' => 'Número',
+        'seller' => 'Vendedor',
+        'document_type_sale' => 'Tipo de documento',
+        'status' => 'Estado',
+        'subtotal' => 'Subtotal',
+        'discount' => 'Descuento',
+        'total' => 'Total',
+        'balance' => 'Saldo',
+        'sold_at' => 'Fecha de venta',
+        'delivered_at' => 'Fecha de entrega',
+        'is_delivered' => '¿Entregado?',
+        'product' => 'Producto',
+        'quantity' => 'Cantidad',
+        'unit_price' => 'Precio unitario',
+        'unit_cost' => 'Costo unitario',
+        'line_total' => 'Total línea',
+        'paid_at' => 'Fecha de pago',
+        'reference' => 'Referencia',
+        'prescription' => 'Prescripción',
+        'items' => 'Ítems',
+        'payments' => 'Pagos / Abonos',
     ],
 
     'sections' => [
@@ -76,5 +98,21 @@ return [
         'ce' => 'Cédula de extranjería',
         'pa' => 'Pasaporte',
         'nit' => 'NIT',
+    ],
+
+    'sale_status' => [
+        'draft' => 'Borrador',
+        'partial' => 'Abonada',
+        'paid' => 'Pagada',
+        'delivered' => 'Entregada',
+        'voided' => 'Anulada',
+    ],
+
+    'sale_document_type' => [
+        'quote' => 'Cotización',
+        'order' => 'Pedido',
+        'layaway' => 'Plan separe',
+        'remission' => 'Remisión',
+        'billing' => 'Cuenta de cobro',
     ],
 ];

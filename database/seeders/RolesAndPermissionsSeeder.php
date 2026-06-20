@@ -19,13 +19,14 @@ class RolesAndPermissionsSeeder extends Seeder
     ];
 
     private const SUBJECTS = [
-        'Customer', 'Expense', 'ExpenseCategory', 'PaymentMethod',
-        'Prescription', 'Product', 'ProductCategory', 'Role',
+        'Customer', 'Expense', 'ExpenseCategory', 'Payment', 'PaymentMethod',
+        'Prescription', 'Product', 'ProductCategory', 'Role', 'Sale',
     ];
 
     /**
-     * Seller permissions: manage customers and prescriptions (no deletes),
+     * Seller permissions: manage customers, prescriptions, sales, and payments (no deletes),
      * and read-only access to the product catalog.
+     * Sellers cannot delete sales, nor update or delete payments.
      *
      * @var list<string>
      */
@@ -33,6 +34,8 @@ class RolesAndPermissionsSeeder extends Seeder
         'ViewAny:Customer', 'View:Customer', 'Create:Customer', 'Update:Customer',
         'ViewAny:Prescription', 'View:Prescription', 'Create:Prescription', 'Update:Prescription',
         'ViewAny:Product', 'View:Product',
+        'ViewAny:Sale', 'View:Sale', 'Create:Sale', 'Update:Sale',
+        'ViewAny:Payment', 'View:Payment', 'Create:Payment',
     ];
 
     public function run(): void
