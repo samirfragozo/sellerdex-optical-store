@@ -34,9 +34,13 @@ en Vue como una capa de UX sobre un backend probado.
 
 ## 3. Roles y control de acceso
 
-Roles mediante enum `role` en `users` (`admin`, `seller`) + Policies de Laravel.
-Se descarta `spatie/laravel-permission` por ahora (YAGNI para 2 roles); se podrá migrar a
-permisos granulares + Filament Shield sin reescribir la lógica de negocio.
+Roles y permisos en BD mediante **`spatie/laravel-permission` + Filament Shield** (RBAC
+completo, gestionable desde el panel). Roles sembrados: **`admin`** (super admin: acceso
+total vía `Gate::before`) y **`seller`** (set curado de permisos). Los permisos se generan
+por recurso con `shield:generate` y se asignan por rol. El modelo `User` usa el trait
+`HasRoles`; los helpers `isAdmin()`/`isSeller()` consultan `hasRole(...)` (se conservan para
+las reglas a nivel de campo, p. ej. ocultar costo). Una `RolesAndPermissionsSeeder` define
+roles y permisos del vendedor.
 
 | Capacidad | Administrador | Vendedor |
 |---|:--:|:--:|
@@ -48,9 +52,12 @@ permisos granulares + Filament Shield sin reescribir la lógica de negocio.
 | Gastos · Métodos de pago · Cuadre · Reportes de dinero · Usuarios | ✅ | ❌ |
 
 ### Reglas anti-fraude (transversales)
-- El **Vendedor no puede eliminar** ningún registro. El borrado es exclusivo del Admin.
+- El **Vendedor no puede eliminar** ningún registro: su rol no recibe permisos `delete`.
 - **Anular o editar un pago/venta ya registrado** es exclusivo del Admin. El vendedor solo
   crea y corrige antes de confirmar.
+- El **Efectivo (método por defecto) no se puede eliminar nunca**, ni siquiera el admin:
+  se garantiza con una **guarda a nivel de modelo** (evento `deleting`), independiente de
+  permisos, porque el super admin saltaría las policies.
 - **Soft deletes** en customers, prescriptions, sales, payments, expenses.
 - **Bitácora de auditoría** con `spatie/laravel-activitylog` sobre sales, payments y
   expenses (incluye creación, edición, anulación y borrado).
@@ -63,7 +70,9 @@ estándar **OD** = ojo derecho, **OS** = ojo izquierdo; 🗑️ = soft deletes; 
 (métodos de pago, categorías de gasto) se almacenan con su etiqueta en español en `name`.
 
 ### users *(ya existe)*
-`+ role` enum(`admin`,`seller`), `+ is_active` (bool).
+`+ is_active` (bool). Los roles NO se guardan como columna: viven en las tablas de
+`spatie/laravel-permission` (`roles`, `permissions`, `model_has_roles`, …). El `User` usa
+`HasRoles`.
 
 ### customers 🗑️
 `name`, `id_number` (única, nullable), `phone`, `address`, `city`, `age`, `email`
@@ -77,11 +86,15 @@ OS: `os_sphere`, `os_cylinder`, `os_axis`, `os_add`, `os_va`, `os_pd`,
 fotocromático, antirreflejo blue…), `usage`, `control_period`, `diagnosis` (el "R:"),
 `drops`, `lensometry`.
 
+### product_categories
+`name`, `is_active`. Tabla propia (no enum) para gestionarse desde el panel, igual que
+`expense_categories`. Semillas: Lente, Montura, Filtro, Accesorio, Promoción, Servicio.
+
 ### products 🗑️
-`name`, `sku` (nullable), `category` enum(`lens`,`frame`,`filter`,`accessory`,`promo`,
-`service`), `brand` (nullable), `price`, `cost`, `is_stockable` (bool), `stock` (nullable
-cuando no aplica, p. ej. lentes a tallar bajo pedido), `is_active`, `attributes` (json:
-material/color).
+`name`, `sku` (nullable), `product_category_id` (FK a `product_categories`), `brand`
+(nullable), `price`, `cost`, `is_stockable` (bool), `stock` (nullable cuando no aplica,
+p. ej. lentes a tallar bajo pedido), `is_active`, `specs` (json: material/color — nombrada
+`specs` y no `attributes` para no colisionar con la propiedad interna de Eloquent).
 
 ### payment_methods
 `name`, `is_active`, `is_default` (bool — Efectivo sembrado y protegido: no se puede

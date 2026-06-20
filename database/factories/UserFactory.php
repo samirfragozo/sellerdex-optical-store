@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Spatie\Permission\Models\Role;
 
 /**
  * @extends Factory<User>
@@ -33,6 +34,7 @@ class UserFactory extends Factory
             'two_factor_secret' => null,
             'two_factor_recovery_codes' => null,
             'two_factor_confirmed_at' => null,
+            'is_active' => true,
         ];
     }
 
@@ -56,5 +58,19 @@ class UserFactory extends Factory
             'two_factor_recovery_codes' => encrypt(json_encode(['recovery-code-1'])),
             'two_factor_confirmed_at' => now(),
         ]);
+    }
+
+    public function admin(): static
+    {
+        return $this->afterCreating(
+            fn (User $user) => $user->assignRole(Role::findOrCreate(User::ROLE_ADMIN))
+        );
+    }
+
+    public function seller(): static
+    {
+        return $this->afterCreating(
+            fn (User $user) => $user->assignRole(Role::findOrCreate(User::ROLE_SELLER))
+        );
     }
 }
