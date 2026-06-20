@@ -9,6 +9,7 @@ return [
         'expense' => ['label' => 'Expense', 'plural' => 'Expenses', 'nav' => 'Expenses'],
         'expense_category' => ['label' => 'Expense category', 'plural' => 'Expense categories', 'nav' => 'Expense categories'],
         'prescription' => ['label' => 'Prescription', 'plural' => 'Prescriptions', 'nav' => 'Prescriptions'],
+        'sale' => ['label' => 'Sale', 'plural' => 'Sales', 'nav' => 'Sales'],
     ],
 
     'fields' => [
@@ -56,6 +57,27 @@ return [
         'add' => 'ADD',
         'va' => 'VA',
         'pd' => 'PD',
+        'number' => 'Number',
+        'seller' => 'Seller',
+        'document_type_sale' => 'Document type',
+        'status' => 'Status',
+        'subtotal' => 'Subtotal',
+        'discount' => 'Discount',
+        'total' => 'Total',
+        'balance' => 'Balance',
+        'sold_at' => 'Sale date',
+        'delivered_at' => 'Delivery date',
+        'is_delivered' => 'Delivered?',
+        'product' => 'Product',
+        'quantity' => 'Quantity',
+        'unit_price' => 'Unit price',
+        'unit_cost' => 'Unit cost',
+        'line_total' => 'Line total',
+        'paid_at' => 'Payment date',
+        'reference' => 'Reference',
+        'prescription' => 'Prescription',
+        'items' => 'Items',
+        'payments' => 'Payments',
     ],
 
     'sections' => [
@@ -76,5 +98,21 @@ return [
         'ce' => 'Foreigner ID',
         'pa' => 'Passport',
         'nit' => 'Tax ID (NIT)',
+    ],
+
+    'sale_status' => [
+        'draft' => 'Draft',
+        'partial' => 'Partial',
+        'paid' => 'Paid',
+        'delivered' => 'Delivered',
+        'voided' => 'Voided',
+    ],
+
+    'sale_document_type' => [
+        'quote' => 'Quote',
+        'order' => 'Order',
+        'layaway' => 'Layaway',
+        'remission' => 'Remission',
+        'billing' => 'Billing note',
     ],
 ];
