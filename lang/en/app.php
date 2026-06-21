@@ -10,6 +10,7 @@ return [
         'expense_category' => ['label' => 'Expense category', 'plural' => 'Expense categories', 'nav' => 'Expense categories'],
         'prescription' => ['label' => 'Prescription', 'plural' => 'Prescriptions', 'nav' => 'Prescriptions'],
         'sale' => ['label' => 'Sale', 'plural' => 'Sales', 'nav' => 'Sales'],
+        'cash_close' => ['label' => 'Cash close', 'plural' => 'Cash closes', 'nav' => 'Cash close'],
     ],
 
     'fields' => [
@@ -78,6 +79,18 @@ return [
         'prescription' => 'Prescription',
         'items' => 'Items',
         'payments' => 'Payments',
+        'opening_cash' => 'Opening cash',
+        'total_sales' => 'Sales',
+        'total_collected' => 'Collected',
+        'total_expenses' => 'Expenses',
+        'total_receivable' => 'Receivable',
+        'expected_cash' => 'Expected cash',
+        'counted_cash' => 'Counted cash',
+        'difference' => 'Difference',
+        'period_start' => 'From',
+        'period_end' => 'To',
+        'type' => 'Type',
+        'profit' => 'Profit',
     ],
 
     'sections' => [
@@ -114,5 +127,20 @@ return [
         'layaway' => 'Layaway',
         'remission' => 'Remission',
         'billing' => 'Billing note',
+    ],
+
+    'cash_close_type' => ['daily' => 'Daily', 'monthly' => 'Monthly'],
+
+    'cash_close_status' => ['open' => 'Open', 'closed' => 'Closed', 'approved' => 'Approved'],
+
+    'reports' => [
+        'title' => 'Reports',
+        'sales' => 'Sales (month)',
+        'collected' => 'Collected (month)',
+        'expenses' => 'Expenses (month)',
+        'profit' => 'Profit (month)',
+        'receivable' => 'Accounts receivable',
+        'low_stock' => 'Low stock',
+        'seller_performance' => 'Seller performance',
     ],
 ];

@@ -10,6 +10,7 @@ return [
         'expense_category' => ['label' => 'Categoría de gasto', 'plural' => 'Categorías de gasto', 'nav' => 'Categorías de gasto'],
         'prescription' => ['label' => 'Prescripción', 'plural' => 'Prescripciones', 'nav' => 'Prescripciones'],
         'sale' => ['label' => 'Venta', 'plural' => 'Ventas', 'nav' => 'Ventas'],
+        'cash_close' => ['label' => 'Cuadre de caja', 'plural' => 'Cuadres de caja', 'nav' => 'Cuadre de caja'],
     ],
 
     'fields' => [
@@ -78,6 +79,18 @@ return [
         'prescription' => 'Prescripción',
         'items' => 'Ítems',
         'payments' => 'Pagos / Abonos',
+        'opening_cash' => 'Caja inicial',
+        'total_sales' => 'Ventas',
+        'total_collected' => 'Recaudado',
+        'total_expenses' => 'Gastos',
+        'total_receivable' => 'Por cobrar',
+        'expected_cash' => 'Efectivo esperado',
+        'counted_cash' => 'Efectivo contado',
+        'difference' => 'Descuadre',
+        'period_start' => 'Desde',
+        'period_end' => 'Hasta',
+        'type' => 'Tipo',
+        'profit' => 'Utilidad',
     ],
 
     'sections' => [
@@ -114,5 +127,20 @@ return [
         'layaway' => 'Plan separe',
         'remission' => 'Remisión',
         'billing' => 'Cuenta de cobro',
+    ],
+
+    'cash_close_type' => ['daily' => 'Diario', 'monthly' => 'Mensual'],
+
+    'cash_close_status' => ['open' => 'Abierto', 'closed' => 'Cerrado', 'approved' => 'Aprobado'],
+
+    'reports' => [
+        'title' => 'Reportes',
+        'sales' => 'Ventas del mes',
+        'collected' => 'Recaudado del mes',
+        'expenses' => 'Gastos del mes',
+        'profit' => 'Utilidad del mes',
+        'receivable' => 'Cuentas por cobrar',
+        'low_stock' => 'Stock bajo',
+        'seller_performance' => 'Desempeño por vendedor',
     ],
 ];
