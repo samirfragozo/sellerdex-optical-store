@@ -9,6 +9,7 @@ use Filament\Panel;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\Contracts\PasskeyUser;
@@ -59,5 +60,10 @@ class User extends Authenticatable implements FilamentUser, PasskeyUser
     public function isSeller(): bool
     {
         return $this->hasRole(self::ROLE_SELLER);
+    }
+
+    public function sales(): HasMany
+    {
+        return $this->hasMany(Sale::class, 'seller_id');
     }
 }
