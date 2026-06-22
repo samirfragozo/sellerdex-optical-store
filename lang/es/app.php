@@ -129,6 +129,17 @@ return [
         'billing' => 'Cuenta de cobro',
     ],
 
+    'pos' => [
+        'title' => 'Punto de venta',
+        'created' => 'Venta :number creada',
+        'new_customer' => 'Cliente nuevo',
+        'existing_customer' => 'Cliente existente',
+        'add_item' => 'Agregar ítem',
+        'take_payment' => 'Registrar abono',
+        'save' => 'Guardar venta',
+        'no_items' => 'Agrega al menos un ítem',
+    ],
+
     'cash_close_type' => ['daily' => 'Diario', 'monthly' => 'Mensual'],
 
     'cash_close_status' => ['open' => 'Abierto', 'closed' => 'Cerrado', 'approved' => 'Aprobado'],

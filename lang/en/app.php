@@ -129,6 +129,17 @@ return [
         'billing' => 'Billing note',
     ],
 
+    'pos' => [
+        'title' => 'Point of sale',
+        'created' => 'Sale :number created',
+        'new_customer' => 'New customer',
+        'existing_customer' => 'Existing customer',
+        'add_item' => 'Add item',
+        'take_payment' => 'Take payment',
+        'save' => 'Save sale',
+        'no_items' => 'Add at least one item',
+    ],
+
     'cash_close_type' => ['daily' => 'Daily', 'monthly' => 'Monthly'],
 
     'cash_close_status' => ['open' => 'Open', 'closed' => 'Closed', 'approved' => 'Approved'],
