@@ -49,3 +49,19 @@ it('creates a new customer inline when none is selected', function () {
     expect(Customer::where('name', 'Lina')->where('last_name', 'Quintero')->exists())->toBeTrue()
         ->and(Sale::count())->toBe(1);
 });
+
+it('flashes the created sale id and number for printing', function () {
+    $seller = User::factory()->seller()->create();
+    $customer = Customer::factory()->create();
+
+    $this->actingAs($seller)
+        ->post('/pos', [
+            'customer_id' => $customer->id,
+            'document_type' => 'order',
+            'items' => [['description' => 'Lente', 'quantity' => 1, 'unit_price' => 100_000]],
+        ])
+        ->assertSessionHas('createdSale');
+
+    $sale = Sale::first();
+    expect(session('createdSale'))->toMatchArray(['id' => $sale->id, 'number' => $sale->number]);
+});

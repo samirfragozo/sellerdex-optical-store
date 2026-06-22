@@ -91,6 +91,8 @@ return [
         'period_end' => 'To',
         'type' => 'Type',
         'profit' => 'Profit',
+        'tax_id' => 'Tax ID',
+        'logo' => 'Logo',
     ],
 
     'sections' => [
@@ -143,6 +145,18 @@ return [
     'cash_close_type' => ['daily' => 'Daily', 'monthly' => 'Monthly'],
 
     'cash_close_status' => ['open' => 'Open', 'closed' => 'Closed', 'approved' => 'Approved'],
+
+    'business' => [
+        'title' => 'Business details',
+        'saved' => 'Details saved',
+    ],
+
+    'documents' => [
+        'print_invoice' => 'Print invoice',
+        'download_invoice' => 'Download PDF',
+        'print_formula' => 'Print formula',
+        'download_formula' => 'Download PDF',
+    ],
 
     'reports' => [
         'title' => 'Reports',

@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\Prescriptions\Tables;
 
+use App\Models\Prescription;
+use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -47,6 +49,15 @@ class PrescriptionsTable
             ])
             ->recordActions([
                 EditAction::make(),
+                Action::make('printFormula')
+                    ->label(__('app.documents.print_formula'))
+                    ->icon('heroicon-o-printer')
+                    ->url(fn (Prescription $record) => route('documents.formula', $record))
+                    ->openUrlInNewTab(),
+                Action::make('downloadFormula')
+                    ->label(__('app.documents.download_formula'))
+                    ->icon('heroicon-o-arrow-down-tray')
+                    ->url(fn (Prescription $record) => route('documents.formula.pdf', $record)),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

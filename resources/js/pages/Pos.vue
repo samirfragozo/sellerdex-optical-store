@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { Head, useForm } from '@inertiajs/vue3';
-import { ShoppingCart, Trash2, Plus } from '@lucide/vue';
+import { Head, useForm, usePage } from '@inertiajs/vue3';
+import { ShoppingCart, Trash2, Plus, FileText, Download, Eye } from '@lucide/vue';
 import { computed, ref, watch } from 'vue';
 import { store } from '@/routes/pos';
 import { Button } from '@/components/ui/button';
@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import InputError from '@/components/InputError.vue';
 import { index } from '@/routes/pos';
+import type { CreatedSale } from '@/types/global';
 
 defineOptions({
     layout: {
@@ -53,6 +54,9 @@ const props = defineProps<{
     paymentMethods: PaymentMethod[];
     customers: Customer[];
 }>();
+
+const page = usePage();
+const createdSale = computed<CreatedSale | null>(() => (page.props.flash as { createdSale?: CreatedSale | null })?.createdSale ?? null);
 
 const form = useForm({
     customer_id: null as number | null,
@@ -171,6 +175,46 @@ function submit(): void {
         <div class="flex items-center gap-3">
             <ShoppingCart class="size-6 text-muted-foreground" />
             <h1 class="text-2xl font-semibold">Punto de venta</h1>
+        </div>
+
+        <!-- Print / download panel shown after a successful sale -->
+        <div
+            v-if="createdSale"
+            class="rounded-xl border border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-950/30"
+        >
+            <p class="mb-3 text-base font-semibold text-green-800 dark:text-green-300">
+                Venta {{ createdSale.number }} creada exitosamente
+            </p>
+            <div class="flex flex-wrap gap-2">
+                <a
+                    :href="createdSale.invoice_url"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="inline-flex items-center gap-2 rounded-md border border-input bg-background px-3 py-1.5 text-sm font-medium shadow-xs transition-colors hover:bg-accent hover:text-accent-foreground"
+                >
+                    <Eye class="size-4" />
+                    Imprimir factura
+                </a>
+                <a
+                    :href="createdSale.invoice_pdf_url"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="inline-flex items-center gap-2 rounded-md border border-input bg-background px-3 py-1.5 text-sm font-medium shadow-xs transition-colors hover:bg-accent hover:text-accent-foreground"
+                >
+                    <Download class="size-4" />
+                    Descargar PDF
+                </a>
+                <a
+                    v-if="createdSale.formula_url"
+                    :href="createdSale.formula_url"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="inline-flex items-center gap-2 rounded-md border border-input bg-background px-3 py-1.5 text-sm font-medium shadow-xs transition-colors hover:bg-accent hover:text-accent-foreground"
+                >
+                    <FileText class="size-4" />
+                    Imprimir fórmula
+                </a>
+            </div>
         </div>
 
         <form class="grid gap-6 lg:grid-cols-3" @submit.prevent="submit">

@@ -4,6 +4,8 @@ namespace App\Filament\Resources\Sales\Tables;
 
 use App\Enums\SaleDocumentType;
 use App\Enums\SaleStatus;
+use App\Models\Sale;
+use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -62,6 +64,15 @@ class SalesTable
             ])
             ->recordActions([
                 EditAction::make(),
+                Action::make('printInvoice')
+                    ->label(__('app.documents.print_invoice'))
+                    ->icon('heroicon-o-printer')
+                    ->url(fn (Sale $record) => route('documents.invoice', $record))
+                    ->openUrlInNewTab(),
+                Action::make('downloadInvoice')
+                    ->label(__('app.documents.download_invoice'))
+                    ->icon('heroicon-o-arrow-down-tray')
+                    ->url(fn (Sale $record) => route('documents.invoice.pdf', $record)),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
