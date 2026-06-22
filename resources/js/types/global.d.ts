@@ -13,12 +13,25 @@ declare module 'vite/client' {
     }
 }
 
+export interface CreatedSale {
+    id: number;
+    number: string;
+    prescription_id: number | null;
+    invoice_url: string;
+    invoice_pdf_url: string;
+    formula_url: string | null;
+}
+
 declare module '@inertiajs/core' {
     export interface InertiaConfig {
         sharedPageProps: {
             name: string;
             auth: Auth;
             sidebarOpen: boolean;
+            flash: {
+                success: string | null;
+                createdSale: CreatedSale | null;
+            };
             [key: string]: unknown;
         };
     }

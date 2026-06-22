@@ -91,6 +91,8 @@ return [
         'period_end' => 'Hasta',
         'type' => 'Tipo',
         'profit' => 'Utilidad',
+        'tax_id' => 'NIT',
+        'logo' => 'Logo',
     ],
 
     'sections' => [
@@ -143,6 +145,18 @@ return [
     'cash_close_type' => ['daily' => 'Diario', 'monthly' => 'Mensual'],
 
     'cash_close_status' => ['open' => 'Abierto', 'closed' => 'Cerrado', 'approved' => 'Aprobado'],
+
+    'business' => [
+        'title' => 'Datos del negocio',
+        'saved' => 'Datos guardados',
+    ],
+
+    'documents' => [
+        'print_invoice' => 'Imprimir factura',
+        'download_invoice' => 'Descargar PDF',
+        'print_formula' => 'Imprimir fórmula',
+        'download_formula' => 'Descargar PDF',
+    ],
 
     'reports' => [
         'title' => 'Reportes',
