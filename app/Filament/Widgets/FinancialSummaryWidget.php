@@ -10,6 +10,11 @@ use Filament\Widgets\StatsOverviewWidget\Stat;
 
 class FinancialSummaryWidget extends BaseWidget
 {
+    public static function canView(): bool
+    {
+        return auth()->user()?->isAdmin() === true;
+    }
+
     protected function getStats(): array
     {
         $start = now()->startOfMonth();

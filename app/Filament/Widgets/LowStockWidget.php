@@ -9,6 +9,11 @@ use Filament\Widgets\TableWidget as BaseWidget;
 
 class LowStockWidget extends BaseWidget
 {
+    public static function canView(): bool
+    {
+        return auth()->user()?->isAdmin() === true;
+    }
+
     public function table(Table $table): Table
     {
         return $table
