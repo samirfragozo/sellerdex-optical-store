@@ -6,6 +6,7 @@ use App\Enums\SaleDocumentType;
 use App\Enums\SaleStatus;
 use Database\Factories\SaleFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -39,6 +40,15 @@ class Sale extends Model
             $sale->number ??= self::nextNumber();
             $sale->sold_at ??= now()->toDateString();
         });
+    }
+
+    /**
+     * Sales with an outstanding balance (total greater than the sum of payments).
+     * Uses a correlated subquery — SQLite rejects HAVING without GROUP BY.
+     */
+    public function scopeOutstanding(Builder $query): void
+    {
+        $query->whereRaw('sales.total > (select coalesce(sum(payments.amount), 0) from payments where payments.sale_id = sales.id and payments.deleted_at is null)');
     }
 
     /** Next sequential sale number, zero-padded (e.g. 000001). */

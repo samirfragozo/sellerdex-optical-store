@@ -9,6 +9,11 @@ use Filament\Widgets\TableWidget as BaseWidget;
 
 class AccountsReceivableWidget extends BaseWidget
 {
+    public static function canView(): bool
+    {
+        return auth()->user()?->isAdmin() === true;
+    }
+
     public function table(Table $table): Table
     {
         return $table
@@ -16,7 +21,7 @@ class AccountsReceivableWidget extends BaseWidget
             ->query(
                 Sale::query()
                     ->withSum('payments as paid_total', 'amount')
-                    ->havingRaw('total - COALESCE(paid_total, 0) > 0')
+                    ->outstanding()
             )
             ->columns([
                 TextColumn::make('number')
