@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\BusinessSetting;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -38,6 +39,9 @@ class HandleInertiaRequests extends Middleware
         return [
             ...parent::share($request),
             'name' => config('app.name'),
+            'business' => [
+                'name' => rescue(fn (): string => BusinessSetting::current()->name, config('app.name'), report: false),
+            ],
             'auth' => [
                 'user' => $request->user(),
                 'is_admin' => (bool) $request->user()?->isAdmin(),
