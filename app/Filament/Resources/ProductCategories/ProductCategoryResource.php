@@ -2,9 +2,11 @@
 
 namespace App\Filament\Resources\ProductCategories;
 
+use App\Filament\Clusters\Catalogo\CatalogoCluster;
 use App\Filament\Resources\ProductCategories\Pages\CreateProductCategory;
 use App\Filament\Resources\ProductCategories\Pages\EditProductCategory;
 use App\Filament\Resources\ProductCategories\Pages\ListProductCategories;
+use App\Filament\Resources\ProductCategories\RelationManagers\ProductsRelationManager;
 use App\Filament\Resources\ProductCategories\Schemas\ProductCategoryForm;
 use App\Filament\Resources\ProductCategories\Tables\ProductCategoriesTable;
 use App\Models\ProductCategory;
@@ -19,6 +21,10 @@ class ProductCategoryResource extends Resource
     protected static ?string $model = ProductCategory::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+
+    protected static ?string $cluster = CatalogoCluster::class;
+
+    protected static ?int $navigationSort = 2;
 
     public static function getModelLabel(): string
     {
@@ -48,7 +54,7 @@ class ProductCategoryResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            ProductsRelationManager::class,
         ];
     }
 
