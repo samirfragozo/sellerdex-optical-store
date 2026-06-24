@@ -2,8 +2,11 @@
 
 use App\Models\Customer;
 use App\Models\PaymentMethod;
+use App\Models\Product;
 use App\Models\Sale;
 use App\Models\User;
+use Database\Seeders\ProductCatalogSeeder;
+use Database\Seeders\ProductCategorySeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
@@ -48,6 +51,24 @@ it('creates a new customer inline when none is selected', function () {
 
     expect(Customer::where('name', 'Lina')->where('last_name', 'Quintero')->exists())->toBeTrue()
         ->and(Sale::count())->toBe(1);
+});
+
+it('passes combo options and applies a paper bag', function () {
+    $this->seed(ProductCategorySeeder::class);
+    $this->seed(ProductCatalogSeeder::class);
+    $seller = User::factory()->seller()->create();
+    $lens = Product::where('sku', 'ML-003')->first(); // 295000
+
+    $this->actingAs($seller)->post('/pos', [
+        'customer_id' => Customer::factory()->create()->id,
+        'document_type' => 'order',
+        'items' => [['product_id' => $lens->id, 'description' => $lens->name, 'quantity' => 1, 'unit_price' => $lens->price]],
+        'combo' => ['forro' => 'small', 'include_liquid' => false, 'with_exam' => true],
+    ])->assertRedirect();
+
+    $sale = Sale::latest('id')->first();
+    $skus = $sale->items->map(fn ($i) => Product::find($i->product_id)?->sku)->filter();
+    expect($skus)->toContain('ACC-FORRO-SMALL', 'ACC-PANO', 'ACC-BOLSA-PAPEL', 'SRV-EXAMEN');
 });
 
 it('flashes the created sale id and number for printing', function () {

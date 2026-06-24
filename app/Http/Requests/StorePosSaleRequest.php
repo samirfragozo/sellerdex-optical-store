@@ -45,6 +45,12 @@ class StorePosSaleRequest extends FormRequest
             'payment.payment_method_id' => ['required_with:payment', 'exists:payment_methods,id'],
             'payment.amount' => ['required_with:payment', 'integer', 'min:1'],
             'payment.reference' => ['nullable', 'string', 'max:255'],
+            'combo' => ['nullable', 'array'],
+            'combo.with_exam' => ['boolean'],
+            'combo.include_liquid' => ['boolean'],
+            'combo.forro' => ['nullable', 'in:small,large'],
+            'combo.own_frame' => ['boolean'],
+            'surcharge_percent' => ['nullable', 'numeric', 'min:0'],
         ];
     }
 }

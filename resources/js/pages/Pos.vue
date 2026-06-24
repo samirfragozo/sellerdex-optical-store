@@ -28,11 +28,13 @@ interface Product {
     price: number;
     is_stockable: boolean;
     stock: number;
+    category_name: string | null;
 }
 
 interface PaymentMethod {
     id: number;
     name: string;
+    surcharge_percent: number;
 }
 
 interface Customer {
@@ -72,6 +74,13 @@ const form = useForm({
     payment: null as { payment_method_id: number | null; amount: number } | null,
     discount: 0,
     notes: '',
+    combo: {
+        with_exam: false,
+        forro: 'small' as 'small' | 'large',
+        include_liquid: false,
+        own_frame: false,
+    },
+    surcharge_percent: 0,
 });
 
 // Customer mode: 'existing' | 'new'
@@ -104,6 +113,13 @@ watch([paymentMethodId, paymentAmount], () => {
     if (showPayment.value) {
         form.payment = { payment_method_id: paymentMethodId.value, amount: paymentAmount.value };
     }
+    // Derive surcharge from the selected payment method.
+    if (paymentMethodId.value !== null) {
+        const pm = props.paymentMethods.find((p) => p.id === paymentMethodId.value);
+        form.surcharge_percent = pm?.surcharge_percent ?? 0;
+    } else {
+        form.surcharge_percent = 0;
+    }
 });
 
 const documentTypes = [
@@ -118,7 +134,9 @@ const subtotal = computed(() =>
     form.items.reduce((sum, item) => sum + item.quantity * item.unit_price, 0),
 );
 
-const total = computed(() => subtotal.value - (form.discount || 0));
+const base = computed(() => Math.max(0, subtotal.value - (form.discount || 0)));
+
+const total = computed(() => Math.round(base.value * (1 + (form.surcharge_percent || 0) / 100)));
 
 const balance = computed(() => {
     if (!showPayment.value || !form.payment) {
@@ -126,6 +144,17 @@ const balance = computed(() => {
     }
     return total.value - (form.payment.amount || 0);
 });
+
+// Detect whether any cart item is a Lente category product.
+const cartHasLens = computed(() =>
+    form.items.some((item) => {
+        if (item.product_id === null) {
+            return false;
+        }
+        const product = props.products.find((p) => p.id === item.product_id);
+        return product?.category_name === 'Lente';
+    }),
+);
 
 function formatCOP(value: number): string {
     return '$' + new Intl.NumberFormat('es-CO').format(value);
@@ -159,6 +188,8 @@ function submit(): void {
         onSuccess: () => {
             form.reset();
             form.items = [{ product_id: null, description: '', quantity: 1, unit_price: 0 }];
+            form.combo = { with_exam: false, forro: 'small', include_liquid: false, own_frame: false };
+            form.surcharge_percent = 0;
             customerMode.value = 'existing';
             showPayment.value = false;
             paymentMethodId.value = null;
@@ -424,6 +455,67 @@ function submit(): void {
                         Agregar ítem
                     </Button>
                 </div>
+
+                <!-- Combo card: shown only when a Lente is in the cart -->
+                <div
+                    v-if="cartHasLens"
+                    class="rounded-xl border border-sidebar-border/70 p-4 dark:border-sidebar-border"
+                >
+                    <h2 class="mb-4 text-base font-semibold">Combo</h2>
+                    <div class="flex flex-col gap-3">
+                        <!-- Examen -->
+                        <label class="flex cursor-pointer items-center gap-2 text-sm">
+                            <Checkbox
+                                :checked="form.combo.with_exam"
+                                @update:checked="(v) => (form.combo.with_exam = !!v)"
+                            />
+                            Incluir examen (gratis)
+                        </label>
+
+                        <!-- Forro -->
+                        <div>
+                            <span class="mb-1 block text-sm font-medium">Forro</span>
+                            <div class="flex gap-4">
+                                <label class="flex cursor-pointer items-center gap-2 text-sm">
+                                    <input
+                                        v-model="form.combo.forro"
+                                        type="radio"
+                                        value="small"
+                                        class="size-4 accent-primary"
+                                    />
+                                    Pequeño
+                                </label>
+                                <label class="flex cursor-pointer items-center gap-2 text-sm">
+                                    <input
+                                        v-model="form.combo.forro"
+                                        type="radio"
+                                        value="large"
+                                        class="size-4 accent-primary"
+                                    />
+                                    Grande
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Líquido -->
+                        <label class="flex cursor-pointer items-center gap-2 text-sm">
+                            <Checkbox
+                                :checked="form.combo.include_liquid"
+                                @update:checked="(v) => (form.combo.include_liquid = !!v)"
+                            />
+                            Incluir líquido
+                        </label>
+
+                        <!-- Montura propia -->
+                        <label class="flex cursor-pointer items-center gap-2 text-sm">
+                            <Checkbox
+                                :checked="form.combo.own_frame"
+                                @update:checked="(v) => (form.combo.own_frame = !!v)"
+                            />
+                            El cliente trae su montura
+                        </label>
+                    </div>
+                </div>
             </div>
 
             <!-- Right column: document type, totals, payment, notes, submit -->
@@ -472,6 +564,14 @@ function submit(): void {
                             />
                         </div>
                         <InputError :message="form.errors.discount" />
+
+                        <!-- Surcharge note -->
+                        <div
+                            v-if="form.surcharge_percent > 0"
+                            class="rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-700 dark:bg-amber-900/20 dark:text-amber-400"
+                        >
+                            Total incluye recargo de plataforma ({{ form.surcharge_percent }}%)
+                        </div>
 
                         <div class="flex justify-between border-t border-border pt-2 text-base font-semibold">
                             <span>Total</span>
