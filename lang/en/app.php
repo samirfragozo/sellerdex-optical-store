@@ -148,6 +148,7 @@ return [
 
     'business' => [
         'title' => 'Business details',
+        'save' => 'Save',
         'saved' => 'Details saved',
     ],
 
