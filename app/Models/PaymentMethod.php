@@ -14,14 +14,19 @@ class PaymentMethod extends Model
     use HasFactory;
 
     /**
-     * The default method (Cash) can NEVER be deleted, not even by the super admin
-     * (who bypasses policies). This is enforced at the model level.
+     * The default method (Cash) can NEVER be deleted, and a method with payments
+     * cannot be deleted either — enforced at the model level (super admin bypasses policies).
      */
     protected static function booted(): void
     {
         static::deleting(function (PaymentMethod $method): bool {
-            return ! $method->is_default;
+            return ! $method->is_default && ! $method->hasChildren();
         });
+    }
+
+    public function hasChildren(): bool
+    {
+        return Payment::withTrashed()->where('payment_method_id', $this->id)->exists();
     }
 
     protected function casts(): array
