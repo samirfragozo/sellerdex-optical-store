@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
             PaymentMethodSeeder::class,
             ExpenseCategorySeeder::class,
             ProductCategorySeeder::class,
+            ProductCatalogSeeder::class,
         ]);
 
         if (! app()->isProduction()) {
