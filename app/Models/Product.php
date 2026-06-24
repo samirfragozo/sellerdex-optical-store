@@ -31,7 +31,7 @@ class Product extends Model
         return $this->belongsTo(ProductCategory::class, 'product_category_id');
     }
 
-    /** Margen en pesos (precio − costo). */
+    /** Margin in pesos (price − cost). */
     public function margin(): int
     {
         return $this->price - $this->cost;

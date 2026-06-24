@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-#[Fillable(['name', 'is_active', 'is_default', 'sort_order'])]
+#[Fillable(['name', 'is_active', 'is_default', 'sort_order', 'surcharge_percent'])]
 class PaymentMethod extends Model
 {
     /** @use HasFactory<PaymentMethodFactory> */
@@ -29,6 +29,7 @@ class PaymentMethod extends Model
         return [
             'is_active' => 'boolean',
             'is_default' => 'boolean',
+            'surcharge_percent' => 'decimal:2',
         ];
     }
 

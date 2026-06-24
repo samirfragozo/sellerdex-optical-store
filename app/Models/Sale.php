@@ -14,7 +14,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-#[Fillable(['number', 'customer_id', 'seller_id', 'prescription_id', 'document_type', 'status', 'subtotal', 'discount', 'total', 'is_delivered', 'delivered_at', 'sold_at', 'notes', 'created_by'])]
+#[Fillable(['number', 'customer_id', 'seller_id', 'prescription_id', 'document_type', 'status', 'subtotal', 'discount', 'surcharge_percent', 'total', 'is_delivered', 'delivered_at', 'sold_at', 'notes', 'created_by'])]
 class Sale extends Model
 {
     /** @use HasFactory<SaleFactory> */
@@ -27,6 +27,7 @@ class Sale extends Model
             'status' => SaleStatus::class,
             'subtotal' => 'integer',
             'discount' => 'integer',
+            'surcharge_percent' => 'decimal:2',
             'total' => 'integer',
             'is_delivered' => 'boolean',
             'delivered_at' => 'date',
