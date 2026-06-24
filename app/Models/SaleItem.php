@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Enums\SaleDocumentType;
+use App\Enums\SaleStatus;
 use Database\Factories\SaleItemFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -32,6 +34,43 @@ class SaleItem extends Model
 
         static::saved(fn (SaleItem $item) => $item->sale?->recalculateTotals());
         static::deleted(fn (SaleItem $item) => $item->sale?->recalculateTotals());
+
+        static::created(function (SaleItem $item): void {
+            if ($item->movesStock()) {
+                $item->product->decrement('stock', $item->quantity);
+            }
+        });
+
+        static::updated(function (SaleItem $item): void {
+            if (! $item->wasChanged('quantity') || ! $item->movesStock()) {
+                return;
+            }
+            $delta = (int) $item->quantity - (int) $item->getOriginal('quantity');
+            if ($delta > 0) {
+                $item->product->decrement('stock', $delta);
+            } elseif ($delta < 0) {
+                $item->product->increment('stock', -$delta);
+            }
+        });
+
+        static::deleted(function (SaleItem $item): void {
+            if ($item->movesStock()) {
+                $item->product->increment('stock', $item->quantity);
+            }
+        });
+    }
+
+    /** True when selling this line should move product stock. */
+    public function movesStock(): bool
+    {
+        $product = $this->product;
+        $sale = $this->sale;
+
+        return $product !== null
+            && $product->is_stockable
+            && $sale !== null
+            && $sale->document_type !== SaleDocumentType::Quote
+            && $sale->status !== SaleStatus::Voided;
     }
 
     public function sale(): BelongsTo
