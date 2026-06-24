@@ -26,18 +26,24 @@
                 <tr>
                     <td>{{ $item->quantity }}</td>
                     <td>{{ $item->description }}</td>
-                    <td class="right">{{ $fmt($item->unit_price) }}</td>
-                    <td class="right">{{ $fmt($item->line_total) }}</td>
+                    @if ((int) $item->line_total === 0)
+                        <td class="right" colspan="2">{{ $item->product?->sku === 'SRV-EXAMEN' ? 'GRATIS' : 'Incluido' }}</td>
+                    @else
+                        <td class="right">{{ $fmt($item->unit_price) }}</td>
+                        <td class="right">{{ $fmt($item->line_total) }}</td>
+                    @endif
                 </tr>
             @endforeach
         </tbody>
     </table>
     <table class="totals" style="margin-top:8px">
-        <tr><td class="right">Subtotal</td><td class="right" style="width:90px">{{ $fmt($sale->subtotal) }}</td></tr>
-        @if ($sale->discount > 0)
-            <tr><td class="right">Descuento</td><td class="right">{{ $fmt($sale->discount) }}</td></tr>
+        @if ((float) $sale->surcharge_percent <= 0)
+            <tr><td class="right">Subtotal</td><td class="right" style="width:90px">{{ $fmt($sale->subtotal) }}</td></tr>
+            @if ($sale->discount > 0)
+                <tr><td class="right">Descuento</td><td class="right">{{ $fmt($sale->discount) }}</td></tr>
+            @endif
         @endif
-        <tr><td class="right"><strong>Total</strong></td><td class="right"><strong>{{ $fmt($sale->total) }}</strong></td></tr>
+        <tr><td class="right"><strong>Total</strong></td><td class="right" style="width:90px"><strong>{{ $fmt($sale->total) }}</strong></td></tr>
         <tr><td class="right">Abonado</td><td class="right">{{ $fmt($sale->totalPaid()) }}</td></tr>
         <tr><td class="right"><strong>Saldo</strong></td><td class="right"><strong>{{ $fmt($sale->balance) }}</strong></td></tr>
     </table>
