@@ -41,6 +41,44 @@ class Sale extends Model
             $sale->number ??= self::nextNumber();
             $sale->sold_at ??= now()->toDateString();
         });
+
+        static::updated(function (Sale $sale): void {
+            if (! $sale->wasChanged('status')) {
+                return;
+            }
+            $wasVoided = $sale->getRawOriginal('status') === SaleStatus::Voided->value;
+            $isVoided = $sale->status === SaleStatus::Voided;
+
+            if ($isVoided && ! $wasVoided) {
+                $sale->restoreStock();
+            } elseif (! $isVoided && $wasVoided) {
+                $sale->deductStock();
+            }
+        });
+    }
+
+    public function deductStock(): void
+    {
+        $this->adjustStock(decrement: true);
+    }
+
+    public function restoreStock(): void
+    {
+        $this->adjustStock(decrement: false);
+    }
+
+    private function adjustStock(bool $decrement): void
+    {
+        if ($this->document_type === SaleDocumentType::Quote) {
+            return;
+        }
+        foreach ($this->items()->with('product')->get() as $item) {
+            if ($item->product?->is_stockable) {
+                $decrement
+                    ? $item->product->decrement('stock', $item->quantity)
+                    : $item->product->increment('stock', $item->quantity);
+            }
+        }
     }
 
     /**
