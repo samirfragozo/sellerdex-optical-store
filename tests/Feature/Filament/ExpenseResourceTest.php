@@ -1,5 +1,6 @@
 <?php
 
+use App\Filament\Resources\Expenses\ExpenseResource;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -9,7 +10,7 @@ it('el admin ve el listado de gastos', function () {
     $admin = User::factory()->admin()->create();
 
     $this->actingAs($admin)
-        ->get('/admin/expenses')
+        ->get(ExpenseResource::getUrl())
         ->assertSuccessful();
 });
 
@@ -17,6 +18,6 @@ it('el vendedor no puede acceder al listado de gastos', function () {
     $seller = User::factory()->seller()->create();
 
     $this->actingAs($seller)
-        ->get('/admin/expenses')
+        ->get(ExpenseResource::getUrl())
         ->assertForbidden();
 });

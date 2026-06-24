@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\ExpenseCategories;
 
+use App\Filament\Clusters\Gastos\GastosCluster;
 use App\Filament\Resources\ExpenseCategories\Pages\CreateExpenseCategory;
 use App\Filament\Resources\ExpenseCategories\Pages\EditExpenseCategory;
 use App\Filament\Resources\ExpenseCategories\Pages\ListExpenseCategories;
@@ -19,6 +20,10 @@ class ExpenseCategoryResource extends Resource
     protected static ?string $model = ExpenseCategory::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+
+    protected static ?string $cluster = GastosCluster::class;
+
+    protected static ?int $navigationSort = 2;
 
     public static function getModelLabel(): string
     {
