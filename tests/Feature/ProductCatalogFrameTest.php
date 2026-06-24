@@ -22,7 +22,7 @@ it('seeds 18 frame templates that are stockable with zero stock', function () {
 
     $semiTr90 = Product::where('sku', 'MNT-SEMI-AL-AIRE-TR-90')->first();
     expect($semiTr90)->not->toBeNull()
-        ->and($semiTr90->specs['structure'])->toBe('Semi al Aire')
+        ->and($semiTr90->specs['structure'])->toBe('Semi Al Aire')
         ->and($semiTr90->specs['material'])->toBe('TR-90');
 });
 

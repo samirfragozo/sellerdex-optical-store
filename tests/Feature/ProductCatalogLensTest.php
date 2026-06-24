@@ -21,7 +21,7 @@ it('seeds 69 made-to-order lenses with tier-floored prices', function () {
     expect($base->cost)->toBe(6000)
         ->and($base->price)->toBe(125000)       // max(24000, 125000)
         ->and($base->is_stockable)->toBeFalse()
-        ->and($base->specs['filter'])->toBe('Sin Filtro (Claro)');
+        ->and($base->specs['filter'])->toBe('Sin Filtro');
 
     expect(Product::where('sku', 'ML-002')->value('price'))->toBe(195000)  // blue floor
         ->and(Product::where('sku', 'ML-003')->value('price'))->toBe(295000) // foto blue floor
@@ -29,7 +29,7 @@ it('seeds 69 made-to-order lenses with tier-floored prices', function () {
 });
 
 it('computes lensPrice with the tier floor', function () {
-    expect(ProductCatalogSeeder::lensPrice(6000, 'Sin Filtro (Claro)'))->toBe(125000)
+    expect(ProductCatalogSeeder::lensPrice(6000, 'Sin Filtro'))->toBe(125000)
         ->and(ProductCatalogSeeder::lensPrice(50000, 'Foto Blue Cut'))->toBe(295000)
         ->and(ProductCatalogSeeder::lensPrice(557000, 'Foto Blue Cut'))->toBe(2228000);
 });

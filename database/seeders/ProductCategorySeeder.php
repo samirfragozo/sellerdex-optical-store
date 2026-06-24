@@ -9,7 +9,7 @@ class ProductCategorySeeder extends Seeder
 {
     public function run(): void
     {
-        foreach (['Lente', 'Montura', 'Filtro', 'Accesorio', 'Promoción', 'Servicio'] as $name) {
+        foreach (['Lente', 'Montura', 'Accesorio', 'Servicio'] as $name) {
             ProductCategory::updateOrCreate(['name' => $name], ['is_active' => true]);
         }
     }
