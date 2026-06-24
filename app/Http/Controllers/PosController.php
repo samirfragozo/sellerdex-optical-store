@@ -17,10 +17,19 @@ class PosController extends Controller
     {
         return Inertia::render('Pos', [
             'products' => Product::query()->where('is_active', true)
+                ->with('category:id,name')
                 ->orderBy('name')
-                ->get(['id', 'name', 'price', 'is_stockable', 'stock']),
+                ->get(['id', 'name', 'price', 'is_stockable', 'stock', 'product_category_id'])
+                ->map(fn (Product $p) => [
+                    'id' => $p->id,
+                    'name' => $p->name,
+                    'price' => $p->price,
+                    'is_stockable' => $p->is_stockable,
+                    'stock' => $p->stock,
+                    'category_name' => $p->category?->name,
+                ]),
             'paymentMethods' => PaymentMethod::query()->where('is_active', true)
-                ->orderBy('sort_order')->get(['id', 'name']),
+                ->orderBy('sort_order')->get(['id', 'name', 'surcharge_percent']),
             'customers' => Customer::query()->orderBy('name')
                 ->limit(50)->get(['id', 'name', 'last_name', 'id_number']),
         ]);

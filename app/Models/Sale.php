@@ -113,7 +113,8 @@ class Sale extends Model
     {
         $subtotal = (int) $this->items()->sum('line_total');
         $this->subtotal = $subtotal;
-        $this->total = max(0, $subtotal - $this->discount);
+        $base = max(0, $subtotal - $this->discount);
+        $this->total = (int) round($base * (1 + ((float) $this->surcharge_percent) / 100));
         $this->saveQuietly();
         $this->recalculateStatus();
     }
