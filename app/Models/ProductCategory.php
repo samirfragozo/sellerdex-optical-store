@@ -14,6 +14,12 @@ class ProductCategory extends Model
     /** @use HasFactory<ProductCategoryFactory> */
     use HasFactory;
 
+    /** A category that still has products cannot be deleted (enforced even for super admin). */
+    protected static function booted(): void
+    {
+        static::deleting(fn (ProductCategory $category): bool => ! $category->hasChildren());
+    }
+
     protected function casts(): array
     {
         return ['is_active' => 'boolean'];
@@ -22,5 +28,10 @@ class ProductCategory extends Model
     public function products(): HasMany
     {
         return $this->hasMany(Product::class);
+    }
+
+    public function hasChildren(): bool
+    {
+        return $this->products()->withTrashed()->exists();
     }
 }
