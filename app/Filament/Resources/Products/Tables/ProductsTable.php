@@ -9,6 +9,7 @@ use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Actions\RestoreBulkAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 
@@ -20,15 +21,14 @@ class ProductsTable
             ->columns([
                 TextColumn::make('name')
                     ->label(__('app.fields.name'))
-                    ->searchable(),
+                    ->searchable()
+                    ->sortable(),
                 TextColumn::make('sku')
                     ->label(__('app.fields.sku'))
-                    ->searchable(),
+                    ->searchable()
+                    ->sortable(),
                 TextColumn::make('category.name')
                     ->label(__('app.fields.category'))
-                    ->searchable(),
-                TextColumn::make('brand')
-                    ->label(__('app.fields.brand'))
                     ->searchable(),
                 TextColumn::make('price')
                     ->label(__('app.fields.price'))
@@ -60,6 +60,9 @@ class ProductsTable
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
+                SelectFilter::make('product_category_id')
+                    ->label(__('app.fields.category'))
+                    ->relationship('category', 'name'),
                 TrashedFilter::make(),
             ])
             ->recordActions([
