@@ -13,6 +13,14 @@ return [
         'cash_close' => ['label' => 'Cash close', 'plural' => 'Cash closes', 'nav' => 'Cash close'],
     ],
 
+    'relations' => [
+        'payments' => 'Payments',
+        'products' => 'Products',
+        'add_payment' => 'Add payment',
+        'expenses' => 'Expenses',
+        'sales' => 'Documents',
+    ],
+
     'fields' => [
         'name' => 'Name',
         'first_name' => 'First name',
@@ -38,6 +46,7 @@ return [
         'cost' => 'Cost',
         'stock' => 'Stock',
         'is_stockable' => 'Tracks stock?',
+        'is_pos_selectable' => 'Sellable in POS?',
         'specs' => 'Specifications',
         'exam_date' => 'Exam date',
         'lensometry' => 'Lensometry',
@@ -98,6 +107,7 @@ return [
     'sections' => [
         'right_eye' => 'Right eye (OD)',
         'left_eye' => 'Left eye (OS)',
+        'options' => 'Options',
     ],
 
     'lens_type' => [
@@ -116,7 +126,7 @@ return [
     ],
 
     'sale_status' => [
-        'draft' => 'Draft',
+        'draft' => 'Unpaid',
         'partial' => 'Partial',
         'paid' => 'Paid',
         'delivered' => 'Delivered',
@@ -125,14 +135,25 @@ return [
 
     'sale_document_type' => [
         'quote' => 'Quote',
-        'order' => 'Order',
+        'order' => 'Sale',
         'layaway' => 'Layaway',
-        'remission' => 'Remission',
-        'billing' => 'Billing note',
+    ],
+
+    'sale_document_legend' => [
+        'quote' => 'Quote — informational document, not a sales invoice. Values subject to change.',
+        'order' => 'Sale.',
+        'layaway' => 'Layaway — goods are delivered once payments are completed.',
+    ],
+
+    'sale_actions' => [
+        'convert_to_order' => 'Convert to sale',
+        'converted' => 'Quote converted to sale.',
+        'mark_delivered' => 'Mark as delivered',
+        'delivered' => 'Sale delivered.',
     ],
 
     'pos' => [
-        'title' => 'Point of sale',
+        'title' => 'New sale',
         'created' => 'Sale :number created',
         'new_customer' => 'New customer',
         'existing_customer' => 'Existing customer',
@@ -161,12 +182,23 @@ return [
 
     'reports' => [
         'title' => 'Reports',
-        'sales' => 'Sales (month)',
-        'collected' => 'Collected (month)',
-        'expenses' => 'Expenses (month)',
-        'profit' => 'Profit (month)',
+        'sales' => 'Sales',
+        'collected' => 'Collected',
+        'expenses' => 'Expenses',
+        'profit' => 'Profit',
         'receivable' => 'Accounts receivable',
         'low_stock' => 'Low stock',
         'seller_performance' => 'Seller performance',
+        'sales_today' => "Today's sales",
+        'collected_today' => 'Collected today',
+        'receivable_total' => 'Receivable',
+        'pending_deliveries' => 'Pending deliveries',
+        'period' => 'Period',
+        'this_week' => 'This week',
+        'this_month' => 'This month',
+        'this_year' => 'This year',
+        'custom' => 'Custom',
+        'from' => 'From',
+        'to' => 'To',
     ],
 ];
