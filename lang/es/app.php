@@ -13,6 +13,14 @@ return [
         'cash_close' => ['label' => 'Cuadre de caja', 'plural' => 'Cuadres de caja', 'nav' => 'Cuadre de caja'],
     ],
 
+    'relations' => [
+        'payments' => 'Pagos / Abonos',
+        'products' => 'Productos',
+        'add_payment' => 'Agregar abono',
+        'expenses' => 'Gastos',
+        'sales' => 'Documentos',
+    ],
+
     'fields' => [
         'name' => 'Nombre',
         'first_name' => 'Nombres',
@@ -38,6 +46,7 @@ return [
         'cost' => 'Costo',
         'stock' => 'Stock',
         'is_stockable' => '¿Maneja stock?',
+        'is_pos_selectable' => '¿Vendible en el POS?',
         'specs' => 'Especificaciones',
         'exam_date' => 'Fecha del examen',
         'lensometry' => 'Lensometría',
@@ -98,6 +107,7 @@ return [
     'sections' => [
         'right_eye' => 'Ojo derecho (OD)',
         'left_eye' => 'Ojo izquierdo (OS)',
+        'options' => 'Opciones',
     ],
 
     'lens_type' => [
@@ -116,7 +126,7 @@ return [
     ],
 
     'sale_status' => [
-        'draft' => 'Borrador',
+        'draft' => 'Sin abono',
         'partial' => 'Abonada',
         'paid' => 'Pagada',
         'delivered' => 'Entregada',
@@ -125,14 +135,25 @@ return [
 
     'sale_document_type' => [
         'quote' => 'Cotización',
-        'order' => 'Pedido',
+        'order' => 'Venta',
         'layaway' => 'Plan separe',
-        'remission' => 'Remisión',
-        'billing' => 'Cuenta de cobro',
+    ],
+
+    'sale_document_legend' => [
+        'quote' => 'Cotización — documento informativo, no constituye factura de venta. Valores sujetos a cambios.',
+        'order' => 'Venta.',
+        'layaway' => 'Plan separe — la mercancía se entrega al completar los abonos.',
+    ],
+
+    'sale_actions' => [
+        'convert_to_order' => 'Convertir a venta',
+        'converted' => 'Cotización convertida a venta.',
+        'mark_delivered' => 'Marcar como entregada',
+        'delivered' => 'Venta entregada.',
     ],
 
     'pos' => [
-        'title' => 'Punto de venta',
+        'title' => 'Nueva venta',
         'created' => 'Venta :number creada',
         'new_customer' => 'Cliente nuevo',
         'existing_customer' => 'Cliente existente',
@@ -161,12 +182,23 @@ return [
 
     'reports' => [
         'title' => 'Reportes',
-        'sales' => 'Ventas del mes',
-        'collected' => 'Recaudado del mes',
-        'expenses' => 'Gastos del mes',
-        'profit' => 'Utilidad del mes',
+        'sales' => 'Ventas',
+        'collected' => 'Recaudado',
+        'expenses' => 'Gastos',
+        'profit' => 'Utilidad',
         'receivable' => 'Cuentas por cobrar',
         'low_stock' => 'Stock bajo',
         'seller_performance' => 'Desempeño por vendedor',
+        'sales_today' => 'Ventas de hoy',
+        'collected_today' => 'Recaudado hoy',
+        'receivable_total' => 'Por cobrar',
+        'pending_deliveries' => 'Entregas pendientes',
+        'period' => 'Período',
+        'this_week' => 'Esta semana',
+        'this_month' => 'Este mes',
+        'this_year' => 'Este año',
+        'custom' => 'Personalizado',
+        'from' => 'Desde',
+        'to' => 'Hasta',
     ],
 ];
