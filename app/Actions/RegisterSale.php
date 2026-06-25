@@ -32,7 +32,7 @@ class RegisterSale
     {
         return DB::transaction(function () use ($data, $seller): Sale {
             $sale = Sale::create([
-                'customer_id' => $data['customer_id'],
+                'customer_id' => $data['customer_id'] ?? null,
                 'seller_id' => $seller->id,
                 'created_by' => $seller->id,
                 'prescription_id' => $data['prescription_id'] ?? null,

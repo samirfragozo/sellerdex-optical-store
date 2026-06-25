@@ -111,10 +111,14 @@ class ProductCatalogSeeder extends Seeder
             ['ACC-BOLSA-PLASTICO', 'Bolsa de plástico', 240, 0],
             ['ACC-FUNDA', 'Funda', 500, 0],
         ];
+        // Auto-included by combos and never sold on their own → hidden from the POS picker.
+        $nonSellable = ['ACC-BOLSA-PAPEL', 'ACC-BOLSA-PLASTICO', 'ACC-FUNDA', 'ACC-PANO'];
+
         foreach ($rows as [$sku, $name, $cost, $price]) {
             $this->upsert($sku, [
                 'product_category_id' => $accId, 'name' => $name, 'cost' => $cost, 'price' => $price,
-                'is_stockable' => true, 'stock' => 0, 'is_active' => true, 'specs' => null,
+                'is_stockable' => true, 'stock' => 0, 'is_active' => true,
+                'is_pos_selectable' => ! in_array($sku, $nonSellable, true), 'specs' => null,
             ]);
         }
     }
@@ -258,7 +262,7 @@ class ProductCatalogSeeder extends Seeder
         foreach ($rows as [$sku, $design, $process, $material, $filter, $cost]) {
             $this->upsert($sku, [
                 'product_category_id' => $lenteId,
-                'name' => trim("{$design} {$process} {$material} {$filter}"),
+                'name' => trim("Lente {$design} {$process} {$material} {$filter}"),
                 'cost' => $cost,
                 'price' => self::lensPrice($cost, $filter),
                 'is_stockable' => false,

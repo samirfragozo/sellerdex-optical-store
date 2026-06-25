@@ -42,19 +42,49 @@ class Sale extends Model
             $sale->sold_at ??= now()->toDateString();
         });
 
+        // React whenever a change flips whether the sale should be holding stock
+        // (void/unvoid, deliver a layaway, or convert a quote into an order).
         static::updated(function (Sale $sale): void {
-            if (! $sale->wasChanged('status')) {
-                return;
-            }
-            $wasVoided = $sale->getRawOriginal('status') === SaleStatus::Voided->value;
-            $isVoided = $sale->status === SaleStatus::Voided;
+            $heldBefore = self::stockHeldFor(
+                SaleDocumentType::from($sale->getRawOriginal('document_type')),
+                SaleStatus::from($sale->getRawOriginal('status')),
+                (bool) $sale->getRawOriginal('is_delivered'),
+            );
+            $holdsNow = $sale->holdsStock();
 
-            if ($isVoided && ! $wasVoided) {
-                $sale->restoreStock();
-            } elseif (! $isVoided && $wasVoided) {
+            if ($holdsNow && ! $heldBefore) {
                 $sale->deductStock();
+            } elseif (! $holdsNow && $heldBefore) {
+                $sale->restoreStock();
+            }
+
+            // Keep the status in sync with the delivery flag.
+            if ($sale->wasChanged('is_delivered')) {
+                $sale->recalculateStatus();
             }
         });
+    }
+
+    /**
+     * Whether this sale should currently have its items deducted from stock.
+     * Quotes never hold stock; a layaway only holds it once delivered.
+     */
+    public function holdsStock(): bool
+    {
+        return self::stockHeldFor($this->document_type, $this->status, (bool) $this->is_delivered);
+    }
+
+    private static function stockHeldFor(SaleDocumentType $type, SaleStatus $status, bool $delivered): bool
+    {
+        if ($status === SaleStatus::Voided) {
+            return false;
+        }
+
+        return match ($type) {
+            SaleDocumentType::Quote => false,
+            SaleDocumentType::Layaway => $delivered,
+            default => true,
+        };
     }
 
     public function deductStock(): void
@@ -69,9 +99,6 @@ class Sale extends Model
 
     private function adjustStock(bool $decrement): void
     {
-        if ($this->document_type === SaleDocumentType::Quote) {
-            return;
-        }
         foreach ($this->items()->with('product')->get() as $item) {
             if ($item->product?->is_stockable) {
                 $decrement
