@@ -23,7 +23,7 @@ const page = usePage();
 const mainNavItems = computed<NavItem[]>(() => {
     const items: NavItem[] = [
         {
-            title: 'Punto de venta',
+            title: 'Nueva venta',
             href: posIndex(),
             icon: ShoppingCart,
         },
