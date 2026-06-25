@@ -2,7 +2,10 @@
 
 namespace App\Enums;
 
-enum LensType: string
+use Filament\Support\Contracts\HasColor;
+use Filament\Support\Contracts\HasLabel;
+
+enum LensType: string implements HasColor, HasLabel
 {
     case SingleVision = 'single_vision';
     case ExtendedRange = 'extended_range';
@@ -12,6 +15,21 @@ enum LensType: string
     public function label(): string
     {
         return __('app.lens_type.'.$this->value);
+    }
+
+    public function getLabel(): string
+    {
+        return $this->label();
+    }
+
+    public function getColor(): string
+    {
+        return match ($this) {
+            self::SingleVision => 'gray',
+            self::ExtendedRange => 'info',
+            self::Bifocal => 'warning',
+            self::Progressive => 'success',
+        };
     }
 
     /** @return array<string,string> */

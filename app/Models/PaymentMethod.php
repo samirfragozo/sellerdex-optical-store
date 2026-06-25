@@ -6,6 +6,7 @@ use Database\Factories\PaymentMethodFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable(['name', 'is_active', 'is_default', 'sort_order', 'surcharge_percent'])]
 class PaymentMethod extends Model
@@ -42,5 +43,15 @@ class PaymentMethod extends Model
     public function isProtected(): bool
     {
         return $this->is_default;
+    }
+
+    public function payments(): HasMany
+    {
+        return $this->hasMany(Payment::class);
+    }
+
+    public function expenses(): HasMany
+    {
+        return $this->hasMany(Expense::class);
     }
 }

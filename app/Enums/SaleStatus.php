@@ -2,7 +2,10 @@
 
 namespace App\Enums;
 
-enum SaleStatus: string
+use Filament\Support\Contracts\HasColor;
+use Filament\Support\Contracts\HasLabel;
+
+enum SaleStatus: string implements HasColor, HasLabel
 {
     case Draft = 'draft';
     case Partial = 'partial';
@@ -13,6 +16,22 @@ enum SaleStatus: string
     public function label(): string
     {
         return __('app.sale_status.'.$this->value);
+    }
+
+    public function getLabel(): string
+    {
+        return $this->label();
+    }
+
+    public function getColor(): string
+    {
+        return match ($this) {
+            self::Draft => 'gray',
+            self::Partial => 'warning',
+            self::Paid => 'success',
+            self::Delivered => 'info',
+            self::Voided => 'danger',
+        };
     }
 
     /** @return array<string,string> */

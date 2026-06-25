@@ -2,8 +2,6 @@
 
 namespace App\Models;
 
-use App\Enums\SaleDocumentType;
-use App\Enums\SaleStatus;
 use Database\Factories\SaleItemFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -63,14 +61,8 @@ class SaleItem extends Model
     /** True when selling this line should move product stock. */
     public function movesStock(): bool
     {
-        $product = $this->product;
-        $sale = $this->sale;
-
-        return $product !== null
-            && $product->is_stockable
-            && $sale !== null
-            && $sale->document_type !== SaleDocumentType::Quote
-            && $sale->status !== SaleStatus::Voided;
+        return $this->product?->is_stockable === true
+            && $this->sale?->holdsStock() === true;
     }
 
     public function sale(): BelongsTo
