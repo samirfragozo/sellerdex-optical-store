@@ -2,12 +2,15 @@
 
 namespace App\Filament\Resources\CashCloses\Pages;
 
+use App\Filament\Concerns\RedirectsToResourceIndex;
 use App\Filament\Resources\CashCloses\CashCloseResource;
 use Filament\Actions\DeleteAction;
 use Filament\Resources\Pages\EditRecord;
 
 class EditCashClose extends EditRecord
 {
+    use RedirectsToResourceIndex;
+
     protected static string $resource = CashCloseResource::class;
 
     protected function getHeaderActions(): array

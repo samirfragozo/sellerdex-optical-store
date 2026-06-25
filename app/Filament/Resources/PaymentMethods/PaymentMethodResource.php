@@ -5,6 +5,8 @@ namespace App\Filament\Resources\PaymentMethods;
 use App\Filament\Resources\PaymentMethods\Pages\CreatePaymentMethod;
 use App\Filament\Resources\PaymentMethods\Pages\EditPaymentMethod;
 use App\Filament\Resources\PaymentMethods\Pages\ListPaymentMethods;
+use App\Filament\Resources\PaymentMethods\RelationManagers\ExpensesRelationManager;
+use App\Filament\Resources\PaymentMethods\RelationManagers\PaymentsRelationManager;
 use App\Filament\Resources\PaymentMethods\Schemas\PaymentMethodForm;
 use App\Filament\Resources\PaymentMethods\Tables\PaymentMethodsTable;
 use App\Models\PaymentMethod;
@@ -48,7 +50,8 @@ class PaymentMethodResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            PaymentsRelationManager::class,
+            ExpensesRelationManager::class,
         ];
     }
 

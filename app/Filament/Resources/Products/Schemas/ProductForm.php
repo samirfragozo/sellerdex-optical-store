@@ -6,6 +6,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 
 class ProductForm
@@ -38,18 +39,26 @@ class ProductForm
                     ->default(0)
                     ->prefix('$')
                     ->visible(fn () => auth()->user()?->isAdmin() === true),
-                Toggle::make('is_stockable')
-                    ->label(__('app.fields.is_stockable'))
-                    ->required(),
                 TextInput::make('stock')
                     ->label(__('app.fields.stock'))
                     ->numeric(),
-                Toggle::make('is_active')
-                    ->label(__('app.fields.active'))
-                    ->required(),
                 Textarea::make('specs')
                     ->label(__('app.fields.specs'))
                     ->columnSpanFull(),
+                Section::make(__('app.sections.options'))
+                    ->columns(2)
+                    ->schema([
+                        Toggle::make('is_stockable')
+                            ->label(__('app.fields.is_stockable'))
+                            ->required(),
+                        Toggle::make('is_active')
+                            ->label(__('app.fields.active'))
+                            ->required(),
+                        Toggle::make('is_pos_selectable')
+                            ->label(__('app.fields.is_pos_selectable'))
+                            ->default(true)
+                            ->required(),
+                    ]),
             ]);
     }
 }

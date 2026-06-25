@@ -12,11 +12,14 @@
             <td class="right">Vendedor: {{ $sale->seller?->name }}</td>
         </tr>
     </table>
-    <p>
-        <strong>Cliente:</strong> {{ $sale->customer->full_name }}<br>
-        @if ($sale->customer->id_number) {{ $sale->customer->document_type->label() }}: {{ $sale->customer->id_number }}<br> @endif
-        @if ($sale->customer->phone) Tel: {{ $sale->customer->phone }} @endif
-    </p>
+    <p class="muted">{{ $sale->document_type->legend() }}</p>
+    @if ($sale->customer)
+        <p>
+            <strong>Cliente:</strong> {{ $sale->customer->full_name }}<br>
+            @if ($sale->customer->id_number) {{ $sale->customer->document_type?->label() }}: {{ $sale->customer->id_number }}<br> @endif
+            @if ($sale->customer->phone) Tel: {{ $sale->customer->phone }} @endif
+        </p>
+    @endif
     <table class="items">
         <thead>
             <tr><th>Cant.</th><th>Descripción</th><th class="right">Vr. Unit.</th><th class="right">Vr. Total</th></tr>

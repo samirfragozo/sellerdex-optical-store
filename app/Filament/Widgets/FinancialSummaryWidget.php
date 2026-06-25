@@ -5,11 +5,15 @@ namespace App\Filament\Widgets;
 use App\Models\Expense;
 use App\Models\Payment;
 use App\Models\Sale;
+use App\Support\ReportPeriod;
+use Filament\Widgets\Concerns\InteractsWithPageFilters;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 
 class FinancialSummaryWidget extends BaseWidget
 {
+    use InteractsWithPageFilters;
+
     public static function canView(): bool
     {
         return auth()->user()?->isAdmin() === true;
@@ -17,8 +21,7 @@ class FinancialSummaryWidget extends BaseWidget
 
     protected function getStats(): array
     {
-        $start = now()->startOfMonth();
-        $end = now()->endOfMonth();
+        [$start, $end] = ReportPeriod::fromFilters($this->pageFilters);
 
         $sales = Sale::whereBetween('sold_at', [$start, $end])->sum('total');
         $collected = Payment::whereBetween('paid_at', [$start, $end])->sum('amount');

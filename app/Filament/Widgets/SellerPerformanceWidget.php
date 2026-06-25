@@ -3,12 +3,18 @@
 namespace App\Filament\Widgets;
 
 use App\Models\User;
+use App\Support\ReportPeriod;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Filament\Widgets\Concerns\InteractsWithPageFilters;
 use Filament\Widgets\TableWidget as BaseWidget;
 
 class SellerPerformanceWidget extends BaseWidget
 {
+    use InteractsWithPageFilters;
+
+    protected int|string|array $columnSpan = 'full';
+
     public static function canView(): bool
     {
         return auth()->user()?->isAdmin() === true;
@@ -16,8 +22,7 @@ class SellerPerformanceWidget extends BaseWidget
 
     public function table(Table $table): Table
     {
-        $start = now()->startOfMonth();
-        $end = now()->endOfMonth();
+        [$start, $end] = ReportPeriod::fromFilters($this->pageFilters);
 
         return $table
             ->heading(__('app.reports.seller_performance'))
