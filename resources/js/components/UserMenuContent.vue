@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link, router, usePage } from '@inertiajs/vue3';
-import { LogOut, Settings, ShieldCheck } from '@lucide/vue';
+import { LogOut, Settings, ShieldCheck, ShoppingCart } from '@lucide/vue';
 import { computed } from 'vue';
 import {
     DropdownMenuGroup,
@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import UserInfo from '@/components/UserInfo.vue';
 import { logout } from '@/routes';
+import { index as pos } from '@/routes/pos';
 import { edit } from '@/routes/profile';
 import type { User } from '@/types';
 
@@ -35,6 +36,12 @@ defineProps<Props>();
     </DropdownMenuLabel>
     <DropdownMenuSeparator />
     <DropdownMenuGroup>
+        <DropdownMenuItem :as-child="true">
+            <Link class="block w-full cursor-pointer" :href="pos()" prefetch>
+                <ShoppingCart class="mr-2 h-4 w-4" />
+                Nueva venta
+            </Link>
+        </DropdownMenuItem>
         <DropdownMenuItem :as-child="true">
             <Link class="block w-full cursor-pointer" :href="edit()" prefetch>
                 <Settings class="mr-2 h-4 w-4" />

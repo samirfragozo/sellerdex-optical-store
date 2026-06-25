@@ -1,8 +1,11 @@
 <?php
 
+use App\Enums\DocumentType;
 use App\Models\Customer;
 use App\Models\PaymentMethod;
+use App\Models\Prescription;
 use App\Models\Product;
+use App\Models\ProductCategory;
 use App\Models\Sale;
 use App\Models\User;
 use Database\Seeders\ProductCatalogSeeder;
@@ -53,6 +56,224 @@ it('creates a new customer inline when none is selected', function () {
         ->and(Sale::count())->toBe(1);
 });
 
+it('returns a specific spanish error when no items are provided', function () {
+    $seller = User::factory()->seller()->create();
+
+    $this->actingAs($seller)
+        ->post('/pos', [
+            'document_type' => 'order',
+            'items' => [],
+        ])
+        ->assertSessionHasErrors(['items' => 'Agrega al menos un ítem a la venta.']);
+});
+
+it('returns a specific spanish error for an item with an invalid quantity', function () {
+    $seller = User::factory()->seller()->create();
+
+    $this->actingAs($seller)
+        ->post('/pos', [
+            'customer_id' => Customer::factory()->create()->id,
+            'document_type' => 'order',
+            'items' => [['description' => 'Lente', 'quantity' => 0, 'unit_price' => 100_000]],
+        ])
+        ->assertSessionHasErrors(['items.0.quantity' => 'La cantidad debe ser al menos 1.']);
+});
+
+it('accepts an existing customer even if a null customer payload is sent', function () {
+    $seller = User::factory()->seller()->create();
+    $customer = Customer::factory()->create();
+
+    // The POS sends `customer: null` (not an object) when an existing one is picked.
+    $this->actingAs($seller)->post('/pos', [
+        'customer_id' => $customer->id,
+        'customer' => null,
+        'document_type' => 'order',
+        'items' => [['description' => 'Lente', 'quantity' => 1, 'unit_price' => 100_000]],
+    ])->assertRedirect()->assertSessionHasNoErrors();
+
+    expect(Sale::where('customer_id', $customer->id)->exists())->toBeTrue();
+});
+
+it('creates an inline customer with a document type', function () {
+    $seller = User::factory()->seller()->create();
+
+    $this->actingAs($seller)->post('/pos', [
+        'customer' => ['name' => 'Lina', 'last_name' => 'Quintero', 'document_type' => 'cc', 'id_number' => '123'],
+        'document_type' => 'order',
+        'items' => [['description' => 'Lente', 'quantity' => 1, 'unit_price' => 100_000]],
+    ])->assertRedirect()->assertSessionHasNoErrors();
+
+    expect(Customer::where('name', 'Lina')->value('document_type'))
+        ->toBe(DocumentType::CC);
+});
+
+it('rejects an invalid customer document type without a server error', function () {
+    $seller = User::factory()->seller()->create();
+
+    $this->actingAs($seller)->post('/pos', [
+        'customer' => ['name' => 'Lina', 'document_type' => 'CC'],
+        'document_type' => 'order',
+        'items' => [['description' => 'Lente', 'quantity' => 1, 'unit_price' => 100_000]],
+    ])->assertSessionHasErrors('customer.document_type');
+
+    expect(Customer::count())->toBe(0);
+});
+
+function lensProduct(): Product
+{
+    return Product::factory()->create([
+        'product_category_id' => ProductCategory::factory()->create(['name' => 'Lente'])->id,
+    ]);
+}
+
+it('rejects a payment greater than the sale total', function () {
+    $seller = User::factory()->seller()->create();
+    $customer = Customer::factory()->create();
+    $method = PaymentMethod::factory()->create();
+
+    $this->actingAs($seller)->post('/pos', [
+        'customer_id' => $customer->id,
+        'document_type' => 'order',
+        'items' => [['description' => 'Montura', 'quantity' => 1, 'unit_price' => 100_000]],
+        'payment' => ['payment_method_id' => $method->id, 'amount' => 150_000],
+    ])->assertSessionHasErrors(['payment.amount' => 'El abono no puede superar el total de la venta.']);
+
+    expect(Sale::count())->toBe(0);
+});
+
+it('hides non-pos-selectable products from the pos picker', function () {
+    $seller = User::factory()->seller()->create();
+    $sellable = Product::factory()->create(['is_pos_selectable' => true]);
+    $hidden = Product::factory()->create(['is_pos_selectable' => false]);
+
+    $response = $this->actingAs($seller)->get('/pos');
+    $ids = collect($response->viewData('page')['props']['products'])->pluck('id');
+
+    expect($ids)->toContain($sellable->id)
+        ->and($ids)->not->toContain($hidden->id);
+});
+
+it('allows a non-lens sale without any customer', function () {
+    $seller = User::factory()->seller()->create();
+
+    $this->actingAs($seller)->post('/pos', [
+        'customer' => null,
+        'document_type' => 'order',
+        'items' => [['description' => 'Estuche', 'quantity' => 1, 'unit_price' => 10_000]],
+    ])->assertRedirect()->assertSessionHasNoErrors();
+
+    expect(Sale::first()->customer_id)->toBeNull();
+});
+
+it('blocks selling a lens without a customer or prescription', function () {
+    $seller = User::factory()->seller()->create();
+    $lens = lensProduct();
+
+    $this->actingAs($seller)->post('/pos', [
+        'customer' => null,
+        'document_type' => 'order',
+        'items' => [['product_id' => $lens->id, 'description' => 'Lente', 'quantity' => 1, 'unit_price' => 100_000]],
+    ])->assertSessionHasErrors([
+        'customer' => 'La venta de lentes formulados requiere un cliente.',
+        'prescription' => 'La venta de lentes formulados requiere una prescripción.',
+    ]);
+
+    expect(Sale::count())->toBe(0);
+});
+
+it('creates and links an inline prescription when selling a lens', function () {
+    $seller = User::factory()->seller()->create();
+    $customer = Customer::factory()->create();
+    $lens = lensProduct();
+
+    $this->actingAs($seller)->post('/pos', [
+        'customer_id' => $customer->id,
+        'document_type' => 'order',
+        'items' => [['product_id' => $lens->id, 'description' => 'Lente', 'quantity' => 1, 'unit_price' => 100_000]],
+        'prescription' => ['exam_date' => '2026-06-20', 'lens_type' => 'single_vision', 'od_sphere' => '-1.25', 'os_sphere' => '-1.00'],
+    ])->assertRedirect()->assertSessionHasNoErrors();
+
+    $sale = Sale::first();
+    $prescription = Prescription::first();
+
+    expect($prescription->customer_id)->toBe($customer->id)
+        ->and($prescription->created_by)->toBe($seller->id)
+        ->and($prescription->sale_id)->toBe($sale->id)
+        ->and($sale->prescription_id)->toBe($prescription->id);
+});
+
+it('links an existing prescription that belongs to the customer when selling a lens', function () {
+    $seller = User::factory()->seller()->create();
+    $customer = Customer::factory()->create();
+    $prescription = Prescription::factory()->create(['customer_id' => $customer->id]);
+    $lens = lensProduct();
+
+    $this->actingAs($seller)->post('/pos', [
+        'customer_id' => $customer->id,
+        'document_type' => 'order',
+        'items' => [['product_id' => $lens->id, 'description' => 'Lente', 'quantity' => 1, 'unit_price' => 100_000]],
+        'prescription_id' => $prescription->id,
+    ])->assertRedirect()->assertSessionHasNoErrors();
+
+    expect(Sale::first()->prescription_id)->toBe($prescription->id)
+        ->and(Prescription::count())->toBe(1);
+});
+
+it('rejects a prescription that belongs to another customer', function () {
+    $seller = User::factory()->seller()->create();
+    $customer = Customer::factory()->create();
+    $otherPrescription = Prescription::factory()->create();
+    $lens = lensProduct();
+
+    $this->actingAs($seller)->post('/pos', [
+        'customer_id' => $customer->id,
+        'document_type' => 'order',
+        'items' => [['product_id' => $lens->id, 'description' => 'Lente', 'quantity' => 1, 'unit_price' => 100_000]],
+        'prescription_id' => $otherPrescription->id,
+    ])->assertSessionHasErrors('prescription_id');
+
+    expect(Sale::count())->toBe(0);
+});
+
+it('rejects prescription diopters out of range or off-step', function () {
+    $seller = User::factory()->seller()->create();
+    $customer = Customer::factory()->create();
+    $lens = lensProduct();
+
+    $this->actingAs($seller)->post('/pos', [
+        'customer_id' => $customer->id,
+        'document_type' => 'order',
+        'items' => [['product_id' => $lens->id, 'description' => 'Lente', 'quantity' => 1, 'unit_price' => 100_000]],
+        'prescription' => ['exam_date' => '2026-06-20', 'od_sphere' => '99', 'os_sphere' => '-2.30'],
+    ])->assertSessionHasErrors(['prescription.od_sphere', 'prescription.os_sphere']);
+});
+
+it('requires the axis when a cylinder is provided', function () {
+    $seller = User::factory()->seller()->create();
+    $customer = Customer::factory()->create();
+    $lens = lensProduct();
+
+    $this->actingAs($seller)->post('/pos', [
+        'customer_id' => $customer->id,
+        'document_type' => 'order',
+        'items' => [['product_id' => $lens->id, 'description' => 'Lente', 'quantity' => 1, 'unit_price' => 100_000]],
+        'prescription' => ['exam_date' => '2026-06-20', 'od_cylinder' => '-1.00'],
+    ])->assertSessionHasErrors(['prescription.od_axis' => 'Indica el eje cuando hay cilindro.']);
+});
+
+it('rejects an exam date older than two years', function () {
+    $seller = User::factory()->seller()->create();
+    $customer = Customer::factory()->create();
+    $lens = lensProduct();
+
+    $this->actingAs($seller)->post('/pos', [
+        'customer_id' => $customer->id,
+        'document_type' => 'order',
+        'items' => [['product_id' => $lens->id, 'description' => 'Lente', 'quantity' => 1, 'unit_price' => 100_000]],
+        'prescription' => ['exam_date' => now()->subYears(3)->toDateString()],
+    ])->assertSessionHasErrors(['prescription.exam_date' => 'La fecha del examen no puede tener más de 2 años.']);
+});
+
 it('passes combo options and applies a paper bag', function () {
     $this->seed(ProductCategorySeeder::class);
     $this->seed(ProductCatalogSeeder::class);
@@ -64,6 +285,7 @@ it('passes combo options and applies a paper bag', function () {
         'document_type' => 'order',
         'items' => [['product_id' => $lens->id, 'description' => $lens->name, 'quantity' => 1, 'unit_price' => $lens->price]],
         'combo' => ['forro' => 'small', 'include_liquid' => false, 'with_exam' => true],
+        'prescription' => ['exam_date' => '2026-06-20'],
     ])->assertRedirect();
 
     $sale = Sale::latest('id')->first();
