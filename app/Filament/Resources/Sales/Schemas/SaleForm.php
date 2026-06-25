@@ -3,11 +3,14 @@
 namespace App\Filament\Resources\Sales\Schemas;
 
 use App\Enums\SaleDocumentType;
+use App\Models\Sale;
 use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 
 class SaleForm
@@ -26,7 +29,10 @@ class SaleForm
                     ->label(__('app.fields.document_type_sale'))
                     ->options(SaleDocumentType::options())
                     ->default(SaleDocumentType::Order->value)
-                    ->required(),
+                    ->required()
+                    // Locked after creation: changing it would desync stock and numbering.
+                    ->disabledOn('edit')
+                    ->dehydrated(),
                 Select::make('prescription_id')
                     ->label(__('app.fields.prescription'))
                     ->relationship('prescription', 'id')
@@ -40,40 +46,27 @@ class SaleForm
                     ->numeric()
                     ->default(0)
                     ->prefix('$'),
+                Placeholder::make('total')
+                    ->label(__('app.fields.total'))
+                    ->visibleOn('edit')
+                    ->content(fn (?Sale $record): string => $record ? '$'.number_format($record->total, 0, ',', '.') : '—'),
+                Placeholder::make('balance')
+                    ->label(__('app.fields.balance'))
+                    ->visibleOn('edit')
+                    ->content(fn (?Sale $record): string => $record ? '$'.number_format($record->balance, 0, ',', '.') : '—'),
                 Textarea::make('notes')
                     ->label(__('app.fields.notes'))
                     ->columnSpanFull(),
-                Repeater::make('items')
-                    ->label(__('app.fields.items'))
-                    ->relationship()
+                Section::make(__('app.sections.options'))
+                    ->columns(2)
                     ->schema([
-                        Select::make('product_id')
-                            ->label(__('app.fields.product'))
-                            ->relationship('product', 'name')
-                            ->searchable(),
-                        TextInput::make('description')
-                            ->label(__('app.fields.description'))
-                            ->required(),
-                        TextInput::make('quantity')
-                            ->label(__('app.fields.quantity'))
-                            ->numeric()
-                            ->default(1)
-                            ->required(),
-                        TextInput::make('unit_price')
-                            ->label(__('app.fields.unit_price'))
-                            ->numeric()
-                            ->default(0)
-                            ->prefix('$')
-                            ->required(),
-                        TextInput::make('unit_cost')
-                            ->label(__('app.fields.unit_cost'))
-                            ->numeric()
-                            ->default(0)
-                            ->prefix('$')
-                            ->visible(fn () => auth()->user()?->isAdmin() === true),
-                    ])
-                    ->columnSpanFull()
-                    ->defaultItems(1),
+                        Toggle::make('is_delivered')
+                            ->label(__('app.fields.is_delivered')),
+                        DatePicker::make('delivered_at')
+                            ->label(__('app.fields.delivered_at'))
+                            ->default(now())
+                            ->visible(fn ($get): bool => (bool) $get('is_delivered')),
+                    ]),
             ]);
     }
 }

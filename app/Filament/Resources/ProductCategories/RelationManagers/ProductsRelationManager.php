@@ -11,10 +11,16 @@ use Filament\Schemas\Schema;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 
 class ProductsRelationManager extends RelationManager
 {
     protected static string $relationship = 'products';
+
+    public static function getTitle(Model $ownerRecord, string $pageClass): string
+    {
+        return __('app.relations.products');
+    }
 
     public function form(Schema $schema): Schema
     {
