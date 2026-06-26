@@ -95,7 +95,7 @@ class RegisterSale
     private function composeCombo(Sale $sale, ?array $combo): void
     {
         $sale->load('items.product.category');
-        $lensLine = $sale->items->first(fn ($i) => $i->product?->category?->name === 'Lente');
+        $lensLine = $sale->items->first(fn ($i) => $i->product?->category?->key === 'lens');
 
         if ($lensLine === null) {
             $this->applyFunda($sale);
@@ -113,7 +113,7 @@ class RegisterSale
 
         // Montura included at $0 inside a combo.
         foreach ($sale->items as $item) {
-            if ($item->product?->category?->name === 'Montura' && $item->unit_price !== 0) {
+            if ($item->product?->category?->key === 'frame' && $item->unit_price !== 0) {
                 $item->update(['unit_price' => 0]);
             }
         }
@@ -150,7 +150,7 @@ class RegisterSale
     /** A standalone frame/sunglasses sale (no lens) gets a funda. */
     private function applyFunda(Sale $sale): void
     {
-        $hasFrame = $sale->items->contains(fn ($i) => $i->product?->category?->name === 'Montura');
+        $hasFrame = $sale->items->contains(fn ($i) => $i->product?->category?->key === 'frame');
         if ($hasFrame) {
             $this->addZeroLine($sale, self::SKU_FUNDA);
         }
