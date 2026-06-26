@@ -37,9 +37,19 @@ class ProductCatalogSeeder extends Seeder
         return max($markup, self::LENS_TIER_MIN[$filter] ?? 0);
     }
 
+    /** Map the human label used in this seeder to the stable category key. */
+    private const CATEGORY_KEY = [
+        'Lente' => 'lens',
+        'Montura' => 'frame',
+        'Accesorio' => 'accessory',
+        'Servicio' => 'service',
+    ];
+
     private function categoryId(string $name): int
     {
-        return $this->categoryIds[$name] ??= ProductCategory::where('name', $name)->value('id');
+        $key = self::CATEGORY_KEY[$name] ?? $name;
+
+        return $this->categoryIds[$key] ??= ProductCategory::where('key', $key)->value('id');
     }
 
     private function upsert(string $sku, array $attributes): void
