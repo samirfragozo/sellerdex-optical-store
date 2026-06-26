@@ -122,9 +122,29 @@ it('rejects an invalid customer document type without a server error', function 
 function lensProduct(): Product
 {
     return Product::factory()->create([
-        'product_category_id' => ProductCategory::factory()->create(['name' => 'Lente'])->id,
+        'product_category_id' => ProductCategory::factory()->create(['name' => 'Lente', 'key' => 'lens'])->id,
     ]);
 }
+
+it('enforces prescription validation even after the lens category is renamed', function () {
+    $seller = User::factory()->seller()->create();
+    $lensCategory = ProductCategory::factory()->create(['name' => 'Lente', 'key' => 'lens']);
+    $lens = Product::factory()->create(['product_category_id' => $lensCategory->id]);
+
+    // Rename the category display name — only the stable key should matter.
+    $lensCategory->update(['name' => 'Lentes oftálmicos']);
+
+    $this->actingAs($seller)->post('/pos', [
+        'customer' => null,
+        'document_type' => 'order',
+        'items' => [['product_id' => $lens->id, 'description' => 'Lente', 'quantity' => 1, 'unit_price' => 100_000]],
+    ])->assertSessionHasErrors([
+        'customer' => 'La venta de lentes formulados requiere un cliente.',
+        'prescription' => 'La venta de lentes formulados requiere una prescripción.',
+    ]);
+
+    expect(Sale::count())->toBe(0);
+});
 
 it('rejects a payment greater than the sale total', function () {
     $seller = User::factory()->seller()->create();
