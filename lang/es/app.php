@@ -11,6 +11,7 @@ return [
         'prescription' => ['label' => 'Prescripción', 'plural' => 'Prescripciones', 'nav' => 'Prescripciones'],
         'sale' => ['label' => 'Venta', 'plural' => 'Ventas', 'nav' => 'Ventas'],
         'cash_close' => ['label' => 'Cuadre de caja', 'plural' => 'Cuadres de caja', 'nav' => 'Cuadre de caja'],
+        'supplier' => ['label' => 'Proveedor', 'plural' => 'Proveedores', 'nav' => 'Proveedores'],
     ],
 
     'relations' => [
@@ -106,6 +107,14 @@ return [
         'requires_prescription' => 'Exige prescripción',
         'generates_lab_order' => 'Genera orden de laboratorio',
         'is_made_to_order' => 'Hecho a la medida',
+        'nit' => 'NIT / Identificación',
+        'contact_name' => 'Contacto',
+        'is_laboratory' => 'Es laboratorio',
+    ],
+
+    'tabs' => [
+        'all' => 'Todos',
+        'laboratories' => 'Laboratorios',
     ],
 
     'sections' => [
