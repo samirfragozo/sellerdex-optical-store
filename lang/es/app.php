@@ -102,6 +102,10 @@ return [
         'profit' => 'Utilidad',
         'tax_id' => 'NIT',
         'logo' => 'Logo',
+        'category_key' => 'Clave (interna)',
+        'requires_prescription' => 'Exige prescripción',
+        'generates_lab_order' => 'Genera orden de laboratorio',
+        'is_made_to_order' => 'Hecho a la medida',
     ],
 
     'sections' => [
