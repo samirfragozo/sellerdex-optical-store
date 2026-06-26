@@ -50,3 +50,19 @@ it('no permite borrar una categoría de sistema', function () {
     expect($system->delete())->toBeFalse()
         ->and(ProductCategory::whereKey($system->id)->exists())->toBeTrue();
 });
+
+it('siembra las categorías núcleo con key, flags y marca de sistema', function () {
+    $this->seed(ProductCategorySeeder::class);
+    $this->seed(ProductCategorySeeder::class); // idempotente
+
+    $lens = ProductCategory::keyed('lens');
+
+    expect(ProductCategory::pluck('key')->all())->toContain('lens', 'frame', 'accessory', 'service')
+        ->and($lens->is_system)->toBeTrue()
+        ->and($lens->requires_prescription)->toBeTrue()
+        ->and($lens->generates_lab_order)->toBeTrue()
+        ->and($lens->is_made_to_order)->toBeTrue()
+        ->and(ProductCategory::keyed('frame')->is_system)->toBeTrue()
+        ->and(ProductCategory::keyed('frame')->requires_prescription)->toBeFalse()
+        ->and(ProductCategory::where('key', 'lens')->count())->toBe(1);
+});
