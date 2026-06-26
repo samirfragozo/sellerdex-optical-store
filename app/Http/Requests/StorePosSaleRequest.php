@@ -149,7 +149,7 @@ class StorePosSaleRequest extends FormRequest
 
         return Product::query()
             ->whereIn('id', $productIds)
-            ->whereHas('category', fn ($query) => $query->where('name', 'Lente'))
+            ->whereHas('category', fn ($query) => $query->where('key', 'lens'))
             ->exists();
     }
 
