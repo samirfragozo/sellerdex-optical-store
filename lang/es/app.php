@@ -186,6 +186,7 @@ return [
         'converted' => 'Cotización convertida a venta.',
         'mark_delivered' => 'Marcar como entregada',
         'delivered' => 'Venta entregada.',
+        'cannot_deliver_pending_lens' => 'No se puede entregar: hay lentes pendientes por recibir del laboratorio.',
     ],
 
     'pos' => [
