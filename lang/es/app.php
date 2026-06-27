@@ -12,6 +12,7 @@ return [
         'sale' => ['label' => 'Venta', 'plural' => 'Ventas', 'nav' => 'Ventas'],
         'cash_close' => ['label' => 'Cuadre de caja', 'plural' => 'Cuadres de caja', 'nav' => 'Cuadre de caja'],
         'supplier' => ['label' => 'Proveedor', 'plural' => 'Proveedores', 'nav' => 'Proveedores'],
+        'purchase_order' => ['label' => 'Orden de compra', 'plural' => 'Órdenes de compra', 'nav' => 'Órdenes de compra'],
     ],
 
     'relations' => [
@@ -114,6 +115,9 @@ return [
         'lead_time_days' => 'Días de entrega',
         'supplier_sku' => 'Referencia del proveedor',
         'preferred' => 'Preferido',
+        'supplier' => 'Proveedor',
+        'ordered_at' => 'Fecha de orden',
+        'received_at' => 'Fecha de recepción',
     ],
 
     'tabs' => [
@@ -168,6 +172,8 @@ return [
         'order' => 'Venta.',
         'layaway' => 'Plan separe — la mercancía se entrega al completar los abonos.',
     ],
+
+    'purchase_order_actions' => ['receive' => 'Recibir', 'cancel' => 'Cancelar'],
 
     'sale_actions' => [
         'convert_to_order' => 'Convertir a venta',
