@@ -19,7 +19,7 @@ class RolesAndPermissionsSeeder extends Seeder
     ];
 
     private const SUBJECTS = [
-        'Customer', 'Expense', 'ExpenseCategory', 'Payment', 'PaymentMethod',
+        'Customer', 'Expense', 'ExpenseCategory', 'LensOrder', 'Payment', 'PaymentMethod',
         'Prescription', 'Product', 'ProductCategory', 'PurchaseOrder', 'Role', 'Sale', 'Supplier',
     ];
 
@@ -36,6 +36,7 @@ class RolesAndPermissionsSeeder extends Seeder
         'ViewAny:Product', 'View:Product',
         'ViewAny:Sale', 'View:Sale', 'Create:Sale', 'Update:Sale',
         'ViewAny:Payment', 'View:Payment', 'Create:Payment',
+        'ViewAny:LensOrder', 'View:LensOrder', 'Create:LensOrder', 'Update:LensOrder',
     ];
 
     public function run(): void
