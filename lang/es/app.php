@@ -13,6 +13,7 @@ return [
         'cash_close' => ['label' => 'Cuadre de caja', 'plural' => 'Cuadres de caja', 'nav' => 'Cuadre de caja'],
         'supplier' => ['label' => 'Proveedor', 'plural' => 'Proveedores', 'nav' => 'Proveedores'],
         'purchase_order' => ['label' => 'Orden de compra', 'plural' => 'Órdenes de compra', 'nav' => 'Órdenes de compra'],
+        'lens_order' => ['label' => 'Orden de laboratorio', 'plural' => 'Órdenes de laboratorio', 'nav' => 'Laboratorio'],
     ],
 
     'relations' => [
@@ -118,11 +119,17 @@ return [
         'supplier' => 'Proveedor',
         'ordered_at' => 'Fecha de orden',
         'received_at' => 'Fecha de recepción',
+        'lab_status' => 'Estado',
+        'expected_date' => 'Fecha esperada',
+        'received_date' => 'Fecha de recepción',
+        'laboratory' => 'Laboratorio',
+        'sale_item' => 'Lente (venta)',
     ],
 
     'tabs' => [
         'all' => 'Todos',
         'laboratories' => 'Laboratorios',
+        'pending' => 'Pendientes',
     ],
 
     'sections' => [
