@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 #[Fillable(['sale_id', 'product_id', 'description', 'quantity', 'unit_price', 'unit_cost', 'line_total'])]
 class SaleItem extends Model
@@ -73,5 +74,16 @@ class SaleItem extends Model
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
+    }
+
+    public function lensOrder(): HasOne
+    {
+        return $this->hasOne(LensOrder::class);
+    }
+
+    /** True when this line is a made-to-order lens (its category generates a lab order). */
+    public function isLens(): bool
+    {
+        return $this->product?->category?->generates_lab_order === true;
     }
 }

@@ -153,6 +153,12 @@ return [
         'cancelled' => 'Cancelada',
     ],
 
+    'lens_order_status' => [
+        'sent' => 'Enviado',
+        'in_process' => 'En proceso',
+        'received' => 'Recibido',
+    ],
+
     'sale_status' => [
         'draft' => 'Sin abono',
         'partial' => 'Abonada',
