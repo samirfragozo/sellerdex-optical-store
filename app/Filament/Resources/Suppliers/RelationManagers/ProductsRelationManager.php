@@ -32,7 +32,8 @@ class ProductsRelationManager extends RelationManager
                 ->required(),
             TextInput::make('lead_time_days')
                 ->label(__('app.fields.lead_time_days'))
-                ->numeric(),
+                ->numeric()
+                ->minValue(0),
             TextInput::make('supplier_sku')
                 ->label(__('app.fields.supplier_sku'))
                 ->maxLength(255),
@@ -58,7 +59,8 @@ class ProductsRelationManager extends RelationManager
                     ->searchable(),
                 TextColumn::make('pivot.supplier_cost')
                     ->label(__('app.fields.supplier_cost'))
-                    ->money('COP'),
+                    ->money('COP')
+                    ->visible(fn () => auth()->user()?->isAdmin() === true),
                 TextColumn::make('pivot.lead_time_days')
                     ->label(__('app.fields.lead_time_days')),
                 IconColumn::make('pivot.is_preferred')
@@ -76,7 +78,8 @@ class ProductsRelationManager extends RelationManager
                             ->required(),
                         TextInput::make('lead_time_days')
                             ->label(__('app.fields.lead_time_days'))
-                            ->numeric(),
+                            ->numeric()
+                            ->minValue(0),
                         TextInput::make('supplier_sku')
                             ->label(__('app.fields.supplier_sku'))
                             ->maxLength(255),
