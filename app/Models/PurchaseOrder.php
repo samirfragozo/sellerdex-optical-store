@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\DB;
 
 #[Fillable(['number', 'supplier_id', 'status', 'ordered_at', 'received_at', 'total', 'notes', 'created_by'])]
 class PurchaseOrder extends Model
@@ -41,5 +42,47 @@ class PurchaseOrder extends Model
     public function recalculateTotal(): void
     {
         $this->update(['total' => (int) $this->items()->sum('subtotal')]);
+    }
+
+    /** Mark the order received and replenish stock for stockable items (idempotent). */
+    public function receive(): void
+    {
+        DB::transaction(function (): void {
+            $locked = static::query()->whereKey($this->getKey())->lockForUpdate()->first();
+            if ($locked === null || $locked->status === PurchaseOrderStatus::Received) {
+                return;
+            }
+
+            $this->loadMissing('items.product');
+            foreach ($this->items as $item) {
+                if ($item->product?->is_stockable === true) {
+                    $item->product->increment('stock', $item->quantity);
+                }
+            }
+
+            $this->update(['status' => PurchaseOrderStatus::Received, 'received_at' => now()]);
+        });
+    }
+
+    /** Cancel the order; if it was received, roll the replenished stock back. */
+    public function cancel(): void
+    {
+        DB::transaction(function (): void {
+            $locked = static::query()->whereKey($this->getKey())->lockForUpdate()->first();
+            if ($locked === null || $locked->status === PurchaseOrderStatus::Cancelled) {
+                return;
+            }
+
+            if ($locked->status === PurchaseOrderStatus::Received) {
+                $this->loadMissing('items.product');
+                foreach ($this->items as $item) {
+                    if ($item->product?->is_stockable === true) {
+                        $item->product->decrement('stock', $item->quantity);
+                    }
+                }
+            }
+
+            $this->update(['status' => PurchaseOrderStatus::Cancelled]);
+        });
     }
 }
