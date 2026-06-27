@@ -2,8 +2,10 @@
 
 namespace App\Models;
 
+use App\Enums\LensOrderStatus;
 use App\Enums\SaleDocumentType;
 use App\Enums\SaleStatus;
+use App\Exceptions\PendingLensOrderException;
 use Database\Factories\SaleFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -13,6 +15,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Collection;
 
 #[Fillable(['number', 'customer_id', 'seller_id', 'prescription_id', 'document_type', 'status', 'subtotal', 'discount', 'surcharge_percent', 'total', 'is_delivered', 'delivered_at', 'sold_at', 'notes', 'created_by'])]
 class Sale extends Model
@@ -40,6 +43,16 @@ class Sale extends Model
         static::creating(function (Sale $sale): void {
             $sale->number ??= self::nextNumber();
             $sale->sold_at ??= now()->toDateString();
+        });
+
+        static::updating(function (Sale $sale): void {
+            $deliveringNow = $sale->isDirty('is_delivered')
+                && $sale->is_delivered === true
+                && (bool) $sale->getOriginal('is_delivered') === false;
+
+            if ($deliveringNow && $sale->hasPendingLensWork()) {
+                throw new PendingLensOrderException(__('app.sale_actions.cannot_deliver_pending_lens'));
+            }
         });
 
         // React whenever a change flips whether the sale should be holding stock
@@ -166,6 +179,26 @@ class Sale extends Model
             $this->status = $status;
             $this->saveQuietly();
         }
+    }
+
+    /** Sale items that are made-to-order lenses (their category generates a lab order). */
+    public function lensItems(): Collection
+    {
+        return $this->items()->with(['product.category', 'lensOrder'])->get()
+            ->filter(fn (SaleItem $item): bool => $item->isLens());
+    }
+
+    /** True if any lens item lacks a received lab order (missing order counts as pending). */
+    public function hasPendingLensWork(): bool
+    {
+        return $this->lensItems()->contains(
+            fn (SaleItem $item): bool => $item->lensOrder?->lab_status !== LensOrderStatus::Received
+        );
+    }
+
+    public function canBeDelivered(): bool
+    {
+        return ! $this->hasPendingLensWork();
     }
 
     public function customer(): BelongsTo
