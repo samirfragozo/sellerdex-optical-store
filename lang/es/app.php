@@ -142,6 +142,13 @@ return [
         'nit' => 'NIT',
     ],
 
+    'purchase_order_status' => [
+        'draft' => 'Borrador',
+        'sent' => 'Enviada',
+        'received' => 'Recibida',
+        'cancelled' => 'Cancelada',
+    ],
+
     'sale_status' => [
         'draft' => 'Sin abono',
         'partial' => 'Abonada',
