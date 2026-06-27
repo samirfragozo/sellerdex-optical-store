@@ -94,6 +94,15 @@ class SalesTable
                         ->visible(fn (Sale $record): bool => ! $record->is_delivered && $record->status !== SaleStatus::Voided)
                         ->requiresConfirmation()
                         ->action(function (Sale $record): void {
+                            if (! $record->canBeDelivered()) {
+                                Notification::make()
+                                    ->danger()
+                                    ->title(__('app.sale_actions.cannot_deliver_pending_lens'))
+                                    ->send();
+
+                                return;
+                            }
+
                             $record->update(['is_delivered' => true, 'delivered_at' => now()]);
 
                             Notification::make()->success()->title(__('app.sale_actions.delivered'))->send();
