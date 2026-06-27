@@ -3,6 +3,7 @@
 use App\Models\Product;
 use App\Models\Supplier;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 
 uses(RefreshDatabase::class);
 
@@ -30,4 +31,16 @@ it('expone los productos desde el proveedor con el costo del pivote', function (
         ->and($pivot->lead_time_days)->toBe(5)
         ->and($pivot->supplier_cost)->toBeInt()
         ->and($pivot->is_preferred)->toBeBool();
+});
+
+it('conserva las filas del pivote al borrar suave un proveedor y las elimina al borrado definitivo', function () {
+    $product = Product::factory()->create();
+    $supplier = Supplier::factory()->create();
+    $supplier->products()->attach($product, ['supplier_cost' => 60000]);
+
+    $supplier->delete(); // soft delete
+    expect(DB::table('product_supplier')->count())->toBe(1);
+
+    $supplier->forceDelete(); // hard delete → cascade
+    expect(DB::table('product_supplier')->count())->toBe(0);
 });
