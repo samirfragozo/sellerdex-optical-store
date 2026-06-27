@@ -110,6 +110,10 @@ return [
         'nit' => 'NIT / Identificación',
         'contact_name' => 'Contacto',
         'is_laboratory' => 'Es laboratorio',
+        'supplier_cost' => 'Costo del proveedor',
+        'lead_time_days' => 'Días de entrega',
+        'supplier_sku' => 'Referencia del proveedor',
+        'preferred' => 'Preferido',
     ],
 
     'tabs' => [
