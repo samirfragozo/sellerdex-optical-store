@@ -19,7 +19,7 @@ class LensOrderForm
                 Select::make('sale_item_id')
                     ->label(__('app.fields.sale_item'))
                     ->relationship(name: 'saleItem')
-                    ->getOptionLabelFromRecordUsing(fn (Model $record) => 'Venta '.$record->sale?->number.' — '.$record->description)
+                    ->getOptionLabelFromRecordUsing(fn (Model $record) => __('app.resources.sale.label').' '.$record->sale?->number.' — '.$record->description)
                     ->searchable()
                     ->required(),
                 Select::make('supplier_id')
