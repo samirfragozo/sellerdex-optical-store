@@ -4,6 +4,7 @@ namespace App\Filament\Pages;
 
 use App\Filament\Widgets\AccountsReceivableWidget;
 use App\Filament\Widgets\LowStockWidget;
+use App\Filament\Widgets\PendingLensesWidget;
 use App\Filament\Widgets\TodaySummaryWidget;
 use Filament\Pages\Dashboard as BaseDashboard;
 
@@ -20,6 +21,7 @@ class Dashboard extends BaseDashboard
             TodaySummaryWidget::class,
             AccountsReceivableWidget::class,
             LowStockWidget::class,
+            PendingLensesWidget::class,
         ];
     }
 

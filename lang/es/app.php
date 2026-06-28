@@ -246,5 +246,7 @@ return [
         'to' => 'Hasta',
         'sales_by_category' => 'Ventas por categoría',
         'units' => 'Unidades',
+        'pending_lenses' => 'Lentes pendientes por laboratorio',
+        'pending_count' => 'Pendientes',
     ],
 ];
