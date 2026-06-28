@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[Fillable(['name', 'nit', 'contact_name', 'phone', 'email', 'address', 'notes', 'is_laboratory', 'is_active'])]
@@ -22,6 +23,11 @@ class Supplier extends Model
             'is_laboratory' => 'boolean',
             'is_active' => 'boolean',
         ];
+    }
+
+    public function lensOrders(): HasMany
+    {
+        return $this->hasMany(LensOrder::class);
     }
 
     public function products(): BelongsToMany
