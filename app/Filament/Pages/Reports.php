@@ -3,6 +3,7 @@
 namespace App\Filament\Pages;
 
 use App\Filament\Widgets\FinancialSummaryWidget;
+use App\Filament\Widgets\SalesByCategoryWidget;
 use App\Filament\Widgets\SellerPerformanceWidget;
 use BackedEnum;
 use Carbon\CarbonImmutable;
@@ -50,6 +51,7 @@ class Reports extends Dashboard
         return [
             FinancialSummaryWidget::class,
             SellerPerformanceWidget::class,
+            SalesByCategoryWidget::class,
         ];
     }
 

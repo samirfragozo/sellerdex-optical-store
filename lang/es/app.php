@@ -244,5 +244,7 @@ return [
         'custom' => 'Personalizado',
         'from' => 'Desde',
         'to' => 'Hasta',
+        'sales_by_category' => 'Ventas por categoría',
+        'units' => 'Unidades',
     ],
 ];
