@@ -61,7 +61,9 @@ class SaleForm
                     ->columns(2)
                     ->schema([
                         Toggle::make('is_delivered')
-                            ->label(__('app.fields.is_delivered')),
+                            ->label(__('app.fields.is_delivered'))
+                            ->disabled(fn (?Sale $record): bool => $record !== null && ! $record->canBeDelivered() && ! $record->is_delivered)
+                            ->helperText(fn (?Sale $record): ?string => ($record && ! $record->canBeDelivered() && ! $record->is_delivered) ? __('app.sale_actions.cannot_deliver_pending_lens') : null),
                         DatePicker::make('delivered_at')
                             ->label(__('app.fields.delivered_at'))
                             ->default(now())

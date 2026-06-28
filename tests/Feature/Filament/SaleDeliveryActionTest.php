@@ -10,6 +10,7 @@ use App\Models\SaleItem;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Filament\Actions\Testing\TestAction;
+use Filament\Notifications\Notification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 
@@ -34,7 +35,11 @@ it('no entrega la venta si el lente sigue pendiente', function () {
 
     Livewire::test(ListSales::class)
         ->callAction(TestAction::make('markDelivered')->table($sale))
-        ->assertNotified();
+        ->assertNotified(
+            Notification::make()
+                ->danger()
+                ->title(__('app.sale_actions.cannot_deliver_pending_lens'))
+        );
 
     expect($sale->fresh()->is_delivered)->toBeFalse();
 });
