@@ -67,8 +67,8 @@ class StorePosSaleRequest extends FormRequest
             'armados.*.lens.unit_price' => ['required', 'integer', 'min:0'],
             'armados.*.frame' => ['nullable', 'array'],
             'armados.*.frame.product_id' => ['nullable', 'exists:products,id'],
-            'armados.*.frame.description' => ['required_with:armados.*.frame', 'string', 'max:255'],
-            'armados.*.frame.unit_price' => ['required_with:armados.*.frame', 'integer', 'min:0'],
+            'armados.*.frame.description' => ['nullable', 'string', 'max:255'],
+            'armados.*.frame.unit_price' => ['nullable', 'integer', 'min:0'],
             'armados.*.own_frame' => ['boolean'],
             'armados.*.combo' => ['nullable', 'array'],
             'armados.*.combo.with_exam' => ['boolean'],
@@ -96,6 +96,18 @@ class StorePosSaleRequest extends FormRequest
         $validator->after(function (Validator $validator): void {
             if (empty($this->input('armados')) && empty($this->input('products'))) {
                 $validator->errors()->add('armados', 'Agrega al menos un lente o un producto a la venta.');
+            }
+
+            foreach ((array) $this->input('armados', []) as $index => $armado) {
+                if (empty($armado['frame'])) {
+                    continue;
+                }
+                if (blank($armado['frame']['description'] ?? null)) {
+                    $validator->errors()->add("armados.{$index}.frame.description", 'La descripción de la montura es obligatoria.');
+                }
+                if (! isset($armado['frame']['unit_price'])) {
+                    $validator->errors()->add("armados.{$index}.frame.unit_price", 'Indica el precio de la montura.');
+                }
             }
 
             // A payment cannot exceed the sale total.
