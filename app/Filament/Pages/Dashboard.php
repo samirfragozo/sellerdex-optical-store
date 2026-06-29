@@ -19,9 +19,9 @@ class Dashboard extends BaseDashboard
     {
         return [
             TodaySummaryWidget::class,
+            PendingLensesWidget::class,
             AccountsReceivableWidget::class,
             LowStockWidget::class,
-            PendingLensesWidget::class,
         ];
     }
 
