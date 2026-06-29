@@ -6,7 +6,6 @@ use App\Enums\DocumentType;
 use App\Enums\LensType;
 use App\Enums\SaleDocumentType;
 use App\Models\Prescription;
-use App\Models\Product;
 use App\Models\Sale;
 use App\Rules\Diopter;
 use Illuminate\Foundation\Http\FormRequest;
@@ -61,20 +60,29 @@ class StorePosSaleRequest extends FormRequest
             'prescription.os_pd' => ['nullable', 'numeric', 'between:20,40'],
             'discount' => ['nullable', 'integer', 'min:0'],
             'notes' => ['nullable', 'string'],
-            'items' => ['required', 'array', 'min:1'],
-            'items.*.product_id' => ['nullable', 'exists:products,id'],
-            'items.*.description' => ['required', 'string', 'max:255'],
-            'items.*.quantity' => ['required', 'integer', 'min:1'],
-            'items.*.unit_price' => ['required', 'integer', 'min:0'],
+            'armados' => ['nullable', 'array'],
+            'armados.*.lens.product_id' => ['required', 'exists:products,id'],
+            'armados.*.lens.description' => ['required', 'string', 'max:255'],
+            'armados.*.lens.quantity' => ['nullable', 'integer', 'min:1'],
+            'armados.*.lens.unit_price' => ['required', 'integer', 'min:0'],
+            'armados.*.frame' => ['nullable', 'array'],
+            'armados.*.frame.product_id' => ['nullable', 'exists:products,id'],
+            'armados.*.frame.description' => ['required_with:armados.*.frame', 'string', 'max:255'],
+            'armados.*.frame.unit_price' => ['required_with:armados.*.frame', 'integer', 'min:0'],
+            'armados.*.own_frame' => ['boolean'],
+            'armados.*.combo' => ['nullable', 'array'],
+            'armados.*.combo.with_exam' => ['boolean'],
+            'armados.*.combo.include_liquid' => ['boolean'],
+            'armados.*.combo.forro' => ['nullable', 'in:small,large'],
+            'products' => ['nullable', 'array'],
+            'products.*.product_id' => ['nullable', 'exists:products,id'],
+            'products.*.description' => ['required', 'string', 'max:255'],
+            'products.*.quantity' => ['required', 'integer', 'min:1'],
+            'products.*.unit_price' => ['required', 'integer', 'min:0'],
             'payment' => ['nullable', 'array'],
             'payment.payment_method_id' => ['required_with:payment', 'exists:payment_methods,id'],
             'payment.amount' => ['required_with:payment', 'integer', 'min:1'],
             'payment.reference' => ['nullable', 'string', 'max:255'],
-            'combo' => ['nullable', 'array'],
-            'combo.with_exam' => ['boolean'],
-            'combo.include_liquid' => ['boolean'],
-            'combo.forro' => ['nullable', 'in:small,large'],
-            'combo.own_frame' => ['boolean'],
             'surcharge_percent' => ['nullable', 'numeric', 'min:0'],
         ];
     }
@@ -86,6 +94,10 @@ class StorePosSaleRequest extends FormRequest
     public function withValidator(Validator $validator): void
     {
         $validator->after(function (Validator $validator): void {
+            if (empty($this->input('armados')) && empty($this->input('products'))) {
+                $validator->errors()->add('armados', 'Agrega al menos un lente o un producto a la venta.');
+            }
+
             // A payment cannot exceed the sale total.
             if (! empty($this->input('payment')) && (int) $this->input('payment.amount', 0) > $this->saleTotal()) {
                 $validator->errors()->add('payment.amount', 'El abono no puede superar el total de la venta.');
@@ -133,35 +145,30 @@ class StorePosSaleRequest extends FormRequest
         });
     }
 
-    /**
-     * Determine whether any submitted item is a lens product.
-     */
+    /** A lens sale is any sale that carries at least one armado. */
     protected function cartHasLens(): bool
     {
-        $productIds = collect($this->input('items', []))
-            ->pluck('product_id')
-            ->filter()
-            ->all();
-
-        if (empty($productIds)) {
-            return false;
-        }
-
-        return Product::query()
-            ->whereIn('id', $productIds)
-            ->whereHas('category', fn ($query) => $query->where('key', 'lens'))
-            ->exists();
+        return ! empty($this->input('armados'));
     }
 
     /**
-     * Compute the sale total from the submitted items, discount and surcharge.
+     * Compute the sale total from the submitted armados and products, discount and surcharge.
      */
     protected function saleTotal(): int
     {
-        $subtotal = collect($this->input('items', []))
-            ->sum(fn ($item): int => (int) ($item['quantity'] ?? 0) * (int) ($item['unit_price'] ?? 0));
+        $armados = collect($this->input('armados', []))->sum(function ($armado): int {
+            $lens = (int) ($armado['lens']['unit_price'] ?? 0) * (int) ($armado['lens']['quantity'] ?? 1);
+            $frame = empty($armado['own_frame']) && ! empty($armado['frame'])
+                ? (int) ($armado['frame']['unit_price'] ?? 0) * (int) ($armado['frame']['quantity'] ?? 1)
+                : 0;
 
-        $base = max(0, $subtotal - (int) $this->input('discount', 0));
+            return $lens + $frame;
+        });
+
+        $products = collect($this->input('products', []))
+            ->sum(fn ($p): int => (int) ($p['quantity'] ?? 0) * (int) ($p['unit_price'] ?? 0));
+
+        $base = max(0, ($armados + $products) - (int) $this->input('discount', 0));
 
         return (int) round($base * (1 + ((float) $this->input('surcharge_percent', 0)) / 100));
     }
@@ -175,13 +182,10 @@ class StorePosSaleRequest extends FormRequest
     {
         return [
             'document_type.required' => 'Selecciona el tipo de documento.',
-            'items.required' => 'Agrega al menos un ítem a la venta.',
-            'items.min' => 'Agrega al menos un ítem a la venta.',
-            'items.*.description.required' => 'La descripción del ítem es obligatoria.',
-            'items.*.quantity.required' => 'Indica la cantidad del ítem.',
-            'items.*.quantity.min' => 'La cantidad debe ser al menos 1.',
-            'items.*.unit_price.required' => 'Indica el precio unitario del ítem.',
-            'items.*.unit_price.min' => 'El precio unitario no puede ser negativo.',
+            'armados.*.lens.product_id.required' => 'Selecciona el lente del armado.',
+            'armados.*.lens.unit_price.required' => 'Indica el precio del lente.',
+            'products.*.description.required' => 'La descripción del producto es obligatoria.',
+            'products.*.quantity.min' => 'La cantidad debe ser al menos 1.',
             'payment.payment_method_id.required_with' => 'Selecciona el método de pago.',
             'payment.amount.required_with' => 'Ingresa el monto del abono.',
             'payment.amount.min' => 'El monto del abono debe ser mayor a 0.',
@@ -220,9 +224,6 @@ class StorePosSaleRequest extends FormRequest
             'prescription.os_pd' => 'DP OS',
             'discount' => 'descuento',
             'notes' => 'observaciones',
-            'items.*.description' => 'descripción',
-            'items.*.quantity' => 'cantidad',
-            'items.*.unit_price' => 'precio unitario',
         ];
     }
 }
