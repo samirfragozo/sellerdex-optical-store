@@ -130,3 +130,21 @@ it('adds a single global bag for the whole sale', function () {
     $bags = $sale->items->filter(fn ($i) => str_starts_with(Product::find($i->product_id)?->sku ?? '', 'ACC-BOLSA-'));
     expect($bags)->toHaveCount(1);
 });
+
+it('sells standalone products via the new payload and adds a funda for a frame', function () {
+    seedCatalog();
+    $frame = Product::where('sku', 'MNT-COMPLETAS-ACETATO')->first();
+    $frame->update(['stock' => 5]);
+
+    $sale = app(RegisterSale::class)->handle([
+        'customer_id' => Customer::factory()->create()->id,
+        'document_type' => 'order',
+        'armados' => [],
+        'products' => [
+            ['product_id' => $frame->id, 'description' => $frame->name, 'unit_price' => $frame->price, 'quantity' => 1],
+        ],
+    ], User::factory()->seller()->create());
+
+    expect($sale->items->contains(fn ($i) => Product::find($i->product_id)?->sku === 'ACC-FUNDA'))->toBeTrue()
+        ->and($sale->items->firstWhere('product_id', $frame->id)->quantity)->toBe(1);
+});
