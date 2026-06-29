@@ -43,18 +43,35 @@ class RegisterSale
                 'notes' => $data['notes'] ?? null,
             ]);
 
-            foreach ($data['items'] as $item) {
-                $sale->items()->create([
-                    'product_id' => $item['product_id'] ?? null,
-                    'description' => $item['description'],
-                    'quantity' => $item['quantity'],
-                    'unit_price' => $item['unit_price'],
-                    'unit_cost' => $item['unit_cost'] ?? 0,
-                ]);
+            if (! empty($data['armados'])) {
+                $this->buildArmados($sale, $data['armados']);
+                foreach ($data['products'] ?? [] as $product) {
+                    $sale->items()->create([
+                        'product_id' => $product['product_id'] ?? null,
+                        'description' => $product['description'],
+                        'quantity' => $product['quantity'] ?? 1,
+                        'unit_price' => $product['unit_price'],
+                        'unit_cost' => $product['unit_cost'] ?? 0,
+                    ]);
+                }
+                $this->applyIncludes($sale);
+                if (empty($data['armados'])) {
+                    $this->applyFunda($sale);
+                }
+                $this->applyBag($sale);
+            } else {
+                foreach ($data['items'] as $item) {
+                    $sale->items()->create([
+                        'product_id' => $item['product_id'] ?? null,
+                        'description' => $item['description'],
+                        'quantity' => $item['quantity'],
+                        'unit_price' => $item['unit_price'],
+                        'unit_cost' => $item['unit_cost'] ?? 0,
+                    ]);
+                }
+                $this->composeCombo($sale, $data['combo'] ?? null);
+                $this->applyIncludes($sale);
             }
-
-            $this->composeCombo($sale, $data['combo'] ?? null);
-            $this->applyIncludes($sale);
 
             $sale->recalculateTotals();
 
@@ -127,10 +144,7 @@ class RegisterSale
         }
 
         // Bag by merchandise total (subtotal - discount), before surcharge.
-        $sale->recalculateTotals();
-        $merch = max(0, (int) $sale->subtotal - (int) $sale->discount);
-        $bagSku = $merch >= self::BAG_THRESHOLD ? 'ACC-BOLSA-PAPEL' : 'ACC-BOLSA-PLASTICO';
-        $this->addZeroLine($sale, $bagSku);
+        $this->applyBag($sale);
     }
 
     /** Add the per-product `specs.includes` bundle SKUs (e.g. contact-lens solution). */
@@ -156,14 +170,103 @@ class RegisterSale
         }
     }
 
-    /** Idempotently add a $0 line for a consumable SKU (decrements stock if stockable). */
-    private function addZeroLine(Sale $sale, string $sku): void
+    /**
+     * Build each armado as a grouped set of lines (lens + optional frame + combo extras).
+     *
+     * @param  array<int,array<string,mixed>>  $armados
+     */
+    private function buildArmados(Sale $sale, array $armados): void
+    {
+        foreach ($armados as $index => $armado) {
+            $groupKey = 'g'.($index + 1);
+            $lens = $armado['lens'];
+
+            $sale->items()->create([
+                'group_key' => $groupKey,
+                'product_id' => $lens['product_id'] ?? null,
+                'description' => $lens['description'],
+                'quantity' => $lens['quantity'] ?? 1,
+                'unit_price' => $lens['unit_price'],
+                'unit_cost' => $lens['unit_cost'] ?? 0,
+            ]);
+
+            if (empty($armado['own_frame']) && ! empty($armado['frame'])) {
+                $frame = $armado['frame'];
+                $sale->items()->create([
+                    'group_key' => $groupKey,
+                    'product_id' => $frame['product_id'] ?? null,
+                    'description' => $frame['description'],
+                    'quantity' => $frame['quantity'] ?? 1,
+                    'unit_price' => $frame['unit_price'],
+                    'unit_cost' => $frame['unit_cost'] ?? 0,
+                ]);
+            }
+
+            $this->composeArmadoCombo($sale, $groupKey, $armado['combo'] ?? null);
+        }
+    }
+
+    /**
+     * Apply the combo rules within a single armado group.
+     *
+     * @param  array<string,mixed>|null  $combo
+     */
+    private function composeArmadoCombo(Sale $sale, string $groupKey, ?array $combo): void
+    {
+        $combo ??= ['forro' => 'small', 'include_liquid' => false, 'with_exam' => false];
+        $sale->load('items.product.category');
+
+        $groupItems = $sale->items->where('group_key', $groupKey);
+        $lensLine = $groupItems->first(fn ($i) => $i->product?->category?->key === 'lens');
+
+        if ($lensLine === null) {
+            return;
+        }
+
+        if (! empty($combo['with_exam'])) {
+            $lensLine->update(['unit_price' => $lensLine->unit_price + self::EXAM_SURCHARGE]);
+            $this->addZeroLine($sale, self::SKU_EXAM, $groupKey);
+        }
+
+        foreach ($groupItems as $item) {
+            if ($item->product?->category?->key === 'frame' && $item->unit_price !== 0) {
+                $item->update(['unit_price' => 0]);
+            }
+        }
+
+        $forroSku = ($combo['forro'] ?? 'small') === 'large' ? 'ACC-FORRO-LARGE' : 'ACC-FORRO-SMALL';
+        $this->addZeroLine($sale, $forroSku, $groupKey);
+        $this->addZeroLine($sale, self::SKU_PANO, $groupKey);
+        if (! empty($combo['include_liquid'])) {
+            $this->addZeroLine($sale, self::SKU_LIQUIDO, $groupKey);
+        }
+    }
+
+    /** Add the bag once for the whole sale, chosen by merchandise total. */
+    private function applyBag(Sale $sale): void
+    {
+        $sale->recalculateTotals();
+        $merch = max(0, (int) $sale->subtotal - (int) $sale->discount);
+        $bagSku = $merch >= self::BAG_THRESHOLD ? 'ACC-BOLSA-PAPEL' : 'ACC-BOLSA-PLASTICO';
+        $this->addZeroLine($sale, $bagSku);
+    }
+
+    /** Idempotently add a $0 line for a consumable SKU within an optional armado group. */
+    private function addZeroLine(Sale $sale, string $sku, ?string $groupKey = null): void
     {
         $product = Product::where('sku', $sku)->first();
-        if ($product === null || $sale->items()->where('product_id', $product->id)->exists()) {
+        if ($product === null) {
+            return;
+        }
+        $exists = $sale->items()
+            ->where('product_id', $product->id)
+            ->where('group_key', $groupKey)
+            ->exists();
+        if ($exists) {
             return;
         }
         $sale->items()->create([
+            'group_key' => $groupKey,
             'product_id' => $product->id,
             'description' => $product->name,
             'quantity' => 1,
