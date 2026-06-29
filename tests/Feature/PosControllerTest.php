@@ -345,6 +345,35 @@ it('rejects a lens armado without a customer', function () {
         ->assertSessionHasErrors('customer');
 });
 
+it('accepts two armados where only one carries a frame', function () {
+    $this->seed(ProductCategorySeeder::class);
+    $this->seed(ProductCatalogSeeder::class);
+    $lensA = Product::where('sku', 'ML-001')->first();
+    $lensB = Product::where('sku', 'ML-052')->first();
+    $frame = Product::where('sku', 'MNT-COMPLETAS-ACETATO')->first();
+    $customer = Customer::factory()->create();
+
+    $this->actingAs(User::factory()->seller()->create())
+        ->post('/pos', [
+            'document_type' => 'order',
+            'customer_id' => $customer->id,
+            'prescription' => ['exam_date' => now()->toDateString(), 'od_sphere' => '-1.00'],
+            'armados' => [
+                [
+                    'lens' => ['product_id' => $lensA->id, 'description' => $lensA->name, 'unit_price' => $lensA->price],
+                    'frame' => ['product_id' => $frame->id, 'description' => $frame->name, 'unit_price' => $frame->price],
+                    'own_frame' => false,
+                ],
+                [
+                    'lens' => ['product_id' => $lensB->id, 'description' => $lensB->name, 'unit_price' => $lensB->price],
+                    'frame' => null,
+                    'own_frame' => true,
+                ],
+            ],
+        ])
+        ->assertSessionHasNoErrors();
+});
+
 it('rejects a lens armado without a prescription', function () {
     $this->seed(ProductCategorySeeder::class);
     $this->seed(ProductCatalogSeeder::class);
