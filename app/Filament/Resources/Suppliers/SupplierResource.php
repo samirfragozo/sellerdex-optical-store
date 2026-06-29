@@ -2,7 +2,7 @@
 
 namespace App\Filament\Resources\Suppliers;
 
-use App\Filament\Clusters\Catalogo\CatalogoCluster;
+use App\Filament\Clusters\Compras\ComprasCluster;
 use App\Filament\Resources\Suppliers\Pages\CreateSupplier;
 use App\Filament\Resources\Suppliers\Pages\EditSupplier;
 use App\Filament\Resources\Suppliers\Pages\ListSuppliers;
@@ -23,9 +23,9 @@ class SupplierResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBuildingStorefront;
 
-    protected static ?string $cluster = CatalogoCluster::class;
+    protected static ?string $cluster = ComprasCluster::class;
 
-    protected static ?int $navigationSort = 2;
+    protected static ?int $navigationSort = 1;
 
     public static function getModelLabel(): string
     {
