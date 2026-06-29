@@ -9,6 +9,8 @@ Route::get('/', fn () => redirect(auth()->check() ? route('pos.index') : route('
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('pos', [PosController::class, 'index'])->name('pos.index');
     Route::post('pos', [PosController::class, 'store'])->name('pos.store');
+    Route::post('pos/lens-recommendation', [PosController::class, 'lensRecommendation'])
+        ->name('pos.lens-recommendation');
 });
 
 Route::middleware('auth')->group(function () {
