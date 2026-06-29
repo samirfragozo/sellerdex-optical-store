@@ -328,3 +328,36 @@ it('flashes the created sale id and number for printing', function () {
     $sale = Sale::first();
     expect(session('createdSale'))->toMatchArray(['id' => $sale->id, 'number' => $sale->number]);
 });
+
+it('rejects a lens armado without a customer', function () {
+    $this->seed(ProductCategorySeeder::class);
+    $this->seed(ProductCatalogSeeder::class);
+    $lens = Product::where('sku', 'ML-001')->first();
+
+    $this->actingAs(User::factory()->seller()->create())
+        ->post('/pos', [
+            'document_type' => 'order',
+            'armados' => [[
+                'lens' => ['product_id' => $lens->id, 'description' => $lens->name, 'unit_price' => $lens->price],
+                'own_frame' => true,
+            ]],
+        ])
+        ->assertSessionHasErrors('customer');
+});
+
+it('rejects a lens armado without a prescription', function () {
+    $this->seed(ProductCategorySeeder::class);
+    $this->seed(ProductCatalogSeeder::class);
+    $lens = Product::where('sku', 'ML-001')->first();
+
+    $this->actingAs(User::factory()->seller()->create())
+        ->post('/pos', [
+            'document_type' => 'order',
+            'customer_id' => Customer::factory()->create()->id,
+            'armados' => [[
+                'lens' => ['product_id' => $lens->id, 'description' => $lens->name, 'unit_price' => $lens->price],
+                'own_frame' => true,
+            ]],
+        ])
+        ->assertSessionHasErrors('prescription');
+});
