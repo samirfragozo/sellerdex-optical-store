@@ -43,23 +43,7 @@ class RegisterSale
                 'notes' => $data['notes'] ?? null,
             ]);
 
-            if (! empty($data['armados'])) {
-                $this->buildArmados($sale, $data['armados']);
-                foreach ($data['products'] ?? [] as $product) {
-                    $sale->items()->create([
-                        'product_id' => $product['product_id'] ?? null,
-                        'description' => $product['description'],
-                        'quantity' => $product['quantity'] ?? 1,
-                        'unit_price' => $product['unit_price'],
-                        'unit_cost' => $product['unit_cost'] ?? 0,
-                    ]);
-                }
-                $this->applyIncludes($sale);
-                if (empty($data['armados'])) {
-                    $this->applyFunda($sale);
-                }
-                $this->applyBag($sale);
-            } else {
+            if (array_key_exists('items', $data)) {
                 foreach ($data['items'] as $item) {
                     $sale->items()->create([
                         'product_id' => $item['product_id'] ?? null,
@@ -71,6 +55,23 @@ class RegisterSale
                 }
                 $this->composeCombo($sale, $data['combo'] ?? null);
                 $this->applyIncludes($sale);
+            } else {
+                $this->buildArmados($sale, $data['armados'] ?? []);
+                foreach ($data['products'] ?? [] as $product) {
+                    $sale->items()->create([
+                        'product_id' => $product['product_id'] ?? null,
+                        'description' => $product['description'],
+                        'quantity' => $product['quantity'] ?? 1,
+                        'unit_price' => $product['unit_price'],
+                        'unit_cost' => $product['unit_cost'] ?? 0,
+                    ]);
+                }
+                $this->applyIncludes($sale);
+                if (empty($data['armados'])) {
+                    $sale->load('items.product.category');
+                    $this->applyFunda($sale);
+                }
+                $this->applyBag($sale);
             }
 
             $sale->recalculateTotals();
