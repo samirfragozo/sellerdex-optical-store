@@ -9,6 +9,7 @@ import {
     Trash2,
 } from '@lucide/vue';
 import { computed, ref, watch } from 'vue';
+import InputError from '@/components/InputError.vue';
 import AccordionStep from '@/components/pos/AccordionStep.vue';
 import CartSummary from '@/components/pos/CartSummary.vue';
 import StepCombo from '@/components/pos/StepCombo.vue';
@@ -718,6 +719,7 @@ function submit(): void {
                         class="mt-1 w-full resize-none rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring/50 dark:bg-input/30"
                         placeholder="Observaciones opcionales..."
                     ></textarea>
+                    <InputError :message="form.errors.notes" />
                 </div>
 
                 <!-- Submit -->
