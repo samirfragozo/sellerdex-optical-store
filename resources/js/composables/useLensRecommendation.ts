@@ -1,9 +1,13 @@
-import { ref  } from 'vue';
-import type {Ref} from 'vue';
+import { ref } from 'vue';
+import type { Ref } from 'vue';
 import type { LensSpecs } from './useLensCatalog';
 
 function csrfToken(): string {
-    return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
+    return (
+        document
+            .querySelector('meta[name="csrf-token"]')
+            ?.getAttribute('content') ?? ''
+    );
 }
 
 export function useLensRecommendation() {
@@ -30,7 +34,10 @@ export function useLensRecommendation() {
             return;
         }
 
-        const data = (await res.json()) as { recommended: LensSpecs; warnings: string[] };
+        const data = (await res.json()) as {
+            recommended: LensSpecs;
+            warnings: string[];
+        };
         recommended.value = data.recommended;
         warnings.value = data.warnings;
     }

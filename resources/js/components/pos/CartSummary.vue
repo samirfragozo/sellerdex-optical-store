@@ -27,6 +27,8 @@ function toggleArmado(id: number): void {
     } else {
         openArmados.value.add(id);
     }
+
+    openArmados.value = new Set(openArmados.value);
 }
 </script>
 
