@@ -236,6 +236,14 @@ class StorePosSaleRequest extends FormRequest
             'prescription.os_pd' => 'DP OS',
             'discount' => 'descuento',
             'notes' => 'observaciones',
+            'armados.*.lens.product_id' => 'lente',
+            'armados.*.lens.description' => 'descripción del lente',
+            'armados.*.lens.unit_price' => 'precio del lente',
+            'armados.*.frame.description' => 'descripción de la montura',
+            'armados.*.frame.unit_price' => 'precio de la montura',
+            'products.*.description' => 'descripción del producto',
+            'products.*.quantity' => 'cantidad',
+            'products.*.unit_price' => 'precio unitario',
         ];
     }
 }
