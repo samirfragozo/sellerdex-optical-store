@@ -52,8 +52,11 @@ export function useLensRecommendation() {
 
         return new Promise((resolve) => {
             timer = setTimeout(async () => {
-                await request(prescription, chosen);
-                resolve();
+                try {
+                    await request(prescription, chosen);
+                } finally {
+                    resolve();
+                }
             }, 300);
         });
     }
