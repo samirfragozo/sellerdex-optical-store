@@ -39,19 +39,33 @@ export function useLensCatalog(products: Ref<ProductProp[]>) {
 
     const uniq = (values: string[]): string[] => [...new Set(values)];
 
-    const designs = computed(() => uniq(lenses.value.map((l) => l.specs.design)));
+    const designs = computed(() =>
+        uniq(lenses.value.map((l) => l.specs.design)),
+    );
 
     const processesFor = (design: string): string[] =>
-        uniq(lenses.value.filter((l) => l.specs.design === design).map((l) => l.specs.process));
+        uniq(
+            lenses.value
+                .filter((l) => l.specs.design === design)
+                .map((l) => l.specs.process),
+        );
 
     const materialsFor = (design: string, process: string): string[] =>
         uniq(
             lenses.value
-                .filter((l) => l.specs.design === design && l.specs.process === process)
+                .filter(
+                    (l) =>
+                        l.specs.design === design &&
+                        l.specs.process === process,
+                )
                 .map((l) => l.specs.material),
         );
 
-    const filtersFor = (design: string, process: string, material: string): string[] =>
+    const filtersFor = (
+        design: string,
+        process: string,
+        material: string,
+    ): string[] =>
         uniq(
             lenses.value
                 .filter(
@@ -76,7 +90,11 @@ export function useLensCatalog(products: Ref<ProductProp[]>) {
         designs: ComputedRef<string[]>;
         processesFor: (design: string) => string[];
         materialsFor: (design: string, process: string) => string[];
-        filtersFor: (design: string, process: string, material: string) => string[];
+        filtersFor: (
+            design: string,
+            process: string,
+            material: string,
+        ) => string[];
         resolve: (sel: LensSpecs) => LensProduct | null;
     };
 }

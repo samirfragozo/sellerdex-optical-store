@@ -12,7 +12,11 @@ export interface Armado {
     lens: ArmadoLine | null;
     frame: ArmadoLine | null;
     own_frame: boolean;
-    combo: { with_exam: boolean; forro: 'small' | 'large'; include_liquid: boolean };
+    combo: {
+        with_exam: boolean;
+        forro: 'small' | 'large';
+        include_liquid: boolean;
+    };
 }
 
 export interface LooseProduct {
@@ -47,7 +51,12 @@ export function usePosCart() {
     }
 
     function addProduct(): void {
-        products.value.push({ product_id: null, description: '', quantity: 1, unit_price: 0 });
+        products.value.push({
+            product_id: null,
+            description: '',
+            quantity: 1,
+            unit_price: 0,
+        });
     }
 
     function removeProduct(index: number): void {
@@ -61,7 +70,10 @@ export function usePosCart() {
 
             return sum + lens + frame;
         }, 0);
-        const productSum = products.value.reduce((sum, p) => sum + p.quantity * p.unit_price, 0);
+        const productSum = products.value.reduce(
+            (sum, p) => sum + p.quantity * p.unit_price,
+            0,
+        );
 
         return armadoSum + productSum;
     });
