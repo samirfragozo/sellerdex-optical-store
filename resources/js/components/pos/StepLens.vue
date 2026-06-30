@@ -73,6 +73,7 @@ function pickFilter(v: string) {
 watch(
     selection,
     (sel) => {
+        // Update the resolvedLens model BEFORE emitting change: the parent's @change handler reads resolvedLens.
         resolvedLens.value =
             sel.design && sel.process && sel.material && sel.filter
                 ? catalog.resolve(sel)
