@@ -27,9 +27,9 @@ it('el vendedor también puede ver el listado de prescripciones', function () {
 
 it('combina el signo y el valor al crear una prescripción', function () {
     $admin = User::factory()->admin()->create();
-    $customer = Customer::factory()->create();
 
     $this->actingAs($admin);
+    $customer = Customer::factory()->create();
 
     Livewire::test(CreatePrescription::class)
         ->fillForm([

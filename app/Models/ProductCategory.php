@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToCompany;
 use Database\Factories\ProductCategoryFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -9,11 +10,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
-#[Fillable(['name', 'key', 'is_active', 'is_system', 'requires_prescription', 'generates_lab_order', 'is_made_to_order'])]
+#[Fillable(['company_id', 'name', 'key', 'is_active', 'is_system', 'requires_prescription', 'generates_lab_order', 'is_made_to_order'])]
 class ProductCategory extends Model
 {
     /** @use HasFactory<ProductCategoryFactory> */
-    use HasFactory;
+    use BelongsToCompany, HasFactory;
 
     /** A system category, or one that still has products, cannot be deleted. */
     protected static function booted(): void

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\DocumentType;
+use App\Traits\BelongsToCompany;
 use Database\Factories\CustomerFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -11,11 +12,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-#[Fillable(['name', 'last_name', 'document_type', 'id_number', 'phone', 'address', 'city', 'birth_date', 'email', 'notes'])]
+#[Fillable(['company_id', 'name', 'last_name', 'document_type', 'id_number', 'phone', 'address', 'city', 'birth_date', 'email', 'notes'])]
 class Customer extends Model
 {
     /** @use HasFactory<CustomerFactory> */
-    use HasFactory, SoftDeletes;
+    use BelongsToCompany, HasFactory, SoftDeletes;
 
     protected function casts(): array
     {

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\LensOrderStatus;
+use App\Traits\BelongsToCompany;
 use Database\Factories\LensOrderFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -10,11 +11,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['sale_item_id', 'supplier_id', 'lab_status', 'expected_date', 'received_date', 'notes'])]
+#[Fillable(['company_id', 'sale_item_id', 'supplier_id', 'lab_status', 'expected_date', 'received_date', 'notes'])]
 class LensOrder extends Model
 {
     /** @use HasFactory<LensOrderFactory> */
-    use HasFactory;
+    use BelongsToCompany, HasFactory;
 
     protected function casts(): array
     {

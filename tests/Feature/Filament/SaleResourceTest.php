@@ -33,10 +33,10 @@ it('renders the sale create page', function () {
 
 it('renders the sale edit page with its items', function () {
     $admin = User::factory()->admin()->create();
+    $this->actingAs($admin);
     $sale = Sale::factory()->create();
     SaleItem::factory()->create(['sale_id' => $sale->id]);
 
-    $this->actingAs($admin)
-        ->get("/admin/sales/{$sale->id}/edit")
+    $this->get("/admin/sales/{$sale->id}/edit")
         ->assertSuccessful();
 });

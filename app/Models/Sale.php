@@ -6,6 +6,7 @@ use App\Enums\LensOrderStatus;
 use App\Enums\SaleDocumentType;
 use App\Enums\SaleStatus;
 use App\Exceptions\PendingLensOrderException;
+use App\Traits\BelongsToCompany;
 use Database\Factories\SaleFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -16,12 +17,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Auth;
 
-#[Fillable(['number', 'customer_id', 'seller_id', 'prescription_id', 'document_type', 'status', 'subtotal', 'discount', 'surcharge_percent', 'total', 'is_delivered', 'delivered_at', 'sold_at', 'notes', 'created_by'])]
+#[Fillable(['company_id', 'number', 'customer_id', 'seller_id', 'prescription_id', 'document_type', 'status', 'subtotal', 'discount', 'surcharge_percent', 'total', 'is_delivered', 'delivered_at', 'sold_at', 'notes', 'created_by'])]
 class Sale extends Model
 {
     /** @use HasFactory<SaleFactory> */
-    use HasFactory, SoftDeletes;
+    use BelongsToCompany, HasFactory, SoftDeletes;
 
     protected function casts(): array
     {
@@ -130,10 +132,13 @@ class Sale extends Model
         $query->whereRaw('sales.total > (select coalesce(sum(payments.amount), 0) from payments where payments.sale_id = sales.id and payments.deleted_at is null)');
     }
 
-    /** Next sequential sale number, zero-padded (e.g. 000001). */
+    /** Next sequential sale number, zero-padded (e.g. 000001), scoped to the current company. */
     public static function nextNumber(): string
     {
-        $max = (int) static::withTrashed()->max('id');
+        $companyId = Auth::user()?->company_id;
+        $max = (int) static::withTrashed()
+            ->when($companyId, fn ($q) => $q->where('company_id', $companyId))
+            ->max('id');
 
         return str_pad((string) ($max + 1), 6, '0', STR_PAD_LEFT);
     }

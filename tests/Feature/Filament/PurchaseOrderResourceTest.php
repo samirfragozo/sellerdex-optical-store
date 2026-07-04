@@ -43,10 +43,10 @@ it('repone stock cuando la orden se marca recibida', function () {
 
 it('registra el usuario que crea la orden en created_by', function () {
     $admin = User::factory()->admin()->create();
-    $supplier = Supplier::factory()->create();
-    $product = Product::factory()->create();
 
     $this->actingAs($admin);
+    $supplier = Supplier::factory()->create();
+    $product = Product::factory()->create();
 
     Livewire::test(CreatePurchaseOrder::class)
         ->fillForm([

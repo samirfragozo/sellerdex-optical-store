@@ -2,16 +2,17 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToCompany;
 use Database\Factories\ExpenseCategoryFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-#[Fillable(['name', 'is_active'])]
+#[Fillable(['company_id', 'name', 'is_active'])]
 class ExpenseCategory extends Model
 {
     /** @use HasFactory<ExpenseCategoryFactory> */
-    use HasFactory;
+    use BelongsToCompany, HasFactory;
 
     /** A category that still has expenses cannot be deleted (enforced even for super admin). */
     protected static function booted(): void

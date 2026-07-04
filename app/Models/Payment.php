@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToCompany;
 use Database\Factories\PaymentFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -11,11 +12,11 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
 
-#[Fillable(['sale_id', 'payment_method_id', 'amount', 'paid_at', 'received_by', 'reference', 'notes'])]
+#[Fillable(['company_id', 'sale_id', 'payment_method_id', 'amount', 'paid_at', 'received_by', 'reference', 'notes'])]
 class Payment extends Model
 {
     /** @use HasFactory<PaymentFactory> */
-    use HasFactory, LogsActivity, SoftDeletes;
+    use BelongsToCompany, HasFactory, LogsActivity, SoftDeletes;
 
     protected function casts(): array
     {

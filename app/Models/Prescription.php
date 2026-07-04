@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\LensType;
+use App\Traits\BelongsToCompany;
 use Database\Factories\PrescriptionFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -12,7 +13,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[Fillable([
-    'customer_id', 'sale_id', 'created_by', 'exam_date',
+    'company_id', 'customer_id', 'sale_id', 'created_by', 'exam_date',
     'od_sphere', 'od_cylinder', 'od_axis', 'od_add', 'od_va', 'od_pd',
     'os_sphere', 'os_cylinder', 'os_axis', 'os_add', 'os_va', 'os_pd',
     'lens_type', 'filters', 'usage', 'control_period', 'diagnosis', 'drops', 'lensometry',
@@ -20,7 +21,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Prescription extends Model
 {
     /** @use HasFactory<PrescriptionFactory> */
-    use HasFactory, SoftDeletes;
+    use BelongsToCompany, HasFactory, SoftDeletes;
 
     protected function casts(): array
     {

@@ -4,17 +4,18 @@ namespace App\Models;
 
 use App\Enums\CashCloseStatus;
 use App\Enums\CashCloseType;
+use App\Traits\BelongsToCompany;
 use Database\Factories\CashCloseFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['type', 'period_start', 'period_end', 'opening_cash', 'total_sales', 'total_collected', 'collected_by_method', 'total_expenses', 'total_receivable', 'expected_cash', 'counted_cash', 'difference', 'status', 'closed_by', 'closed_at', 'notes'])]
+#[Fillable(['company_id', 'type', 'period_start', 'period_end', 'opening_cash', 'total_sales', 'total_collected', 'collected_by_method', 'total_expenses', 'total_receivable', 'expected_cash', 'counted_cash', 'difference', 'status', 'closed_by', 'closed_at', 'notes'])]
 class CashClose extends Model
 {
     /** @use HasFactory<CashCloseFactory> */
-    use HasFactory;
+    use BelongsToCompany, HasFactory;
 
     protected function casts(): array
     {

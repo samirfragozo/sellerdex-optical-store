@@ -2,17 +2,18 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToCompany;
 use Database\Factories\PaymentMethodFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['name', 'is_active', 'is_default', 'sort_order', 'surcharge_percent'])]
+#[Fillable(['company_id', 'name', 'is_active', 'is_default', 'sort_order', 'surcharge_percent'])]
 class PaymentMethod extends Model
 {
     /** @use HasFactory<PaymentMethodFactory> */
-    use HasFactory;
+    use BelongsToCompany, HasFactory;
 
     /**
      * The default method (Cash) can NEVER be deleted, and a method with payments

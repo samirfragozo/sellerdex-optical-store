@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\DocumentType;
+use App\Models\Company;
 use App\Models\Customer;
 use App\Models\PaymentMethod;
 use App\Models\Prescription;
@@ -165,10 +166,11 @@ it('rejects a payment greater than the sale total', function () {
 
 it('hides non-pos-selectable products from the pos picker', function () {
     $seller = User::factory()->seller()->create();
+    $this->actingAs($seller);
     $sellable = Product::factory()->create(['is_pos_selectable' => true]);
     $hidden = Product::factory()->create(['is_pos_selectable' => false]);
 
-    $response = $this->actingAs($seller)->get('/pos');
+    $response = $this->get('/pos');
     $ids = collect($response->viewData('page')['props']['products'])->pluck('id');
 
     expect($ids)->toContain($sellable->id)
@@ -232,11 +234,12 @@ it('creates and links an inline prescription when selling a lens', function () {
 
 it('links an existing prescription that belongs to the customer when selling a lens', function () {
     $seller = User::factory()->seller()->create();
+    $this->actingAs($seller);
     $customer = Customer::factory()->create();
     $prescription = Prescription::factory()->create(['customer_id' => $customer->id]);
     $lens = lensProduct();
 
-    $this->actingAs($seller)->post('/pos', [
+    $this->post('/pos', [
         'customer_id' => $customer->id,
         'document_type' => 'order',
         'armados' => [[
@@ -334,13 +337,18 @@ it('flashes the created sale id and number for printing', function () {
 });
 
 it('passes combo options and applies a paper bag', function () {
+    $company = Company::factory()->create();
     $this->seed(ProductCategorySeeder::class);
     $this->seed(ProductCatalogSeeder::class);
-    $seller = User::factory()->seller()->create();
+    ProductCategory::withoutGlobalScopes()->whereNull('company_id')->update(['company_id' => $company->id]);
+    Product::withoutGlobalScopes()->whereNull('company_id')->update(['company_id' => $company->id]);
+
+    $seller = User::factory()->forCompany($company)->seller()->create();
+    $this->actingAs($seller);
     // ML-022 = 1,000,000 (≥ bag threshold of 215,000)
     $lens = Product::where('sku', 'ML-022')->first();
 
-    $this->actingAs($seller)->post('/pos', [
+    $this->post('/pos', [
         'customer_id' => Customer::factory()->create()->id,
         'document_type' => 'order',
         'armados' => [[
@@ -352,7 +360,7 @@ it('passes combo options and applies a paper bag', function () {
     ])->assertRedirect();
 
     $sale = Sale::latest('id')->first();
-    $skus = $sale->items->map(fn ($i) => Product::find($i->product_id)?->sku)->filter();
+    $skus = $sale->items->map(fn ($i) => Product::withoutGlobalScopes()->find($i->product_id)?->sku)->filter();
     expect($skus)->toContain('ACC-FORRO-SMALL', 'ACC-PANO', 'ACC-BOLSA-PAPEL', 'SRV-EXAMEN');
 });
 
@@ -444,10 +452,13 @@ it('creates a sale from an armado with a new prescription', function () {
 });
 
 it('exposes lens specs in the POS props', function () {
+    $company = Company::factory()->create();
     $this->seed(ProductCategorySeeder::class);
     $this->seed(ProductCatalogSeeder::class);
+    ProductCategory::withoutGlobalScopes()->whereNull('company_id')->update(['company_id' => $company->id]);
+    Product::withoutGlobalScopes()->whereNull('company_id')->update(['company_id' => $company->id]);
 
-    $this->actingAs(User::factory()->seller()->create())
+    $this->actingAs(User::factory()->forCompany($company)->seller()->create())
         ->get('/pos')
         ->assertInertia(fn ($page) => $page
             ->component('Pos')

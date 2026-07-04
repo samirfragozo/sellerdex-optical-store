@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToCompany;
 use Database\Factories\ProductFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -10,11 +11,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-#[Fillable(['name', 'sku', 'product_category_id', 'brand', 'price', 'cost', 'is_stockable', 'stock', 'is_active', 'is_pos_selectable', 'specs'])]
+#[Fillable(['company_id', 'name', 'sku', 'product_category_id', 'brand', 'price', 'cost', 'is_stockable', 'stock', 'is_active', 'is_pos_selectable', 'specs'])]
 class Product extends Model
 {
     /** @use HasFactory<ProductFactory> */
-    use HasFactory, SoftDeletes;
+    use BelongsToCompany, HasFactory, SoftDeletes;
 
     protected function casts(): array
     {

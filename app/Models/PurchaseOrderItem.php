@@ -2,17 +2,18 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToCompany;
 use Database\Factories\PurchaseOrderItemFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['purchase_order_id', 'product_id', 'quantity', 'unit_cost', 'subtotal'])]
+#[Fillable(['company_id', 'purchase_order_id', 'product_id', 'quantity', 'unit_cost', 'subtotal'])]
 class PurchaseOrderItem extends Model
 {
     /** @use HasFactory<PurchaseOrderItemFactory> */
-    use HasFactory;
+    use BelongsToCompany, HasFactory;
 
     protected function casts(): array
     {

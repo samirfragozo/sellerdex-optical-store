@@ -23,10 +23,11 @@ it('redirects guests away from the invoice', function () {
 });
 
 it('renders the invoice HTML for an authenticated user', function () {
+    $seller = User::factory()->seller()->create();
+    $this->actingAs($seller);
     $sale = invoiceSale();
 
-    $this->actingAs(User::factory()->seller()->create())
-        ->get(route('documents.invoice', $sale))
+    $this->get(route('documents.invoice', $sale))
         ->assertSuccessful()
         ->assertSee($sale->number)
         ->assertSee('Lina Quintero')
@@ -34,10 +35,11 @@ it('renders the invoice HTML for an authenticated user', function () {
 });
 
 it('downloads the invoice as a PDF', function () {
+    $admin = User::factory()->admin()->create();
+    $this->actingAs($admin);
     $sale = invoiceSale();
 
-    $response = $this->actingAs(User::factory()->admin()->create())
-        ->get(route('documents.invoice.pdf', $sale));
+    $response = $this->get(route('documents.invoice.pdf', $sale));
 
     $response->assertSuccessful();
     expect($response->headers->get('content-type'))->toContain('application/pdf');
