@@ -9,7 +9,10 @@ use App\Models\Customer;
 use App\Models\PaymentMethod;
 use App\Models\Prescription;
 use App\Models\Product;
+use App\Support\Optics\LensRecommender;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -23,9 +26,9 @@ class PosController extends Controller
         return Inertia::render('Pos', [
             'products' => Product::query()->where('is_active', true)
                 ->where('is_pos_selectable', true)
-                ->with('category:id,name')
+                ->with('category:id,name,key')
                 ->orderBy('name')
-                ->get(['id', 'name', 'price', 'is_stockable', 'stock', 'product_category_id'])
+                ->get(['id', 'name', 'price', 'is_stockable', 'stock', 'product_category_id', 'specs'])
                 ->map(fn (Product $p) => [
                     'id' => $p->id,
                     'name' => $p->name,
@@ -33,6 +36,8 @@ class PosController extends Controller
                     'is_stockable' => $p->is_stockable,
                     'stock' => $p->stock,
                     'category_name' => $p->category?->name,
+                    'category_key' => $p->category?->key,
+                    'specs' => $p->specs,
                 ]),
             'paymentMethods' => PaymentMethod::query()->where('is_active', true)
                 ->orderBy('sort_order')->get(['id', 'name', 'surcharge_percent']),
@@ -89,5 +94,16 @@ class PosController extends Controller
                 'invoice_pdf_url' => route('documents.invoice.pdf', $sale),
                 'formula_url' => $sale->prescription_id ? route('documents.formula', $sale->prescription_id) : null,
             ]);
+    }
+
+    public function lensRecommendation(Request $request, LensRecommender $recommender): JsonResponse
+    {
+        $prescription = (array) $request->input('prescription', []);
+        $chosen = (array) $request->input('chosen', []);
+
+        return response()->json([
+            'recommended' => $recommender->recommend($prescription),
+            'warnings' => $recommender->warningsFor($prescription, $chosen),
+        ]);
     }
 }

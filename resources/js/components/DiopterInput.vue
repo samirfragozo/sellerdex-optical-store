@@ -26,6 +26,7 @@ function parseSign(value: string | null): '+' | '-' {
     if (props.fixedSign) {
         return props.fixedSign;
     }
+
     return value?.trim().startsWith('-') ? '-' : '+';
 }
 
@@ -33,6 +34,7 @@ function parseMagnitude(value: string | null): string {
     if (value === null || value === '') {
         return '';
     }
+
     return value.replace(/^[+-]/, '').trim();
 }
 
@@ -50,7 +52,10 @@ watch(
 
 function emitValue(): void {
     const mag = magnitude.value.trim();
-    emit('update:modelValue', mag === '' ? '' : `${props.fixedSign ?? sign.value}${mag}`);
+    emit(
+        'update:modelValue',
+        mag === '' ? '' : `${props.fixedSign ?? sign.value}${mag}`,
+    );
 }
 
 function setSign(next: '+' | '-'): void {
@@ -61,7 +66,9 @@ function setSign(next: '+' | '-'): void {
 function signClass(value: '+' | '-'): string {
     return [
         'flex h-9 w-8 items-center justify-center border border-input text-sm font-semibold transition-colors',
-        sign.value === value ? 'bg-primary text-primary-foreground' : 'bg-transparent hover:bg-accent',
+        sign.value === value
+            ? 'bg-primary text-primary-foreground'
+            : 'bg-transparent hover:bg-accent',
     ].join(' ');
 }
 </script>
@@ -78,8 +85,16 @@ function signClass(value: '+' | '-'): string {
 
         <!-- Sign toggle -->
         <template v-else>
-            <button type="button" :class="[signClass('-'), 'rounded-l-md']" @click="setSign('-')">−</button>
-            <button type="button" :class="signClass('+')" @click="setSign('+')">+</button>
+            <button
+                type="button"
+                :class="[signClass('-'), 'rounded-l-md']"
+                @click="setSign('-')"
+            >
+                −
+            </button>
+            <button type="button" :class="signClass('+')" @click="setSign('+')">
+                +
+            </button>
         </template>
 
         <input
@@ -90,7 +105,7 @@ function signClass(value: '+' | '-'): string {
             :max="max"
             :step="step"
             :placeholder="placeholder"
-            class="border-input dark:bg-input/30 h-9 w-full min-w-0 rounded-r-md border bg-transparent px-2 py-1 text-right text-sm shadow-xs outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+            class="h-9 w-full min-w-0 rounded-r-md border border-input bg-transparent px-2 py-1 text-right text-sm shadow-xs outline-none focus-visible:ring-2 focus-visible:ring-ring/50 dark:bg-input/30"
             @input="emitValue"
         />
     </div>

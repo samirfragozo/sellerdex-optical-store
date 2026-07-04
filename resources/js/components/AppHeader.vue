@@ -43,7 +43,9 @@ const auth = computed(() => page.props.auth);
                                 size="icon"
                                 class="relative size-10 w-auto rounded-full p-1 focus-within:ring-2 focus-within:ring-primary"
                             >
-                                <Avatar class="size-8 overflow-hidden rounded-full">
+                                <Avatar
+                                    class="size-8 overflow-hidden rounded-full"
+                                >
                                     <AvatarImage
                                         v-if="auth.user.avatar"
                                         :src="auth.user.avatar"
