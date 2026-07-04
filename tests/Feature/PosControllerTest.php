@@ -47,7 +47,7 @@ it('creates a new customer inline when none is selected', function () {
     $seller = User::factory()->seller()->create();
 
     $this->actingAs($seller)->post('/pos', [
-        'customer' => ['name' => 'Lina', 'last_name' => 'Quintero', 'phone' => '3044211489'],
+        'customer' => ['name' => 'Lina', 'last_name' => 'Quintero', 'phone' => '3044211489', 'document_type' => 'cc', 'id_number' => '123456'],
         'document_type' => 'order',
         'products' => [['description' => 'Lente', 'quantity' => 1, 'unit_price' => 100_000]],
     ])->assertRedirect();
@@ -97,7 +97,7 @@ it('creates an inline customer with a document type', function () {
     $seller = User::factory()->seller()->create();
 
     $this->actingAs($seller)->post('/pos', [
-        'customer' => ['name' => 'Lina', 'last_name' => 'Quintero', 'document_type' => 'cc', 'id_number' => '123'],
+        'customer' => ['name' => 'Lina', 'last_name' => 'Quintero', 'phone' => '3044211489', 'document_type' => 'cc', 'id_number' => '123'],
         'document_type' => 'order',
         'products' => [['description' => 'Lente', 'quantity' => 1, 'unit_price' => 100_000]],
     ])->assertRedirect()->assertSessionHasNoErrors();

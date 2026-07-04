@@ -267,6 +267,11 @@ const frameProducts = computed<ProductProp[]>(() =>
     props.products.filter((p) => p.category_key === 'frame'),
 );
 
+// Lenses are only selectable through the armado wizard, not as loose products.
+const looseProducts = computed<ProductProp[]>(() =>
+    props.products.filter((p) => p.category_key !== 'lens'),
+);
+
 // --- Armado management ---
 function startArmado(): void {
     const armado = cart.addArmado();
@@ -484,7 +489,6 @@ function submit(): void {
                             v-model:prescription-id="form.prescription_id"
                             v-model:prescription="form.prescription"
                             :customer-prescriptions="customerPrescriptions"
-                            :lens-types="lensTypes"
                             :lens-needs-customer="lensNeedsCustomer"
                             :errors="form.errors"
                             :today="today"
@@ -614,7 +618,7 @@ function submit(): void {
                                 >
                                     <option value="">— Ninguno —</option>
                                     <option
-                                        v-for="product in products"
+                                        v-for="product in looseProducts"
                                         :key="product.id"
                                         :value="product.id"
                                     >

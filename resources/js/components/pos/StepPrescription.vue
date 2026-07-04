@@ -34,7 +34,6 @@ interface PrescriptionErrors {
 
 const props = defineProps<{
     customerPrescriptions: PrescriptionOption[];
-    lensTypes: Record<string, string>;
     lensNeedsCustomer?: boolean;
     errors?: PrescriptionErrors;
     today?: string;
@@ -145,23 +144,6 @@ function onRefractionChange(): void {
                             class="mt-1"
                             :message="props.errors?.['prescription.exam_date']"
                         />
-                    </div>
-                    <div>
-                        <Label for="rx_lens_type">Tipo de lente</Label>
-                        <select
-                            id="rx_lens_type"
-                            v-model="prescription.lens_type"
-                            class="mt-1 h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs outline-none focus-visible:ring-2 focus-visible:ring-ring/50 dark:bg-input/30"
-                        >
-                            <option value="">— Seleccionar —</option>
-                            <option
-                                v-for="(label, value) in lensTypes"
-                                :key="value"
-                                :value="value"
-                            >
-                                {{ label }}
-                            </option>
-                        </select>
                     </div>
                 </div>
 
