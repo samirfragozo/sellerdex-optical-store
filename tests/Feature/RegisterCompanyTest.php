@@ -3,6 +3,8 @@
 use App\Models\Company;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
+use Laravel\Fortify\Contracts\CreatesNewUsers;
 
 uses(RefreshDatabase::class);
 
@@ -25,8 +27,9 @@ it('creates a company and admin user on registration', function () {
         ->and($user->hasRole('admin'))->toBeTrue();
 });
 
-it('rolls back if user creation fails', function () {
-    // Forzar email duplicado
+it('does not create orphaned company when email already taken', function () {
+    // La validación de email único ocurre ANTES de DB::transaction,
+    // por lo que nunca se escribe ninguna empresa.
     User::factory()->create(['email' => 'dup@test.com']);
 
     $this->post('/register', [
@@ -37,8 +40,38 @@ it('rolls back if user creation fails', function () {
         'password_confirmation' => 'Password1!',
     ])->assertSessionHasErrors('email');
 
-    // No debe haber quedado empresa huérfana
     expect(Company::where('name', 'Óptica Norte')->exists())->toBeFalse();
+});
+
+it('rolls back company creation if user insertion fails inside transaction', function () {
+    // Reemplazamos la acción con una que crea la empresa y luego lanza,
+    // para verificar que DB::transaction revierte la empresa.
+    $this->app->bind(CreatesNewUsers::class, function () {
+        return new class implements CreatesNewUsers
+        {
+            public function create(array $input): User
+            {
+                return DB::transaction(function () use ($input): User {
+                    Company::create(['name' => $input['company_name'], 'is_active' => true, 'plan' => 'free']);
+                    throw new RuntimeException('fallo simulado en inserción de usuario');
+                });
+            }
+        };
+    });
+
+    try {
+        $this->post('/register', [
+            'company_name' => 'Óptica Rota',
+            'name' => 'Test',
+            'email' => 'rota@test.com',
+            'password' => 'Password1!',
+            'password_confirmation' => 'Password1!',
+        ]);
+    } catch (Throwable) {
+        // La excepción puede propagarse o devolver 500; en ambos casos verificamos el DB.
+    }
+
+    expect(Company::where('name', 'Óptica Rota')->exists())->toBeFalse();
 });
 
 it('requires a company name', function () {

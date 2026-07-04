@@ -40,6 +40,7 @@ defineOptions({
                     required
                     autofocus
                     :tabindex="1"
+                    autocomplete="organization"
                     name="company_name"
                     placeholder="Óptica Central"
                 />
