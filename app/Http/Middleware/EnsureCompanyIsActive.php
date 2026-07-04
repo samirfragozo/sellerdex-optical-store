@@ -22,9 +22,8 @@ class EnsureCompanyIsActive
             $request->session()->invalidate();
             $request->session()->regenerateToken();
 
-            return redirect()->route('login')->withErrors([
-                'email' => 'Tu cuenta ha sido suspendida. Contacta al soporte.',
-            ]);
+            return redirect()->route('login')
+                ->with('status', 'Tu cuenta ha sido suspendida. Contacta al soporte.');
         }
 
         return $next($request);
