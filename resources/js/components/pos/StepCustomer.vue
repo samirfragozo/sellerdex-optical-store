@@ -120,7 +120,9 @@ const customer = defineModel<NewCustomer>('customer', { required: true });
         <!-- New customer fields -->
         <div v-else class="grid gap-3 sm:grid-cols-2">
             <div>
-                <Label for="customer_name">Nombre</Label>
+                <Label for="customer_name">
+                    Nombre <span class="text-destructive">*</span>
+                </Label>
                 <Input
                     id="customer_name"
                     v-model="customer.name"
@@ -133,7 +135,9 @@ const customer = defineModel<NewCustomer>('customer', { required: true });
                 />
             </div>
             <div>
-                <Label for="customer_last_name">Apellidos</Label>
+                <Label for="customer_last_name">
+                    Apellidos <span class="text-destructive">*</span>
+                </Label>
                 <Input
                     id="customer_last_name"
                     v-model="customer.last_name"
@@ -146,7 +150,9 @@ const customer = defineModel<NewCustomer>('customer', { required: true });
                 />
             </div>
             <div>
-                <Label for="customer_document_type">Tipo de documento</Label>
+                <Label for="customer_document_type">
+                    Tipo de documento <span class="text-destructive">*</span>
+                </Label>
                 <select
                     id="customer_document_type"
                     v-model="customer.document_type"
@@ -165,7 +171,9 @@ const customer = defineModel<NewCustomer>('customer', { required: true });
                 />
             </div>
             <div>
-                <Label for="customer_id_number">Número de documento</Label>
+                <Label for="customer_id_number">
+                    Número de documento <span class="text-destructive">*</span>
+                </Label>
                 <Input
                     id="customer_id_number"
                     v-model="customer.id_number"
@@ -178,7 +186,9 @@ const customer = defineModel<NewCustomer>('customer', { required: true });
                 />
             </div>
             <div>
-                <Label for="customer_phone">Celular</Label>
+                <Label for="customer_phone">
+                    Celular <span class="text-destructive">*</span>
+                </Label>
                 <Input
                     id="customer_phone"
                     v-model="customer.phone"
