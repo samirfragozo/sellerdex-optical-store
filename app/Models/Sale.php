@@ -6,6 +6,7 @@ use App\Enums\LensOrderStatus;
 use App\Enums\SaleDocumentType;
 use App\Enums\SaleStatus;
 use App\Exceptions\PendingLensOrderException;
+use App\Scopes\CompanyScope;
 use App\Traits\BelongsToCompany;
 use Database\Factories\SaleFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -136,8 +137,10 @@ class Sale extends Model
     public static function nextNumber(): string
     {
         $companyId = Auth::user()?->company_id;
-        $max = (int) static::withTrashed()
-            ->when($companyId, fn ($q) => $q->where('company_id', $companyId))
+        // ponytail: bypass auto-scope and filter explicitly — makes intent clear for superadmin passthrough
+        $max = (int) static::withoutGlobalScope(CompanyScope::class)
+            ->withTrashed()
+            ->when($companyId !== null, fn ($q) => $q->where('company_id', $companyId))
             ->max('id');
 
         return str_pad((string) ($max + 1), 6, '0', STR_PAD_LEFT);

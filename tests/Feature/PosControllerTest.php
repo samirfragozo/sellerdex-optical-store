@@ -451,6 +451,24 @@ it('creates a sale from an armado with a new prescription', function () {
         ->and($sale->items->firstWhere('product_id', $lens->id)->group_key)->toBe('g1');
 });
 
+// flujo real multi-empresa: un seller solo ve productos de su propia empresa
+it('a seller only sees products from their own company in pos props', function () {
+    $companyA = Company::factory()->create();
+    $companyB = Company::factory()->create();
+
+    $productA = Product::factory()->create(['company_id' => $companyA->id, 'is_pos_selectable' => true]);
+    $productB = Product::factory()->create(['company_id' => $companyB->id, 'is_pos_selectable' => true]);
+
+    $seller = User::factory()->forCompany($companyA)->seller()->create();
+
+    $ids = collect(
+        $this->actingAs($seller)->get('/pos')->viewData('page')['props']['products']
+    )->pluck('id');
+
+    expect($ids)->toContain($productA->id)
+        ->and($ids)->not->toContain($productB->id);
+});
+
 it('exposes lens specs in the POS props', function () {
     $company = Company::factory()->create();
     $this->seed(ProductCategorySeeder::class);
