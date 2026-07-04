@@ -56,5 +56,7 @@ class RolesAndPermissionsSeeder extends Seeder
 
         $seller = Role::findOrCreate(User::ROLE_SELLER, 'web');
         $seller->syncPermissions(self::SELLER_PERMISSIONS);
+
+        Role::findOrCreate(User::ROLE_SUPERADMIN, 'web');
     }
 }

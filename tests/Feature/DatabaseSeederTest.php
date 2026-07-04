@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\BusinessSetting;
+use App\Models\Company;
 use App\Models\ExpenseCategory;
 use App\Models\PaymentMethod;
 use App\Models\User;
@@ -14,6 +14,6 @@ it('siembra los datos base del negocio', function () {
 
     expect(PaymentMethod::where('is_default', true)->where('name', 'Efectivo')->exists())->toBeTrue()
         ->and(ExpenseCategory::count())->toBe(6)
-        ->and(BusinessSetting::count())->toBe(1)
+        ->and(Company::count())->toBe(1)
         ->and(User::where('email', 'admin@optica.test')->first()?->hasRole('admin'))->toBeTrue();
 });

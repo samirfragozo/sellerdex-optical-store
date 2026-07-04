@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\Company;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
@@ -35,6 +36,7 @@ class UserFactory extends Factory
             'two_factor_recovery_codes' => null,
             'two_factor_confirmed_at' => null,
             'is_active' => true,
+            'company_id' => Company::factory(),
         ];
     }
 
@@ -72,5 +74,18 @@ class UserFactory extends Factory
         return $this->afterCreating(
             fn (User $user) => $user->assignRole(Role::findOrCreate(User::ROLE_SELLER))
         );
+    }
+
+    public function forCompany(Company $company): static
+    {
+        return $this->state(['company_id' => $company->id]);
+    }
+
+    public function superadmin(): static
+    {
+        return $this->state(['company_id' => null])
+            ->afterCreating(fn (User $user) => $user->assignRole(
+                Role::findOrCreate(User::ROLE_SUPERADMIN)
+            ));
     }
 }

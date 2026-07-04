@@ -3,7 +3,7 @@
 namespace App\Providers\Filament;
 
 use App\Filament\Pages\Dashboard;
-use App\Models\BusinessSetting;
+use App\Models\Company;
 use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
 use Filament\Actions\Action;
 use Filament\Http\Middleware\Authenticate;
@@ -31,8 +31,18 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->login()
             ->globalSearch(false)
-            ->brandName(fn () => rescue(fn () => BusinessSetting::current()->name ?? 'Óptica', 'Óptica', report: false))
-            ->brandLogo(fn () => rescue(fn () => ($logo = BusinessSetting::current()->logo) ? Storage::disk('public')->url($logo) : null, null, report: false))
+            ->brandName(fn () => rescue(
+                fn () => Company::current()->name ?? 'Óptica',
+                'Óptica',
+                report: false
+            ))
+            ->brandLogo(fn () => rescue(
+                fn () => ($logo = Company::current()->logo)
+                    ? Storage::disk('public')->url($logo)
+                    : null,
+                null,
+                report: false
+            ))
             ->brandLogoHeight('2.5rem')
             ->colors([
                 'primary' => Color::Amber,

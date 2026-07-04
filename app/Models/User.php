@@ -9,6 +9,7 @@ use Filament\Panel;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -17,7 +18,7 @@ use Laravel\Fortify\PasskeyAuthenticatable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Spatie\Permission\Traits\HasRoles;
 
-#[Fillable(['name', 'email', 'password', 'is_active'])]
+#[Fillable(['name', 'email', 'password', 'is_active', 'company_id'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 class User extends Authenticatable implements FilamentUser, PasskeyUser
 {
@@ -28,6 +29,8 @@ class User extends Authenticatable implements FilamentUser, PasskeyUser
      * Role names. Roles themselves live in the database (spatie/laravel-permission);
      * these constants are the single source of truth for the role identifiers.
      */
+    public const ROLE_SUPERADMIN = 'superadmin';
+
     public const ROLE_ADMIN = 'admin';
 
     public const ROLE_SELLER = 'seller';
@@ -49,7 +52,10 @@ class User extends Authenticatable implements FilamentUser, PasskeyUser
 
     public function canAccessPanel(Panel $panel): bool
     {
-        return $this->is_active;
+        return match ($panel->getId()) {
+            'superadmin' => $this->company_id === null && $this->hasRole(self::ROLE_SUPERADMIN),
+            default => $this->company_id !== null && $this->is_active,
+        };
     }
 
     public function isAdmin(): bool
@@ -60,6 +66,11 @@ class User extends Authenticatable implements FilamentUser, PasskeyUser
     public function isSeller(): bool
     {
         return $this->hasRole(self::ROLE_SELLER);
+    }
+
+    public function company(): BelongsTo
+    {
+        return $this->belongsTo(Company::class);
     }
 
     public function sales(): HasMany
