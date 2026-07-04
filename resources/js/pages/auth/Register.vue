@@ -16,14 +16,14 @@ defineProps<{
 
 defineOptions({
     layout: {
-        title: 'Create an account',
-        description: 'Enter your details below to create your account',
+        title: 'Crear una cuenta',
+        description: 'Ingresa los datos de tu óptica para comenzar',
     },
 });
 </script>
 
 <template>
-    <Head title="Register" />
+    <Head title="Registro" />
 
     <Form
         v-bind="store.form()"
@@ -33,57 +33,70 @@ defineOptions({
     >
         <div class="grid gap-6">
             <div class="grid gap-2">
-                <Label for="name">Name</Label>
+                <Label for="company_name">Nombre de la óptica</Label>
                 <Input
-                    id="name"
+                    id="company_name"
                     type="text"
                     required
                     autofocus
                     :tabindex="1"
+                    name="company_name"
+                    placeholder="Óptica Central"
+                />
+                <InputError :message="errors.company_name" />
+            </div>
+
+            <div class="grid gap-2">
+                <Label for="name">Nombre completo</Label>
+                <Input
+                    id="name"
+                    type="text"
+                    required
+                    :tabindex="2"
                     autocomplete="name"
                     name="name"
-                    placeholder="Full name"
+                    placeholder="Nombre completo"
                 />
                 <InputError :message="errors.name" />
             </div>
 
             <div class="grid gap-2">
-                <Label for="email">Email address</Label>
+                <Label for="email">Correo electrónico</Label>
                 <Input
                     id="email"
                     type="email"
                     required
-                    :tabindex="2"
+                    :tabindex="3"
                     autocomplete="email"
                     name="email"
-                    placeholder="email@example.com"
+                    placeholder="correo@ejemplo.com"
                 />
                 <InputError :message="errors.email" />
             </div>
 
             <div class="grid gap-2">
-                <Label for="password">Password</Label>
+                <Label for="password">Contraseña</Label>
                 <PasswordInput
                     id="password"
                     required
-                    :tabindex="3"
+                    :tabindex="4"
                     autocomplete="new-password"
                     name="password"
-                    placeholder="Password"
+                    placeholder="Contraseña"
                     :passwordrules="passwordRules"
                 />
                 <InputError :message="errors.password" />
             </div>
 
             <div class="grid gap-2">
-                <Label for="password_confirmation">Confirm password</Label>
+                <Label for="password_confirmation">Confirmar contraseña</Label>
                 <PasswordInput
                     id="password_confirmation"
                     required
-                    :tabindex="4"
+                    :tabindex="5"
                     autocomplete="new-password"
                     name="password_confirmation"
-                    placeholder="Confirm password"
+                    placeholder="Confirmar contraseña"
                     :passwordrules="passwordRules"
                 />
                 <InputError :message="errors.password_confirmation" />
@@ -92,22 +105,22 @@ defineOptions({
             <Button
                 type="submit"
                 class="mt-2 w-full"
-                tabindex="5"
+                tabindex="6"
                 :disabled="processing"
                 data-test="register-user-button"
             >
                 <Spinner v-if="processing" />
-                Create account
+                Crear cuenta
             </Button>
         </div>
 
         <div class="text-center text-sm text-muted-foreground">
-            Already have an account?
+            ¿Ya tienes una cuenta?
             <TextLink
                 :href="login()"
                 class="underline underline-offset-4"
-                :tabindex="6"
-                >Log in</TextLink
+                :tabindex="7"
+                >Iniciar sesión</TextLink
             >
         </div>
     </Form>

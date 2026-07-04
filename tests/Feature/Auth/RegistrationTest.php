@@ -14,12 +14,13 @@ test('registration screen can be rendered', function () {
 
 test('new users can register', function () {
     $response = $this->post(route('register.store'), [
+        'company_name' => 'Óptica Test',
         'name' => 'Test User',
         'email' => 'test@example.com',
-        'password' => 'password',
-        'password_confirmation' => 'password',
+        'password' => 'Password1!',
+        'password_confirmation' => 'Password1!',
     ]);
 
     $this->assertAuthenticated();
-    $response->assertRedirect(route('pos.index', absolute: false));
+    $response->assertRedirect('/admin');
 });

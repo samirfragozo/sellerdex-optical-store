@@ -77,6 +77,21 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Post-Action Redirects
+    |--------------------------------------------------------------------------
+    |
+    | Here you may specify which URL Fortify should redirect to after a given
+    | action completes. Unless specified here, Fortify will redirect to the
+    | "home" configuration value.
+    |
+    */
+
+    'redirects' => [
+        'register' => '/admin',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Fortify Routes Prefix / Subdomain
     |--------------------------------------------------------------------------
     |
