@@ -207,3 +207,7 @@ Vue components must have a single root element.
 - IMPORTANT: Activate `inertia-vue-development` when working with Inertia Vue client-side patterns.
 
 </laravel-boost-guidelines>
+
+## Git commits
+
+- Never add a `Co-Authored-By` trailer (or any AI attribution line) to commit messages in this repository. Commit messages must contain only the summary/body — no attribution footer.
