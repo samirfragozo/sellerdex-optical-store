@@ -218,3 +218,4 @@ Vue components must have a single root element.
 ## Git commits
 
 - Never add a `Co-Authored-By` trailer (or any AI attribution line) to commit messages in this repository. Commit messages must contain only the summary/body — no attribution footer.
+- Commit messages and all documentation must be written in English, regardless of the language used in conversation.
