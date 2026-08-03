@@ -6,7 +6,7 @@
     "keywords": ["laravel", "framework"],
     "license": "MIT",
     "require": {
-        "php": "^8.3",
+        "php": "^8.4",
         "barryvdh/laravel-dompdf": "^3.1",
         "bezhansalleh/filament-language-switch": "^4.3",
         "bezhansalleh/filament-shield": "^4.2",
@@ -17,6 +17,7 @@
         "laravel/framework": "^13.7",
         "laravel/tinker": "^3.0",
         "laravel/wayfinder": "^0.1.14",
+        "resend/resend-php": "^1.7",
         "spatie/laravel-activitylog": "^5.0"
     },
     "require-dev": {
