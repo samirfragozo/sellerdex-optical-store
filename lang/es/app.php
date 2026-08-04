@@ -1,6 +1,11 @@
 <?php
 
 return [
+    'languages' => [
+        'es' => 'Español',
+        'en' => 'Inglés',
+    ],
+
     'nav' => [
         'platform' => 'Plataforma',
         'settings' => 'Configuración',

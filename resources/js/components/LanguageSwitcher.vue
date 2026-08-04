@@ -1,9 +1,17 @@
 <script setup lang="ts">
 import { router, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { useTranslations } from '@/composables/useTranslations';
 import { update as updateLocale } from '@/routes/locale';
 
 const page = usePage();
+const { trans } = useTranslations();
 const currentLocale = computed(() => page.props.locale);
 
 const locales = [
@@ -11,11 +19,15 @@ const locales = [
     { value: 'en', label: 'EN' },
 ] as const;
 
-function switchLocale(locale: string): void {
-    if (locale === currentLocale.value) {
-        return;
-    }
+const otherLocales = computed(() =>
+    locales.filter((locale) => locale.value !== currentLocale.value),
+);
 
+const currentLabel = computed(
+    () => locales.find((locale) => locale.value === currentLocale.value)?.label,
+);
+
+function switchLocale(locale: string): void {
     router.post(
         updateLocale.url({ locale }),
         {},
@@ -25,22 +37,29 @@ function switchLocale(locale: string): void {
 </script>
 
 <template>
-    <div
-        class="inline-flex gap-1 rounded-lg bg-neutral-100 p-1 dark:bg-neutral-800"
-    >
-        <button
-            v-for="{ value, label } in locales"
-            :key="value"
-            type="button"
-            @click="switchLocale(value)"
-            :class="[
-                'rounded-md px-2 py-1 text-xs font-medium transition-colors',
-                currentLocale === value
-                    ? 'bg-white shadow-xs dark:bg-neutral-700 dark:text-neutral-100'
-                    : 'text-neutral-500 hover:bg-neutral-200/60 hover:text-black dark:text-neutral-400 dark:hover:bg-neutral-700/60',
-            ]"
+    <DropdownMenu>
+        <DropdownMenuTrigger
+            :title="trans(`app.languages.${currentLocale}`)"
+            class="flex size-8 items-center justify-center rounded-lg text-md"
         >
-            {{ label }}
-        </button>
-    </div>
+            {{ currentLabel }}
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+            <DropdownMenuItem
+                v-for="locale in otherLocales"
+                :key="locale.value"
+                class="gap-2 w-56"
+                @click="switchLocale(locale.value)"
+            >
+                <span
+                    class="flex size-5 items-center justify-center rounded-lg text-md"
+                >
+                    {{ locale.label }}
+                </span>
+                <span>
+                    {{ trans(`app.languages.${locale.value}`) }}
+                </span>
+            </DropdownMenuItem>
+        </DropdownMenuContent>
+    </DropdownMenu>
 </template>
