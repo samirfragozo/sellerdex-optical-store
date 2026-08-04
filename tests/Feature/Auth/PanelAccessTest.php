@@ -20,6 +20,18 @@ it('niega el acceso a un usuario inactivo', function () {
     expect($user->canAccessPanel(filament()->getPanel('admin')))->toBeFalse();
 });
 
+it('redirige el login de filament hacia el login del pos', function () {
+    $this->get('/admin/login')->assertRedirect(route('login'));
+});
+
+it('un usuario ya autenticado que visita el login de filament entra al panel', function () {
+    $user = User::factory()->admin()->create();
+
+    $this->actingAs($user)
+        ->get('/admin/login')
+        ->assertRedirect('/admin');
+});
+
 it('expone helpers de rol', function () {
     expect(User::factory()->admin()->create()->isAdmin())->toBeTrue()
         ->and(User::factory()->seller()->create()->isSeller())->toBeTrue();

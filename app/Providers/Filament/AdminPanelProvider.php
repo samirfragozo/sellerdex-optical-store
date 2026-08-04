@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Pages\Auth\RedirectToLogin;
 use App\Filament\Pages\Dashboard;
 use App\Http\Middleware\EnsureCompanyIsActive;
 use App\Models\Company;
@@ -30,7 +31,7 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admin')
-            ->login()
+            ->login(RedirectToLogin::class)
             ->globalSearch(false)
             ->brandName(fn () => rescue(
                 fn () => Company::current()->name ?? 'Óptica',

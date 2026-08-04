@@ -74,6 +74,19 @@ it('rolls back company creation if user insertion fails inside transaction', fun
     expect(Company::where('name', 'Óptica Rota')->exists())->toBeFalse();
 });
 
+it('uses an Inertia location visit when redirecting to the admin panel', function () {
+    $this->withHeaders(['X-Inertia' => 'true'])
+        ->post('/register', [
+            'company_name' => 'Óptica Este',
+            'name' => 'Carla',
+            'email' => 'carla@opticaeste.com',
+            'password' => 'Password1!',
+            'password_confirmation' => 'Password1!',
+        ])
+        ->assertStatus(409)
+        ->assertHeader('X-Inertia-Location', '/admin');
+});
+
 it('requires a company name', function () {
     $this->post('/register', [
         'name' => 'Juan',

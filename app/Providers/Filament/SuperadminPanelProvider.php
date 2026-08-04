@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Pages\Auth\RedirectToLogin;
 use App\Filament\Superadmin\Pages\Dashboard;
 use App\Filament\Superadmin\Resources\CompanyResource;
 use Filament\Http\Middleware\Authenticate;
@@ -25,7 +26,7 @@ class SuperadminPanelProvider extends PanelProvider
         return $panel
             ->id('superadmin')
             ->path('superadmin')
-            ->login()
+            ->login(RedirectToLogin::class)
             ->brandName('Sellerdex — Admin')
             ->colors(['primary' => Color::Violet])
             ->pages([Dashboard::class])

@@ -42,6 +42,32 @@ test('users with two factor enabled are redirected to two factor challenge', fun
     $this->assertGuest();
 });
 
+test('admin users are redirected to the admin panel after login', function () {
+    $user = User::factory()->admin()->create();
+
+    $response = $this->withHeaders(['X-Inertia' => 'true'])->post(route('login.store'), [
+        'email' => $user->email,
+        'password' => 'password',
+    ]);
+
+    $this->assertAuthenticated();
+    $response->assertStatus(409);
+    $response->assertHeader('X-Inertia-Location', '/admin');
+});
+
+test('superadmin users are redirected to the superadmin panel after login', function () {
+    $user = User::factory()->superadmin()->create();
+
+    $response = $this->withHeaders(['X-Inertia' => 'true'])->post(route('login.store'), [
+        'email' => $user->email,
+        'password' => 'password',
+    ]);
+
+    $this->assertAuthenticated();
+    $response->assertStatus(409);
+    $response->assertHeader('X-Inertia-Location', '/superadmin');
+});
+
 test('users can not authenticate with invalid password', function () {
     $user = User::factory()->create();
 
