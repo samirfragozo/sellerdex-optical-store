@@ -4,23 +4,26 @@ import Heading from '@/components/Heading.vue';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { useCurrentUrl } from '@/composables/useCurrentUrl';
+import { useTranslations } from '@/composables/useTranslations';
 import { toUrl } from '@/lib/utils';
 import { edit as editAppearance } from '@/routes/appearance';
 import { edit as editProfile } from '@/routes/profile';
 import { edit as editSecurity } from '@/routes/security';
 import type { NavItem } from '@/types';
 
+const { trans } = useTranslations();
+
 const sidebarNavItems: NavItem[] = [
     {
-        title: 'Profile',
+        title: trans('settings.profile.title'),
         href: editProfile(),
     },
     {
-        title: 'Security',
+        title: trans('settings.security.breadcrumb'),
         href: editSecurity(),
     },
     {
-        title: 'Appearance',
+        title: trans('settings.appearance.title'),
         href: editAppearance(),
     },
 ];
@@ -31,15 +34,15 @@ const { isCurrentOrParentUrl } = useCurrentUrl();
 <template>
     <div class="px-4 py-6">
         <Heading
-            title="Settings"
-            description="Manage your profile and account settings"
+            :title="trans('settings.index.title')"
+            :description="trans('settings.index.description')"
         />
 
         <div class="flex flex-col lg:flex-row lg:space-x-12">
             <aside class="w-full max-w-xl lg:w-48">
                 <nav
                     class="flex flex-col space-y-1 space-x-0"
-                    aria-label="Settings"
+                    :aria-label="trans('settings.index.title')"
                 >
                     <Button
                         v-for="item in sidebarNavItems"
