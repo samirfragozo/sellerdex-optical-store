@@ -1,6 +1,36 @@
 <?php
 
 return [
+    'nav' => [
+        'platform' => 'Plataforma',
+        'settings' => 'Configuración',
+        'admin' => 'Administración',
+        'log_out' => 'Cerrar sesión',
+    ],
+
+    'clusters' => [
+        'compras' => 'Compras',
+        'catalogo' => 'Catálogo',
+        'gastos' => 'Gastos',
+    ],
+
+    'superadmin' => [
+        'company' => [
+            'label' => 'Empresa',
+            'plural' => 'Empresas',
+            'name' => 'Nombre',
+            'tax_id' => 'NIT',
+            'address' => 'Dirección',
+            'phones' => 'Teléfonos',
+            'active' => 'Activa',
+            'plan' => 'Plan',
+            'users' => 'Usuarios',
+            'registered_at' => 'Registro',
+            'suspend' => 'Suspender',
+            'activate' => 'Activar',
+        ],
+    ],
+
     'resources' => [
         'customer' => ['label' => 'Cliente', 'plural' => 'Clientes', 'nav' => 'Clientes'],
         'product' => ['label' => 'Producto', 'plural' => 'Productos', 'nav' => 'Productos'],
@@ -198,13 +228,98 @@ return [
 
     'pos' => [
         'title' => 'Nueva venta',
-        'created' => 'Venta :number creada',
+        'created' => 'Venta :number creada exitosamente',
+        'no_customer' => 'Sin cliente',
         'new_customer' => 'Cliente nuevo',
         'existing_customer' => 'Cliente existente',
-        'add_item' => 'Agregar ítem',
+        'selected_customer' => 'Cliente seleccionado',
         'take_payment' => 'Registrar abono',
         'save' => 'Guardar venta',
+        'saving' => 'Guardando...',
         'no_items' => 'Agrega al menos un ítem',
+        'add_armado' => 'Agregar gafas / lente',
+        'add_product' => 'Agregar producto',
+        'none_option' => '— Ninguno —',
+        'select_option' => '— Seleccionar —',
+        'additional_products' => 'Productos adicionales',
+        'quantity_short' => 'Cant.',
+        'unit_price_short' => 'P. unitario',
+        'notes_placeholder' => 'Observaciones opcionales...',
+        'fix_errors' => 'Corrige los siguientes errores:',
+
+        'steps' => [
+            'customer' => 'Cliente',
+            'prescription' => 'Prescripción (Armado #:id)',
+            'lens' => 'Lente (Armado #:id)',
+            'frame' => 'Montura (Armado #:id)',
+            'combo' => 'Combo (Armado #:id)',
+        ],
+
+        'continue_to_lens' => 'Continuar al lente',
+        'continue_to_frame' => 'Continuar a la montura',
+        'continue_to_combo' => 'Continuar al combo',
+        'remove_armado' => 'Quitar este armado',
+
+        'summary' => [
+            'title' => 'Resumen',
+            'armado' => 'Armado #:id',
+            'lens' => 'Lente',
+            'frame' => 'Montura',
+            'own_frame' => 'Montura propia',
+            'exam_included' => '+ Examen incluido',
+            'liquid_included' => '+ Líquido incluido',
+            'lining' => 'Forro',
+            'small' => 'Pequeño',
+            'large' => 'Grande',
+            'no_description' => '(sin descripción)',
+            'surcharge_note' => 'Total incluye recargo de plataforma (:percent%)',
+            'balance' => 'Saldo pendiente',
+        ],
+
+        'combo_form' => [
+            'include_exam' => 'Incluir examen (gratis)',
+            'include_liquid' => 'Incluir líquido',
+        ],
+
+        'frame_form' => [
+            'own_frame_toggle' => 'El cliente trae su montura',
+            'select_frame' => 'Seleccionar montura',
+        ],
+
+        'customer_form' => [
+            'select_customer' => 'Seleccionar cliente',
+            'no_customer_option' => '— Sin cliente —',
+            'no_customer_notice' => 'La venta se registrará sin cliente.',
+            'id_number_placeholder' => 'Número',
+            'phone_placeholder' => '3001234567',
+            'email_placeholder' => 'correo@ejemplo.com',
+            'address_placeholder' => 'Calle 1 # 2-3',
+            'notes_placeholder' => 'Opcional...',
+        ],
+
+        'lens_form' => [
+            'design' => 'Diseño',
+            'range' => 'Gama',
+            'material' => 'Material',
+            'filter' => 'Filtro',
+            'no_combo' => 'Esa combinación no existe en el catálogo. Ajusta material o filtro.',
+        ],
+
+        'payment_form' => [
+            'document_type' => 'Tipo de documento',
+            'payment_method' => 'Método de pago',
+            'amount' => 'Monto del abono',
+            'exceeds_total' => 'El abono no puede superar el total (:total).',
+        ],
+
+        'prescription_form' => [
+            'required_notice' => 'Obligatoria para vender lentes formulados.',
+            'needs_customer' => 'Para vender lentes formulados debes seleccionar o registrar un cliente.',
+            'use_existing' => 'Usar existente',
+            'create_new' => 'Crear nueva',
+            'select_prescription' => 'Seleccionar prescripción',
+            'notes_placeholder' => 'Opcional...',
+        ],
     ],
 
     'cash_close_type' => ['daily' => 'Diario', 'monthly' => 'Mensual'],
@@ -222,6 +337,24 @@ return [
         'download_invoice' => 'Descargar PDF',
         'print_formula' => 'Imprimir fórmula',
         'download_formula' => 'Descargar PDF',
+
+        'default_title' => 'Documento',
+        'invoice_title' => 'Factura',
+        'formula_title' => 'Fórmula',
+        'formula_heading' => 'PRESCRIPCIÓN DE LENTES OFTÁLMICOS',
+        'number_label' => 'No.',
+        'tax_id_label' => 'NIT',
+        'phone_label' => 'Tel',
+        'unit_value' => 'Vr. Unit.',
+        'total_value' => 'Vr. Total',
+        'free' => 'GRATIS',
+        'included' => 'Incluido',
+        'paid' => 'Abonado',
+        'signature' => 'Firma y sello',
+        'patient' => 'Paciente',
+        'eye' => 'Ojo',
+        'diagnosis_short' => 'R',
+        'control' => 'Control',
     ],
 
     'reports' => [

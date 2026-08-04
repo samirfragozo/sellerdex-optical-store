@@ -6,6 +6,9 @@ import type {
     ProductProp,
 } from '@/composables/useLensCatalog';
 import { useLensCatalog } from '@/composables/useLensCatalog';
+import { useTranslations } from '@/composables/useTranslations';
+
+const { trans } = useTranslations();
 
 const props = defineProps<{
     products: ProductProp[];
@@ -116,7 +119,9 @@ watch(filters, (f) => {
 
         <!-- Diseño -->
         <div>
-            <span class="mb-1 block text-sm font-medium">Diseño</span>
+            <span class="mb-1 block text-sm font-medium">{{
+                trans('app.pos.lens_form.design')
+            }}</span>
             <div class="flex flex-wrap gap-2">
                 <button
                     v-for="d in designs"
@@ -135,7 +140,9 @@ watch(filters, (f) => {
 
         <!-- Gama / proceso -->
         <div v-if="selection.design">
-            <span class="mb-1 block text-sm font-medium">Gama</span>
+            <span class="mb-1 block text-sm font-medium">{{
+                trans('app.pos.lens_form.range')
+            }}</span>
             <div class="flex flex-wrap gap-2">
                 <button
                     v-for="p in processes"
@@ -156,7 +163,9 @@ watch(filters, (f) => {
 
         <!-- Material -->
         <div v-if="selection.process">
-            <span class="mb-1 block text-sm font-medium">Material</span>
+            <span class="mb-1 block text-sm font-medium">{{
+                trans('app.pos.lens_form.material')
+            }}</span>
             <div class="flex flex-wrap gap-2">
                 <button
                     v-for="m in materials"
@@ -177,7 +186,9 @@ watch(filters, (f) => {
 
         <!-- Filtro -->
         <div v-if="selection.material">
-            <span class="mb-1 block text-sm font-medium">Filtro</span>
+            <span class="mb-1 block text-sm font-medium">{{
+                trans('app.pos.lens_form.filter')
+            }}</span>
             <div class="flex flex-wrap gap-2">
                 <button
                     v-for="f in filters"
@@ -205,7 +216,7 @@ watch(filters, (f) => {
             }}</span>
         </div>
         <p v-else-if="noCombo" class="text-sm text-muted-foreground">
-            Esa combinación no existe en el catálogo. Ajusta material o filtro.
+            {{ trans('app.pos.lens_form.no_combo') }}
         </p>
     </div>
 </template>

@@ -1,6 +1,36 @@
 <?php
 
 return [
+    'nav' => [
+        'platform' => 'Platform',
+        'settings' => 'Settings',
+        'admin' => 'Administration',
+        'log_out' => 'Log out',
+    ],
+
+    'clusters' => [
+        'compras' => 'Purchasing',
+        'catalogo' => 'Catalog',
+        'gastos' => 'Expenses',
+    ],
+
+    'superadmin' => [
+        'company' => [
+            'label' => 'Company',
+            'plural' => 'Companies',
+            'name' => 'Name',
+            'tax_id' => 'Tax ID',
+            'address' => 'Address',
+            'phones' => 'Phones',
+            'active' => 'Active',
+            'plan' => 'Plan',
+            'users' => 'Users',
+            'registered_at' => 'Registered',
+            'suspend' => 'Suspend',
+            'activate' => 'Activate',
+        ],
+    ],
+
     'resources' => [
         'customer' => ['label' => 'Customer', 'plural' => 'Customers', 'nav' => 'Customers'],
         'product' => ['label' => 'Product', 'plural' => 'Products', 'nav' => 'Products'],
@@ -154,13 +184,98 @@ return [
 
     'pos' => [
         'title' => 'New sale',
-        'created' => 'Sale :number created',
+        'created' => 'Sale :number created successfully',
+        'no_customer' => 'No customer',
         'new_customer' => 'New customer',
         'existing_customer' => 'Existing customer',
-        'add_item' => 'Add item',
+        'selected_customer' => 'Selected customer',
         'take_payment' => 'Take payment',
         'save' => 'Save sale',
+        'saving' => 'Saving...',
         'no_items' => 'Add at least one item',
+        'add_armado' => 'Add glasses / lens',
+        'add_product' => 'Add product',
+        'none_option' => '— None —',
+        'select_option' => '— Select —',
+        'additional_products' => 'Additional products',
+        'quantity_short' => 'Qty.',
+        'unit_price_short' => 'Unit price',
+        'notes_placeholder' => 'Optional notes...',
+        'fix_errors' => 'Please fix the following errors:',
+
+        'steps' => [
+            'customer' => 'Customer',
+            'prescription' => 'Prescription (Armado #:id)',
+            'lens' => 'Lens (Armado #:id)',
+            'frame' => 'Frame (Armado #:id)',
+            'combo' => 'Combo (Armado #:id)',
+        ],
+
+        'continue_to_lens' => 'Continue to lens',
+        'continue_to_frame' => 'Continue to frame',
+        'continue_to_combo' => 'Continue to combo',
+        'remove_armado' => 'Remove this armado',
+
+        'summary' => [
+            'title' => 'Summary',
+            'armado' => 'Armado #:id',
+            'lens' => 'Lens',
+            'frame' => 'Frame',
+            'own_frame' => 'Own frame',
+            'exam_included' => '+ Exam included',
+            'liquid_included' => '+ Cleaning liquid included',
+            'lining' => 'Lining',
+            'small' => 'Small',
+            'large' => 'Large',
+            'no_description' => '(no description)',
+            'surcharge_note' => 'Total includes platform surcharge (:percent%)',
+            'balance' => 'Balance due',
+        ],
+
+        'combo_form' => [
+            'include_exam' => 'Include exam (free)',
+            'include_liquid' => 'Include cleaning liquid',
+        ],
+
+        'frame_form' => [
+            'own_frame_toggle' => 'Customer brings their own frame',
+            'select_frame' => 'Select frame',
+        ],
+
+        'customer_form' => [
+            'select_customer' => 'Select customer',
+            'no_customer_option' => '— No customer —',
+            'no_customer_notice' => 'The sale will be recorded without a customer.',
+            'id_number_placeholder' => 'Number',
+            'phone_placeholder' => '3001234567',
+            'email_placeholder' => 'email@example.com',
+            'address_placeholder' => 'Street 1 # 2-3',
+            'notes_placeholder' => 'Optional...',
+        ],
+
+        'lens_form' => [
+            'design' => 'Design',
+            'range' => 'Range',
+            'material' => 'Material',
+            'filter' => 'Filter',
+            'no_combo' => 'That combination does not exist in the catalog. Adjust material or filter.',
+        ],
+
+        'payment_form' => [
+            'document_type' => 'Document type',
+            'payment_method' => 'Payment method',
+            'amount' => 'Payment amount',
+            'exceeds_total' => 'The payment cannot exceed the total (:total).',
+        ],
+
+        'prescription_form' => [
+            'required_notice' => 'Required to sell prescription lenses.',
+            'needs_customer' => 'Selling prescription lenses requires selecting or registering a customer.',
+            'use_existing' => 'Use existing',
+            'create_new' => 'Create new',
+            'select_prescription' => 'Select prescription',
+            'notes_placeholder' => 'Optional...',
+        ],
     ],
 
     'cash_close_type' => ['daily' => 'Daily', 'monthly' => 'Monthly'],
@@ -178,6 +293,24 @@ return [
         'download_invoice' => 'Download PDF',
         'print_formula' => 'Print formula',
         'download_formula' => 'Download PDF',
+
+        'default_title' => 'Document',
+        'invoice_title' => 'Invoice',
+        'formula_title' => 'Formula',
+        'formula_heading' => 'OPHTHALMIC LENS PRESCRIPTION',
+        'number_label' => 'No.',
+        'tax_id_label' => 'Tax ID',
+        'phone_label' => 'Phone',
+        'unit_value' => 'Unit price',
+        'total_value' => 'Total price',
+        'free' => 'FREE',
+        'included' => 'Included',
+        'paid' => 'Paid',
+        'signature' => 'Signature and stamp',
+        'patient' => 'Patient',
+        'eye' => 'Eye',
+        'diagnosis_short' => 'Dx',
+        'control' => 'Follow-up',
     ],
 
     'reports' => [

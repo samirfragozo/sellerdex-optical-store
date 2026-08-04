@@ -2,6 +2,9 @@
 import InputError from '@/components/InputError.vue';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useTranslations } from '@/composables/useTranslations';
+
+const { trans } = useTranslations();
 
 interface Customer {
     id: number;
@@ -64,7 +67,7 @@ const customer = defineModel<NewCustomer>('customer', { required: true });
                 ]"
                 @click="customerMode = 'none'"
             >
-                Sin cliente
+                {{ trans('app.pos.no_customer') }}
             </button>
             <button
                 type="button"
@@ -76,7 +79,7 @@ const customer = defineModel<NewCustomer>('customer', { required: true });
                 ]"
                 @click="customerMode = 'existing'"
             >
-                Cliente existente
+                {{ trans('app.pos.existing_customer') }}
             </button>
             <button
                 type="button"
@@ -88,19 +91,23 @@ const customer = defineModel<NewCustomer>('customer', { required: true });
                 ]"
                 @click="customerMode = 'new'"
             >
-                Cliente nuevo
+                {{ trans('app.pos.new_customer') }}
             </button>
         </div>
 
         <!-- Existing customer select -->
         <div v-if="customerMode === 'existing'">
-            <Label for="customer_id">Seleccionar cliente</Label>
+            <Label for="customer_id">{{
+                trans('app.pos.customer_form.select_customer')
+            }}</Label>
             <select
                 id="customer_id"
                 v-model="customerId"
                 class="mt-1 h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs outline-none focus-visible:ring-2 focus-visible:ring-ring/50 dark:bg-input/30"
             >
-                <option :value="null">— Sin cliente —</option>
+                <option :value="null">
+                    {{ trans('app.pos.customer_form.no_customer_option') }}
+                </option>
                 <option v-for="c in customers" :key="c.id" :value="c.id">
                     {{ c.name }} {{ c.last_name }}
                     <template v-if="c.id_number"> — {{ c.id_number }}</template>
@@ -114,20 +121,21 @@ const customer = defineModel<NewCustomer>('customer', { required: true });
             v-else-if="customerMode === 'none'"
             class="text-sm text-muted-foreground"
         >
-            La venta se registrará sin cliente.
+            {{ trans('app.pos.customer_form.no_customer_notice') }}
         </p>
 
         <!-- New customer fields -->
         <div v-else class="grid gap-3 sm:grid-cols-2">
             <div>
                 <Label for="customer_name">
-                    Nombre <span class="text-destructive">*</span>
+                    {{ trans('app.fields.name') }}
+                    <span class="text-destructive">*</span>
                 </Label>
                 <Input
                     id="customer_name"
                     v-model="customer.name"
                     class="mt-1 w-full"
-                    placeholder="Nombre"
+                    :placeholder="trans('app.fields.name')"
                 />
                 <InputError
                     class="mt-1"
@@ -136,13 +144,14 @@ const customer = defineModel<NewCustomer>('customer', { required: true });
             </div>
             <div>
                 <Label for="customer_last_name">
-                    Apellidos <span class="text-destructive">*</span>
+                    {{ trans('app.fields.last_name') }}
+                    <span class="text-destructive">*</span>
                 </Label>
                 <Input
                     id="customer_last_name"
                     v-model="customer.last_name"
                     class="mt-1 w-full"
-                    placeholder="Apellidos"
+                    :placeholder="trans('app.fields.last_name')"
                 />
                 <InputError
                     class="mt-1"
@@ -151,19 +160,32 @@ const customer = defineModel<NewCustomer>('customer', { required: true });
             </div>
             <div>
                 <Label for="customer_document_type">
-                    Tipo de documento <span class="text-destructive">*</span>
+                    {{ trans('app.fields.document_type') }}
+                    <span class="text-destructive">*</span>
                 </Label>
                 <select
                     id="customer_document_type"
                     v-model="customer.document_type"
                     class="mt-1 h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs outline-none focus-visible:ring-2 focus-visible:ring-ring/50 dark:bg-input/30"
                 >
-                    <option value="">— Seleccionar —</option>
-                    <option value="cc">Cédula de ciudadanía</option>
-                    <option value="ce">Cédula de extranjería</option>
-                    <option value="ti">Tarjeta de identidad</option>
-                    <option value="nit">NIT</option>
-                    <option value="pa">Pasaporte</option>
+                    <option value="">
+                        {{ trans('app.pos.select_option') }}
+                    </option>
+                    <option value="cc">
+                        {{ trans('app.document_type.cc') }}
+                    </option>
+                    <option value="ce">
+                        {{ trans('app.document_type.ce') }}
+                    </option>
+                    <option value="ti">
+                        {{ trans('app.document_type.ti') }}
+                    </option>
+                    <option value="nit">
+                        {{ trans('app.document_type.nit') }}
+                    </option>
+                    <option value="pa">
+                        {{ trans('app.document_type.pa') }}
+                    </option>
                 </select>
                 <InputError
                     class="mt-1"
@@ -172,13 +194,16 @@ const customer = defineModel<NewCustomer>('customer', { required: true });
             </div>
             <div>
                 <Label for="customer_id_number">
-                    Número de documento <span class="text-destructive">*</span>
+                    {{ trans('app.fields.id_number') }}
+                    <span class="text-destructive">*</span>
                 </Label>
                 <Input
                     id="customer_id_number"
                     v-model="customer.id_number"
                     class="mt-1 w-full"
-                    placeholder="Número"
+                    :placeholder="
+                        trans('app.pos.customer_form.id_number_placeholder')
+                    "
                 />
                 <InputError
                     class="mt-1"
@@ -187,13 +212,16 @@ const customer = defineModel<NewCustomer>('customer', { required: true });
             </div>
             <div>
                 <Label for="customer_phone">
-                    Celular <span class="text-destructive">*</span>
+                    {{ trans('app.fields.phone') }}
+                    <span class="text-destructive">*</span>
                 </Label>
                 <Input
                     id="customer_phone"
                     v-model="customer.phone"
                     class="mt-1 w-full"
-                    placeholder="3001234567"
+                    :placeholder="
+                        trans('app.pos.customer_form.phone_placeholder')
+                    "
                 />
                 <InputError
                     class="mt-1"
@@ -201,13 +229,17 @@ const customer = defineModel<NewCustomer>('customer', { required: true });
                 />
             </div>
             <div>
-                <Label for="customer_email">Correo</Label>
+                <Label for="customer_email">{{
+                    trans('app.fields.email')
+                }}</Label>
                 <Input
                     id="customer_email"
                     v-model="customer.email"
                     type="email"
                     class="mt-1 w-full"
-                    placeholder="correo@ejemplo.com"
+                    :placeholder="
+                        trans('app.pos.customer_form.email_placeholder')
+                    "
                 />
                 <InputError
                     class="mt-1"
@@ -215,7 +247,9 @@ const customer = defineModel<NewCustomer>('customer', { required: true });
                 />
             </div>
             <div>
-                <Label for="customer_birth_date">Fecha de nacimiento</Label>
+                <Label for="customer_birth_date">{{
+                    trans('app.fields.birth_date')
+                }}</Label>
                 <Input
                     id="customer_birth_date"
                     v-model="customer.birth_date"
@@ -229,12 +263,16 @@ const customer = defineModel<NewCustomer>('customer', { required: true });
                 />
             </div>
             <div>
-                <Label for="customer_address">Dirección</Label>
+                <Label for="customer_address">{{
+                    trans('app.fields.address')
+                }}</Label>
                 <Input
                     id="customer_address"
                     v-model="customer.address"
                     class="mt-1 w-full"
-                    placeholder="Calle 1 # 2-3"
+                    :placeholder="
+                        trans('app.pos.customer_form.address_placeholder')
+                    "
                 />
                 <InputError
                     class="mt-1"
@@ -242,12 +280,14 @@ const customer = defineModel<NewCustomer>('customer', { required: true });
                 />
             </div>
             <div>
-                <Label for="customer_city">Ciudad</Label>
+                <Label for="customer_city">{{
+                    trans('app.fields.city')
+                }}</Label>
                 <Input
                     id="customer_city"
                     v-model="customer.city"
                     class="mt-1 w-full"
-                    placeholder="Ciudad"
+                    :placeholder="trans('app.fields.city')"
                 />
                 <InputError
                     class="mt-1"
@@ -255,13 +295,17 @@ const customer = defineModel<NewCustomer>('customer', { required: true });
                 />
             </div>
             <div class="sm:col-span-2">
-                <Label for="customer_notes">Notas</Label>
+                <Label for="customer_notes">{{
+                    trans('app.fields.notes')
+                }}</Label>
                 <textarea
                     id="customer_notes"
                     v-model="customer.notes"
                     rows="2"
                     class="mt-1 w-full resize-none rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring/50 dark:bg-input/30"
-                    placeholder="Opcional..."
+                    :placeholder="
+                        trans('app.pos.customer_form.notes_placeholder')
+                    "
                 ></textarea>
                 <InputError
                     class="mt-1"

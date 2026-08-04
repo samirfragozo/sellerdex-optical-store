@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Checkbox } from '@/components/ui/checkbox';
+import { useTranslations } from '@/composables/useTranslations';
 
 interface Combo {
     with_exam: boolean;
@@ -8,6 +9,7 @@ interface Combo {
 }
 
 const combo = defineModel<Combo>('combo', { required: true });
+const { trans } = useTranslations();
 </script>
 
 <template>
@@ -15,12 +17,14 @@ const combo = defineModel<Combo>('combo', { required: true });
         <!-- Examen -->
         <label class="flex cursor-pointer items-center gap-2 text-sm">
             <Checkbox v-model="combo.with_exam" />
-            Incluir examen (gratis)
+            {{ trans('app.pos.combo_form.include_exam') }}
         </label>
 
         <!-- Forro -->
         <div>
-            <span class="mb-1 block text-sm font-medium">Forro</span>
+            <span class="mb-1 block text-sm font-medium">{{
+                trans('app.pos.summary.lining')
+            }}</span>
             <div class="flex gap-4">
                 <label class="flex cursor-pointer items-center gap-2 text-sm">
                     <input
@@ -29,7 +33,7 @@ const combo = defineModel<Combo>('combo', { required: true });
                         value="small"
                         class="size-4 accent-primary"
                     />
-                    Pequeño
+                    {{ trans('app.pos.summary.small') }}
                 </label>
                 <label class="flex cursor-pointer items-center gap-2 text-sm">
                     <input
@@ -38,7 +42,7 @@ const combo = defineModel<Combo>('combo', { required: true });
                         value="large"
                         class="size-4 accent-primary"
                     />
-                    Grande
+                    {{ trans('app.pos.summary.large') }}
                 </label>
             </div>
         </div>
@@ -46,7 +50,7 @@ const combo = defineModel<Combo>('combo', { required: true });
         <!-- Líquido -->
         <label class="flex cursor-pointer items-center gap-2 text-sm">
             <Checkbox v-model="combo.include_liquid" />
-            Incluir líquido
+            {{ trans('app.pos.combo_form.include_liquid') }}
         </label>
     </div>
 </template>

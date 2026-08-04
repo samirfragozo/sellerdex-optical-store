@@ -28,14 +28,17 @@ import type {
 import { useLensRecommendation } from '@/composables/useLensRecommendation';
 import type { Armado } from '@/composables/usePosCart';
 import { usePosCart } from '@/composables/usePosCart';
+import { useTranslations } from '@/composables/useTranslations';
 import { index, store } from '@/routes/pos';
 import type { CreatedSale } from '@/types/global';
+
+const { trans } = useTranslations();
 
 defineOptions({
     layout: {
         breadcrumbs: [
             {
-                title: 'Nueva venta',
+                title: trans('app.pos.title'),
                 href: index(),
             },
         ],
@@ -184,13 +187,15 @@ watch(customerMode, (mode) => {
 // Customer summary for accordion collapsed view
 const customerSummary = computed(() => {
     if (customerMode.value === 'none') {
-        return 'Sin cliente';
+        return trans('app.pos.no_customer');
     }
 
     if (customerMode.value === 'existing' && form.customer_id !== null) {
         const c = props.customers.find((c) => c.id === form.customer_id);
 
-        return c ? `${c.name} ${c.last_name}` : 'Cliente seleccionado';
+        return c
+            ? `${c.name} ${c.last_name}`
+            : trans('app.pos.selected_customer');
     }
 
     if (customerMode.value === 'new' && form.customer.name) {
@@ -257,9 +262,9 @@ const balance = computed(() => {
 
 // --- Document types ---
 const documentTypes = [
-    { value: 'quote', label: 'Cotización' },
-    { value: 'order', label: 'Venta' },
-    { value: 'layaway', label: 'Plan separe' },
+    { value: 'quote', label: trans('app.sale_document_type.quote') },
+    { value: 'order', label: trans('app.sale_document_type.order') },
+    { value: 'layaway', label: trans('app.sale_document_type.layaway') },
 ];
 
 // --- Frame products ---
@@ -406,12 +411,12 @@ function submit(): void {
 </script>
 
 <template>
-    <Head title="Nueva venta" />
+    <Head :title="trans('app.pos.title')" />
 
     <div class="flex h-full flex-1 flex-col gap-6 overflow-x-auto p-4">
         <div class="flex items-center gap-3">
             <ShoppingCart class="size-6 text-muted-foreground" />
-            <h1 class="text-2xl font-semibold">Nueva venta</h1>
+            <h1 class="text-2xl font-semibold">{{ trans('app.pos.title') }}</h1>
         </div>
 
         <!-- Print / download panel shown after a successful sale -->
@@ -422,7 +427,12 @@ function submit(): void {
             <p
                 class="mb-3 text-base font-semibold text-green-800 dark:text-green-300"
             >
-                Venta {{ createdSale.number }} creada exitosamente
+                {{
+                    trans('app.pos.created').replace(
+                        ':number',
+                        createdSale.number,
+                    )
+                }}
             </p>
             <div class="flex flex-wrap gap-2">
                 <a
@@ -432,7 +442,7 @@ function submit(): void {
                     class="inline-flex items-center gap-2 rounded-md border border-input bg-background px-3 py-1.5 text-sm font-medium shadow-xs transition-colors hover:bg-accent hover:text-accent-foreground"
                 >
                     <Eye class="size-4" />
-                    Imprimir factura
+                    {{ trans('app.documents.print_invoice') }}
                 </a>
                 <a
                     :href="createdSale.invoice_pdf_url"
@@ -441,7 +451,7 @@ function submit(): void {
                     class="inline-flex items-center gap-2 rounded-md border border-input bg-background px-3 py-1.5 text-sm font-medium shadow-xs transition-colors hover:bg-accent hover:text-accent-foreground"
                 >
                     <Download class="size-4" />
-                    Descargar PDF
+                    {{ trans('app.documents.download_invoice') }}
                 </a>
                 <a
                     v-if="createdSale.formula_url"
@@ -451,7 +461,7 @@ function submit(): void {
                     class="inline-flex items-center gap-2 rounded-md border border-input bg-background px-3 py-1.5 text-sm font-medium shadow-xs transition-colors hover:bg-accent hover:text-accent-foreground"
                 >
                     <FileText class="size-4" />
-                    Imprimir fórmula
+                    {{ trans('app.documents.print_formula') }}
                 </a>
             </div>
         </div>
@@ -461,7 +471,7 @@ function submit(): void {
             <div class="flex flex-col gap-3 lg:col-span-2">
                 <!-- Step: Cliente -->
                 <AccordionStep
-                    title="Cliente"
+                    :title="trans('app.pos.steps.customer')"
                     :open="openStep === 'customer'"
                     :summary="customerSummary"
                     @toggle="toggle('customer')"
@@ -480,7 +490,12 @@ function submit(): void {
                 <template v-for="armado in cart.armados.value" :key="armado.id">
                     <!-- Prescripción -->
                     <AccordionStep
-                        :title="`Prescripción (Armado #${armado.id})`"
+                        :title="
+                            trans('app.pos.steps.prescription').replace(
+                                ':id',
+                                String(armado.id),
+                            )
+                        "
                         :open="openStep === `prescription-${armado.id}`"
                         @toggle="toggle(`prescription-${armado.id}`)"
                     >
@@ -502,14 +517,19 @@ function submit(): void {
                                 size="sm"
                                 @click="toggle(`lens-${armado.id}`)"
                             >
-                                Continuar al lente
+                                {{ trans('app.pos.continue_to_lens') }}
                             </Button>
                         </div>
                     </AccordionStep>
 
                     <!-- Lente -->
                     <AccordionStep
-                        :title="`Lente (Armado #${armado.id})`"
+                        :title="
+                            trans('app.pos.steps.lens').replace(
+                                ':id',
+                                String(armado.id),
+                            )
+                        "
                         :open="openStep === `lens-${armado.id}`"
                         @toggle="toggle(`lens-${armado.id}`)"
                     >
@@ -530,14 +550,19 @@ function submit(): void {
                                 size="sm"
                                 @click="toggle(`frame-${armado.id}`)"
                             >
-                                Continuar a la montura
+                                {{ trans('app.pos.continue_to_frame') }}
                             </Button>
                         </div>
                     </AccordionStep>
 
                     <!-- Montura -->
                     <AccordionStep
-                        :title="`Montura (Armado #${armado.id})`"
+                        :title="
+                            trans('app.pos.steps.frame').replace(
+                                ':id',
+                                String(armado.id),
+                            )
+                        "
                         :open="openStep === `frame-${armado.id}`"
                         @toggle="toggle(`frame-${armado.id}`)"
                     >
@@ -553,14 +578,19 @@ function submit(): void {
                                 size="sm"
                                 @click="toggle(`combo-${armado.id}`)"
                             >
-                                Continuar al combo
+                                {{ trans('app.pos.continue_to_combo') }}
                             </Button>
                         </div>
                     </AccordionStep>
 
                     <!-- Combo -->
                     <AccordionStep
-                        :title="`Combo (Armado #${armado.id})`"
+                        :title="
+                            trans('app.pos.steps.combo').replace(
+                                ':id',
+                                String(armado.id),
+                            )
+                        "
                         :open="openStep === `combo-${armado.id}`"
                         @toggle="toggle(`combo-${armado.id}`)"
                     >
@@ -574,7 +604,7 @@ function submit(): void {
                                 @click="removeArmado(armado.id)"
                             >
                                 <Trash2 class="mr-1.5 size-4" />
-                                Quitar este armado
+                                {{ trans('app.pos.remove_armado') }}
                             </Button>
                         </div>
                     </AccordionStep>
@@ -586,17 +616,23 @@ function submit(): void {
                         class="rounded-xl border border-sidebar-border/70 p-4 dark:border-sidebar-border"
                     >
                         <h2 class="mb-3 text-base font-semibold">
-                            Productos adicionales
+                            {{ trans('app.pos.additional_products') }}
                         </h2>
                         <div class="flex flex-col gap-3">
                             <!-- Header -->
                             <div
                                 class="hidden grid-cols-[1fr_2fr_5rem_6rem_2rem] gap-2 text-xs font-medium text-muted-foreground sm:grid"
                             >
-                                <span>Producto</span>
-                                <span>Descripción</span>
-                                <span class="text-right">Cant.</span>
-                                <span class="text-right">P. unitario</span>
+                                <span>{{ trans('app.fields.product') }}</span>
+                                <span>{{
+                                    trans('app.fields.description')
+                                }}</span>
+                                <span class="text-right">{{
+                                    trans('app.pos.quantity_short')
+                                }}</span>
+                                <span class="text-right">{{
+                                    trans('app.pos.unit_price_short')
+                                }}</span>
                                 <span></span>
                             </div>
 
@@ -616,7 +652,9 @@ function submit(): void {
                                         )
                                     "
                                 >
-                                    <option value="">— Ninguno —</option>
+                                    <option value="">
+                                        {{ trans('app.pos.none_option') }}
+                                    </option>
                                     <option
                                         v-for="product in looseProducts"
                                         :key="product.id"
@@ -629,7 +667,9 @@ function submit(): void {
                                 <Input
                                     v-model="item.description"
                                     class="w-full"
-                                    placeholder="Descripción"
+                                    :placeholder="
+                                        trans('app.fields.description')
+                                    "
                                 />
 
                                 <Input
@@ -669,7 +709,7 @@ function submit(): void {
                         @click="startArmado"
                     >
                         <Plus class="size-4" />
-                        Agregar gafas / lente
+                        {{ trans('app.pos.add_armado') }}
                     </Button>
                     <Button
                         type="button"
@@ -678,7 +718,7 @@ function submit(): void {
                         @click="addLooseProduct"
                     >
                         <Plus class="size-4" />
-                        Agregar producto
+                        {{ trans('app.pos.add_product') }}
                     </Button>
                 </div>
             </div>
@@ -713,15 +753,15 @@ function submit(): void {
                 <div
                     class="rounded-xl border border-sidebar-border/70 p-4 dark:border-sidebar-border"
                 >
-                    <label for="notes" class="block text-sm font-semibold"
-                        >Observaciones</label
-                    >
+                    <label for="notes" class="block text-sm font-semibold">{{
+                        trans('app.fields.notes')
+                    }}</label>
                     <textarea
                         id="notes"
                         v-model="form.notes"
                         rows="3"
                         class="mt-1 w-full resize-none rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring/50 dark:bg-input/30"
-                        placeholder="Observaciones opcionales..."
+                        :placeholder="trans('app.pos.notes_placeholder')"
                     ></textarea>
                     <InputError :message="form.errors.notes" />
                 </div>
@@ -732,7 +772,11 @@ function submit(): void {
                     class="w-full"
                     :disabled="form.processing"
                 >
-                    {{ form.processing ? 'Guardando...' : 'Guardar venta' }}
+                    {{
+                        form.processing
+                            ? trans('app.pos.saving')
+                            : trans('app.pos.save')
+                    }}
                 </Button>
 
                 <div
@@ -740,7 +784,7 @@ function submit(): void {
                     class="rounded-md bg-destructive/10 px-4 py-3 text-sm text-destructive"
                 >
                     <p class="mb-1 font-medium">
-                        Corrige los siguientes errores:
+                        {{ trans('app.pos.fix_errors') }}
                     </p>
                     <ul class="list-disc space-y-0.5 pl-5">
                         <li v-for="(message, key) in form.errors" :key="key">

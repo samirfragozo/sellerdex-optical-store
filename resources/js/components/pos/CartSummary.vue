@@ -5,6 +5,9 @@ import InputError from '@/components/InputError.vue';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import type { Armado, LooseProduct } from '@/composables/usePosCart';
+import { useTranslations } from '@/composables/useTranslations';
+
+const { trans } = useTranslations();
 
 const props = defineProps<{
     armados: Armado[];
@@ -36,7 +39,9 @@ function toggleArmado(id: number): void {
     <div
         class="rounded-xl border border-sidebar-border/70 p-4 dark:border-sidebar-border"
     >
-        <h2 class="mb-3 text-base font-semibold">Resumen</h2>
+        <h2 class="mb-3 text-base font-semibold">
+            {{ trans('app.pos.summary.title') }}
+        </h2>
 
         <!-- Armados (lens + frame combos) -->
         <div v-if="armados.length > 0" class="mb-3 flex flex-col gap-2">
@@ -52,7 +57,12 @@ function toggleArmado(id: number): void {
                     @click="toggleArmado(armado.id)"
                 >
                     <span>
-                        Armado #{{ armado.id }}
+                        {{
+                            trans('app.pos.summary.armado').replace(
+                                ':id',
+                                String(armado.id),
+                            )
+                        }}
                         <span
                             v-if="armado.lens"
                             class="ml-1 text-xs font-normal text-muted-foreground"
@@ -73,7 +83,9 @@ function toggleArmado(id: number): void {
                 >
                     <div class="flex flex-col gap-1 text-sm">
                         <div v-if="armado.lens" class="flex justify-between">
-                            <span class="text-muted-foreground">Lente</span>
+                            <span class="text-muted-foreground">{{
+                                trans('app.pos.summary.lens')
+                            }}</span>
                             <span class="tabular-nums">{{
                                 props.formatCOP(armado.lens.unit_price)
                             }}</span>
@@ -82,7 +94,9 @@ function toggleArmado(id: number): void {
                             v-if="armado.frame && !armado.own_frame"
                             class="flex justify-between"
                         >
-                            <span class="text-muted-foreground">Montura</span>
+                            <span class="text-muted-foreground">{{
+                                trans('app.pos.summary.frame')
+                            }}</span>
                             <span class="tabular-nums">{{
                                 props.formatCOP(armado.frame.unit_price)
                             }}</span>
@@ -91,26 +105,26 @@ function toggleArmado(id: number): void {
                             v-if="armado.own_frame"
                             class="text-xs text-muted-foreground"
                         >
-                            Montura propia
+                            {{ trans('app.pos.summary.own_frame') }}
                         </div>
                         <div
                             v-if="armado.combo.with_exam"
                             class="text-xs text-muted-foreground"
                         >
-                            + Examen incluido
+                            {{ trans('app.pos.summary.exam_included') }}
                         </div>
                         <div
                             v-if="armado.combo.include_liquid"
                             class="text-xs text-muted-foreground"
                         >
-                            + Líquido incluido
+                            {{ trans('app.pos.summary.liquid_included') }}
                         </div>
                         <div class="text-xs text-muted-foreground">
-                            Forro:
+                            {{ trans('app.pos.summary.lining') }}:
                             {{
                                 armado.combo.forro === 'small'
-                                    ? 'Pequeño'
-                                    : 'Grande'
+                                    ? trans('app.pos.summary.small')
+                                    : trans('app.pos.summary.large')
                             }}
                         </div>
                     </div>
@@ -126,7 +140,10 @@ function toggleArmado(id: number): void {
                 class="flex justify-between text-sm"
             >
                 <span class="text-muted-foreground">
-                    {{ product.description || '(sin descripción)' }}
+                    {{
+                        product.description ||
+                        trans('app.pos.summary.no_description')
+                    }}
                     <span v-if="product.quantity > 1"
                         >x{{ product.quantity }}</span
                     >
@@ -140,16 +157,18 @@ function toggleArmado(id: number): void {
         <!-- Totals block -->
         <div class="flex flex-col gap-2 text-sm">
             <div class="flex justify-between">
-                <span class="text-muted-foreground">Subtotal</span>
+                <span class="text-muted-foreground">{{
+                    trans('app.fields.subtotal')
+                }}</span>
                 <span class="font-medium tabular-nums">{{
                     props.formatCOP(subtotal)
                 }}</span>
             </div>
 
             <div class="flex items-center justify-between gap-2">
-                <Label for="discount" class="text-muted-foreground"
-                    >Descuento</Label
-                >
+                <Label for="discount" class="text-muted-foreground">{{
+                    trans('app.fields.discount')
+                }}</Label>
                 <Input
                     id="discount"
                     v-model.number="discount"
@@ -166,13 +185,18 @@ function toggleArmado(id: number): void {
                 v-if="surchargePercent > 0"
                 class="rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-700 dark:bg-amber-900/20 dark:text-amber-400"
             >
-                Total incluye recargo de plataforma ({{ surchargePercent }}%)
+                {{
+                    trans('app.pos.summary.surcharge_note').replace(
+                        ':percent',
+                        String(surchargePercent),
+                    )
+                }}
             </div>
 
             <div
                 class="flex justify-between border-t border-border pt-2 text-base font-semibold"
             >
-                <span>Total</span>
+                <span>{{ trans('app.fields.total') }}</span>
                 <span class="tabular-nums">{{ props.formatCOP(total) }}</span>
             </div>
 
@@ -181,7 +205,9 @@ function toggleArmado(id: number): void {
                 v-if="balance !== total"
                 class="flex justify-between border-t border-border pt-2 text-sm"
             >
-                <span class="text-muted-foreground">Saldo pendiente</span>
+                <span class="text-muted-foreground">{{
+                    trans('app.pos.summary.balance')
+                }}</span>
                 <span
                     :class="[
                         'font-semibold tabular-nums',

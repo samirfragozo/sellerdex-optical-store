@@ -3,6 +3,9 @@ import InputError from '@/components/InputError.vue';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useTranslations } from '@/composables/useTranslations';
+
+const { trans } = useTranslations();
 
 interface PaymentMethod {
     id: number;
@@ -43,7 +46,9 @@ const paymentAmount = defineModel<number>('paymentAmount', { required: true });
         <div
             class="rounded-xl border border-sidebar-border/70 p-4 dark:border-sidebar-border"
         >
-            <h2 class="mb-3 text-base font-semibold">Tipo de documento</h2>
+            <h2 class="mb-3 text-base font-semibold">
+                {{ trans('app.pos.payment_form.document_type') }}
+            </h2>
             <div class="flex flex-col gap-2">
                 <label
                     v-for="dt in documentTypes"
@@ -68,20 +73,26 @@ const paymentAmount = defineModel<number>('paymentAmount', { required: true });
         >
             <div class="mb-3 flex items-center gap-2">
                 <Checkbox id="show_payment" v-model="showPayment" />
-                <Label for="show_payment" class="cursor-pointer font-semibold"
-                    >Registrar abono</Label
+                <Label
+                    for="show_payment"
+                    class="cursor-pointer font-semibold"
+                    >{{ trans('app.pos.take_payment') }}</Label
                 >
             </div>
 
             <div v-if="showPayment" class="flex flex-col gap-3">
                 <div>
-                    <Label for="payment_method">Método de pago</Label>
+                    <Label for="payment_method">{{
+                        trans('app.pos.payment_form.payment_method')
+                    }}</Label>
                     <select
                         id="payment_method"
                         v-model="paymentMethodId"
                         class="mt-1 h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs outline-none focus-visible:ring-2 focus-visible:ring-ring/50 dark:bg-input/30"
                     >
-                        <option :value="null">— Seleccionar —</option>
+                        <option :value="null">
+                            {{ trans('app.pos.select_option') }}
+                        </option>
                         <option
                             v-for="pm in paymentMethods"
                             :key="pm.id"
@@ -96,7 +107,9 @@ const paymentAmount = defineModel<number>('paymentAmount', { required: true });
                 </div>
 
                 <div>
-                    <Label for="payment_amount">Monto del abono</Label>
+                    <Label for="payment_amount">{{
+                        trans('app.pos.payment_form.amount')
+                    }}</Label>
                     <Input
                         id="payment_amount"
                         v-model.number="paymentAmount"
@@ -111,9 +124,12 @@ const paymentAmount = defineModel<number>('paymentAmount', { required: true });
                         v-if="paymentAmount > total"
                         class="mt-1 text-sm text-destructive"
                     >
-                        El abono no puede superar el total ({{
-                            props.formatCOP(total)
-                        }}).
+                        {{
+                            trans('app.pos.payment_form.exceeds_total').replace(
+                                ':total',
+                                props.formatCOP(total),
+                            )
+                        }}
                     </p>
                 </div>
             </div>

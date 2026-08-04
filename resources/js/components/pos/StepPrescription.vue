@@ -3,6 +3,9 @@ import DiopterInput from '@/components/DiopterInput.vue';
 import InputError from '@/components/InputError.vue';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useTranslations } from '@/composables/useTranslations';
+
+const { trans } = useTranslations();
 
 interface PrescriptionOption {
     id: number;
@@ -62,7 +65,7 @@ function onRefractionChange(): void {
 <template>
     <div>
         <p class="mb-4 text-xs text-muted-foreground">
-            Obligatoria para vender lentes formulados.
+            {{ trans('app.pos.prescription_form.required_notice') }}
         </p>
 
         <!-- A lens sale requires a customer -->
@@ -70,8 +73,7 @@ function onRefractionChange(): void {
             v-if="props.lensNeedsCustomer"
             class="rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-700 dark:bg-amber-900/20 dark:text-amber-400"
         >
-            Para vender lentes formulados debes seleccionar o registrar un
-            cliente.
+            {{ trans('app.pos.prescription_form.needs_customer') }}
         </div>
 
         <template v-else>
@@ -88,7 +90,7 @@ function onRefractionChange(): void {
                     ]"
                     @click="prescriptionMode = 'existing'"
                 >
-                    Usar existente
+                    {{ trans('app.pos.prescription_form.use_existing') }}
                 </button>
                 <button
                     type="button"
@@ -100,19 +102,23 @@ function onRefractionChange(): void {
                     ]"
                     @click="prescriptionMode = 'new'"
                 >
-                    Crear nueva
+                    {{ trans('app.pos.prescription_form.create_new') }}
                 </button>
             </div>
 
             <!-- Existing prescription select -->
             <div v-if="prescriptionMode === 'existing'">
-                <Label for="prescription_id">Seleccionar prescripción</Label>
+                <Label for="prescription_id">{{
+                    trans('app.pos.prescription_form.select_prescription')
+                }}</Label>
                 <select
                     id="prescription_id"
                     v-model="prescriptionId"
                     class="mt-1 h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs outline-none focus-visible:ring-2 focus-visible:ring-ring/50 dark:bg-input/30"
                 >
-                    <option :value="null">— Seleccionar —</option>
+                    <option :value="null">
+                        {{ trans('app.pos.select_option') }}
+                    </option>
                     <option
                         v-for="rx in customerPrescriptions"
                         :key="rx.id"
@@ -131,7 +137,9 @@ function onRefractionChange(): void {
             <div v-else class="flex flex-col gap-3">
                 <div class="grid gap-3 sm:grid-cols-2">
                     <div>
-                        <Label for="rx_exam_date">Fecha del examen</Label>
+                        <Label for="rx_exam_date">{{
+                            trans('app.fields.exam_date')
+                        }}</Label>
                         <Input
                             id="rx_exam_date"
                             v-model="prescription.exam_date"
@@ -153,10 +161,10 @@ function onRefractionChange(): void {
                         class="grid min-w-[26rem] grid-cols-[2rem_1fr_1fr_1fr_1fr] gap-2 text-xs font-medium text-muted-foreground"
                     >
                         <span></span>
-                        <span>Esfera</span>
-                        <span>Cilindro</span>
-                        <span>Eje</span>
-                        <span>Add</span>
+                        <span>{{ trans('app.fields.sphere') }}</span>
+                        <span>{{ trans('app.fields.cylinder') }}</span>
+                        <span>{{ trans('app.fields.axis') }}</span>
+                        <span>{{ trans('app.fields.add') }}</span>
                     </div>
                     <div
                         class="mt-1 grid min-w-[26rem] grid-cols-[2rem_1fr_1fr_1fr_1fr] items-center gap-2"
@@ -225,13 +233,17 @@ function onRefractionChange(): void {
                 </div>
 
                 <div>
-                    <Label for="rx_diagnosis">Diagnóstico</Label>
+                    <Label for="rx_diagnosis">{{
+                        trans('app.fields.diagnosis')
+                    }}</Label>
                     <textarea
                         id="rx_diagnosis"
                         v-model="prescription.diagnosis"
                         rows="2"
                         class="mt-1 w-full resize-none rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring/50 dark:bg-input/30"
-                        placeholder="Opcional..."
+                        :placeholder="
+                            trans('app.pos.prescription_form.notes_placeholder')
+                        "
                     ></textarea>
                 </div>
             </div>
