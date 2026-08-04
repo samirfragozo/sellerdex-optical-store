@@ -30,8 +30,10 @@ const auth = computed(() => page.props.auth);
 
 <template>
     <div>
-        <div class="border-b border-sidebar-border/80">
-            <div class="mx-auto flex h-16 items-center px-4 md:max-w-7xl">
+        <div
+            class="bg-white shadow-xs ring-1 ring-zinc-950/5 dark:bg-zinc-900 dark:ring-white/10"
+        >
+            <div class="flex h-16 items-center px-8">
                 <Link :href="posIndex()" class="flex items-center gap-x-2">
                     <AppLogo />
                 </Link>
@@ -75,7 +77,7 @@ const auth = computed(() => page.props.auth);
             class="flex w-full border-b border-sidebar-border/70"
         >
             <div
-                class="mx-auto flex h-12 w-full items-center justify-start px-4 text-neutral-500 md:max-w-7xl"
+                class="flex h-12 w-full items-center justify-start px-4 text-neutral-500"
             >
                 <Breadcrumbs :breadcrumbs="breadcrumbs" />
             </div>
