@@ -53,7 +53,9 @@ const getStoredAppearance = () => {
         return null;
     }
 
-    return localStorage.getItem('appearance') as Appearance | null;
+    // Shared with Filament's own theme switcher (vendor/filament/filament/resources/js/dark-mode.js),
+    // which reads/writes this same 'theme' key so light/dark stays in sync between POS and Filament.
+    return localStorage.getItem('theme') as Appearance | null;
 };
 
 const prefersDark = (): boolean => {
@@ -88,7 +90,7 @@ const appearance = ref<Appearance>('system');
 export function useAppearance(): UseAppearanceReturn {
     onMounted(() => {
         const savedAppearance = localStorage.getItem(
-            'appearance',
+            'theme',
         ) as Appearance | null;
 
         if (savedAppearance) {
@@ -107,8 +109,8 @@ export function useAppearance(): UseAppearanceReturn {
     function updateAppearance(value: Appearance) {
         appearance.value = value;
 
-        // Store in localStorage for client-side persistence...
-        localStorage.setItem('appearance', value);
+        // Store in localStorage for client-side persistence (shared key with Filament, see above)...
+        localStorage.setItem('theme', value);
 
         // Store in cookie for SSR...
         setCookie('appearance', value);
