@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Form, Head, usePage } from '@inertiajs/vue3';
+import { Form, Head, setLayoutProps, usePage } from '@inertiajs/vue3';
 import { Link } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
@@ -15,15 +15,13 @@ import { send } from '@/routes/verification';
 
 const { trans } = useTranslations();
 
-defineOptions({
-    layout: {
-        breadcrumbs: [
-            {
-                title: trans('settings.profile.breadcrumb'),
-                href: edit(),
-            },
-        ],
-    },
+setLayoutProps({
+    breadcrumbs: [
+        {
+            title: trans('settings.profile.breadcrumb'),
+            href: edit(),
+        },
+    ],
 });
 
 const page = usePage();

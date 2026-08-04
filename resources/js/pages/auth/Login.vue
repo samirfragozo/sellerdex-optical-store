@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Form, Head } from '@inertiajs/vue3';
+import { Form, Head, setLayoutProps } from '@inertiajs/vue3';
 import InputError from '@/components/InputError.vue';
 import PasskeyVerify from '@/components/PasskeyVerify.vue';
 import PasswordInput from '@/components/PasswordInput.vue';
@@ -16,11 +16,9 @@ import { request } from '@/routes/password';
 
 const { trans } = useTranslations();
 
-defineOptions({
-    layout: {
-        title: trans('auth.login.title'),
-        description: trans('auth.login.description'),
-    },
+setLayoutProps({
+    title: trans('auth.login.title'),
+    description: trans('auth.login.description'),
 });
 
 defineProps<{

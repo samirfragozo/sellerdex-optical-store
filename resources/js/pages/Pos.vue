@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, useForm, usePage } from '@inertiajs/vue3';
+import { Head, setLayoutProps, useForm, usePage } from '@inertiajs/vue3';
 import {
     Download,
     Eye,
@@ -34,15 +34,13 @@ import type { CreatedSale } from '@/types/global';
 
 const { trans } = useTranslations();
 
-defineOptions({
-    layout: {
-        breadcrumbs: [
-            {
-                title: trans('app.pos.title'),
-                href: index(),
-            },
-        ],
-    },
+setLayoutProps({
+    breadcrumbs: [
+        {
+            title: trans('app.pos.title'),
+            href: index(),
+        },
+    ],
 });
 
 interface PaymentMethod {

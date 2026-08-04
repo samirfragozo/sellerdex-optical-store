@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Form, Head } from '@inertiajs/vue3';
+import { Form, Head, setLayoutProps } from '@inertiajs/vue3';
 import {
     index as confirmOptions,
     store as confirmStore,
@@ -15,11 +15,9 @@ import { store } from '@/routes/password/confirm';
 
 const { trans } = useTranslations();
 
-defineOptions({
-    layout: {
-        title: trans('auth.confirm_password.title'),
-        description: trans('auth.confirm_password.description'),
-    },
+setLayoutProps({
+    title: trans('auth.confirm_password.title'),
+    description: trans('auth.confirm_password.description'),
 });
 </script>
 

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Form, Head } from '@inertiajs/vue3';
+import { Form, Head, setLayoutProps } from '@inertiajs/vue3';
 import TextLink from '@/components/TextLink.vue';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
@@ -9,11 +9,9 @@ import { send } from '@/routes/verification';
 
 const { trans } = useTranslations();
 
-defineOptions({
-    layout: {
-        title: trans('auth.verify_email.title'),
-        description: trans('auth.verify_email.description'),
-    },
+setLayoutProps({
+    title: trans('auth.verify_email.title'),
+    description: trans('auth.verify_email.description'),
 });
 
 defineProps<{

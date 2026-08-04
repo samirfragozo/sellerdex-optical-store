@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Form, Head } from '@inertiajs/vue3';
+import { Form, Head, setLayoutProps } from '@inertiajs/vue3';
 import InputError from '@/components/InputError.vue';
 import TextLink from '@/components/TextLink.vue';
 import { Button } from '@/components/ui/button';
@@ -12,11 +12,9 @@ import { email } from '@/routes/password';
 
 const { trans } = useTranslations();
 
-defineOptions({
-    layout: {
-        title: trans('auth.forgot_password.title'),
-        description: trans('auth.forgot_password.description'),
-    },
+setLayoutProps({
+    title: trans('auth.forgot_password.title'),
+    description: trans('auth.forgot_password.description'),
 });
 
 defineProps<{

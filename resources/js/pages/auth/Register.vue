@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Form, Head } from '@inertiajs/vue3';
+import { Form, Head, setLayoutProps } from '@inertiajs/vue3';
 import InputError from '@/components/InputError.vue';
 import PasswordInput from '@/components/PasswordInput.vue';
 import TextLink from '@/components/TextLink.vue';
@@ -17,11 +17,9 @@ defineProps<{
     passwordRules: string;
 }>();
 
-defineOptions({
-    layout: {
-        title: trans('auth.register.title'),
-        description: trans('auth.register.description'),
-    },
+setLayoutProps({
+    title: trans('auth.register.title'),
+    description: trans('auth.register.description'),
 });
 </script>
 
