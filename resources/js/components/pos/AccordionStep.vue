@@ -7,7 +7,7 @@ defineEmits<{ toggle: [] }>();
 
 <template>
     <div
-        class="rounded-xl border border-sidebar-border/70 dark:border-sidebar-border"
+        class="rounded-xl border border-sidebar-border/70 bg-white dark:border-sidebar-border dark:bg-zinc-900"
     >
         <button
             type="button"

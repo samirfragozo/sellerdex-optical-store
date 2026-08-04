@@ -611,7 +611,7 @@ function submit(): void {
                 <!-- Loose products -->
                 <template v-if="cart.products.value.length > 0">
                     <div
-                        class="rounded-xl border border-sidebar-border/70 p-4 dark:border-sidebar-border"
+                        class="rounded-xl border border-sidebar-border/70 bg-white p-4 dark:border-sidebar-border dark:bg-zinc-900"
                     >
                         <h2 class="mb-3 text-base font-semibold">
                             {{ trans('app.pos.additional_products') }}
@@ -749,7 +749,7 @@ function submit(): void {
 
                 <!-- Notes -->
                 <div
-                    class="rounded-xl border border-sidebar-border/70 p-4 dark:border-sidebar-border"
+                    class="rounded-xl border border-sidebar-border/70 bg-white p-4 dark:border-sidebar-border dark:bg-zinc-900"
                 >
                     <label for="notes" class="block text-sm font-semibold">{{
                         trans('app.fields.notes')
