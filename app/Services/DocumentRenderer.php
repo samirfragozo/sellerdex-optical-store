@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\BusinessSetting;
+use App\Models\Company;
 use App\Models\Prescription;
 use App\Models\Sale;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -20,11 +20,11 @@ class DocumentRenderer
      * Business header data shared by every document, with the logo inlined as a
      * base64 data URI so it renders identically in the browser and in dompdf.
      *
-     * @return array{settings: BusinessSetting, logo: string|null}
+     * @return array{settings: Company, logo: string|null}
      */
     public function businessHeader(): array
     {
-        $settings = BusinessSetting::current();
+        $settings = Company::current();
 
         return ['settings' => $settings, 'logo' => $this->logoDataUri($settings)];
     }
@@ -34,7 +34,7 @@ class DocumentRenderer
      * make dompdf decode the entire bitmap into memory (e.g. a 7407×2020 PNG is
      * ~57 MB), so we downscale it first and cache the result.
      */
-    private function logoDataUri(BusinessSetting $settings): ?string
+    private function logoDataUri(Company $settings): ?string
     {
         if (! $settings->logo || ! Storage::disk('public')->exists($settings->logo)) {
             return null;

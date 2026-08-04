@@ -3,17 +3,17 @@
 namespace App\Filament\Resources\BusinessSettings\Pages;
 
 use App\Filament\Resources\BusinessSettings\BusinessSettingResource;
-use App\Models\BusinessSetting;
+use App\Models\Company;
 use Filament\Resources\Pages\EditRecord;
 
 class ManageBusinessSetting extends EditRecord
 {
     protected static string $resource = BusinessSettingResource::class;
 
-    /** Always edit the single business-settings row, regardless of route params. */
+    /** Always edit the current company's row, regardless of route params. */
     public function mount(int|string|null $record = null): void
     {
-        parent::mount(BusinessSetting::current()->getKey());
+        parent::mount(Company::current()->getKey());
     }
 
     public function getBreadcrumb(): string

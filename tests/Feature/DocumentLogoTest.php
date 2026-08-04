@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\BusinessSetting;
+use App\Models\User;
 use App\Services\DocumentRenderer;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
@@ -17,8 +17,9 @@ it('downscales a large logo before embedding it in documents', function () {
     $bytes = ob_get_clean();
     Storage::disk('public')->put('business/logo.png', $bytes);
 
-    BusinessSetting::query()->delete();
-    BusinessSetting::create(['name' => 'Óptica', 'logo' => 'business/logo.png']);
+    $user = User::factory()->admin()->create();
+    $user->company->update(['logo' => 'business/logo.png']);
+    $this->actingAs($user);
 
     $header = app(DocumentRenderer::class)->businessHeader();
 

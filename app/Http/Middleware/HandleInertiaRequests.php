@@ -2,7 +2,7 @@
 
 namespace App\Http\Middleware;
 
-use App\Models\BusinessSetting;
+use App\Models\Company;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -41,7 +41,7 @@ class HandleInertiaRequests extends Middleware
             'name' => config('app.name'),
             'locale' => app()->getLocale(),
             'business' => [
-                'name' => rescue(fn (): string => BusinessSetting::current()->name, config('app.name'), report: false),
+                'name' => rescue(fn (): string => Company::current()->name, config('app.name'), report: false),
             ],
             'auth' => [
                 'user' => $request->user(),

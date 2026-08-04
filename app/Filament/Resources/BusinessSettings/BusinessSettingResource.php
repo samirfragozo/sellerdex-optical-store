@@ -3,7 +3,7 @@
 namespace App\Filament\Resources\BusinessSettings;
 
 use App\Filament\Resources\BusinessSettings\Pages\ManageBusinessSetting;
-use App\Models\BusinessSetting;
+use App\Models\Company;
 use BackedEnum;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\TextInput;
@@ -17,7 +17,7 @@ use Filament\Support\Icons\Heroicon;
  */
 class BusinessSettingResource extends Resource
 {
-    protected static ?string $model = BusinessSetting::class;
+    protected static ?string $model = Company::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBuildingOffice2;
 
