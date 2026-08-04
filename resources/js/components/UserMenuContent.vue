@@ -9,6 +9,7 @@ import {
     DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import UserInfo from '@/components/UserInfo.vue';
+import { useTranslations } from '@/composables/useTranslations';
 import { logout } from '@/routes';
 import { index as pos } from '@/routes/pos';
 import { edit } from '@/routes/profile';
@@ -20,6 +21,7 @@ type Props = {
 
 const page = usePage();
 const isAdmin = computed(() => page.props.auth?.is_admin === true);
+const { trans } = useTranslations();
 
 const handleLogout = () => {
     router.flushAll();
@@ -39,19 +41,19 @@ defineProps<Props>();
         <DropdownMenuItem :as-child="true">
             <Link class="block w-full cursor-pointer" :href="pos()" prefetch>
                 <ShoppingCart class="mr-2 h-4 w-4" />
-                Nueva venta
+                {{ trans('app.pos.title') }}
             </Link>
         </DropdownMenuItem>
         <DropdownMenuItem :as-child="true">
             <Link class="block w-full cursor-pointer" :href="edit()" prefetch>
                 <Settings class="mr-2 h-4 w-4" />
-                Settings
+                {{ trans('app.nav.settings') }}
             </Link>
         </DropdownMenuItem>
         <DropdownMenuItem v-if="isAdmin" :as-child="true">
             <a class="block w-full cursor-pointer" href="/admin">
                 <ShieldCheck class="mr-2 h-4 w-4" />
-                Administración
+                {{ trans('app.nav.admin') }}
             </a>
         </DropdownMenuItem>
     </DropdownMenuGroup>
@@ -65,7 +67,7 @@ defineProps<Props>();
             data-test="logout-button"
         >
             <LogOut class="mr-2 h-4 w-4" />
-            Log out
+            {{ trans('app.nav.log_out') }}
         </Link>
     </DropdownMenuItem>
 </template>

@@ -15,15 +15,17 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
+import { useTranslations } from '@/composables/useTranslations';
 import { index as posIndex } from '@/routes/pos';
 import type { NavItem } from '@/types';
 
 const page = usePage();
+const { trans } = useTranslations();
 
 const mainNavItems = computed<NavItem[]>(() => {
     const items: NavItem[] = [
         {
-            title: 'Nueva venta',
+            title: trans('app.pos.title'),
             href: posIndex(),
             icon: ShoppingCart,
         },
@@ -31,7 +33,7 @@ const mainNavItems = computed<NavItem[]>(() => {
 
     if (page.props.auth?.is_admin) {
         items.push({
-            title: 'Administración',
+            title: trans('app.nav.admin'),
             href: '/admin',
             icon: ShieldCheck,
         });
