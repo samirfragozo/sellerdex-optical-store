@@ -215,6 +215,15 @@ Vue components must have a single root element.
 
 </laravel-boost-guidelines>
 
+## Translations (i18n)
+
+- All user-facing text anywhere in the project — Vue pages/components, Filament resources/pages/forms/notifications, mail, validation messages, anything rendered to a user — must be translated, not hardcoded. The app supports Spanish (`APP_LOCALE=es`) and English.
+- Source of truth is `lang/es/*.php` and `lang/en/*.php`. Existing namespaces: `auth.php` (auth pages), `settings.php` (settings pages/components), `app.php` (POS, business/domain fields, nav chrome, Filament resource labels). Reuse an existing key before adding a new one (e.g. `app.fields.*`, `app.document_type.*` are shared across POS, Filament, and elsewhere).
+- **PHP side (Filament resources/pages, controllers, notifications, mail, Blade):** use `__('namespace.key')` / `trans('namespace.key')` — never a literal string — for labels, form fields, table columns, navigation, flash messages, notifications, validation, etc. This is already the convention across `app/Filament/**`; follow it.
+- **Vue side (Inertia pages/components):** translations are shared as `translations.{auth,settings,app}` props via `app/Http/Middleware/HandleInertiaRequests.php`. Call `const { trans } = useTranslations()` (`resources/js/composables/useTranslations.ts`) and use `trans('namespace.key')` — never a literal string — for labels, placeholders, headings, button text, toasts, aria-labels, etc. If you add a new lang file, share it in `HandleInertiaRequests` too.
+- For strings with dynamic parts, use a `:placeholder` in the lang value and `.replace(':placeholder', value)` (Vue) or Laravel's built-in `:placeholder` substitution (PHP `__()`/`trans()`).
+- When creating or modifying any page, component, resource, or form: add the new string to **both** `lang/es/*.php` and `lang/en/*.php` in the same change — never add a key to only one locale.
+
 ## Git commits
 
 - Never add a `Co-Authored-By` trailer (or any AI attribution line) to commit messages in this repository. Commit messages must contain only the summary/body — no attribution footer.
