@@ -33,6 +33,7 @@ declare module '@inertiajs/core' {
                 success: string | null;
                 createdSale: CreatedSale | null;
             };
+            translations: Record<string, unknown>;
             [key: string]: unknown;
         };
     }

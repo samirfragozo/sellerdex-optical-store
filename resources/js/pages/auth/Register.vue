@@ -7,8 +7,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
+import { useTranslations } from '@/composables/useTranslations';
 import { login } from '@/routes';
 import { store } from '@/routes/register';
+
+const { trans } = useTranslations();
 
 defineProps<{
     passwordRules: string;
@@ -16,14 +19,14 @@ defineProps<{
 
 defineOptions({
     layout: {
-        title: 'Crear una cuenta',
-        description: 'Ingresa los datos de tu óptica para comenzar',
+        title: trans('auth.register.title'),
+        description: trans('auth.register.description'),
     },
 });
 </script>
 
 <template>
-    <Head title="Registro" />
+    <Head :title="trans('auth.register.head_title')" />
 
     <Form
         v-bind="store.form()"
@@ -33,7 +36,9 @@ defineOptions({
     >
         <div class="grid gap-6">
             <div class="grid gap-2">
-                <Label for="company_name">Nombre de la óptica</Label>
+                <Label for="company_name">{{
+                    trans('auth.register.company_name')
+                }}</Label>
                 <Input
                     id="company_name"
                     type="text"
@@ -42,13 +47,15 @@ defineOptions({
                     :tabindex="1"
                     autocomplete="organization"
                     name="company_name"
-                    placeholder="Óptica Central"
+                    :placeholder="
+                        trans('auth.register.company_name_placeholder')
+                    "
                 />
                 <InputError :message="errors.company_name" />
             </div>
 
             <div class="grid gap-2">
-                <Label for="name">Nombre completo</Label>
+                <Label for="name">{{ trans('auth.register.name') }}</Label>
                 <Input
                     id="name"
                     type="text"
@@ -56,13 +63,13 @@ defineOptions({
                     :tabindex="2"
                     autocomplete="name"
                     name="name"
-                    placeholder="Nombre completo"
+                    :placeholder="trans('auth.register.name_placeholder')"
                 />
                 <InputError :message="errors.name" />
             </div>
 
             <div class="grid gap-2">
-                <Label for="email">Correo electrónico</Label>
+                <Label for="email">{{ trans('auth.register.email') }}</Label>
                 <Input
                     id="email"
                     type="email"
@@ -70,34 +77,40 @@ defineOptions({
                     :tabindex="3"
                     autocomplete="email"
                     name="email"
-                    placeholder="correo@ejemplo.com"
+                    :placeholder="trans('auth.register.email_placeholder')"
                 />
                 <InputError :message="errors.email" />
             </div>
 
             <div class="grid gap-2">
-                <Label for="password">Contraseña</Label>
+                <Label for="password">{{
+                    trans('auth.register.password')
+                }}</Label>
                 <PasswordInput
                     id="password"
                     required
                     :tabindex="4"
                     autocomplete="new-password"
                     name="password"
-                    placeholder="Contraseña"
+                    :placeholder="trans('auth.register.password_placeholder')"
                     :passwordrules="passwordRules"
                 />
                 <InputError :message="errors.password" />
             </div>
 
             <div class="grid gap-2">
-                <Label for="password_confirmation">Confirmar contraseña</Label>
+                <Label for="password_confirmation">{{
+                    trans('auth.register.confirm_password')
+                }}</Label>
                 <PasswordInput
                     id="password_confirmation"
                     required
                     :tabindex="5"
                     autocomplete="new-password"
                     name="password_confirmation"
-                    placeholder="Confirmar contraseña"
+                    :placeholder="
+                        trans('auth.register.confirm_password_placeholder')
+                    "
                     :passwordrules="passwordRules"
                 />
                 <InputError :message="errors.password_confirmation" />
@@ -111,17 +124,17 @@ defineOptions({
                 data-test="register-user-button"
             >
                 <Spinner v-if="processing" />
-                Crear cuenta
+                {{ trans('auth.register.submit') }}
             </Button>
         </div>
 
         <div class="text-center text-sm text-muted-foreground">
-            ¿Ya tienes una cuenta?
+            {{ trans('auth.register.has_account') }}
             <TextLink
                 :href="login()"
                 class="underline underline-offset-4"
                 :tabindex="7"
-                >Iniciar sesión</TextLink
+                >{{ trans('auth.register.log_in') }}</TextLink
             >
         </div>
     </Form>
