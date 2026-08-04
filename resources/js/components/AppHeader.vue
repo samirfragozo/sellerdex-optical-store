@@ -26,6 +26,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 const page = usePage();
 const auth = computed(() => page.props.auth);
+const businessName = computed(() => page.props.business?.name);
 </script>
 
 <template>
@@ -39,6 +40,13 @@ const auth = computed(() => page.props.auth);
                 </Link>
 
                 <div class="ml-auto flex items-center space-x-2">
+                    <span
+                        v-if="businessName"
+                        class="text-sm font-medium text-zinc-700 dark:text-zinc-200"
+                    >
+                        {{ businessName }}
+                    </span>
+
                     <LanguageSwitcher />
 
                     <DropdownMenu>
