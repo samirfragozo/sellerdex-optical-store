@@ -33,7 +33,7 @@ const auth = computed(() => page.props.auth);
         <div
             class="bg-white shadow-xs ring-1 ring-zinc-950/5 dark:bg-zinc-900 dark:ring-white/10"
         >
-            <div class="flex h-16 items-center px-8">
+            <div class="flex h-16 items-center pr-3.5 pl-7">
                 <Link :href="posIndex()" class="flex items-center gap-x-2">
                     <AppLogo />
                 </Link>
@@ -46,7 +46,7 @@ const auth = computed(() => page.props.auth);
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                class="relative size-10 w-auto rounded-full p-1 focus-within:ring-2 focus-within:ring-primary"
+                                class="relative rounded-full"
                             >
                                 <Avatar
                                     class="size-8 overflow-hidden rounded-full"
@@ -57,7 +57,7 @@ const auth = computed(() => page.props.auth);
                                         :alt="auth.user.name"
                                     />
                                     <AvatarFallback
-                                        class="rounded-lg bg-neutral-200 font-semibold text-black dark:bg-neutral-700 dark:text-white"
+                                        class="rounded-lg bg-zinc-950 font-semibold text-white"
                                     >
                                         {{ getInitials(auth.user?.name) }}
                                     </AvatarFallback>
