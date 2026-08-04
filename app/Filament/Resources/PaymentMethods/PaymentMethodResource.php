@@ -9,9 +9,9 @@ use App\Filament\Resources\PaymentMethods\RelationManagers\ExpensesRelationManag
 use App\Filament\Resources\PaymentMethods\RelationManagers\PaymentsRelationManager;
 use App\Filament\Resources\PaymentMethods\Schemas\PaymentMethodForm;
 use App\Filament\Resources\PaymentMethods\Tables\PaymentMethodsTable;
+use App\Filament\Resources\Resource;
 use App\Models\PaymentMethod;
 use BackedEnum;
-use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
@@ -21,21 +21,6 @@ class PaymentMethodResource extends Resource
     protected static ?string $model = PaymentMethod::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
-
-    public static function getModelLabel(): string
-    {
-        return __('app.resources.payment_method.label');
-    }
-
-    public static function getPluralModelLabel(): string
-    {
-        return __('app.resources.payment_method.plural');
-    }
-
-    public static function getNavigationLabel(): string
-    {
-        return __('app.resources.payment_method.nav');
-    }
 
     public static function form(Schema $schema): Schema
     {

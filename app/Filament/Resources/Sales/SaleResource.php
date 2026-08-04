@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Sales;
 
+use App\Filament\Resources\Resource;
 use App\Filament\Resources\Sales\Pages\CreateSale;
 use App\Filament\Resources\Sales\Pages\EditSale;
 use App\Filament\Resources\Sales\Pages\ListSales;
@@ -11,7 +12,6 @@ use App\Filament\Resources\Sales\Schemas\SaleForm;
 use App\Filament\Resources\Sales\Tables\SalesTable;
 use App\Models\Sale;
 use BackedEnum;
-use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
@@ -23,21 +23,6 @@ class SaleResource extends Resource
     protected static ?string $model = Sale::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
-
-    public static function getModelLabel(): string
-    {
-        return __('app.resources.sale.label');
-    }
-
-    public static function getPluralModelLabel(): string
-    {
-        return __('app.resources.sale.plural');
-    }
-
-    public static function getNavigationLabel(): string
-    {
-        return __('app.resources.sale.nav');
-    }
 
     public static function form(Schema $schema): Schema
     {

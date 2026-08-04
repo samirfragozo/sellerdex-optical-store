@@ -8,9 +8,9 @@ use App\Filament\Resources\Expenses\Pages\EditExpense;
 use App\Filament\Resources\Expenses\Pages\ListExpenses;
 use App\Filament\Resources\Expenses\Schemas\ExpenseForm;
 use App\Filament\Resources\Expenses\Tables\ExpensesTable;
+use App\Filament\Resources\Resource;
 use App\Models\Expense;
 use BackedEnum;
-use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
@@ -26,21 +26,6 @@ class ExpenseResource extends Resource
     protected static ?string $cluster = GastosCluster::class;
 
     protected static ?int $navigationSort = 1;
-
-    public static function getModelLabel(): string
-    {
-        return __('app.resources.expense.label');
-    }
-
-    public static function getPluralModelLabel(): string
-    {
-        return __('app.resources.expense.plural');
-    }
-
-    public static function getNavigationLabel(): string
-    {
-        return __('app.resources.expense.nav');
-    }
 
     public static function form(Schema $schema): Schema
     {

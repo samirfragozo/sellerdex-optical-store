@@ -9,9 +9,9 @@ use App\Filament\Resources\ProductCategories\Pages\ListProductCategories;
 use App\Filament\Resources\ProductCategories\RelationManagers\ProductsRelationManager;
 use App\Filament\Resources\ProductCategories\Schemas\ProductCategoryForm;
 use App\Filament\Resources\ProductCategories\Tables\ProductCategoriesTable;
+use App\Filament\Resources\Resource;
 use App\Models\ProductCategory;
 use BackedEnum;
-use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
@@ -25,21 +25,6 @@ class ProductCategoryResource extends Resource
     protected static ?string $cluster = CatalogoCluster::class;
 
     protected static ?int $navigationSort = 2;
-
-    public static function getModelLabel(): string
-    {
-        return __('app.resources.product_category.label');
-    }
-
-    public static function getPluralModelLabel(): string
-    {
-        return __('app.resources.product_category.plural');
-    }
-
-    public static function getNavigationLabel(): string
-    {
-        return __('app.resources.product_category.nav');
-    }
 
     public static function form(Schema $schema): Schema
     {

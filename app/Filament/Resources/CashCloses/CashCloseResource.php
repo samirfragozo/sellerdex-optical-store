@@ -7,9 +7,9 @@ use App\Filament\Resources\CashCloses\Pages\EditCashClose;
 use App\Filament\Resources\CashCloses\Pages\ListCashCloses;
 use App\Filament\Resources\CashCloses\Schemas\CashCloseForm;
 use App\Filament\Resources\CashCloses\Tables\CashClosesTable;
+use App\Filament\Resources\Resource;
 use App\Models\CashClose;
 use BackedEnum;
-use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
@@ -19,21 +19,6 @@ class CashCloseResource extends Resource
     protected static ?string $model = CashClose::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBanknotes;
-
-    public static function getModelLabel(): string
-    {
-        return __('app.resources.cash_close.label');
-    }
-
-    public static function getPluralModelLabel(): string
-    {
-        return __('app.resources.cash_close.plural');
-    }
-
-    public static function getNavigationLabel(): string
-    {
-        return __('app.resources.cash_close.nav');
-    }
 
     public static function form(Schema $schema): Schema
     {

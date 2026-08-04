@@ -8,9 +8,9 @@ use App\Filament\Resources\Prescriptions\Pages\ListPrescriptions;
 use App\Filament\Resources\Prescriptions\RelationManagers\SalesRelationManager;
 use App\Filament\Resources\Prescriptions\Schemas\PrescriptionForm;
 use App\Filament\Resources\Prescriptions\Tables\PrescriptionsTable;
+use App\Filament\Resources\Resource;
 use App\Models\Prescription;
 use BackedEnum;
-use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
@@ -22,21 +22,6 @@ class PrescriptionResource extends Resource
     protected static ?string $model = Prescription::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
-
-    public static function getModelLabel(): string
-    {
-        return __('app.resources.prescription.label');
-    }
-
-    public static function getPluralModelLabel(): string
-    {
-        return __('app.resources.prescription.plural');
-    }
-
-    public static function getNavigationLabel(): string
-    {
-        return __('app.resources.prescription.nav');
-    }
 
     public static function form(Schema $schema): Schema
     {

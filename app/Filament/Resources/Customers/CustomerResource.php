@@ -8,9 +8,9 @@ use App\Filament\Resources\Customers\Pages\ListCustomers;
 use App\Filament\Resources\Customers\RelationManagers\SalesRelationManager;
 use App\Filament\Resources\Customers\Schemas\CustomerForm;
 use App\Filament\Resources\Customers\Tables\CustomersTable;
+use App\Filament\Resources\Resource;
 use App\Models\Customer;
 use BackedEnum;
-use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
@@ -22,21 +22,6 @@ class CustomerResource extends Resource
     protected static ?string $model = Customer::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
-
-    public static function getModelLabel(): string
-    {
-        return __('app.resources.customer.label');
-    }
-
-    public static function getPluralModelLabel(): string
-    {
-        return __('app.resources.customer.plural');
-    }
-
-    public static function getNavigationLabel(): string
-    {
-        return __('app.resources.customer.nav');
-    }
 
     public static function form(Schema $schema): Schema
     {

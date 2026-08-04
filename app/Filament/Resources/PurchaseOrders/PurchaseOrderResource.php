@@ -8,9 +8,9 @@ use App\Filament\Resources\PurchaseOrders\Pages\EditPurchaseOrder;
 use App\Filament\Resources\PurchaseOrders\Pages\ListPurchaseOrders;
 use App\Filament\Resources\PurchaseOrders\Schemas\PurchaseOrderForm;
 use App\Filament\Resources\PurchaseOrders\Tables\PurchaseOrdersTable;
+use App\Filament\Resources\Resource;
 use App\Models\PurchaseOrder;
 use BackedEnum;
-use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
@@ -26,21 +26,6 @@ class PurchaseOrderResource extends Resource
     protected static ?string $cluster = ComprasCluster::class;
 
     protected static ?int $navigationSort = 2;
-
-    public static function getModelLabel(): string
-    {
-        return __('app.resources.purchase_order.label');
-    }
-
-    public static function getPluralModelLabel(): string
-    {
-        return __('app.resources.purchase_order.plural');
-    }
-
-    public static function getNavigationLabel(): string
-    {
-        return __('app.resources.purchase_order.nav');
-    }
 
     public static function form(Schema $schema): Schema
     {

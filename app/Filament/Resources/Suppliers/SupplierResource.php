@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Suppliers;
 
 use App\Filament\Clusters\Compras\ComprasCluster;
+use App\Filament\Resources\Resource;
 use App\Filament\Resources\Suppliers\Pages\CreateSupplier;
 use App\Filament\Resources\Suppliers\Pages\EditSupplier;
 use App\Filament\Resources\Suppliers\Pages\ListSuppliers;
@@ -10,7 +11,6 @@ use App\Filament\Resources\Suppliers\Schemas\SupplierForm;
 use App\Filament\Resources\Suppliers\Tables\SuppliersTable;
 use App\Models\Supplier;
 use BackedEnum;
-use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
@@ -26,21 +26,6 @@ class SupplierResource extends Resource
     protected static ?string $cluster = ComprasCluster::class;
 
     protected static ?int $navigationSort = 1;
-
-    public static function getModelLabel(): string
-    {
-        return __('app.resources.supplier.label');
-    }
-
-    public static function getPluralModelLabel(): string
-    {
-        return __('app.resources.supplier.plural');
-    }
-
-    public static function getNavigationLabel(): string
-    {
-        return __('app.resources.supplier.nav');
-    }
 
     public static function form(Schema $schema): Schema
     {
