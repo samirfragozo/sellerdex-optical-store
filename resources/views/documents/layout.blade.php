@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="{{ app()->getLocale() }}">
 <head>
     <meta charset="utf-8">
-    <title>@yield('title', 'Documento')</title>
+    <title>@yield('title', __('app.documents.default_title'))</title>
     <style>
         @page { size: A5; margin: 12mm; }
         * { font-family: DejaVu Sans, sans-serif; }
@@ -29,9 +29,9 @@
         <div>
             <div class="biz-name">{{ $settings->name }}</div>
             <div class="muted">
-                @if ($settings->tax_id) NIT: {{ $settings->tax_id }} @endif
+                @if ($settings->tax_id) {{ __('app.documents.tax_id_label') }}: {{ $settings->tax_id }} @endif
                 @if ($settings->address) · {{ $settings->address }} @endif
-                @if ($settings->phones) · Tel: {{ $settings->phones }} @endif
+                @if ($settings->phones) · {{ __('app.documents.phone_label') }}: {{ $settings->phones }} @endif
             </div>
         </div>
     </div>
