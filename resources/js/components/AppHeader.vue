@@ -3,6 +3,7 @@ import { Link, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import AppLogo from '@/components/AppLogo.vue';
 import Breadcrumbs from '@/components/Breadcrumbs.vue';
+import LanguageSwitcher from '@/components/LanguageSwitcher.vue';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -36,6 +37,8 @@ const auth = computed(() => page.props.auth);
                 </Link>
 
                 <div class="ml-auto flex items-center space-x-2">
+                    <LanguageSwitcher />
+
                     <DropdownMenu>
                         <DropdownMenuTrigger :as-child="true">
                             <Button

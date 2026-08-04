@@ -1,10 +1,13 @@
 <?php
 
 use App\Http\Controllers\DocumentController;
+use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\PosController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', fn () => redirect(auth()->check() ? route('pos.index') : route('login')))->name('home');
+
+Route::post('locale/{locale}', [LocaleController::class, 'update'])->name('locale.update');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('pos', [PosController::class, 'index'])->name('pos.index');
