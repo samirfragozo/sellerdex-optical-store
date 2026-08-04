@@ -5,7 +5,6 @@ namespace App\Providers\Filament;
 use App\Filament\Pages\Auth\RedirectToLogin;
 use App\Filament\Pages\Dashboard;
 use App\Http\Middleware\EnsureCompanyIsActive;
-use App\Models\Company;
 use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
 use Filament\Actions\Action;
 use Filament\Http\Middleware\Authenticate;
@@ -20,7 +19,6 @@ use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 
 class AdminPanelProvider extends PanelProvider
@@ -33,21 +31,11 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->login(RedirectToLogin::class)
             ->globalSearch(false)
-            ->brandName(fn () => rescue(
-                fn () => Company::current()->name ?? 'Óptica',
-                'Óptica',
-                report: false
-            ))
-            ->brandLogo(fn () => rescue(
-                fn () => ($logo = Company::current()->logo)
-                    ? Storage::disk('public')->url($logo)
-                    : null,
-                null,
-                report: false
-            ))
-            ->brandLogoHeight('2.5rem')
+            ->brandLogo(asset('images/brand/logo-color.png'))
+            ->darkModeBrandLogo(asset('images/brand/logo-blanco.png'))
+            ->brandLogoHeight('1.5rem')
             ->colors([
-                'primary' => Color::Amber,
+                'primary' => Color::hex('#008235'),
             ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverClusters(in: app_path('Filament/Clusters'), for: 'App\Filament\Clusters')

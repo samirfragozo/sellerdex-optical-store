@@ -27,8 +27,10 @@ class SuperadminPanelProvider extends PanelProvider
             ->id('superadmin')
             ->path('superadmin')
             ->login(RedirectToLogin::class)
-            ->brandName('Sellerdex — Admin')
-            ->colors(['primary' => Color::Violet])
+            ->brandLogo(asset('images/brand/logo-color.png'))
+            ->darkModeBrandLogo(asset('images/brand/logo-blanco.png'))
+            ->brandLogoHeight('1.5rem')
+            ->colors(['primary' => Color::hex('#00C950')])
             ->pages([Dashboard::class])
             ->resources([CompanyResource::class])
             ->middleware([
