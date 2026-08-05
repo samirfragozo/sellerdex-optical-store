@@ -123,4 +123,19 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Superadmin Seed Account
+    |--------------------------------------------------------------------------
+    |
+    | Credentials for the superadmin user created by SuperadminSeeder. Required
+    | in production (the seeder fails without them); optional elsewhere.
+    |
+    */
+
+    'superadmin' => [
+        'email' => env('SUPERADMIN_EMAIL'),
+        'password' => env('SUPERADMIN_PASSWORD'),
+    ],
+
 ];
