@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
-import AppLogoIcon from '@/components/AppLogoIcon.vue';
+import AppLogo from '@/components/AppLogo.vue';
 import LanguageSwitcher from '@/components/LanguageSwitcher.vue';
 import { home } from '@/routes';
 
@@ -23,10 +23,8 @@ defineProps<{
                         :href="home()"
                         class="flex flex-col items-center gap-2 font-medium"
                     >
-                        <div
-                            class="mb-1 flex h-9 w-9 items-center justify-center rounded-md"
-                        >
-                            <AppLogoIcon class="size-9" />
+                        <div class="mb-1 flex items-center justify-center">
+                            <AppLogo />
                         </div>
                         <span class="sr-only">{{ title }}</span>
                     </Link>

@@ -37,29 +37,34 @@ function switchLocale(locale: string): void {
 </script>
 
 <template>
-    <DropdownMenu>
-        <DropdownMenuTrigger
-            :title="trans(`app.languages.${currentLocale}`)"
-            class="flex size-8 items-center justify-center rounded-lg text-md"
-        >
-            {{ currentLabel }}
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-            <DropdownMenuItem
-                v-for="locale in otherLocales"
-                :key="locale.value"
-                class="gap-2 w-56"
-                @click="switchLocale(locale.value)"
+    <!-- DropdownMenu (Reka UI) has no root DOM node of its own, so this wrapping
+    div is the component's single root — that's what makes a `class` passed by
+    a caller (e.g. `absolute top-4 right-4`) fall through correctly. -->
+    <div>
+        <DropdownMenu>
+            <DropdownMenuTrigger
+                :title="trans(`app.languages.${currentLocale}`)"
+                class="flex size-8 items-center justify-center rounded-lg text-md"
             >
-                <span
-                    class="flex size-5 items-center justify-center rounded-lg text-md"
+                {{ currentLabel }}
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                    v-for="locale in otherLocales"
+                    :key="locale.value"
+                    class="gap-2 w-56"
+                    @click="switchLocale(locale.value)"
                 >
-                    {{ locale.label }}
-                </span>
-                <span>
-                    {{ trans(`app.languages.${locale.value}`) }}
-                </span>
-            </DropdownMenuItem>
-        </DropdownMenuContent>
-    </DropdownMenu>
+                    <span
+                        class="flex size-5 items-center justify-center rounded-lg text-md"
+                    >
+                        {{ locale.label }}
+                    </span>
+                    <span>
+                        {{ trans(`app.languages.${locale.value}`) }}
+                    </span>
+                </DropdownMenuItem>
+            </DropdownMenuContent>
+        </DropdownMenu>
+    </div>
 </template>
