@@ -29,9 +29,10 @@ export default defineConfig({
         }),
         wayfinder({
             formVariants: true,
-            // Use Herd's PHP proxy so this always runs on the version isolated
-            // for this site (8.5), regardless of the machine's global `php`.
-            command: 'herd php artisan wayfinder:generate',
+            // Use Herd's PHP proxy locally (isolates the version per-site);
+            // fall back to plain `php` where Herd isn't installed, e.g. Docker builds.
+            command:
+                'sh -c \'if command -v herd >/dev/null 2>&1; then herd php artisan wayfinder:generate "$@"; else php artisan wayfinder:generate "$@"; fi\' _',
         }),
     ],
 });
