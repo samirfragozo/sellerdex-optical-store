@@ -6,7 +6,6 @@ use App\Filament\Pages\Auth\RedirectToLogin;
 use App\Filament\Pages\Dashboard;
 use App\Http\Middleware\EnsureCompanyIsActive;
 use App\Models\Company;
-use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
 use Filament\Actions\Action;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -72,9 +71,6 @@ class AdminPanelProvider extends PanelProvider
             ->authMiddleware([
                 Authenticate::class,
                 EnsureCompanyIsActive::class,
-            ])
-            ->plugins([
-                FilamentShieldPlugin::make(),
             ]);
     }
 }
