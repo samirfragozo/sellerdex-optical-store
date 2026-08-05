@@ -14,6 +14,14 @@ class ExpenseCategory extends Model
     /** @use HasFactory<ExpenseCategoryFactory> */
     use BelongsToCompany, HasFactory;
 
+    /**
+     * Generic default categories for a new company. Shared by ExpenseCategorySeeder
+     * (global bootstrap) and SeedCompanyDefaults (per-company provisioning).
+     *
+     * @var list<string>
+     */
+    public const DEFAULT_NAMES = ['Arriendo', 'Salario', 'Lentes Terminados', 'Exámenes', 'Digitales', 'Otros'];
+
     /** A category that still has expenses cannot be deleted (enforced even for super admin). */
     protected static function booted(): void
     {

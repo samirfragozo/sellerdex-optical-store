@@ -1,6 +1,9 @@
 <?php
 
 use App\Models\Company;
+use App\Models\ExpenseCategory;
+use App\Models\PaymentMethod;
+use App\Models\ProductCategory;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -85,6 +88,22 @@ it('uses an Inertia location visit when redirecting to the admin panel', functio
         ])
         ->assertStatus(409)
         ->assertHeader('X-Inertia-Location', '/admin');
+});
+
+it('seeds the new company with default reference data', function () {
+    $this->post('/register', [
+        'company_name' => 'Óptica Sur',
+        'name' => 'Ana García',
+        'email' => 'ana@opticasur.com',
+        'password' => 'Password1!',
+        'password_confirmation' => 'Password1!',
+    ]);
+
+    $company = Company::where('name', 'Óptica Sur')->firstOrFail();
+
+    expect(PaymentMethod::where('company_id', $company->id)->where('name', 'Efectivo')->exists())->toBeTrue()
+        ->and(ProductCategory::where('company_id', $company->id)->count())->toBe(4)
+        ->and(ExpenseCategory::where('company_id', $company->id)->count())->toBe(6);
 });
 
 it('requires a company name', function () {

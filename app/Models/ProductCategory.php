@@ -16,6 +16,21 @@ class ProductCategory extends Model
     /** @use HasFactory<ProductCategoryFactory> */
     use BelongsToCompany, HasFactory;
 
+    /**
+     * The structural categories every company needs for the catalog UI to work.
+     * The `key` is the stable, code-facing identifier; `name` is the editable
+     * Spanish label. Flags encode business rules. Shared by ProductCategorySeeder
+     * (global bootstrap) and SeedCompanyDefaults (per-company provisioning).
+     *
+     * @var array<int,array{key:string,name:string,requires_prescription:bool,generates_lab_order:bool,is_made_to_order:bool}>
+     */
+    public const SYSTEM_CATEGORIES = [
+        ['key' => 'lens', 'name' => 'Lente', 'requires_prescription' => true, 'generates_lab_order' => true, 'is_made_to_order' => true],
+        ['key' => 'frame', 'name' => 'Montura', 'requires_prescription' => false, 'generates_lab_order' => false, 'is_made_to_order' => false],
+        ['key' => 'accessory', 'name' => 'Accesorio', 'requires_prescription' => false, 'generates_lab_order' => false, 'is_made_to_order' => false],
+        ['key' => 'service', 'name' => 'Servicio', 'requires_prescription' => false, 'generates_lab_order' => false, 'is_made_to_order' => false],
+    ];
+
     /** A system category, or one that still has products, cannot be deleted. */
     protected static function booted(): void
     {

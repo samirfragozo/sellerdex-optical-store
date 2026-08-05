@@ -9,7 +9,7 @@ class ExpenseCategorySeeder extends Seeder
 {
     public function run(): void
     {
-        foreach (['Arriendo', 'Salario', 'Lentes Terminados', 'Exámenes', 'Digitales', 'Otros'] as $name) {
+        foreach (ExpenseCategory::DEFAULT_NAMES as $name) {
             ExpenseCategory::updateOrCreate(['name' => $name], ['is_active' => true]);
         }
     }

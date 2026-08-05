@@ -2,6 +2,7 @@
 
 namespace App\Actions\Fortify;
 
+use App\Actions\SeedCompanyDefaults;
 use App\Concerns\PasswordValidationRules;
 use App\Concerns\ProfileValidationRules;
 use App\Models\Company;
@@ -30,6 +31,8 @@ class CreateCompanyAndUser implements CreatesNewUsers
                 'is_active' => true,
                 'plan' => 'free',
             ]);
+
+            (new SeedCompanyDefaults)->handle($company);
 
             $user = User::create([
                 'name' => $input['name'],
