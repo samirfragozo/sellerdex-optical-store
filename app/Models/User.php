@@ -77,4 +77,20 @@ class User extends Authenticatable implements FilamentUser, PasskeyUser
     {
         return $this->hasMany(Sale::class, 'seller_id');
     }
+
+    /**
+     * Whether this user has any historical business records tied to it
+     * (sales, payments, cash closes, expenses, prescriptions, purchase orders).
+     * Used to guard hard deletes: only a user with none of these can be deleted.
+     */
+    public function hasBusinessActivity(): bool
+    {
+        return $this->sales()->exists()
+            || Sale::where('created_by', $this->id)->exists()
+            || Payment::where('received_by', $this->id)->exists()
+            || CashClose::where('closed_by', $this->id)->exists()
+            || Expense::where('created_by', $this->id)->exists()
+            || Prescription::where('created_by', $this->id)->exists()
+            || PurchaseOrder::where('created_by', $this->id)->exists();
+    }
 }

@@ -20,7 +20,7 @@ class RolesAndPermissionsSeeder extends Seeder
 
     private const SUBJECTS = [
         'Customer', 'Expense', 'ExpenseCategory', 'LensOrder', 'Payment', 'PaymentMethod',
-        'Prescription', 'Product', 'ProductCategory', 'PurchaseOrder', 'Role', 'Sale', 'Supplier',
+        'Prescription', 'Product', 'ProductCategory', 'PurchaseOrder', 'Role', 'Sale', 'Supplier', 'User',
     ];
 
     /**

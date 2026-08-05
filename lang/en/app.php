@@ -46,6 +46,16 @@ return [
         'prescription' => ['label' => 'Prescription', 'plural' => 'Prescriptions', 'nav' => 'Prescriptions'],
         'sale' => ['label' => 'Sale', 'plural' => 'Sales', 'nav' => 'Sales'],
         'cash_close' => ['label' => 'Cash close', 'plural' => 'Cash closes', 'nav' => 'Cash close'],
+        'user' => ['label' => 'User', 'plural' => 'Users', 'nav' => 'Users'],
+    ],
+
+    'users' => [
+        'suspend' => 'Deactivate',
+        'activate' => 'Activate',
+        'invite_sent' => 'An email was sent so the user can set their password.',
+        'cannot_delete_has_activity' => 'Cannot delete: this user has sales, payments, or other related records. Deactivate them instead.',
+        'cannot_delete_self' => 'You cannot delete your own user.',
+        'cannot_deactivate_self' => 'You cannot deactivate your own user.',
     ],
 
     'relations' => [
@@ -72,6 +82,9 @@ return [
         'notes' => 'Notes',
         'active' => 'Active',
         'active_f' => 'Active',
+        'role' => 'Role',
+        'role_admin' => 'Admin',
+        'role_seller' => 'Seller',
         'is_default' => 'Default',
         'sort_order' => 'Order',
         'category' => 'Category',

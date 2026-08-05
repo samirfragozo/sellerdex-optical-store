@@ -49,6 +49,16 @@ return [
         'supplier' => ['label' => 'Proveedor', 'plural' => 'Proveedores', 'nav' => 'Proveedores'],
         'purchase_order' => ['label' => 'Orden de compra', 'plural' => 'Órdenes de compra', 'nav' => 'Órdenes de compra'],
         'lens_order' => ['label' => 'Orden de laboratorio', 'plural' => 'Órdenes de laboratorio', 'nav' => 'Laboratorio'],
+        'user' => ['label' => 'Usuario', 'plural' => 'Usuarios', 'nav' => 'Usuarios'],
+    ],
+
+    'users' => [
+        'suspend' => 'Desactivar',
+        'activate' => 'Activar',
+        'invite_sent' => 'Se envió un correo para que el usuario configure su contraseña.',
+        'cannot_delete_has_activity' => 'No se puede eliminar: este usuario tiene ventas, pagos u otros registros asociados. Desactívalo en su lugar.',
+        'cannot_delete_self' => 'No puedes eliminar tu propio usuario.',
+        'cannot_deactivate_self' => 'No puedes desactivar tu propio usuario.',
     ],
 
     'relations' => [
@@ -75,6 +85,9 @@ return [
         'notes' => 'Notas',
         'active' => 'Activo',
         'active_f' => 'Activa',
+        'role' => 'Rol',
+        'role_admin' => 'Administrador',
+        'role_seller' => 'Vendedor',
         'is_default' => 'Por defecto',
         'sort_order' => 'Orden',
         'category' => 'Categoría',
