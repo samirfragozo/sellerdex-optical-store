@@ -20,15 +20,27 @@ return new class extends Migration
             });
         }
 
+        // On a fresh install, Spatie's base migration creates this column NOT NULL
+        // (it assumes every role assignment belongs to a team). This app also keeps
+        // a global superadmin role with no company (company_id = null) — relax the
+        // constraint in that case so assigning that role can insert company_id = null.
         if (! Schema::hasColumn('model_has_roles', 'company_id')) {
             Schema::table('model_has_roles', function (Blueprint $table) {
                 $table->unsignedBigInteger('company_id')->nullable()->after('role_id')->index();
+            });
+        } else {
+            Schema::table('model_has_roles', function (Blueprint $table) {
+                $table->unsignedBigInteger('company_id')->nullable()->change();
             });
         }
 
         if (! Schema::hasColumn('model_has_permissions', 'company_id')) {
             Schema::table('model_has_permissions', function (Blueprint $table) {
                 $table->unsignedBigInteger('company_id')->nullable()->after('permission_id')->index();
+            });
+        } else {
+            Schema::table('model_has_permissions', function (Blueprint $table) {
+                $table->unsignedBigInteger('company_id')->nullable()->change();
             });
         }
 
