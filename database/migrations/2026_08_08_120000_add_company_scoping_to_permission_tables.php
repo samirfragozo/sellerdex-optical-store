@@ -11,14 +11,23 @@ return new class extends Migration
     {
         // Guarded: on a fresh migrate, Spatie's base migration
         // (2026_06_08_184525_create_permission_tables.php) reads config('permission.teams')
-        // live and already adds these columns/constraints itself now that teams is true,
-        // so these blocks are no-ops there. On the real (pre-existing) DB, where that base
-        // migration ran back when teams was false, these blocks do the actual work.
+        // live and already adds the company_id column itself now that teams is true, so the
+        // column-adding call below is a no-op there. On the real (pre-existing) DB, where that
+        // base migration ran back when teams was false, it does the actual work.
+        //
+        // Either way, the base migration never adds a foreign key constraint on this column
+        // (it's a bare unsignedBigInteger + index) — so the constraint must always be added
+        // separately below, cascading, so that deleting a company removes its roles instead of
+        // leaving them as company_id-null-alike orphans that Spatie treats as global roles.
         if (! Schema::hasColumn('roles', 'company_id')) {
             Schema::table('roles', function (Blueprint $table) {
-                $table->foreignId('company_id')->nullable()->after('id')->constrained('companies')->nullOnDelete();
+                $table->foreignId('company_id')->nullable()->after('id');
             });
         }
+
+        Schema::table('roles', function (Blueprint $table) {
+            $table->foreign('company_id')->references('id')->on('companies')->cascadeOnDelete();
+        });
 
         // On a fresh install, Spatie's base migration creates this column NOT NULL
         // (it assumes every role assignment belongs to a team). This app also keeps
