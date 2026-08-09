@@ -4,10 +4,17 @@ use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Database\Seeders\SuperadminSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Spatie\Permission\Models\Role;
 
 uses(RefreshDatabase::class);
 
 beforeEach(fn () => $this->seed(RolesAndPermissionsSeeder::class));
+
+it('does not create a global admin or seller role', function () {
+    expect(Role::where('name', 'admin')->whereNull('company_id')->exists())->toBeFalse()
+        ->and(Role::where('name', 'seller')->whereNull('company_id')->exists())->toBeFalse()
+        ->and(Role::where('name', 'superadmin')->whereNull('company_id')->exists())->toBeTrue();
+});
 
 it('does nothing outside production when no credentials are configured', function () {
     config(['app.superadmin.email' => null, 'app.superadmin.password' => null]);

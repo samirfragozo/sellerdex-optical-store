@@ -13,12 +13,12 @@ class RolesAndPermissionsSeeder extends Seeder
     /**
      * Shield generates permissions in the `Action:Subject` format (pascal case, ':' separator).
      */
-    private const ACTIONS = [
+    public const ACTIONS = [
         'ViewAny', 'View', 'Create', 'Update', 'Delete', 'DeleteAny',
         'ForceDelete', 'ForceDeleteAny', 'Restore', 'RestoreAny', 'Reorder', 'Replicate',
     ];
 
-    private const SUBJECTS = [
+    public const SUBJECTS = [
         'Customer', 'Expense', 'ExpenseCategory', 'LensOrder', 'Payment', 'PaymentMethod',
         'Prescription', 'Product', 'ProductCategory', 'PurchaseOrder', 'Role', 'Sale', 'Supplier', 'User',
     ];
@@ -30,7 +30,7 @@ class RolesAndPermissionsSeeder extends Seeder
      *
      * @var list<string>
      */
-    private const SELLER_PERMISSIONS = [
+    public const SELLER_PERMISSIONS = [
         'ViewAny:Customer', 'View:Customer', 'Create:Customer', 'Update:Customer',
         'ViewAny:Prescription', 'View:Prescription', 'Create:Prescription', 'Update:Prescription',
         'ViewAny:Product', 'View:Product',
@@ -48,14 +48,6 @@ class RolesAndPermissionsSeeder extends Seeder
                 Permission::findOrCreate("{$action}:{$subject}", 'web');
             }
         }
-
-        // Admin is the super admin (intercepted by Shield via Gate::before); it is
-        // granted every permission anyway for clarity.
-        $admin = Role::findOrCreate(User::ROLE_ADMIN, 'web');
-        $admin->syncPermissions(Permission::all());
-
-        $seller = Role::findOrCreate(User::ROLE_SELLER, 'web');
-        $seller->syncPermissions(self::SELLER_PERMISSIONS);
 
         Role::findOrCreate(User::ROLE_SUPERADMIN, 'web');
     }
