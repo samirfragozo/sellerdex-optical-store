@@ -2,7 +2,10 @@
 
 namespace Database\Seeders;
 
+use App\Actions\ProvisionCompanyRoles;
+use App\Models\Company;
 use App\Models\User;
+use App\Support\PermissionsTeam;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
@@ -14,16 +17,20 @@ class DevSeeder extends Seeder
 {
     public function run(): void
     {
+        $company = Company::firstOrFail();
+
+        (new ProvisionCompanyRoles)->handle($company);
+
         $admin = User::firstOrCreate(
             ['email' => 'admin@optica.test'],
-            ['name' => 'Admin', 'password' => Hash::make('password'), 'is_active' => true],
+            ['name' => 'Admin', 'password' => Hash::make('password'), 'is_active' => true, 'company_id' => $company->id],
         );
-        $admin->assignRole(User::ROLE_ADMIN);
+        PermissionsTeam::runAs($company, fn () => $admin->assignRole(User::ROLE_ADMIN));
 
         $seller = User::firstOrCreate(
             ['email' => 'seller@optica.test'],
-            ['name' => 'Seller', 'password' => Hash::make('password'), 'is_active' => true],
+            ['name' => 'Seller', 'password' => Hash::make('password'), 'is_active' => true, 'company_id' => $company->id],
         );
-        $seller->assignRole(User::ROLE_SELLER);
+        PermissionsTeam::runAs($company, fn () => $seller->assignRole(User::ROLE_SELLER));
     }
 }
