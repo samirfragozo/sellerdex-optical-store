@@ -3,6 +3,7 @@
 use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\User;
+use App\Support\PermissionsTeam;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
@@ -21,13 +22,13 @@ it('pertenece a una categoría de producto', function () {
 
 it('el vendedor solo ve el catálogo, no lo modifica', function () {
     $seller = User::factory()->seller()->create();
-    expect($seller->can('ViewAny:Product'))->toBeTrue()
-        ->and($seller->can('Create:Product'))->toBeFalse()
-        ->and($seller->can('Delete:Product'))->toBeFalse();
+    expect(PermissionsTeam::runAs($seller->company, fn () => $seller->can('ViewAny:Product')))->toBeTrue()
+        ->and(PermissionsTeam::runAs($seller->company, fn () => $seller->can('Create:Product')))->toBeFalse()
+        ->and(PermissionsTeam::runAs($seller->company, fn () => $seller->can('Delete:Product')))->toBeFalse();
 });
 
 it('el admin gestiona el catálogo', function () {
     $admin = User::factory()->admin()->create();
-    expect($admin->can('Create:Product'))->toBeTrue()
-        ->and($admin->can('Delete:Product'))->toBeTrue();
+    expect(PermissionsTeam::runAs($admin->company, fn () => $admin->can('Create:Product')))->toBeTrue()
+        ->and(PermissionsTeam::runAs($admin->company, fn () => $admin->can('Delete:Product')))->toBeTrue();
 });

@@ -3,6 +3,7 @@
 use App\Models\Payment;
 use App\Models\User;
 use App\Policies\UserPolicy;
+use App\Support\PermissionsTeam;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
@@ -13,8 +14,8 @@ it('lets admins manage users but not sellers', function () {
     $seller = User::factory()->seller()->create();
     $otherUser = User::factory()->seller()->create();
 
-    expect($policy->create($admin))->toBeTrue()
-        ->and($policy->update($admin, $otherUser))->toBeTrue()
+    expect(PermissionsTeam::runAs($admin->company, fn () => $policy->create($admin)))->toBeTrue()
+        ->and(PermissionsTeam::runAs($admin->company, fn () => $policy->update($admin, $otherUser)))->toBeTrue()
         ->and($policy->create($seller))->toBeFalse()
         ->and($policy->update($seller, $otherUser))->toBeFalse();
 });
@@ -24,7 +25,7 @@ it('lets an admin delete a user with no business activity', function () {
     $admin = User::factory()->admin()->create();
     $otherUser = User::factory()->seller()->create();
 
-    expect($policy->delete($admin, $otherUser))->toBeTrue();
+    expect(PermissionsTeam::runAs($admin->company, fn () => $policy->delete($admin, $otherUser)))->toBeTrue();
 });
 
 it('blocks deleting a user with business activity', function () {

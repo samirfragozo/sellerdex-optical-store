@@ -2,6 +2,7 @@
 
 use App\Models\Supplier;
 use App\Models\User;
+use App\Support\PermissionsTeam;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;
@@ -34,6 +35,9 @@ it('usa borrado suave', function () {
 it('da acceso de proveedores solo al admin', function () {
     $this->seed(RolesAndPermissionsSeeder::class);
 
-    expect(User::factory()->admin()->create()->can('ViewAny:Supplier'))->toBeTrue()
-        ->and(User::factory()->seller()->create()->can('ViewAny:Supplier'))->toBeFalse();
+    $admin = User::factory()->admin()->create();
+    $seller = User::factory()->seller()->create();
+
+    expect(PermissionsTeam::runAs($admin->company, fn () => $admin->can('ViewAny:Supplier')))->toBeTrue()
+        ->and(PermissionsTeam::runAs($seller->company, fn () => $seller->can('ViewAny:Supplier')))->toBeFalse();
 });

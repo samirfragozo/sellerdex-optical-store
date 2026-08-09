@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\User;
+use App\Support\PermissionsTeam;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
@@ -33,6 +34,9 @@ it('un usuario ya autenticado que visita el login de filament entra al panel', f
 });
 
 it('expone helpers de rol', function () {
-    expect(User::factory()->admin()->create()->isAdmin())->toBeTrue()
-        ->and(User::factory()->seller()->create()->isSeller())->toBeTrue();
+    $admin = User::factory()->admin()->create();
+    $seller = User::factory()->seller()->create();
+
+    expect(PermissionsTeam::runAs($admin->company, fn () => $admin->isAdmin()))->toBeTrue()
+        ->and(PermissionsTeam::runAs($seller->company, fn () => $seller->isSeller()))->toBeTrue();
 });

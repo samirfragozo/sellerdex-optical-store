@@ -5,6 +5,7 @@ use App\Models\Sale;
 use App\Models\User;
 use App\Policies\PaymentPolicy;
 use App\Policies\SalePolicy;
+use App\Support\PermissionsTeam;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
@@ -25,8 +26,8 @@ it('lets admins void and delete sales', function () {
     $admin = User::factory()->admin()->create();
     $sale = Sale::factory()->create();
 
-    expect($policy->void($admin, $sale))->toBeTrue()
-        ->and($policy->delete($admin, $sale))->toBeTrue();
+    expect(PermissionsTeam::runAs($admin->company, fn () => $policy->void($admin, $sale)))->toBeTrue()
+        ->and(PermissionsTeam::runAs($admin->company, fn () => $policy->delete($admin, $sale)))->toBeTrue();
 });
 
 it('lets sellers register payments but not edit or delete registered ones', function () {
@@ -38,6 +39,6 @@ it('lets sellers register payments but not edit or delete registered ones', func
     expect($policy->create($seller))->toBeTrue()
         ->and($policy->update($seller, $payment))->toBeFalse()
         ->and($policy->delete($seller, $payment))->toBeFalse()
-        ->and($policy->update($admin, $payment))->toBeTrue()
-        ->and($policy->delete($admin, $payment))->toBeTrue();
+        ->and(PermissionsTeam::runAs($admin->company, fn () => $policy->update($admin, $payment)))->toBeTrue()
+        ->and(PermissionsTeam::runAs($admin->company, fn () => $policy->delete($admin, $payment)))->toBeTrue();
 });

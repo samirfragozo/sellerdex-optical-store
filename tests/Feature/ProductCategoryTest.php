@@ -2,6 +2,7 @@
 
 use App\Models\ProductCategory;
 use App\Models\User;
+use App\Support\PermissionsTeam;
 use Database\Seeders\ProductCategorySeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;
@@ -9,8 +10,11 @@ use Illuminate\Support\Facades\Schema;
 uses(RefreshDatabase::class);
 
 it('las categorías de producto son exclusivas del admin', function () {
-    expect(User::factory()->seller()->create()->can('ViewAny:ProductCategory'))->toBeFalse()
-        ->and(User::factory()->admin()->create()->can('ViewAny:ProductCategory'))->toBeTrue();
+    $seller = User::factory()->seller()->create();
+    $admin = User::factory()->admin()->create();
+
+    expect(PermissionsTeam::runAs($seller->company, fn () => $seller->can('ViewAny:ProductCategory')))->toBeFalse()
+        ->and(PermissionsTeam::runAs($admin->company, fn () => $admin->can('ViewAny:ProductCategory')))->toBeTrue();
 });
 
 it('siembra las categorías de producto base sin duplicar', function () {
