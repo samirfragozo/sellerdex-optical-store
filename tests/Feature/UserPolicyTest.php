@@ -34,12 +34,12 @@ it('blocks deleting a user with business activity', function () {
     $seller = User::factory()->seller()->create();
     Payment::factory()->create(['received_by' => $seller->id]);
 
-    expect($policy->delete($admin, $seller))->toBeFalse();
+    expect(PermissionsTeam::runAs($admin->company, fn () => $policy->delete($admin, $seller)))->toBeFalse();
 });
 
 it('blocks an admin from deleting themselves', function () {
     $policy = new UserPolicy;
     $admin = User::factory()->admin()->create();
 
-    expect($policy->delete($admin, $admin))->toBeFalse();
+    expect(PermissionsTeam::runAs($admin->company, fn () => $policy->delete($admin, $admin)))->toBeFalse();
 });
