@@ -8,6 +8,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Filament\Widgets\Concerns\InteractsWithPageFilters;
 use Filament\Widgets\TableWidget as BaseWidget;
+use Illuminate\Support\Facades\Auth;
 
 class SellerPerformanceWidget extends BaseWidget
 {
@@ -28,6 +29,7 @@ class SellerPerformanceWidget extends BaseWidget
             ->heading(__('app.reports.seller_performance'))
             ->query(
                 User::query()
+                    ->where('company_id', Auth::user()->company_id)
                     ->whereHas('sales')
                     ->withCount(['sales as sales_count' => fn ($q) => $q->whereBetween('sold_at', [$start, $end])])
                     ->withSum(['sales as sales_total' => fn ($q) => $q->whereBetween('sold_at', [$start, $end])], 'total')
