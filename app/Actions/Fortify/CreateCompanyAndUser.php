@@ -7,10 +7,10 @@ use App\Concerns\PasswordValidationRules;
 use App\Concerns\ProfileValidationRules;
 use App\Models\Company;
 use App\Models\User;
+use App\Support\PermissionsTeam;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Laravel\Fortify\Contracts\CreatesNewUsers;
-use Spatie\Permission\Models\Role;
 
 class CreateCompanyAndUser implements CreatesNewUsers
 {
@@ -42,7 +42,7 @@ class CreateCompanyAndUser implements CreatesNewUsers
                 'is_active' => true,
             ]);
 
-            $user->assignRole(Role::findOrCreate(User::ROLE_ADMIN));
+            PermissionsTeam::runAs($company, fn () => $user->assignRole(User::ROLE_ADMIN));
 
             return $user;
         });

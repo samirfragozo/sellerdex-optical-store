@@ -17,6 +17,8 @@ class SeedCompanyDefaults
 {
     public function handle(Company $company): void
     {
+        (new ProvisionCompanyRoles)->handle($company);
+
         PaymentMethod::create([
             'company_id' => $company->id,
             'name' => 'Efectivo',

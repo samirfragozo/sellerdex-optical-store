@@ -6,6 +6,7 @@ use App\Models\ExpenseCategory;
 use App\Models\PaymentMethod;
 use App\Models\ProductCategory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Spatie\Permission\Models\Role;
 
 uses(RefreshDatabase::class);
 
@@ -38,6 +39,15 @@ it('seeds generic expense categories for the company', function () {
 
     $names = ExpenseCategory::where('company_id', $company->id)->pluck('name')->all();
     expect($names)->toEqualCanonicalizing(ExpenseCategory::DEFAULT_NAMES);
+});
+
+it('provisions the admin and seller roles for the company', function () {
+    $company = Company::factory()->create();
+
+    (new SeedCompanyDefaults)->handle($company);
+
+    expect(Role::where('company_id', $company->id)->pluck('name')->all())
+        ->toEqualCanonicalizing(['admin', 'seller']);
 });
 
 it('does not leak defaults into another company', function () {
