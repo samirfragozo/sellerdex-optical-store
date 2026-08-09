@@ -61,3 +61,26 @@ it('the resolver falls back to the authenticated user company when no override i
 
     expect(app(PermissionRegistrar::class)->getPermissionsTeamId())->toBe($company->id);
 });
+
+it('does not permanently pin the team after being called while a user is authenticated', function () {
+    $companyA = Company::factory()->create();
+    $companyB = Company::factory()->create();
+    $userA = User::factory()->forCompany($companyA)->create();
+    $userB = User::factory()->forCompany($companyB)->create();
+    $registrar = app(PermissionRegistrar::class);
+
+    $this->actingAs($userA);
+    expect($registrar->getPermissionsTeamId())->toBe($companyA->id);
+
+    PermissionsTeam::runAs($companyB, fn () => null);
+
+    // Still acting as userA — should still resolve to A's company, not
+    // stay pinned to whatever runAs() last touched.
+    expect($registrar->getPermissionsTeamId())->toBe($companyA->id);
+
+    $this->actingAs($userB);
+
+    // Switching the authenticated user afterward must be reflected —
+    // this is exactly what stayed silently stale before the fix.
+    expect($registrar->getPermissionsTeamId())->toBe($companyB->id);
+});
