@@ -2,8 +2,10 @@
 
 namespace Database\Factories;
 
+use App\Actions\ProvisionCompanyRoles;
 use App\Models\Company;
 use App\Models\User;
+use App\Support\PermissionsTeam;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -64,16 +66,22 @@ class UserFactory extends Factory
 
     public function admin(): static
     {
-        return $this->afterCreating(
-            fn (User $user) => $user->assignRole(Role::findOrCreate(User::ROLE_ADMIN))
-        );
+        return $this->afterCreating(function (User $user): void {
+            PermissionsTeam::runAs($user->company, function () use ($user): void {
+                (new ProvisionCompanyRoles)->handle($user->company);
+                $user->assignRole(User::ROLE_ADMIN);
+            });
+        });
     }
 
     public function seller(): static
     {
-        return $this->afterCreating(
-            fn (User $user) => $user->assignRole(Role::findOrCreate(User::ROLE_SELLER))
-        );
+        return $this->afterCreating(function (User $user): void {
+            PermissionsTeam::runAs($user->company, function () use ($user): void {
+                (new ProvisionCompanyRoles)->handle($user->company);
+                $user->assignRole(User::ROLE_SELLER);
+            });
+        });
     }
 
     public function forCompany(Company $company): static
@@ -84,8 +92,8 @@ class UserFactory extends Factory
     public function superadmin(): static
     {
         return $this->state(['company_id' => null])
-            ->afterCreating(fn (User $user) => $user->assignRole(
-                Role::findOrCreate(User::ROLE_SUPERADMIN)
-            ));
+            ->afterCreating(fn (User $user) => PermissionsTeam::runAs(null, function () use ($user): void {
+                $user->assignRole(Role::findOrCreate(User::ROLE_SUPERADMIN, 'web'));
+            }));
     }
 }
