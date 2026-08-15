@@ -30,16 +30,22 @@ return new class extends Migration
         });
 
         // On a fresh install, Spatie's base migration creates this column NOT NULL
-        // (it assumes every role assignment belongs to a team). This app also keeps
-        // a global superadmin role with no company (company_id = null) — relax the
-        // constraint in that case so assigning that role can insert company_id = null.
+        // and folds it into the composite primary key (it assumes every role
+        // assignment belongs to a team). This app also keeps a global superadmin
+        // role with no company (company_id = null), so the column must be nullable
+        // and out of the primary key — a NOT NULL column can't be relaxed while
+        // it's still part of the primary key on Postgres, so the key is dropped
+        // first and rebuilt without company_id, matching the shape the pre-existing
+        // (nullable, non-key) branch below already produces.
         if (! Schema::hasColumn('model_has_roles', 'company_id')) {
             Schema::table('model_has_roles', function (Blueprint $table) {
                 $table->unsignedBigInteger('company_id')->nullable()->after('role_id')->index();
             });
         } else {
             Schema::table('model_has_roles', function (Blueprint $table) {
+                $table->dropPrimary();
                 $table->unsignedBigInteger('company_id')->nullable()->change();
+                $table->primary(['role_id', 'model_id', 'model_type']);
             });
         }
 
@@ -49,7 +55,9 @@ return new class extends Migration
             });
         } else {
             Schema::table('model_has_permissions', function (Blueprint $table) {
+                $table->dropPrimary();
                 $table->unsignedBigInteger('company_id')->nullable()->change();
+                $table->primary(['permission_id', 'model_id', 'model_type']);
             });
         }
 
