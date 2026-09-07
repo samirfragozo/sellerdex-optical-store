@@ -359,6 +359,14 @@ return [
             'out_of_stock' => 'Sin stock',
             'empty' => 'No hay productos que coincidan con la búsqueda.',
         ],
+
+        'checkout' => [
+            'title' => 'Cobrar',
+            'payments' => 'Pagos',
+            'remaining' => 'Saldo',
+            'add_payment' => 'Agregar método de pago',
+            'confirm' => 'Confirmar venta',
+        ],
     ],
 
     'cash_close_type' => ['daily' => 'Diario', 'monthly' => 'Mensual'],

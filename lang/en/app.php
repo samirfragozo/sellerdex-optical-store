@@ -315,6 +315,14 @@ return [
             'out_of_stock' => 'Out of stock',
             'empty' => 'No products match your search.',
         ],
+
+        'checkout' => [
+            'title' => 'Checkout',
+            'payments' => 'Payments',
+            'remaining' => 'Remaining',
+            'add_payment' => 'Add payment method',
+            'confirm' => 'Confirm sale',
+        ],
     ],
 
     'cash_close_type' => ['daily' => 'Daily', 'monthly' => 'Monthly'],
