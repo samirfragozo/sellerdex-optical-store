@@ -33,6 +33,8 @@ it('rejects opening a second session while one is already open', function () {
 
 it('closes a session and computes expected cash from the cash payments received since it opened', function () {
     $seller = User::factory()->seller()->create();
+    $this->actingAs($seller);
+
     $cashMethod = PaymentMethod::factory()->create(['is_default' => true]);
     $cardMethod = PaymentMethod::factory()->create(['is_default' => false]);
     $session = openCashRegisterSession($seller, 50_000);
@@ -52,8 +54,7 @@ it('closes a session and computes expected cash from the cash payments received 
         'amount' => 40_000,
     ]);
 
-    $this->actingAs($seller)
-        ->postJson("/pos/cash-sessions/{$session->id}/close", ['closed_cash' => 135_000])
+    $this->postJson("/pos/cash-sessions/{$session->id}/close", ['closed_cash' => 135_000])
         ->assertOk()
         ->assertJson(['expected_cash' => 130_000, 'difference' => 5_000]);
 

@@ -45,6 +45,9 @@ class CashRegisterSession extends Model
 
     public function resolveRouteBinding($value, $field = null)
     {
+        // ponytail: implicit route binding must bypass global scopes so the controller's own
+        // abort_if($cashRegisterSession->user_id !== $request->user()->id, 403) ownership check
+        // can run and return 403, rather than CompanyScope filtering the record and returning 404 first.
         return $this->withoutGlobalScopes()
             ->where($field ?? $this->getRouteKeyName(), $value)
             ->first();

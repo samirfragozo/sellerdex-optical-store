@@ -13,10 +13,7 @@ class CompanyScope implements Scope
     {
         $companyId = Auth::user()?->company_id;
         if ($companyId !== null) {
-            $builder->where(function ($q) use ($model, $companyId) {
-                $q->where($model->getTable().'.company_id', $companyId)
-                    ->orWhereNull($model->getTable().'.company_id');
-            });
+            $builder->where($model->getTable().'.company_id', $companyId);
         }
         // superadmin (company_id = null): sin filtro, ve todo
     }

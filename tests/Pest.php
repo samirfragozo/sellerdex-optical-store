@@ -1,6 +1,5 @@
 <?php
 
-use App\Models\Company;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -18,12 +17,7 @@ use Tests\TestCase;
 
 pest()->extend(TestCase::class)
     ->use(RefreshDatabase::class)
-    ->beforeEach(function () {
-        test()->seed(RolesAndPermissionsSeeder::class);
-        // Store the default test company ID in a context variable
-        $company = Company::factory()->create();
-        $this->testCompanyId = $company->id;
-    })
+    ->beforeEach(fn () => test()->seed(RolesAndPermissionsSeeder::class))
     ->in('Feature');
 
 pest()->extend(TestCase::class)
