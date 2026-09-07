@@ -13,6 +13,9 @@ export interface ProductProp {
     name: string;
     price: number;
     category_key: string | null;
+    category_name: string | null;
+    is_stockable: boolean;
+    stock: number | null;
     specs: Record<string, string> | null;
 }
 
