@@ -341,6 +341,12 @@ return [
             'select_prescription' => 'Seleccionar prescripción',
             'notes_placeholder' => 'Opcional...',
         ],
+
+        'cash_session' => [
+            'already_open' => 'Ya tienes una sesión de caja abierta.',
+            'already_closed' => 'Esta sesión ya fue cerrada.',
+            'required_notice' => 'Debes abrir una sesión de caja antes de vender.',
+        ],
     ],
 
     'cash_close_type' => ['daily' => 'Diario', 'monthly' => 'Mensual'],

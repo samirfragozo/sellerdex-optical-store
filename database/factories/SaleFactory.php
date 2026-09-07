@@ -7,6 +7,7 @@ use App\Enums\SaleStatus;
 use App\Models\Customer;
 use App\Models\Sale;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Facades\Auth;
 
 /**
  * @extends Factory<Sale>
@@ -21,6 +22,7 @@ class SaleFactory extends Factory
     public function definition(): array
     {
         return [
+            'company_id' => Auth::user()?->company_id,
             'customer_id' => Customer::factory(),
             'seller_id' => null,
             'document_type' => SaleDocumentType::Order->value,

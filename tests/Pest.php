@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Company;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -17,7 +18,12 @@ use Tests\TestCase;
 
 pest()->extend(TestCase::class)
     ->use(RefreshDatabase::class)
-    ->beforeEach(fn () => test()->seed(RolesAndPermissionsSeeder::class))
+    ->beforeEach(function () {
+        test()->seed(RolesAndPermissionsSeeder::class);
+        // Store the default test company ID in a context variable
+        $company = Company::factory()->create();
+        $this->testCompanyId = $company->id;
+    })
     ->in('Feature');
 
 pest()->extend(TestCase::class)
@@ -58,5 +64,6 @@ function openCashRegisterSession(User $user, int $openingCash = 0): CashRegister
 {
     return CashRegisterSession::factory()->for($user)->create([
         'opening_cash' => $openingCash,
+        'company_id' => $user->company_id,
     ]);
 }

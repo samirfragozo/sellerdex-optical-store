@@ -42,4 +42,11 @@ class CashRegisterSession extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    public function resolveRouteBinding($value, $field = null)
+    {
+        return $this->withoutGlobalScopes()
+            ->where($field ?? $this->getRouteKeyName(), $value)
+            ->first();
+    }
 }

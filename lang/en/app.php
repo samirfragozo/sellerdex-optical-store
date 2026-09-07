@@ -297,6 +297,12 @@ return [
             'select_prescription' => 'Select prescription',
             'notes_placeholder' => 'Optional...',
         ],
+
+        'cash_session' => [
+            'already_open' => 'You already have an open cash session.',
+            'already_closed' => 'This session is already closed.',
+            'required_notice' => 'You must open a cash session before selling.',
+        ],
     ],
 
     'cash_close_type' => ['daily' => 'Daily', 'monthly' => 'Monthly'],

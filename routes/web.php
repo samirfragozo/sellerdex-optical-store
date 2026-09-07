@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\CashRegisterSessionController;
 use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\PosController;
@@ -14,6 +15,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('pos', [PosController::class, 'store'])->name('pos.store');
     Route::post('pos/lens-recommendation', [PosController::class, 'lensRecommendation'])
         ->name('pos.lens-recommendation');
+    Route::post('pos/cash-sessions', [CashRegisterSessionController::class, 'store'])
+        ->name('pos.cash-sessions.store');
+    Route::post('pos/cash-sessions/{cashRegisterSession}/close', [CashRegisterSessionController::class, 'close'])
+        ->name('pos.cash-sessions.close');
 });
 
 Route::middleware('auth')->group(function () {
