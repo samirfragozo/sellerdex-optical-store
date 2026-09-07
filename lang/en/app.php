@@ -303,6 +303,14 @@ return [
             'already_closed' => 'This session is already closed.',
             'required_notice' => 'You must open a cash session before selling.',
         ],
+
+        'catalog' => [
+            'search_placeholder' => 'Search product...',
+            'all_categories' => 'All',
+            'uncategorized' => 'Uncategorized',
+            'out_of_stock' => 'Out of stock',
+            'empty' => 'No products match your search.',
+        ],
     ],
 
     'cash_close_type' => ['daily' => 'Daily', 'monthly' => 'Monthly'],

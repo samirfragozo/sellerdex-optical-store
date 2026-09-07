@@ -347,6 +347,14 @@ return [
             'already_closed' => 'Esta sesión ya fue cerrada.',
             'required_notice' => 'Debes abrir una sesión de caja antes de vender.',
         ],
+
+        'catalog' => [
+            'search_placeholder' => 'Buscar producto...',
+            'all_categories' => 'Todos',
+            'uncategorized' => 'Sin categoría',
+            'out_of_stock' => 'Sin stock',
+            'empty' => 'No hay productos que coincidan con la búsqueda.',
+        ],
     ],
 
     'cash_close_type' => ['daily' => 'Diario', 'monthly' => 'Mensual'],
