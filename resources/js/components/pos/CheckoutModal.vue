@@ -16,7 +16,7 @@ import { useTranslations } from '@/composables/useTranslations';
 
 const { trans } = useTranslations();
 
-const props = defineProps<{
+defineProps<{
     open: boolean;
     paymentMethods: { id: number; name: string; surcharge_percent: number }[];
     documentTypes: { value: string; label: string }[];
@@ -51,12 +51,14 @@ function formatCOP(value: number): string {
                             :key="dt.value"
                             class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1 text-sm hover:bg-accent"
                         >
+                            <!-- eslint-disable vue/no-mutating-props -->
                             <input
                                 v-model="checkout.documentType.value"
                                 type="radio"
                                 :value="dt.value"
                                 class="size-4 accent-primary"
                             />
+                            <!-- eslint-enable vue/no-mutating-props -->
                             {{ dt.label }}
                         </label>
                     </div>
@@ -122,6 +124,7 @@ function formatCOP(value: number): string {
                 <!-- Notes -->
                 <div>
                     <Label for="checkout_notes">{{ trans('app.fields.notes') }}</Label>
+                    <!-- eslint-disable vue/no-mutating-props -->
                     <textarea
                         id="checkout_notes"
                         v-model="checkout.notes.value"
@@ -129,6 +132,7 @@ function formatCOP(value: number): string {
                         class="mt-1 w-full resize-none rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring/50 dark:bg-input/30"
                         :placeholder="trans('app.pos.notes_placeholder')"
                     ></textarea>
+                    <!-- eslint-enable vue/no-mutating-props -->
                 </div>
 
                 <InputError :message="checkout.errors.value.cash_session" />
