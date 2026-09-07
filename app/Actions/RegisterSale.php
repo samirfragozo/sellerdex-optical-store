@@ -76,13 +76,16 @@ class RegisterSale
 
             $sale->recalculateTotals();
 
-            if (! empty($data['payment']) && ($data['payment']['amount'] ?? 0) > 0) {
+            foreach ($data['payments'] ?? [] as $payment) {
+                if (($payment['amount'] ?? 0) <= 0) {
+                    continue;
+                }
                 $sale->payments()->create([
-                    'payment_method_id' => $data['payment']['payment_method_id'],
-                    'amount' => $data['payment']['amount'],
+                    'payment_method_id' => $payment['payment_method_id'],
+                    'amount' => $payment['amount'],
                     'paid_at' => now()->toDateString(),
                     'received_by' => $seller->id,
-                    'reference' => $data['payment']['reference'] ?? null,
+                    'reference' => $payment['reference'] ?? null,
                 ]);
             }
 
@@ -91,6 +94,10 @@ class RegisterSale
     }
 
     /**
+     * The blended surcharge across every payment method used, weighted by amount —
+     * Sale keeps a single surcharge_percent column, so a split payment is folded
+     * into one weighted-average rate instead of one line per method.
+     *
      * @param  array<string,mixed>  $data
      */
     private function resolveSurcharge(array $data): float
@@ -98,11 +105,22 @@ class RegisterSale
         if (isset($data['surcharge_percent'])) {
             return (float) $data['surcharge_percent'];
         }
-        if (! empty($data['payment']['payment_method_id'])) {
-            return (float) (PaymentMethod::whereKey($data['payment']['payment_method_id'])->value('surcharge_percent') ?? 0);
+
+        $payments = collect($data['payments'] ?? [])->filter(fn (array $p): bool => ($p['amount'] ?? 0) > 0);
+        $totalAmount = (int) $payments->sum('amount');
+
+        if ($totalAmount === 0) {
+            return 0.0;
         }
 
-        return 0.0;
+        $surchargeByMethod = PaymentMethod::whereIn('id', $payments->pluck('payment_method_id')->unique())
+            ->pluck('surcharge_percent', 'id');
+
+        $weighted = $payments->sum(
+            fn (array $p): float => (float) ($surchargeByMethod[$p['payment_method_id']] ?? 0) * $p['amount']
+        );
+
+        return $weighted / $totalAmount;
     }
 
     /**

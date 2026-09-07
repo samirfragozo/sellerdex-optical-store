@@ -24,7 +24,7 @@ it('derives the sale surcharge from the payment method', function () {
         'customer_id' => Customer::factory()->create()->id,
         'document_type' => 'order',
         'items' => [['description' => 'Lente', 'quantity' => 1, 'unit_price' => 100000]],
-        'payment' => ['payment_method_id' => $addi->id, 'amount' => 50000],
+        'payments' => [['payment_method_id' => $addi->id, 'amount' => 50000]],
     ], User::factory()->seller()->create());
 
     expect((float) $sale->surcharge_percent)->toBe(7.0)

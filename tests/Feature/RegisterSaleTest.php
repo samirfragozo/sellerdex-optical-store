@@ -38,7 +38,7 @@ it('records an optional initial payment and moves status to partial', function (
         'customer_id' => $customer->id,
         'document_type' => 'layaway',
         'items' => [['description' => 'Promo', 'quantity' => 1, 'unit_price' => 375_000]],
-        'payment' => ['payment_method_id' => $method->id, 'amount' => 50_000],
+        'payments' => [['payment_method_id' => $method->id, 'amount' => 50_000]],
     ], $seller);
 
     expect($sale->total)->toBe(375_000)
