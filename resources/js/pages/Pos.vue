@@ -4,6 +4,7 @@ import {
     Download,
     Eye,
     FileText,
+    Pencil,
     Plus,
     ShoppingCart,
     Trash2,
@@ -11,13 +12,10 @@ import {
 import { computed, ref, watch } from 'vue';
 import InputError from '@/components/InputError.vue';
 import AccordionStep from '@/components/pos/AccordionStep.vue';
+import ArmadoModal from '@/components/pos/ArmadoModal.vue';
 import CartSummary from '@/components/pos/CartSummary.vue';
-import StepCombo from '@/components/pos/StepCombo.vue';
 import StepCustomer from '@/components/pos/StepCustomer.vue';
-import StepFrame from '@/components/pos/StepFrame.vue';
-import StepLens from '@/components/pos/StepLens.vue';
 import StepPayment from '@/components/pos/StepPayment.vue';
-import StepPrescription from '@/components/pos/StepPrescription.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import type {
@@ -27,7 +25,7 @@ import type {
 } from '@/composables/useLensCatalog';
 import { useLensRecommendation } from '@/composables/useLensRecommendation';
 import type { Armado } from '@/composables/usePosCart';
-import { usePosCart } from '@/composables/usePosCart';
+import { armadoTotal, usePosCart } from '@/composables/usePosCart';
 import { useTranslations } from '@/composables/useTranslations';
 import { index, store } from '@/routes/pos';
 import type { CreatedSale } from '@/types/global';
@@ -95,27 +93,8 @@ const { recommended, warnings, fetchFor } = useLensRecommendation();
 const lensSelections = ref<Record<number, LensSpecs>>({});
 const resolvedLenses = ref<Record<number, LensProduct | null>>({});
 
-function getLensSelection(armadoId: number): LensSpecs {
-    if (!lensSelections.value[armadoId]) {
-        lensSelections.value[armadoId] = {
-            design: '',
-            process: '',
-            material: '',
-            filter: '',
-        };
-    }
-
-    return lensSelections.value[armadoId];
-}
-
 // --- Accordion state ---
-type StepKey =
-    | 'customer'
-    | `prescription-${number}`
-    | `lens-${number}`
-    | `frame-${number}`
-    | `combo-${number}`
-    | 'payment';
+type StepKey = 'customer';
 
 const openStep = ref<StepKey>('customer');
 
@@ -212,9 +191,9 @@ const customerPrescriptions = computed<PrescriptionOption[]>(() =>
         : props.prescriptions.filter((p) => p.customer_id === form.customer_id),
 );
 
-const lensNeedsCustomer = computed(
-    () => cart.armados.value.length > 0 && customerMode.value === 'none',
-);
+// The prescription step only renders while the armado modal is open, so
+// "needs a customer" just reflects the current customer mode.
+const lensNeedsCustomer = computed(() => customerMode.value === 'none');
 
 watch([customerMode, customerPrescriptions], () => {
     if (
@@ -276,26 +255,46 @@ const looseProducts = computed<ProductProp[]>(() =>
 );
 
 // --- Armado management ---
-function startArmado(): void {
-    const armado = cart.addArmado();
-    lensSelections.value[armado.id] = {
-        design: '',
-        process: '',
-        material: '',
-        filter: '',
+// null while creating a new armado, otherwise the id of the one being edited.
+const editingArmadoId = ref<number | null>(null);
+const armadoModalOpen = ref(false);
+
+const editingArmado = computed<Armado | null>(
+    () =>
+        cart.armados.value.find((a) => a.id === editingArmadoId.value) ?? null,
+);
+
+function openArmadoModal(id: number | null): void {
+    editingArmadoId.value = id;
+    armadoModalOpen.value = true;
+}
+
+function onArmadoSave(payload: {
+    armado: Armado;
+    lensSelection: LensSpecs;
+    resolvedLens: LensProduct | null;
+}): void {
+    const data = {
+        lens: payload.armado.lens,
+        frame: payload.armado.frame,
+        own_frame: payload.armado.own_frame,
+        combo: payload.armado.combo,
     };
-    resolvedLenses.value[armado.id] = null;
-    openStep.value = `prescription-${armado.id}`;
+    const id = editingArmadoId.value ?? cart.commitArmado(data).id;
+
+    if (editingArmadoId.value !== null) {
+        cart.updateArmado(editingArmadoId.value, data);
+    }
+
+    lensSelections.value[id] = payload.lensSelection;
+    resolvedLenses.value[id] = payload.resolvedLens;
+    armadoModalOpen.value = false;
 }
 
 function removeArmado(id: number): void {
     cart.removeArmado(id);
     delete lensSelections.value[id];
     delete resolvedLenses.value[id];
-
-    if (cart.armados.value.length === 0) {
-        openStep.value = 'customer';
-    }
 }
 
 // --- Loose product management ---
@@ -327,39 +326,12 @@ function onLooseProductSelect(index: number, productId: string): void {
     }
 }
 
-// --- Lens selection change → refresh recommendation ---
-function onLensSelectionChange(armado: Armado, sel: LensSpecs): void {
-    void fetchFor(form.prescription as Record<string, unknown>, {
-        design: sel.design || undefined,
-        material: sel.material || undefined,
-    });
-    // Sync resolved lens back to armado
-    const resolved = resolvedLenses.value[armado.id];
-
-    if (resolved) {
-        armado.lens = {
-            product_id: resolved.id,
-            description: resolved.name,
-            unit_price: resolved.price,
-        };
-    } else {
-        armado.lens = null;
-    }
-}
-
-// Prescription change → refresh recommendation for first armado
-function onPrescriptionChange(): void {
-    const firstArmado = cart.armados.value[0];
-
-    if (!firstArmado) {
-        return;
-    }
-
-    const sel = getLensSelection(firstArmado.id);
-    void fetchFor(form.prescription as Record<string, unknown>, {
-        design: sel.design || undefined,
-        material: sel.material || undefined,
-    });
+// --- Lens/prescription changes in the armado modal → refresh recommendation ---
+function onRefreshRecommendation(sel: {
+    design?: string;
+    material?: string;
+}): void {
+    void fetchFor(form.prescription as Record<string, unknown>, sel);
 }
 
 // --- Formatting ---
@@ -484,129 +456,80 @@ function submit(): void {
                     />
                 </AccordionStep>
 
-                <!-- Per-armado steps -->
-                <template v-for="armado in cart.armados.value" :key="armado.id">
-                    <!-- Prescripción -->
-                    <AccordionStep
-                        :title="
-                            trans('app.pos.steps.prescription').replace(
-                                ':id',
-                                String(armado.id),
-                            )
-                        "
-                        :open="openStep === `prescription-${armado.id}`"
-                        @toggle="toggle(`prescription-${armado.id}`)"
+                <!-- Armados (lens + frame) -->
+                <template v-if="cart.armados.value.length > 0">
+                    <div
+                        v-for="armado in cart.armados.value"
+                        :key="armado.id"
+                        class="flex items-center justify-between rounded-xl border border-sidebar-border/70 bg-white p-4 dark:border-sidebar-border dark:bg-zinc-900"
                     >
-                        <StepPrescription
-                            v-model:prescription-mode="prescriptionMode"
-                            v-model:prescription-id="form.prescription_id"
-                            v-model:prescription="form.prescription"
-                            :customer-prescriptions="customerPrescriptions"
-                            :lens-needs-customer="lensNeedsCustomer"
-                            :errors="form.errors"
-                            :today="today"
-                            :min-exam-date="minExamDate"
-                            @change="onPrescriptionChange"
-                        />
-                        <div class="mt-4 flex justify-end">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                @click="toggle(`lens-${armado.id}`)"
-                            >
-                                {{ trans('app.pos.continue_to_lens') }}
-                            </Button>
+                        <div>
+                            <p class="font-medium">
+                                {{ armado.lens?.description }}
+                            </p>
+                            <p class="text-sm text-muted-foreground">
+                                {{
+                                    armado.own_frame
+                                        ? trans('app.pos.summary.own_frame')
+                                        : (armado.frame?.description ??
+                                          trans('app.pos.none_option'))
+                                }}
+                                · {{ formatCOP(armadoTotal(armado)) }}
+                            </p>
                         </div>
-                    </AccordionStep>
-
-                    <!-- Lente -->
-                    <AccordionStep
-                        :title="
-                            trans('app.pos.steps.lens').replace(
-                                ':id',
-                                String(armado.id),
-                            )
-                        "
-                        :open="openStep === `lens-${armado.id}`"
-                        @toggle="toggle(`lens-${armado.id}`)"
-                    >
-                        <StepLens
-                            v-model:selection="lensSelections[armado.id]"
-                            v-model:resolved-lens="resolvedLenses[armado.id]"
-                            :products="products"
-                            :recommended="recommended"
-                            :warnings="warnings"
-                            @change="
-                                (sel) => onLensSelectionChange(armado, sel)
-                            "
-                        />
-                        <div class="mt-4 flex justify-end">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                @click="toggle(`frame-${armado.id}`)"
-                            >
-                                {{ trans('app.pos.continue_to_frame') }}
-                            </Button>
-                        </div>
-                    </AccordionStep>
-
-                    <!-- Montura -->
-                    <AccordionStep
-                        :title="
-                            trans('app.pos.steps.frame').replace(
-                                ':id',
-                                String(armado.id),
-                            )
-                        "
-                        :open="openStep === `frame-${armado.id}`"
-                        @toggle="toggle(`frame-${armado.id}`)"
-                    >
-                        <StepFrame
-                            v-model:frame="armado.frame"
-                            v-model:own-frame="armado.own_frame"
-                            :frame-products="frameProducts"
-                        />
-                        <div class="mt-4 flex justify-end">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                @click="toggle(`combo-${armado.id}`)"
-                            >
-                                {{ trans('app.pos.continue_to_combo') }}
-                            </Button>
-                        </div>
-                    </AccordionStep>
-
-                    <!-- Combo -->
-                    <AccordionStep
-                        :title="
-                            trans('app.pos.steps.combo').replace(
-                                ':id',
-                                String(armado.id),
-                            )
-                        "
-                        :open="openStep === `combo-${armado.id}`"
-                        @toggle="toggle(`combo-${armado.id}`)"
-                    >
-                        <StepCombo v-model:combo="armado.combo" />
-                        <div class="mt-4 flex items-center justify-between">
+                        <div class="flex items-center gap-1">
                             <Button
                                 type="button"
                                 variant="ghost"
-                                size="sm"
+                                size="icon"
+                                :title="trans('app.pos.edit_armado')"
+                                @click="openArmadoModal(armado.id)"
+                            >
+                                <Pencil class="size-4" />
+                            </Button>
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
                                 class="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                                :title="trans('app.pos.remove_armado')"
                                 @click="removeArmado(armado.id)"
                             >
-                                <Trash2 class="mr-1.5 size-4" />
-                                {{ trans('app.pos.remove_armado') }}
+                                <Trash2 class="size-4" />
                             </Button>
                         </div>
-                    </AccordionStep>
+                    </div>
                 </template>
+
+                <ArmadoModal
+                    :open="armadoModalOpen"
+                    :armado="editingArmado"
+                    :lens-selection="
+                        editingArmadoId !== null
+                            ? (lensSelections[editingArmadoId] ?? null)
+                            : null
+                    "
+                    :resolved-lens="
+                        editingArmadoId !== null
+                            ? (resolvedLenses[editingArmadoId] ?? null)
+                            : null
+                    "
+                    :products="products"
+                    :frame-products="frameProducts"
+                    :recommended="recommended"
+                    :warnings="warnings"
+                    :customer-prescriptions="customerPrescriptions"
+                    :lens-needs-customer="lensNeedsCustomer"
+                    :errors="form.errors"
+                    :today="today"
+                    :min-exam-date="minExamDate"
+                    v-model:prescription-mode="prescriptionMode"
+                    v-model:prescription-id="form.prescription_id"
+                    v-model:prescription="form.prescription"
+                    @update:open="armadoModalOpen = $event"
+                    @refresh-recommendation="onRefreshRecommendation"
+                    @save="onArmadoSave"
+                />
 
                 <!-- Loose products -->
                 <template v-if="cart.products.value.length > 0">
@@ -704,7 +627,7 @@ function submit(): void {
                         type="button"
                         variant="outline"
                         class="gap-2"
-                        @click="startArmado"
+                        @click="openArmadoModal(null)"
                     >
                         <Plus class="size-4" />
                         {{ trans('app.pos.add_armado') }}

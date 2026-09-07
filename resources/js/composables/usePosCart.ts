@@ -26,6 +26,13 @@ export interface LooseProduct {
     unit_price: number;
 }
 
+export function armadoTotal(armado: Armado): number {
+    const lens = armado.lens?.unit_price ?? 0;
+    const frame = !armado.own_frame ? (armado.frame?.unit_price ?? 0) : 0;
+
+    return lens + frame;
+}
+
 export function usePosCart() {
     const armados: Ref<Armado[]> = ref([]);
     const products: Ref<LooseProduct[]> = ref([]);
@@ -33,17 +40,17 @@ export function usePosCart() {
     const surchargePercent = ref(0);
     let nextId = 1;
 
-    function addArmado(): Armado {
-        const armado: Armado = {
-            id: nextId++,
-            lens: null,
-            frame: null,
-            own_frame: false,
-            combo: { with_exam: false, forro: 'small', include_liquid: true },
-        };
+    function commitArmado(data: Omit<Armado, 'id'>): Armado {
+        const armado: Armado = { id: nextId++, ...data };
         armados.value.push(armado);
 
         return armado;
+    }
+
+    function updateArmado(id: number, data: Omit<Armado, 'id'>): void {
+        armados.value = armados.value.map((a) =>
+            a.id === id ? { id, ...data } : a,
+        );
     }
 
     function removeArmado(id: number): void {
@@ -64,12 +71,10 @@ export function usePosCart() {
     }
 
     const subtotal: ComputedRef<number> = computed(() => {
-        const armadoSum = armados.value.reduce((sum, a) => {
-            const lens = a.lens?.unit_price ?? 0;
-            const frame = !a.own_frame ? (a.frame?.unit_price ?? 0) : 0;
-
-            return sum + lens + frame;
-        }, 0);
+        const armadoSum = armados.value.reduce(
+            (sum, a) => sum + armadoTotal(a),
+            0,
+        );
         const productSum = products.value.reduce(
             (sum, p) => sum + p.quantity * p.unit_price,
             0,
@@ -105,7 +110,8 @@ export function usePosCart() {
         surchargePercent,
         subtotal,
         total,
-        addArmado,
+        commitArmado,
+        updateArmado,
         removeArmado,
         addProduct,
         removeProduct,

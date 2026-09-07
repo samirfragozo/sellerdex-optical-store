@@ -267,15 +267,18 @@ return [
 
         'steps' => [
             'customer' => 'Cliente',
-            'prescription' => 'Prescripción (Armado #:id)',
-            'lens' => 'Lente (Armado #:id)',
-            'frame' => 'Montura (Armado #:id)',
-            'combo' => 'Combo (Armado #:id)',
+            'prescription' => 'Prescripción',
+            'lens' => 'Lente',
+            'frame' => 'Montura',
+            'combo' => 'Combo',
         ],
 
         'continue_to_lens' => 'Continuar al lente',
         'continue_to_frame' => 'Continuar a la montura',
         'continue_to_combo' => 'Continuar al combo',
+        'back' => 'Atrás',
+        'save_armado' => 'Guardar ítem',
+        'edit_armado' => 'Editar ítem',
         'remove_armado' => 'Quitar este armado',
 
         'summary' => [

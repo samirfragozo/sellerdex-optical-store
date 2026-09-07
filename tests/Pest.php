@@ -20,6 +20,11 @@ pest()->extend(TestCase::class)
     ->beforeEach(fn () => test()->seed(RolesAndPermissionsSeeder::class))
     ->in('Feature');
 
+pest()->extend(TestCase::class)
+    ->use(RefreshDatabase::class)
+    ->beforeEach(fn () => test()->seed(RolesAndPermissionsSeeder::class))
+    ->in('Browser');
+
 /*
 |--------------------------------------------------------------------------
 | Expectations

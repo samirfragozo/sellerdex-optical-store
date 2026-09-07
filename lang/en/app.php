@@ -223,15 +223,18 @@ return [
 
         'steps' => [
             'customer' => 'Customer',
-            'prescription' => 'Prescription (Armado #:id)',
-            'lens' => 'Lens (Armado #:id)',
-            'frame' => 'Frame (Armado #:id)',
-            'combo' => 'Combo (Armado #:id)',
+            'prescription' => 'Prescription',
+            'lens' => 'Lens',
+            'frame' => 'Frame',
+            'combo' => 'Combo',
         ],
 
         'continue_to_lens' => 'Continue to lens',
         'continue_to_frame' => 'Continue to frame',
         'continue_to_combo' => 'Continue to combo',
+        'back' => 'Back',
+        'save_armado' => 'Save item',
+        'edit_armado' => 'Edit item',
         'remove_armado' => 'Remove this armado',
 
         'summary' => [
