@@ -167,6 +167,13 @@ const frameProducts = computed<ProductProp[]>(() =>
     props.products.filter((p) => p.category_key === 'frame'),
 );
 
+// Lenses are only selectable through the armado wizard, not as loose
+// products — otherwise the customer/prescription requirement is bypassed
+// (StorePosSaleRequest's cartHasLens() only inspects the armados array).
+const looseProducts = computed<ProductProp[]>(() =>
+    props.products.filter((p) => p.category_key !== 'lens'),
+);
+
 // --- Armado management ---
 const editingArmadoId = ref<number | null>(null);
 const armadoModalOpen = ref(false);
@@ -238,6 +245,35 @@ const checkout = usePosCheckout(cart.total);
 const checkoutModalOpen = ref(false);
 const showMobileCart = ref(false);
 const createdSale = ref<CreatedSale | null>(null);
+
+// Mirrors the backend's weighted-average calculation
+// (RegisterSale::resolveSurcharge()) so the cart total/summary reflect the
+// real charge before submitting, since an explicit surcharge_percent in the
+// payload always wins over the backend's own computation.
+watch(
+    () => checkout.payments.value,
+    (payments) => {
+        const active = payments.filter((p) => p.amount > 0);
+        const total = active.reduce((sum, p) => sum + p.amount, 0);
+
+        if (total === 0) {
+            cart.surchargePercent.value = 0;
+
+            return;
+        }
+
+        const weighted = active.reduce((sum, p) => {
+            const method = props.paymentMethods.find(
+                (m) => m.id === p.payment_method_id,
+            );
+
+            return sum + (method?.surcharge_percent ?? 0) * p.amount;
+        }, 0);
+
+        cart.surchargePercent.value = weighted / total;
+    },
+    { deep: true },
+);
 
 async function confirmCheckout(): Promise<void> {
     const cartPayload = cart.buildPayload();
@@ -419,7 +455,7 @@ async function confirmCheckout(): Promise<void> {
                     v-for="(item, idx) in cart.products.value"
                     :key="idx"
                     :item="item"
-                    :products="products"
+                    :products="looseProducts"
                     @update:item="(value) => (cart.products.value[idx] = value)"
                     @remove="removeLooseProduct(idx)"
                 />

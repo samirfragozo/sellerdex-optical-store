@@ -3,6 +3,7 @@
 use App\Models\PaymentMethod;
 use App\Models\Product;
 use App\Models\ProductCategory;
+use App\Models\Sale;
 use App\Models\User;
 
 it('sells a loose product end to end through the new catalog and cart', function () {
@@ -21,7 +22,7 @@ it('sells a loose product end to end through the new catalog and cart', function
         'is_active' => true,
         'is_stockable' => false,
     ]);
-    $paymentMethod = PaymentMethod::factory()->create(['name' => 'Efectivo']);
+    $paymentMethod = PaymentMethod::factory()->create(['name' => 'Efectivo', 'surcharge_percent' => 3]);
 
     $page = visit('/pos');
 
@@ -50,4 +51,15 @@ it('sells a loose product end to end through the new catalog and cart', function
         ->assertSee(__('app.documents.print_invoice'));
 
     $page->assertNoJavaScriptErrors();
+
+    // Confirms the sale was actually persisted, and — since the payment
+    // method carries a non-zero surcharge — that the frontend's reactive
+    // weighted-average surcharge computation reached the backend correctly
+    // instead of silently overriding it to 0.
+    expect(Sale::count())->toBe(1);
+
+    $sale = Sale::sole();
+
+    expect((float) $sale->surcharge_percent)->toBe(3.0)
+        ->and($sale->total)->toBe(15_450);
 });
