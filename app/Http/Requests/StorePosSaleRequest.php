@@ -79,10 +79,10 @@ class StorePosSaleRequest extends FormRequest
             'products.*.description' => ['required', 'string', 'max:255'],
             'products.*.quantity' => ['required', 'integer', 'min:1'],
             'products.*.unit_price' => ['required', 'integer', 'min:0'],
-            'payment' => ['nullable', 'array'],
-            'payment.payment_method_id' => ['required_with:payment', 'exists:payment_methods,id'],
-            'payment.amount' => ['required_with:payment', 'integer', 'min:1'],
-            'payment.reference' => ['nullable', 'string', 'max:255'],
+            'payments' => ['nullable', 'array'],
+            'payments.*.payment_method_id' => ['required', 'exists:payment_methods,id'],
+            'payments.*.amount' => ['required', 'integer', 'min:1'],
+            'payments.*.reference' => ['nullable', 'string', 'max:255'],
             'surcharge_percent' => ['nullable', 'numeric', 'min:0'],
         ];
     }
@@ -110,9 +110,10 @@ class StorePosSaleRequest extends FormRequest
                 }
             }
 
-            // A payment cannot exceed the sale total.
-            if (! empty($this->input('payment')) && (int) $this->input('payment.amount', 0) > $this->saleTotal()) {
-                $validator->errors()->add('payment.amount', 'El abono no puede superar el total de la venta.');
+            // The sum of every split payment cannot exceed the sale total.
+            $paymentsTotal = collect($this->input('payments', []))->sum(fn ($p) => (int) ($p['amount'] ?? 0));
+            if ($paymentsTotal > $this->saleTotal()) {
+                $validator->errors()->add('payments', 'La suma de los abonos no puede superar el total de la venta.');
             }
 
             // An eye's axis and cylinder must be provided together.
@@ -198,9 +199,9 @@ class StorePosSaleRequest extends FormRequest
             'armados.*.lens.unit_price.required' => 'Indica el precio del lente.',
             'products.*.description.required' => 'La descripción del producto es obligatoria.',
             'products.*.quantity.min' => 'La cantidad debe ser al menos 1.',
-            'payment.payment_method_id.required_with' => 'Selecciona el método de pago.',
-            'payment.amount.required_with' => 'Ingresa el monto del abono.',
-            'payment.amount.min' => 'El monto del abono debe ser mayor a 0.',
+            'payments.*.payment_method_id.required' => 'Selecciona el método de pago.',
+            'payments.*.amount.required' => 'Ingresa el monto del abono.',
+            'payments.*.amount.min' => 'El monto del abono debe ser mayor a 0.',
             'prescription.exam_date.before_or_equal' => 'La fecha del examen no puede ser futura.',
             'prescription.exam_date.after_or_equal' => 'La fecha del examen no puede tener más de 2 años.',
         ];

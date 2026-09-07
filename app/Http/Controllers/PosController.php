@@ -5,20 +5,20 @@ namespace App\Http\Controllers;
 use App\Actions\RegisterSale;
 use App\Enums\LensType;
 use App\Http\Requests\StorePosSaleRequest;
+use App\Models\CashRegisterSession;
 use App\Models\Customer;
 use App\Models\PaymentMethod;
 use App\Models\Prescription;
 use App\Models\Product;
 use App\Support\Optics\LensRecommender;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class PosController extends Controller
 {
-    public function index(): Response
+    public function index(Request $request): Response
     {
         $customers = Customer::query()->orderBy('name')
             ->limit(50)->get(['id', 'name', 'last_name', 'id_number']);
@@ -54,11 +54,20 @@ class PosController extends Controller
                     'lens_type' => $p->lens_type?->value,
                     'summary' => sprintf('OD %s / OS %s', $p->od_sphere ?? '—', $p->os_sphere ?? '—'),
                 ]),
+            'cashRegisterSession' => $this->openSessionFor($request)?->only([
+                'id', 'opened_at', 'opening_cash', 'closed_at', 'closed_cash', 'expected_cash', 'difference',
+            ]),
         ]);
     }
 
-    public function store(StorePosSaleRequest $request, RegisterSale $registerSale): RedirectResponse
+    public function store(StorePosSaleRequest $request, RegisterSale $registerSale): JsonResponse
     {
+        if ($this->openSessionFor($request) === null) {
+            return response()->json([
+                'message' => __('app.pos.cash_session.required_notice'),
+            ], 403);
+        }
+
         $data = $request->validated();
 
         // Create the customer inline when new customer data was provided.
@@ -84,16 +93,14 @@ class PosController extends Controller
             Prescription::whereKey($createdPrescriptionId)->update(['sale_id' => $sale->id]);
         }
 
-        return back()
-            ->with('success', __('app.pos.created', ['number' => $sale->number]))
-            ->with('createdSale', [
-                'id' => $sale->id,
-                'number' => $sale->number,
-                'prescription_id' => $sale->prescription_id,
-                'invoice_url' => route('documents.invoice', $sale),
-                'invoice_pdf_url' => route('documents.invoice.pdf', $sale),
-                'formula_url' => $sale->prescription_id ? route('documents.formula', $sale->prescription_id) : null,
-            ]);
+        return response()->json([
+            'id' => $sale->id,
+            'number' => $sale->number,
+            'prescription_id' => $sale->prescription_id,
+            'invoice_url' => route('documents.invoice', $sale),
+            'invoice_pdf_url' => route('documents.invoice.pdf', $sale),
+            'formula_url' => $sale->prescription_id ? route('documents.formula', $sale->prescription_id) : null,
+        ]);
     }
 
     public function lensRecommendation(Request $request, LensRecommender $recommender): JsonResponse
@@ -105,5 +112,13 @@ class PosController extends Controller
             'recommended' => $recommender->recommend($prescription),
             'warnings' => $recommender->warningsFor($prescription, $chosen),
         ]);
+    }
+
+    private function openSessionFor(Request $request): ?CashRegisterSession
+    {
+        return CashRegisterSession::query()
+            ->where('user_id', $request->user()->id)
+            ->whereNull('closed_at')
+            ->first();
     }
 }
