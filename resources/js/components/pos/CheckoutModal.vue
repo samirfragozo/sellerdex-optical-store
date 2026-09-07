@@ -44,7 +44,9 @@ function formatCOP(value: number): string {
             <div class="flex flex-col gap-4">
                 <!-- Document type -->
                 <div>
-                    <Label>{{ trans('app.pos.payment_form.document_type') }}</Label>
+                    <Label>{{
+                        trans('app.pos.payment_form.document_type')
+                    }}</Label>
                     <div class="mt-1 flex flex-col gap-1">
                         <label
                             v-for="dt in documentTypes"
@@ -123,7 +125,9 @@ function formatCOP(value: number): string {
 
                 <!-- Notes -->
                 <div>
-                    <Label for="checkout_notes">{{ trans('app.fields.notes') }}</Label>
+                    <Label for="checkout_notes">{{
+                        trans('app.fields.notes')
+                    }}</Label>
                     <!-- eslint-disable vue/no-mutating-props -->
                     <textarea
                         id="checkout_notes"
@@ -140,9 +144,14 @@ function formatCOP(value: number): string {
                     v-if="Object.keys(checkout.errors.value).length > 0"
                     class="rounded-md bg-destructive/10 px-4 py-3 text-sm text-destructive"
                 >
-                    <p class="mb-1 font-medium">{{ trans('app.pos.fix_errors') }}</p>
+                    <p class="mb-1 font-medium">
+                        {{ trans('app.pos.fix_errors') }}
+                    </p>
                     <ul class="list-disc space-y-0.5 pl-5">
-                        <li v-for="(message, key) in checkout.errors.value" :key="key">
+                        <li
+                            v-for="(message, key) in checkout.errors.value"
+                            :key="key"
+                        >
                             {{ message }}
                         </li>
                     </ul>

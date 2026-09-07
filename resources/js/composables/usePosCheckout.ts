@@ -82,7 +82,9 @@ export function usePosCheckout(total: Ref<number>) {
             }
 
             if (!response.ok) {
-                throw new Error(`Unexpected POS checkout response: ${response.status}`);
+                throw new Error(
+                    `Unexpected POS checkout response: ${response.status}`,
+                );
             }
 
             return (await response.json()) as CreatedSale;

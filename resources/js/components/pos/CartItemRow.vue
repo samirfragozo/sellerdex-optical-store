@@ -37,10 +37,16 @@ function onProductSelect(value: string): void {
         <select
             :value="item.product_id ?? ''"
             class="h-9 w-full rounded-md border border-input bg-transparent px-2 py-1 text-sm shadow-xs outline-none focus-visible:ring-2 focus-visible:ring-ring/50 dark:bg-input/30"
-            @change="onProductSelect(($event.target as HTMLSelectElement).value)"
+            @change="
+                onProductSelect(($event.target as HTMLSelectElement).value)
+            "
         >
             <option value="">{{ trans('app.pos.none_option') }}</option>
-            <option v-for="product in products" :key="product.id" :value="product.id">
+            <option
+                v-for="product in products"
+                :key="product.id"
+                :value="product.id"
+            >
                 {{ product.name }}
             </option>
         </select>
@@ -50,7 +56,8 @@ function onProductSelect(value: string): void {
             class="w-full"
             :placeholder="trans('app.fields.description')"
             @update:model-value="
-                (value) => emit('update:item', { ...item, description: String(value) })
+                (value) =>
+                    emit('update:item', { ...item, description: String(value) })
             "
         />
 
@@ -60,7 +67,8 @@ function onProductSelect(value: string): void {
             min="1"
             class="w-full text-right"
             @update:model-value="
-                (value) => emit('update:item', { ...item, quantity: Number(value) })
+                (value) =>
+                    emit('update:item', { ...item, quantity: Number(value) })
             "
         />
 
@@ -70,7 +78,8 @@ function onProductSelect(value: string): void {
             min="0"
             class="w-full text-right"
             @update:model-value="
-                (value) => emit('update:item', { ...item, unit_price: Number(value) })
+                (value) =>
+                    emit('update:item', { ...item, unit_price: Number(value) })
             "
         />
 

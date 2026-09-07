@@ -1,23 +1,16 @@
 <script setup lang="ts">
-import { Head, setLayoutProps, useForm, usePage } from '@inertiajs/vue3';
-import {
-    Download,
-    Eye,
-    FileText,
-    Pencil,
-    Plus,
-    ShoppingCart,
-    Trash2,
-} from '@lucide/vue';
+import { Head, setLayoutProps } from '@inertiajs/vue3';
+import { ShoppingCart } from '@lucide/vue';
 import { computed, ref, watch } from 'vue';
-import InputError from '@/components/InputError.vue';
-import AccordionStep from '@/components/pos/AccordionStep.vue';
 import ArmadoModal from '@/components/pos/ArmadoModal.vue';
+import CartItemRow from '@/components/pos/CartItemRow.vue';
 import CartSummary from '@/components/pos/CartSummary.vue';
+import CashSessionGateModal from '@/components/pos/CashSessionGateModal.vue';
+import CheckoutModal from '@/components/pos/CheckoutModal.vue';
+import ProductCatalog from '@/components/pos/ProductCatalog.vue';
+import SaleCreatedPanel from '@/components/pos/SaleCreatedPanel.vue';
 import StepCustomer from '@/components/pos/StepCustomer.vue';
-import StepPayment from '@/components/pos/StepPayment.vue';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import type {
     LensProduct,
     LensSpecs,
@@ -26,19 +19,15 @@ import type {
 import { useLensRecommendation } from '@/composables/useLensRecommendation';
 import type { Armado } from '@/composables/usePosCart';
 import { armadoTotal, usePosCart } from '@/composables/usePosCart';
+import { usePosCheckout } from '@/composables/usePosCheckout';
 import { useTranslations } from '@/composables/useTranslations';
-import { index, store } from '@/routes/pos';
-import type { CreatedSale } from '@/types/global';
+import { index } from '@/routes/pos';
+import type { CashRegisterSession, CreatedSale } from '@/types/global';
 
 const { trans } = useTranslations();
 
 setLayoutProps({
-    breadcrumbs: [
-        {
-            title: trans('app.pos.title'),
-            href: index(),
-        },
-    ],
+    breadcrumbs: [{ title: trans('app.pos.title'), href: index() }],
 });
 
 interface PaymentMethod {
@@ -68,6 +57,7 @@ const props = defineProps<{
     customers: Customer[];
     prescriptions: PrescriptionOption[];
     lensTypes: Record<string, string>;
+    cashRegisterSession: CashRegisterSession | null;
 }>();
 
 const today = new Date().toISOString().slice(0, 10);
@@ -78,71 +68,41 @@ const minExamDate = (() => {
     return d.toISOString().slice(0, 10);
 })();
 
-const page = usePage();
-const createdSale = computed<CreatedSale | null>(
-    () =>
-        (page.props.flash as { createdSale?: CreatedSale | null })
-            ?.createdSale ?? null,
-);
+// --- Cash register session gate ---
+const session = ref<CashRegisterSession | null>(props.cashRegisterSession);
+
+function onSessionOpened(opened: CashRegisterSession): void {
+    session.value = opened;
+}
 
 // --- Cart + recommendation composables ---
 const cart = usePosCart();
 const { recommended, warnings, fetchFor } = useLensRecommendation();
 
-// Per-armado lens selection + resolvedLens (keyed by armado.id)
 const lensSelections = ref<Record<number, LensSpecs>>({});
 const resolvedLenses = ref<Record<number, LensProduct | null>>({});
 
-// --- Accordion state ---
-type StepKey = 'customer';
-
-const openStep = ref<StepKey>('customer');
-
-function toggle(step: StepKey): void {
-    openStep.value = openStep.value === step ? ('customer' as StepKey) : step;
-}
-
-// --- Form state ---
-const form = useForm({
-    customer_id: null as number | null,
-    customer: {
-        name: '',
-        last_name: '',
-        document_type: 'cc',
-        id_number: '',
-        phone: '',
-        address: '',
-        city: '',
-        birth_date: '',
-        email: '',
-        notes: '',
-    },
-    document_type: 'order',
-    prescription_id: null as number | null,
-    prescription: {
-        exam_date: today,
-        lens_type: '',
-        od_sphere: '',
-        od_cylinder: '',
-        od_axis: '',
-        od_add: '',
-        os_sphere: '',
-        os_cylinder: '',
-        os_axis: '',
-        os_add: '',
-        diagnosis: '',
-    },
+// --- Customer (fixed panel, no longer a collapsible step) ---
+const customerMode = ref<'none' | 'existing' | 'new'>('existing');
+const customerId = ref<number | null>(null);
+const newCustomer = ref({
+    name: '',
+    last_name: '',
+    document_type: 'cc',
+    id_number: '',
+    phone: '',
+    address: '',
+    city: '',
+    birth_date: '',
+    email: '',
     notes: '',
 });
 
-// --- Customer mode ---
-const customerMode = ref<'none' | 'existing' | 'new'>('existing');
-
 watch(customerMode, (mode) => {
     if (mode === 'new') {
-        form.customer_id = null;
+        customerId.value = null;
     } else {
-        form.customer = {
+        newCustomer.value = {
             name: '',
             last_name: '',
             document_type: 'cc',
@@ -157,42 +117,33 @@ watch(customerMode, (mode) => {
     }
 
     if (mode !== 'existing') {
-        form.customer_id = null;
+        customerId.value = null;
     }
 });
 
-// Customer summary for accordion collapsed view
-const customerSummary = computed(() => {
-    if (customerMode.value === 'none') {
-        return trans('app.pos.no_customer');
-    }
-
-    if (customerMode.value === 'existing' && form.customer_id !== null) {
-        const c = props.customers.find((c) => c.id === form.customer_id);
-
-        return c
-            ? `${c.name} ${c.last_name}`
-            : trans('app.pos.selected_customer');
-    }
-
-    if (customerMode.value === 'new' && form.customer.name) {
-        return `${form.customer.name} ${form.customer.last_name}`.trim();
-    }
-
-    return undefined;
-});
-
-// --- Prescription mode ---
+// --- Prescription mode (used inside the armado modal) ---
 const prescriptionMode = ref<'existing' | 'new'>('new');
+const prescriptionId = ref<number | null>(null);
+const newPrescription = ref({
+    exam_date: today,
+    lens_type: '',
+    od_sphere: '',
+    od_cylinder: '',
+    od_axis: '',
+    od_add: '',
+    os_sphere: '',
+    os_cylinder: '',
+    os_axis: '',
+    os_add: '',
+    diagnosis: '',
+});
 
 const customerPrescriptions = computed<PrescriptionOption[]>(() =>
-    form.customer_id === null
+    customerId.value === null
         ? []
-        : props.prescriptions.filter((p) => p.customer_id === form.customer_id),
+        : props.prescriptions.filter((p) => p.customer_id === customerId.value),
 );
 
-// The prescription step only renders while the armado modal is open, so
-// "needs a customer" just reflects the current customer mode.
 const lensNeedsCustomer = computed(() => customerMode.value === 'none');
 
 watch([customerMode, customerPrescriptions], () => {
@@ -204,39 +155,6 @@ watch([customerMode, customerPrescriptions], () => {
     }
 });
 
-// --- Payment ---
-const showPayment = ref(false);
-const paymentMethodId = ref<number | null>(null);
-const paymentAmount = ref(0);
-
-watch([paymentMethodId, paymentAmount], () => {
-    if (paymentMethodId.value !== null) {
-        const pm = props.paymentMethods.find(
-            (p) => p.id === paymentMethodId.value,
-        );
-        cart.surchargePercent.value = pm?.surcharge_percent ?? 0;
-    } else {
-        cart.surchargePercent.value = 0;
-    }
-});
-
-const payment = computed(() =>
-    showPayment.value
-        ? {
-              payment_method_id: paymentMethodId.value,
-              amount: paymentAmount.value,
-          }
-        : null,
-);
-
-const balance = computed(() => {
-    if (!showPayment.value || !payment.value) {
-        return cart.total.value;
-    }
-
-    return cart.total.value - (payment.value.amount || 0);
-});
-
 // --- Document types ---
 const documentTypes = [
     { value: 'quote', label: trans('app.sale_document_type.quote') },
@@ -244,18 +162,12 @@ const documentTypes = [
     { value: 'layaway', label: trans('app.sale_document_type.layaway') },
 ];
 
-// --- Frame products ---
+// --- Frame products (used inside the armado modal) ---
 const frameProducts = computed<ProductProp[]>(() =>
     props.products.filter((p) => p.category_key === 'frame'),
 );
 
-// Lenses are only selectable through the armado wizard, not as loose products.
-const looseProducts = computed<ProductProp[]>(() =>
-    props.products.filter((p) => p.category_key !== 'lens'),
-);
-
 // --- Armado management ---
-// null while creating a new armado, otherwise the id of the one being edited.
 const editingArmadoId = ref<number | null>(null);
 const armadoModalOpen = ref(false);
 
@@ -297,423 +209,267 @@ function removeArmado(id: number): void {
     delete resolvedLenses.value[id];
 }
 
-// --- Loose product management ---
-function addLooseProduct(): void {
+// --- Catalog -> cart wiring ---
+function onAddProduct(product: ProductProp): void {
     cart.addProduct();
+    const item = cart.products.value[cart.products.value.length - 1];
+    item.product_id = product.id;
+    item.description = product.name;
+    item.unit_price = product.price;
 }
 
 function removeLooseProduct(index: number): void {
     cart.removeProduct(index);
 }
 
-function onLooseProductSelect(index: number, productId: string): void {
-    const id = productId ? parseInt(productId, 10) : null;
-    const item = cart.products.value[index];
-
-    if (!item) {
-        return;
-    }
-
-    item.product_id = id;
-
-    if (id !== null) {
-        const product = props.products.find((p) => p.id === id);
-
-        if (product) {
-            item.description = product.name;
-            item.unit_price = product.price;
-        }
-    }
-}
-
-// --- Lens/prescription changes in the armado modal → refresh recommendation ---
 function onRefreshRecommendation(sel: {
     design?: string;
     material?: string;
 }): void {
-    void fetchFor(form.prescription as Record<string, unknown>, sel);
+    void fetchFor(newPrescription.value as Record<string, unknown>, sel);
 }
 
-// --- Formatting ---
 function formatCOP(value: number): string {
     return '$' + new Intl.NumberFormat('es-CO').format(value);
 }
 
-// --- Submit ---
-function submit(): void {
+// --- Checkout ---
+const checkout = usePosCheckout(cart.total);
+const checkoutModalOpen = ref(false);
+const showMobileCart = ref(false);
+const createdSale = ref<CreatedSale | null>(null);
+
+async function confirmCheckout(): Promise<void> {
     const cartPayload = cart.buildPayload();
-    form.transform((data) => ({
-        ...data,
-        customer: customerMode.value === 'new' ? data.customer : null,
+
+    const result = await checkout.submit({
+        customer_id:
+            customerMode.value === 'existing' ? customerId.value : null,
+        customer: customerMode.value === 'new' ? newCustomer.value : null,
         prescription_id:
             cart.armados.value.length > 0 &&
             prescriptionMode.value === 'existing'
-                ? data.prescription_id
+                ? prescriptionId.value
                 : null,
         prescription:
             cart.armados.value.length > 0 && prescriptionMode.value === 'new'
-                ? data.prescription
+                ? newPrescription.value
                 : null,
         armados: cartPayload.armados,
         products: cartPayload.products,
         discount: cart.discount.value,
         surcharge_percent: cart.surchargePercent.value,
-        payment: payment.value,
-    })).post(store.url(), {
-        preserveScroll: true,
-        onSuccess: () => {
-            form.reset();
-            cart.armados.value = [];
-            cart.products.value = [];
-            cart.discount.value = 0;
-            cart.surchargePercent.value = 0;
-            lensSelections.value = {};
-            resolvedLenses.value = {};
-            customerMode.value = 'existing';
-            prescriptionMode.value = 'new';
-            showPayment.value = false;
-            paymentMethodId.value = null;
-            paymentAmount.value = 0;
-            openStep.value = 'customer';
-        },
     });
+
+    if (result === null) {
+        return;
+    }
+
+    createdSale.value = result;
+    checkoutModalOpen.value = false;
+    checkout.reset();
+    cart.armados.value = [];
+    cart.products.value = [];
+    cart.discount.value = 0;
+    cart.surchargePercent.value = 0;
+    lensSelections.value = {};
+    resolvedLenses.value = {};
+    customerMode.value = 'existing';
+    customerId.value = null;
+    prescriptionMode.value = 'new';
 }
 </script>
 
 <template>
     <Head :title="trans('app.pos.title')" />
 
-    <div class="flex h-full flex-1 flex-col gap-6 overflow-x-auto p-4">
-        <div class="flex items-center gap-3">
-            <ShoppingCart class="size-6 text-muted-foreground" />
-            <h1 class="text-2xl font-semibold">{{ trans('app.pos.title') }}</h1>
-        </div>
+    <CashSessionGateModal :open="session === null" @opened="onSessionOpened" />
 
-        <!-- Print / download panel shown after a successful sale -->
+    <div class="flex h-full flex-1 overflow-hidden">
+        <!-- Catalog -->
         <div
-            v-if="createdSale"
-            class="rounded-xl border border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-950/30"
+            :class="[
+                'h-full w-full min-w-sm flex-col transition-all duration-300',
+                showMobileCart ? 'hidden md:flex' : 'flex',
+            ]"
         >
-            <p
-                class="mb-3 text-base font-semibold text-green-800 dark:text-green-300"
-            >
-                {{
-                    trans('app.pos.created').replace(
-                        ':number',
-                        createdSale.number,
-                    )
-                }}
-            </p>
-            <div class="flex flex-wrap gap-2">
-                <a
-                    :href="createdSale.invoice_url"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="inline-flex items-center gap-2 rounded-md border border-input bg-background px-3 py-1.5 text-sm font-medium shadow-xs transition-colors hover:bg-accent hover:text-accent-foreground"
-                >
-                    <Eye class="size-4" />
-                    {{ trans('app.documents.print_invoice') }}
-                </a>
-                <a
-                    :href="createdSale.invoice_pdf_url"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="inline-flex items-center gap-2 rounded-md border border-input bg-background px-3 py-1.5 text-sm font-medium shadow-xs transition-colors hover:bg-accent hover:text-accent-foreground"
-                >
-                    <Download class="size-4" />
-                    {{ trans('app.documents.download_invoice') }}
-                </a>
-                <a
-                    v-if="createdSale.formula_url"
-                    :href="createdSale.formula_url"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="inline-flex items-center gap-2 rounded-md border border-input bg-background px-3 py-1.5 text-sm font-medium shadow-xs transition-colors hover:bg-accent hover:text-accent-foreground"
-                >
-                    <FileText class="size-4" />
-                    {{ trans('app.documents.print_formula') }}
-                </a>
-            </div>
+            <ProductCatalog
+                :products="products"
+                @select-lens-category="openArmadoModal(null)"
+                @add-product="onAddProduct"
+            />
         </div>
 
-        <form class="grid gap-6 lg:grid-cols-3" @submit.prevent="submit">
-            <!-- Left column: accordion steps -->
-            <div class="flex flex-col gap-3 lg:col-span-2">
-                <!-- Step: Cliente -->
-                <AccordionStep
-                    :title="trans('app.pos.steps.customer')"
-                    :open="openStep === 'customer'"
-                    :summary="customerSummary"
-                    @toggle="toggle('customer')"
-                >
-                    <StepCustomer
-                        v-model:customer-mode="customerMode"
-                        v-model:customer-id="form.customer_id"
-                        v-model:customer="form.customer"
-                        :customers="customers"
-                        :errors="form.errors"
-                        :today="today"
-                    />
-                </AccordionStep>
-
-                <!-- Armados (lens + frame) -->
-                <template v-if="cart.armados.value.length > 0">
-                    <div
-                        v-for="armado in cart.armados.value"
-                        :key="armado.id"
-                        class="flex items-center justify-between rounded-xl border border-sidebar-border/70 bg-white p-4 dark:border-sidebar-border dark:bg-zinc-900"
-                    >
-                        <div>
-                            <p class="font-medium">
-                                {{ armado.lens?.description }}
-                            </p>
-                            <p class="text-sm text-muted-foreground">
-                                {{
-                                    armado.own_frame
-                                        ? trans('app.pos.summary.own_frame')
-                                        : (armado.frame?.description ??
-                                          trans('app.pos.none_option'))
-                                }}
-                                · {{ formatCOP(armadoTotal(armado)) }}
-                            </p>
-                        </div>
-                        <div class="flex items-center gap-1">
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                :title="trans('app.pos.edit_armado')"
-                                @click="openArmadoModal(armado.id)"
-                            >
-                                <Pencil class="size-4" />
-                            </Button>
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                class="text-destructive hover:bg-destructive/10 hover:text-destructive"
-                                :title="trans('app.pos.remove_armado')"
-                                @click="removeArmado(armado.id)"
-                            >
-                                <Trash2 class="size-4" />
-                            </Button>
-                        </div>
-                    </div>
-                </template>
-
-                <ArmadoModal
-                    :open="armadoModalOpen"
-                    :armado="editingArmado"
-                    :lens-selection="
-                        editingArmadoId !== null
-                            ? (lensSelections[editingArmadoId] ?? null)
-                            : null
-                    "
-                    :resolved-lens="
-                        editingArmadoId !== null
-                            ? (resolvedLenses[editingArmadoId] ?? null)
-                            : null
-                    "
-                    :products="products"
-                    :frame-products="frameProducts"
-                    :recommended="recommended"
-                    :warnings="warnings"
-                    :customer-prescriptions="customerPrescriptions"
-                    :lens-needs-customer="lensNeedsCustomer"
-                    :errors="form.errors"
-                    :today="today"
-                    :min-exam-date="minExamDate"
-                    v-model:prescription-mode="prescriptionMode"
-                    v-model:prescription-id="form.prescription_id"
-                    v-model:prescription="form.prescription"
-                    @update:open="armadoModalOpen = $event"
-                    @refresh-recommendation="onRefreshRecommendation"
-                    @save="onArmadoSave"
-                />
-
-                <!-- Loose products -->
-                <template v-if="cart.products.value.length > 0">
-                    <div
-                        class="rounded-xl border border-sidebar-border/70 bg-white p-4 dark:border-sidebar-border dark:bg-zinc-900"
-                    >
-                        <h2 class="mb-3 text-base font-semibold">
-                            {{ trans('app.pos.additional_products') }}
-                        </h2>
-                        <div class="flex flex-col gap-3">
-                            <!-- Header -->
-                            <div
-                                class="hidden grid-cols-[1fr_2fr_5rem_6rem_2rem] gap-2 text-xs font-medium text-muted-foreground sm:grid"
-                            >
-                                <span>{{ trans('app.fields.product') }}</span>
-                                <span>{{
-                                    trans('app.fields.description')
-                                }}</span>
-                                <span class="text-right">{{
-                                    trans('app.pos.quantity_short')
-                                }}</span>
-                                <span class="text-right">{{
-                                    trans('app.pos.unit_price_short')
-                                }}</span>
-                                <span></span>
-                            </div>
-
-                            <div
-                                v-for="(item, idx) in cart.products.value"
-                                :key="idx"
-                                class="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_2fr_5rem_6rem_2rem] sm:items-center"
-                            >
-                                <select
-                                    :value="item.product_id ?? ''"
-                                    class="h-9 w-full rounded-md border border-input bg-transparent px-2 py-1 text-sm shadow-xs outline-none focus-visible:ring-2 focus-visible:ring-ring/50 dark:bg-input/30"
-                                    @change="
-                                        onLooseProductSelect(
-                                            idx,
-                                            ($event.target as HTMLSelectElement)
-                                                .value,
-                                        )
-                                    "
-                                >
-                                    <option value="">
-                                        {{ trans('app.pos.none_option') }}
-                                    </option>
-                                    <option
-                                        v-for="product in looseProducts"
-                                        :key="product.id"
-                                        :value="product.id"
-                                    >
-                                        {{ product.name }}
-                                    </option>
-                                </select>
-
-                                <Input
-                                    v-model="item.description"
-                                    class="w-full"
-                                    :placeholder="
-                                        trans('app.fields.description')
-                                    "
-                                />
-
-                                <Input
-                                    v-model.number="item.quantity"
-                                    type="number"
-                                    min="1"
-                                    class="w-full text-right"
-                                    placeholder="1"
-                                />
-
-                                <Input
-                                    v-model.number="item.unit_price"
-                                    type="number"
-                                    min="0"
-                                    class="w-full text-right"
-                                    placeholder="0"
-                                />
-
-                                <button
-                                    type="button"
-                                    class="flex size-8 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                                    @click="removeLooseProduct(idx)"
-                                >
-                                    <Trash2 class="size-4" />
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </template>
-
-                <!-- Action buttons -->
-                <div class="flex flex-wrap gap-2">
-                    <Button
-                        type="button"
-                        variant="outline"
-                        class="gap-2"
-                        @click="openArmadoModal(null)"
-                    >
-                        <Plus class="size-4" />
-                        {{ trans('app.pos.add_armado') }}
-                    </Button>
-                    <Button
-                        type="button"
-                        variant="outline"
-                        class="gap-2"
-                        @click="addLooseProduct"
-                    >
-                        <Plus class="size-4" />
-                        {{ trans('app.pos.add_product') }}
-                    </Button>
+        <!-- Cart -->
+        <div
+            :class="[
+                'h-full min-w-sm flex-col gap-4 overflow-y-auto border-l border-sidebar-border/70 p-4 dark:border-sidebar-border',
+                showMobileCart ? 'flex w-full' : 'hidden md:flex',
+            ]"
+        >
+            <div class="flex items-center justify-between gap-3">
+                <div class="flex items-center gap-2">
+                    <ShoppingCart class="size-5 text-muted-foreground" />
+                    <h1 class="text-lg font-semibold">
+                        {{ trans('app.pos.title') }}
+                    </h1>
                 </div>
-            </div>
-
-            <!-- Right column: cart summary + payment + submit -->
-            <div class="flex flex-col gap-4 lg:sticky lg:top-4 lg:self-start">
-                <CartSummary
-                    v-model:discount="cart.discount.value"
-                    :armados="cart.armados.value"
-                    :products="cart.products.value"
-                    :subtotal="cart.subtotal.value"
-                    :total="cart.total.value"
-                    :surcharge-percent="cart.surchargePercent.value"
-                    :balance="balance"
-                    :format-c-o-p="formatCOP"
-                    :discount-error="undefined"
-                />
-
-                <StepPayment
-                    v-model:document-type="form.document_type"
-                    v-model:show-payment="showPayment"
-                    v-model:payment-method-id="paymentMethodId"
-                    v-model:payment-amount="paymentAmount"
-                    :payment-methods="paymentMethods"
-                    :document-types="documentTypes"
-                    :total="cart.total.value"
-                    :format-c-o-p="formatCOP"
-                    :errors="form.errors"
-                />
-
-                <!-- Notes -->
-                <div
-                    class="rounded-xl border border-sidebar-border/70 bg-white p-4 dark:border-sidebar-border dark:bg-zinc-900"
-                >
-                    <label for="notes" class="block text-sm font-semibold">{{
-                        trans('app.fields.notes')
-                    }}</label>
-                    <textarea
-                        id="notes"
-                        v-model="form.notes"
-                        rows="3"
-                        class="mt-1 w-full resize-none rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring/50 dark:bg-input/30"
-                        :placeholder="trans('app.pos.notes_placeholder')"
-                    ></textarea>
-                    <InputError :message="form.errors.notes" />
-                </div>
-
-                <!-- Submit -->
                 <Button
-                    type="submit"
-                    class="w-full"
-                    :disabled="form.processing"
+                    v-if="showMobileCart"
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    class="md:hidden"
+                    @click="showMobileCart = false"
                 >
-                    {{
-                        form.processing
-                            ? trans('app.pos.saving')
-                            : trans('app.pos.save')
-                    }}
+                    {{ trans('app.pos.catalog.all_categories') }}
                 </Button>
-
-                <div
-                    v-if="Object.keys(form.errors).length > 0"
-                    class="rounded-md bg-destructive/10 px-4 py-3 text-sm text-destructive"
-                >
-                    <p class="mb-1 font-medium">
-                        {{ trans('app.pos.fix_errors') }}
-                    </p>
-                    <ul class="list-disc space-y-0.5 pl-5">
-                        <li v-for="(message, key) in form.errors" :key="key">
-                            {{ message }}
-                        </li>
-                    </ul>
-                </div>
             </div>
-        </form>
+
+            <SaleCreatedPanel
+                v-if="createdSale"
+                :sale="createdSale"
+                @dismiss="createdSale = null"
+            />
+
+            <StepCustomer
+                v-model:customer-mode="customerMode"
+                v-model:customer-id="customerId"
+                v-model:customer="newCustomer"
+                :customers="customers"
+                :today="today"
+            />
+
+            <template v-if="cart.armados.value.length > 0">
+                <div
+                    v-for="armado in cart.armados.value"
+                    :key="armado.id"
+                    class="flex items-center justify-between rounded-xl border border-sidebar-border/70 bg-white p-3 dark:border-sidebar-border dark:bg-zinc-900"
+                >
+                    <div>
+                        <p class="text-sm font-medium">
+                            {{ armado.lens?.description }}
+                        </p>
+                        <p class="text-xs text-muted-foreground">
+                            {{
+                                armado.own_frame
+                                    ? trans('app.pos.summary.own_frame')
+                                    : (armado.frame?.description ??
+                                      trans('app.pos.none_option'))
+                            }}
+                            · {{ formatCOP(armadoTotal(armado)) }}
+                        </p>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            @click="openArmadoModal(armado.id)"
+                        >
+                            {{ trans('app.pos.edit_armado') }}
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            class="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                            @click="removeArmado(armado.id)"
+                        >
+                            {{ trans('app.pos.remove_armado') }}
+                        </Button>
+                    </div>
+                </div>
+            </template>
+
+            <ArmadoModal
+                :open="armadoModalOpen"
+                :armado="editingArmado"
+                :lens-selection="
+                    editingArmadoId !== null
+                        ? (lensSelections[editingArmadoId] ?? null)
+                        : null
+                "
+                :resolved-lens="
+                    editingArmadoId !== null
+                        ? (resolvedLenses[editingArmadoId] ?? null)
+                        : null
+                "
+                :products="products"
+                :frame-products="frameProducts"
+                :recommended="recommended"
+                :warnings="warnings"
+                :customer-prescriptions="customerPrescriptions"
+                :lens-needs-customer="lensNeedsCustomer"
+                :today="today"
+                :min-exam-date="minExamDate"
+                v-model:prescription-mode="prescriptionMode"
+                v-model:prescription-id="prescriptionId"
+                v-model:prescription="newPrescription"
+                @update:open="armadoModalOpen = $event"
+                @refresh-recommendation="onRefreshRecommendation"
+                @save="onArmadoSave"
+            />
+
+            <div
+                v-if="cart.products.value.length > 0"
+                class="flex flex-col gap-2 rounded-xl border border-sidebar-border/70 bg-white p-3 dark:border-sidebar-border dark:bg-zinc-900"
+            >
+                <CartItemRow
+                    v-for="(item, idx) in cart.products.value"
+                    :key="idx"
+                    :item="item"
+                    :products="products"
+                    @update:item="(value) => (cart.products.value[idx] = value)"
+                    @remove="removeLooseProduct(idx)"
+                />
+            </div>
+
+            <CartSummary
+                v-model:discount="cart.discount.value"
+                :armados="cart.armados.value"
+                :products="cart.products.value"
+                :subtotal="cart.subtotal.value"
+                :total="cart.total.value"
+                :surcharge-percent="cart.surchargePercent.value"
+                :balance="cart.total.value"
+                :format-c-o-p="formatCOP"
+            />
+
+            <Button
+                type="button"
+                class="w-full"
+                :disabled="
+                    (cart.armados.value.length === 0 &&
+                        cart.products.value.length === 0) ||
+                    session === null
+                "
+                @click="checkoutModalOpen = true"
+            >
+                {{ trans('app.pos.checkout.title') }}
+            </Button>
+        </div>
+
+        <!-- Mobile cart toggle -->
+        <button
+            v-if="!showMobileCart"
+            type="button"
+            class="fixed right-4 bottom-4 flex items-center gap-2 rounded-full bg-primary px-4 py-3 text-sm font-medium text-primary-foreground shadow-lg md:hidden"
+            @click="showMobileCart = true"
+        >
+            <ShoppingCart class="size-4" />
+            {{ trans('app.pos.view_cart') }}
+            ({{ cart.armados.value.length + cart.products.value.length }})
+        </button>
     </div>
+
+    <CheckoutModal
+        :open="checkoutModalOpen"
+        :payment-methods="paymentMethods"
+        :document-types="documentTypes"
+        :total="cart.total.value"
+        :checkout="checkout"
+        @update:open="checkoutModalOpen = $event"
+        @confirm="confirmCheckout"
+    />
 </template>

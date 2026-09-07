@@ -11,9 +11,9 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useTranslations } from '@/composables/useTranslations';
 import { csrfFetch } from '@/lib/csrfFetch';
 import { store } from '@/routes/pos/cash-sessions';
-import { useTranslations } from '@/composables/useTranslations';
 import type { CashRegisterSession } from '@/types/global';
 
 const { trans } = useTranslations();
@@ -62,7 +62,9 @@ async function submit(): Promise<void> {
             @pointer-down-outside.prevent
         >
             <DialogHeader>
-                <DialogTitle>{{ trans('app.pos.cash_session.open_title') }}</DialogTitle>
+                <DialogTitle>{{
+                    trans('app.pos.cash_session.open_title')
+                }}</DialogTitle>
             </DialogHeader>
 
             <p class="text-sm text-muted-foreground">

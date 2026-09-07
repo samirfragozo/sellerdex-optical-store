@@ -203,6 +203,7 @@ return [
     'pos' => [
         'title' => 'New sale',
         'created' => 'Sale :number created successfully',
+        'view_cart' => 'View cart',
         'no_customer' => 'No customer',
         'new_customer' => 'New customer',
         'existing_customer' => 'Existing customer',

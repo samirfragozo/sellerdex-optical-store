@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import type { ProductProp } from '@/composables/useLensCatalog';
-import { useTranslations } from '@/composables/useTranslations';
 import ProductCard from '@/components/pos/ProductCard.vue';
 import { Input } from '@/components/ui/input';
+import type { ProductProp } from '@/composables/useLensCatalog';
+import { useTranslations } from '@/composables/useTranslations';
 
 const { trans } = useTranslations();
 
@@ -26,6 +26,7 @@ interface CategoryOption {
 
 const categories = computed<CategoryOption[]>(() => {
     const seen = new Map<string, string>();
+
     for (const p of props.products) {
         if (p.category_key && !seen.has(p.category_key)) {
             seen.set(p.category_key, p.category_name ?? p.category_key);

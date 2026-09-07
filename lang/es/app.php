@@ -247,6 +247,7 @@ return [
     'pos' => [
         'title' => 'Nueva venta',
         'created' => 'Venta :number creada exitosamente',
+        'view_cart' => 'Ver carrito',
         'no_customer' => 'Sin cliente',
         'new_customer' => 'Cliente nuevo',
         'existing_customer' => 'Cliente existente',

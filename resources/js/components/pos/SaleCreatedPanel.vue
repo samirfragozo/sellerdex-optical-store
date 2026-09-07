@@ -19,7 +19,9 @@ defineEmits<{
         class="rounded-xl border border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-950/30"
     >
         <div class="mb-3 flex items-start justify-between gap-2">
-            <p class="text-base font-semibold text-green-800 dark:text-green-300">
+            <p
+                class="text-base font-semibold text-green-800 dark:text-green-300"
+            >
                 {{ trans('app.pos.created').replace(':number', sale.number) }}
             </p>
             <button
