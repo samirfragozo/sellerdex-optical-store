@@ -51,7 +51,12 @@ expect()->extend('toBeOne', function () {
 |
 */
 
-function something()
+use App\Models\CashRegisterSession;
+use App\Models\User;
+
+function openCashRegisterSession(User $user, int $openingCash = 0): CashRegisterSession
 {
-    // ..
+    return CashRegisterSession::factory()->for($user)->create([
+        'opening_cash' => $openingCash,
+    ]);
 }
