@@ -302,6 +302,10 @@ return [
             'already_open' => 'You already have an open cash session.',
             'already_closed' => 'This session is already closed.',
             'required_notice' => 'You must open a cash session before selling.',
+            'open_title' => 'Open cash register',
+            'open_notice' => 'You must open a cash session before you can start selling.',
+            'opening_cash' => 'Opening amount',
+            'open_action' => 'Open register',
         ],
 
         'catalog' => [

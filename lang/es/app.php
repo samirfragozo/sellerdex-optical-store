@@ -346,6 +346,10 @@ return [
             'already_open' => 'Ya tienes una sesión de caja abierta.',
             'already_closed' => 'Esta sesión ya fue cerrada.',
             'required_notice' => 'Debes abrir una sesión de caja antes de vender.',
+            'open_title' => 'Abrir caja',
+            'open_notice' => 'Debes abrir una sesión de caja para empezar a vender.',
+            'opening_cash' => 'Monto inicial',
+            'open_action' => 'Abrir caja',
         ],
 
         'catalog' => [

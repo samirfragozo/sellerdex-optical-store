@@ -22,6 +22,16 @@ export interface CreatedSale {
     formula_url: string | null;
 }
 
+export interface CashRegisterSession {
+    id: number;
+    opened_at: string;
+    opening_cash: number;
+    closed_at: string | null;
+    closed_cash: number | null;
+    expected_cash: number | null;
+    difference: number | null;
+}
+
 declare module '@inertiajs/core' {
     export interface InertiaConfig {
         sharedPageProps: {
