@@ -33,7 +33,8 @@ it('rejects sale creation when the seller has no open cash register session', fu
         'customer_id' => $customer->id,
         'document_type' => 'order',
         'products' => [['description' => 'Estuche', 'quantity' => 1, 'unit_price' => 10_000]],
-    ])->assertForbidden();
+    ])->assertForbidden()
+        ->assertJson(['message' => __('app.pos.cash_session.required_notice')]);
 
     expect(Sale::count())->toBe(0);
 });

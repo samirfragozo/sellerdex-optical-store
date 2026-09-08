@@ -6,7 +6,6 @@ use App\Models\Payment;
 use App\Models\PaymentMethod;
 use App\Models\Sale;
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Illuminate\Support\Facades\Auth;
 
 /**
  * @extends Factory<Payment>
@@ -21,7 +20,6 @@ class PaymentFactory extends Factory
     public function definition(): array
     {
         return [
-            'company_id' => Auth::user()?->company_id,
             'sale_id' => Sale::factory(),
             'payment_method_id' => PaymentMethod::factory(),
             'amount' => fake()->numberBetween(10_000, 300_000),

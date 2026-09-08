@@ -58,6 +58,7 @@ async function submit(): Promise<void> {
     <Dialog :open="open">
         <DialogContent
             class="sm:max-w-sm"
+            :show-close-button="false"
             @escape-key-down.prevent
             @pointer-down-outside.prevent
         >

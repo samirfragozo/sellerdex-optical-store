@@ -102,7 +102,7 @@ class RegisterSale
      */
     private function resolveSurcharge(array $data): float
     {
-        if (isset($data['surcharge_percent'])) {
+        if (isset($data['surcharge_percent']) && empty($data['payments'])) {
             return (float) $data['surcharge_percent'];
         }
 

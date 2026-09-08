@@ -5,7 +5,6 @@ namespace Database\Factories;
 use App\Enums\DocumentType;
 use App\Models\Customer;
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Illuminate\Support\Facades\Auth;
 
 /**
  * @extends Factory<Customer>
@@ -20,7 +19,6 @@ class CustomerFactory extends Factory
     public function definition(): array
     {
         return [
-            'company_id' => Auth::user()?->company_id,
             'name' => fake()->firstName(),
             'last_name' => fake()->lastName(),
             'document_type' => fake()->randomElement(DocumentType::cases())->value,

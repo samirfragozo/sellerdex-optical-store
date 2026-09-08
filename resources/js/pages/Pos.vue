@@ -313,6 +313,20 @@ async function confirmCheckout(): Promise<void> {
     customerMode.value = 'existing';
     customerId.value = null;
     prescriptionMode.value = 'new';
+    prescriptionId.value = null;
+    newPrescription.value = {
+        exam_date: today,
+        lens_type: '',
+        od_sphere: '',
+        od_cylinder: '',
+        od_axis: '',
+        od_add: '',
+        os_sphere: '',
+        os_cylinder: '',
+        os_axis: '',
+        os_add: '',
+        diagnosis: '',
+    };
 }
 </script>
 
