@@ -43,11 +43,18 @@ class RolesAndPermissionsSeeder extends Seeder
     {
         app(PermissionRegistrar::class)->forgetCachedPermissions();
 
+        // Bulk upsert instead of one findOrCreate() per permission (168 calls,
+        // 2 queries each): this seeder runs before every single test via
+        // tests/Pest.php's beforeEach, so the per-row query loop multiplied
+        // into six figures of redundant queries across the suite.
+        $now = now();
+        $rows = [];
         foreach (self::SUBJECTS as $subject) {
             foreach (self::ACTIONS as $action) {
-                Permission::findOrCreate("{$action}:{$subject}", 'web');
+                $rows[] = ['name' => "{$action}:{$subject}", 'guard_name' => 'web', 'created_at' => $now, 'updated_at' => $now];
             }
         }
+        Permission::query()->upsert($rows, ['name', 'guard_name'], ['updated_at']);
 
         Role::findOrCreate(User::ROLE_SUPERADMIN, 'web');
     }
