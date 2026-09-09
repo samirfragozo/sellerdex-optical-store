@@ -2,6 +2,8 @@
 
 namespace Database\Seeders;
 
+use App\Models\Option;
+use App\Models\OptionGroup;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use Illuminate\Database\Seeder;
@@ -21,6 +23,7 @@ class ProductCatalogSeeder extends Seeder
     public function run(): void
     {
         $this->seedLenses();
+        $this->seedLensOptions();
         $this->seedFrames();
         $this->seedSunglasses();
         $this->seedConsumables();
@@ -281,5 +284,45 @@ class ProductCatalogSeeder extends Seeder
                 'specs' => compact('design', 'process', 'material', 'filter'),
             ]);
         }
+    }
+
+    /** Demo of the option-group mechanism: one base lens + 2 reusable option groups. */
+    private function seedLensOptions(): void
+    {
+        $lenteId = $this->categoryId('Lente');
+
+        $product = Product::updateOrCreate(['sku' => 'LOPT-MONOFOCAL'], [
+            'product_category_id' => $lenteId,
+            'name' => 'Lente Monofocal (por opciones)',
+            'cost' => 0,
+            'price' => 0,
+            'is_stockable' => false,
+            'stock' => null,
+            'is_active' => true,
+            'specs' => null,
+        ]);
+
+        $material = OptionGroup::firstOrCreate(['name' => 'Material'], ['is_required' => true, 'is_active' => true]);
+        $this->upsertOption($material, 'CR-39', 0, 0, 1);
+        $this->upsertOption($material, 'Policarbonato', 30000, 10000, 2);
+
+        $filter = OptionGroup::firstOrCreate(['name' => 'Filtro'], ['is_required' => true, 'is_active' => true]);
+        $this->upsertOption($filter, 'Sin Filtro', 0, 0, 1);
+        $this->upsertOption($filter, 'Blue Cut', 70000, 20000, 2);
+
+        $product->optionGroups()->syncWithPivotValues(
+            [$material->id, $filter->id],
+            [], // no extra pivot columns beyond the defaults
+        );
+        $product->optionGroups()->updateExistingPivot($material->id, ['sort_order' => 1]);
+        $product->optionGroups()->updateExistingPivot($filter->id, ['sort_order' => 2]);
+    }
+
+    private function upsertOption(OptionGroup $group, string $name, int $price, int $cost, int $sortOrder): void
+    {
+        Option::updateOrCreate(
+            ['option_group_id' => $group->id, 'name' => $name],
+            ['price' => $price, 'cost' => $cost, 'is_active' => true, 'sort_order' => $sortOrder],
+        );
     }
 }
