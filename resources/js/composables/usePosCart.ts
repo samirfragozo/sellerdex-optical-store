@@ -5,6 +5,8 @@ export interface ArmadoLine {
     product_id: number;
     description: string;
     unit_price: number;
+    unit_cost?: number;
+    option_ids?: number[];
 }
 
 export interface Armado {

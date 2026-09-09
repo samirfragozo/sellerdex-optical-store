@@ -285,6 +285,8 @@ return [
             'range' => 'Range',
             'material' => 'Material',
             'filter' => 'Filter',
+            'by_options' => 'Choose by options',
+            'pick_lens' => 'Pick the base lens',
             'no_combo' => 'That combination does not exist in the catalog. Adjust material or filter.',
         ],
 

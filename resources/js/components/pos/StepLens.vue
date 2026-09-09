@@ -6,6 +6,7 @@ import type {
     ProductProp,
 } from '@/composables/useLensCatalog';
 import { useLensCatalog } from '@/composables/useLensCatalog';
+import { useProductOptions } from '@/composables/useProductOptions';
 import { useTranslations } from '@/composables/useTranslations';
 
 const { trans } = useTranslations();
@@ -101,6 +102,37 @@ const chip = (active: boolean) =>
 const designs = catalog.designs;
 const noCombo = ref(false);
 
+const optionLenses = computed<ProductProp[]>(() =>
+    props.products.filter(
+        (p) => p.category_key === 'lens' && p.option_groups.length > 0,
+    ),
+);
+const pickedOptionLens = ref<ProductProp | null>(null);
+const productOptions = useProductOptions(pickedOptionLens);
+
+function pickOptionLens(p: ProductProp): void {
+    pickedOptionLens.value = p;
+}
+
+watch(
+    () => productOptions.isComplete.value,
+    (complete) => {
+        if (!complete || !pickedOptionLens.value) {
+            resolvedLens.value = null;
+            return;
+        }
+        resolvedLens.value = {
+            id: pickedOptionLens.value.id,
+            name: productOptions.resolvedName.value,
+            price: productOptions.resolvedPrice.value,
+            cost: productOptions.resolvedCost.value,
+            specs: pickedOptionLens.value.specs as never,
+            option_ids: productOptions.optionIds.value,
+        };
+        emit('change', selection.value);
+    },
+);
+
 watch(filters, (f) => {
     noCombo.value = selection.value.material !== '' && f.length === 0;
 });
@@ -135,6 +167,47 @@ watch(filters, (f) => {
                         >★</span
                     >
                 </button>
+            </div>
+        </div>
+
+        <!-- Elegir por opciones (mecanismo nuevo, adicional al flujo de specs) -->
+        <div v-if="optionLenses.length > 0">
+            <span class="mb-1 block text-sm font-medium">{{
+                trans('app.pos.lens_form.pick_lens')
+            }}</span>
+            <div class="flex flex-wrap gap-2">
+                <button
+                    v-for="p in optionLenses"
+                    :key="p.id"
+                    type="button"
+                    :class="chip(pickedOptionLens?.id === p.id)"
+                    @click="pickOptionLens(p)"
+                >
+                    {{ p.name }}
+                </button>
+            </div>
+
+            <div
+                v-for="group in pickedOptionLens?.option_groups ?? []"
+                :key="group.id"
+                class="mt-3"
+            >
+                <span class="mb-1 block text-sm font-medium">{{
+                    group.name
+                }}</span>
+                <div class="flex flex-wrap gap-2">
+                    <button
+                        v-for="opt in group.options"
+                        :key="opt.id"
+                        type="button"
+                        :class="
+                            chip(productOptions.selected.value[group.id] === opt.id)
+                        "
+                        @click="productOptions.select(group.id, opt.id)"
+                    >
+                        {{ opt.name }}
+                    </button>
+                </div>
             </div>
         </div>
 

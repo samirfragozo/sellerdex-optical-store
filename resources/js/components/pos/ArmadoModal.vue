@@ -158,6 +158,8 @@ function onLensSelectionChange(): void {
               product_id: draftResolvedLens.value.id,
               description: draftResolvedLens.value.name,
               unit_price: draftResolvedLens.value.price,
+              unit_cost: draftResolvedLens.value.cost,
+              option_ids: draftResolvedLens.value.option_ids,
           }
         : null;
 }

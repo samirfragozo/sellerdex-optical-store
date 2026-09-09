@@ -39,7 +39,9 @@ export interface LensProduct {
     id: number;
     name: string;
     price: number;
+    cost: number;
     specs: LensSpecs;
+    option_ids?: number[];
 }
 
 function isLens(p: ProductProp): boolean {
@@ -52,6 +54,7 @@ export function useLensCatalog(products: Ref<ProductProp[]>) {
             id: p.id,
             name: p.name,
             price: p.price,
+            cost: p.cost,
             specs: p.specs as unknown as LensSpecs,
         })),
     );

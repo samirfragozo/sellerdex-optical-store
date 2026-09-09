@@ -329,6 +329,8 @@ return [
             'range' => 'Gama',
             'material' => 'Material',
             'filter' => 'Filtro',
+            'by_options' => 'Elegir por opciones',
+            'pick_lens' => 'Elige el lente base',
             'no_combo' => 'Esa combinación no existe en el catálogo. Ajusta material o filtro.',
         ],
 
