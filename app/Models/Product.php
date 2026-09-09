@@ -42,6 +42,13 @@ class Product extends Model
             ->withTimestamps();
     }
 
+    public function optionGroups(): BelongsToMany
+    {
+        return $this->belongsToMany(OptionGroup::class, 'product_option_groups')
+            ->withPivot(['sort_order'])
+            ->withTimestamps();
+    }
+
     /** Margin in pesos (price − cost). */
     public function margin(): int
     {

@@ -3,6 +3,7 @@
 use App\Models\Company;
 use App\Models\Option;
 use App\Models\OptionGroup;
+use App\Models\Product;
 
 it('scopes option groups to the current company', function () {
     $companyA = Company::factory()->create();
@@ -23,4 +24,18 @@ it('relates options to their group with price and cost', function () {
     expect($group->options)->toHaveCount(1)
         ->and($group->options->first()->price)->toBe(70000)
         ->and($group->options->first()->cost)->toBe(20000);
+});
+
+it('attaches option groups to a product with a display order', function () {
+    $product = Product::factory()->create();
+    $material = OptionGroup::factory()->create(['name' => 'Material']);
+    $filter = OptionGroup::factory()->create(['name' => 'Filtro']);
+
+    $product->optionGroups()->attach([
+        $material->id => ['sort_order' => 1],
+        $filter->id => ['sort_order' => 2],
+    ]);
+
+    expect($product->optionGroups()->orderByPivot('sort_order')->pluck('name')->all())
+        ->toBe(['Material', 'Filtro']);
 });
