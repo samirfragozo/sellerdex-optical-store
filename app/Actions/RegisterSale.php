@@ -199,15 +199,40 @@ class RegisterSale
         foreach ($armados as $index => $armado) {
             $groupKey = 'g'.($index + 1);
             $lens = $armado['lens'];
+            $lensProduct = Product::find($lens['product_id'] ?? null);
 
-            $sale->items()->create([
+            $unitPrice = (int) $lens['unit_price'];
+            $unitCost = (int) ($lens['unit_cost'] ?? 0);
+            $resolvedOptions = null;
+
+            if ($lensProduct !== null && ! empty($lens['option_ids'])) {
+                $resolved = (new ResolveProductOptions)->handle($lensProduct, $lens['option_ids']);
+                $unitPrice = $lensProduct->price + $resolved['price'];
+                $unitCost = $lensProduct->cost + $resolved['cost'];
+                $resolvedOptions = $resolved['options'];
+            }
+
+            $lensItem = $sale->items()->create([
                 'group_key' => $groupKey,
                 'product_id' => $lens['product_id'] ?? null,
                 'description' => $lens['description'],
                 'quantity' => $lens['quantity'] ?? 1,
-                'unit_price' => $lens['unit_price'],
-                'unit_cost' => $lens['unit_cost'] ?? 0,
+                'unit_price' => $unitPrice,
+                'unit_cost' => $unitCost,
             ]);
+
+            if ($resolvedOptions !== null) {
+                foreach ($resolvedOptions as $option) {
+                    $lensItem->options()->create([
+                        'option_group_id' => $option->option_group_id,
+                        'option_id' => $option->id,
+                        'option_group_name' => $option->group->name,
+                        'option_name' => $option->name,
+                        'price' => $option->price,
+                        'cost' => $option->cost,
+                    ]);
+                }
+            }
 
             if (empty($armado['own_frame']) && ! empty($armado['frame'])) {
                 $frame = $armado['frame'];
