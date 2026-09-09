@@ -541,3 +541,27 @@ it('exposes a null cash session when the seller has none open', function () {
             ->where('cashRegisterSession', null)
         );
 });
+
+it('rejects an option id that does not exist', function () {
+    $seller = User::factory()->seller()->create();
+    openCashRegisterSession($seller);
+    $customer = Customer::factory()->create();
+    $lens = lensProduct();
+
+    $response = $this->actingAs($seller)->postJson('/pos', [
+        'customer_id' => $customer->id,
+        'document_type' => 'order',
+        'prescription' => ['exam_date' => now()->toDateString()],
+        'armados' => [[
+            'lens' => [
+                'product_id' => $lens->id,
+                'description' => $lens->name,
+                'unit_price' => 100000,
+                'option_ids' => [999999],
+            ],
+            'own_frame' => true,
+        ]],
+    ]);
+
+    $response->assertJsonValidationErrors(['armados.0.lens.option_ids.0']);
+});
