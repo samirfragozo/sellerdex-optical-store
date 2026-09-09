@@ -97,6 +97,7 @@ return [
         'is_stockable' => 'Tracks stock?',
         'is_pos_selectable' => 'Sellable in POS?',
         'option_group_name' => 'Group name',
+        'option_groups' => 'Applicable option groups',
         'is_required' => 'Required?',
         'options' => 'Options',
         'specs' => 'Specifications',

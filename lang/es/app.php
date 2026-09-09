@@ -100,6 +100,7 @@ return [
         'is_stockable' => '¿Maneja stock?',
         'is_pos_selectable' => '¿Vendible en el POS?',
         'option_group_name' => 'Nombre del grupo',
+        'option_groups' => 'Grupos de opciones aplicables',
         'is_required' => '¿Obligatorio?',
         'options' => 'Opciones',
         'specs' => 'Especificaciones',

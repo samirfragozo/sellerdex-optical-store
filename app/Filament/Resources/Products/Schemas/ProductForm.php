@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Products\Schemas;
 
+use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -58,6 +59,10 @@ class ProductForm
                             ->label(__('app.fields.is_pos_selectable'))
                             ->default(true)
                             ->required(),
+                        CheckboxList::make('optionGroups')
+                            ->label(__('app.fields.option_groups'))
+                            ->relationship('optionGroups', 'name')
+                            ->columnSpanFull(),
                     ]),
             ]);
     }
