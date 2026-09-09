@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 #[Fillable(['company_id', 'sale_id', 'group_key', 'product_id', 'description', 'quantity', 'unit_price', 'unit_cost', 'line_total'])]
@@ -80,6 +81,11 @@ class SaleItem extends Model
     public function lensOrder(): HasOne
     {
         return $this->hasOne(LensOrder::class);
+    }
+
+    public function options(): HasMany
+    {
+        return $this->hasMany(SaleItemOption::class);
     }
 
     /** True when this line is a made-to-order lens (its category generates a lab order). */
