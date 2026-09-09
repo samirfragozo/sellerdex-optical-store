@@ -26,18 +26,33 @@ class PosController extends Controller
         return Inertia::render('Pos', [
             'products' => Product::query()->where('is_active', true)
                 ->where('is_pos_selectable', true)
-                ->with('category:id,name,key')
+                ->with(['category:id,name,key', 'optionGroups.options' => fn ($q) => $q->where('is_active', true)])
                 ->orderBy('name')
-                ->get(['id', 'name', 'price', 'is_stockable', 'stock', 'product_category_id', 'specs'])
+                ->get(['id', 'name', 'price', 'is_stockable', 'stock', 'product_category_id', 'specs', 'cost'])
                 ->map(fn (Product $p) => [
                     'id' => $p->id,
                     'name' => $p->name,
                     'price' => $p->price,
+                    'cost' => $p->cost,
                     'is_stockable' => $p->is_stockable,
                     'stock' => $p->stock,
                     'category_name' => $p->category?->name,
                     'category_key' => $p->category?->key,
                     'specs' => $p->specs,
+                    'option_groups' => $p->optionGroups
+                        ->sortBy(fn ($g) => $g->pivot->sort_order ?? PHP_INT_MAX)
+                        ->values()
+                        ->map(fn ($g) => [
+                            'id' => $g->id,
+                            'name' => $g->name,
+                            'is_required' => $g->is_required,
+                            'options' => $g->options->map(fn ($o) => [
+                                'id' => $o->id,
+                                'name' => $o->name,
+                                'price' => $o->price,
+                                'cost' => $o->cost,
+                            ])->values(),
+                        ]),
                 ]),
             'paymentMethods' => PaymentMethod::query()->where('is_active', true)
                 ->orderBy('sort_order')->get(['id', 'name', 'surcharge_percent']),

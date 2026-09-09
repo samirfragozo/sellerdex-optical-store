@@ -3,6 +3,8 @@
 use App\Enums\DocumentType;
 use App\Models\Company;
 use App\Models\Customer;
+use App\Models\Option;
+use App\Models\OptionGroup;
 use App\Models\PaymentMethod;
 use App\Models\Prescription;
 use App\Models\Product;
@@ -564,4 +566,25 @@ it('rejects an option id that does not exist', function () {
     ]);
 
     $response->assertJsonValidationErrors(['armados.0.lens.option_ids.0']);
+});
+
+it('includes lens product option groups on the pos payload', function () {
+    $company = Company::factory()->create();
+    $seller = User::factory()->forCompany($company)->seller()->create();
+    $this->actingAs($seller);
+
+    $category = ProductCategory::factory()->create(['company_id' => $company->id, 'key' => 'lens']);
+    $lens = Product::factory()->create(['company_id' => $company->id, 'product_category_id' => $category->id, 'is_active' => true, 'is_pos_selectable' => true]);
+    $group = OptionGroup::factory()->create(['company_id' => $company->id, 'name' => 'Filtro', 'is_required' => true]);
+    $option = Option::factory()->for($group, 'group')->create(['name' => 'Blue Cut', 'price' => 70000, 'cost' => 20000]);
+    $lens->optionGroups()->attach($group->id, ['sort_order' => 1]);
+
+    $response = $this->get('/pos');
+    $products = collect($response->viewData('page')['props']['products']);
+    $lensData = $products->firstWhere('id', $lens->id);
+
+    expect($lensData)->not->toBeNull()
+        ->and($lensData['option_groups'])->toHaveCount(1)
+        ->and($lensData['option_groups'][0]['options'])->toHaveCount(1)
+        ->and($lensData['option_groups'][0]['options'][0]['name'])->toBe('Blue Cut');
 });
