@@ -115,12 +115,14 @@ function pickOptionLens(p: ProductProp): void {
 }
 
 watch(
-    () => productOptions.isComplete.value,
-    (complete) => {
-        if (!complete || !pickedOptionLens.value) {
+    () => productOptions.optionIds.value,
+    () => {
+        if (!productOptions.isComplete.value || !pickedOptionLens.value) {
             resolvedLens.value = null;
+
             return;
         }
+
         resolvedLens.value = {
             id: pickedOptionLens.value.id,
             name: productOptions.resolvedName.value,
