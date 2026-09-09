@@ -98,7 +98,6 @@ return [
         'is_pos_selectable' => 'Sellable in POS?',
         'option_group_name' => 'Group name',
         'is_required' => 'Required?',
-        'sort_order' => 'Order',
         'options' => 'Options',
         'specs' => 'Specifications',
         'exam_date' => 'Exam date',

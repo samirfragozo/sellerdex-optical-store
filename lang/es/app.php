@@ -101,7 +101,6 @@ return [
         'is_pos_selectable' => '¿Vendible en el POS?',
         'option_group_name' => 'Nombre del grupo',
         'is_required' => '¿Obligatorio?',
-        'sort_order' => 'Orden',
         'options' => 'Opciones',
         'specs' => 'Especificaciones',
         'exam_date' => 'Fecha del examen',
