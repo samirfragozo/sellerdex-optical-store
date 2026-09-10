@@ -22,7 +22,10 @@ pest()->extend(TestCase::class)
 
 pest()->extend(TestCase::class)
     ->use(RefreshDatabase::class)
-    ->beforeEach(fn () => test()->seed(RolesAndPermissionsSeeder::class))
+    ->beforeEach(function () {
+        test()->seed(RolesAndPermissionsSeeder::class);
+        assertFrontendBuildIsFresh();
+    })
     ->in('Browser');
 
 pest()->extend(TestCase::class)
@@ -57,6 +60,7 @@ expect()->extend('toBeOne', function () {
 
 use App\Models\CashRegisterSession;
 use App\Models\User;
+use Illuminate\Support\Facades\File;
 
 function openCashRegisterSession(User $user, int $openingCash = 0): CashRegisterSession
 {
@@ -64,4 +68,26 @@ function openCashRegisterSession(User $user, int $openingCash = 0): CashRegister
         'opening_cash' => $openingCash,
         'company_id' => $user->company_id,
     ]);
+}
+
+// Browser tests load the compiled frontend in a real browser. A stale build
+// (source changed since the last `npm run build`) doesn't produce a clean
+// test failure — it hangs the embedded server indefinitely, since the page
+// never finishes loading and nothing here has a bounded timeout. Fail fast
+// with a clear message instead.
+function assertFrontendBuildIsFresh(): void
+{
+    $manifest = public_path('build/manifest.json');
+
+    if (! file_exists($manifest)) {
+        test()->fail('Frontend assets are not built — run `npm run build` before running the Browser suite.');
+    }
+
+    $manifestTime = filemtime($manifest);
+    $staleFile = collect(File::allFiles(resource_path('js')))
+        ->first(fn ($file) => $file->getMTime() > $manifestTime);
+
+    if ($staleFile) {
+        test()->fail("Frontend assets are stale ({$staleFile->getRelativePathname()} changed after the last build) — run `npm run build` before running the Browser suite.");
+    }
 }
