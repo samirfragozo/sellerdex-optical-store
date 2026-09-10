@@ -318,6 +318,8 @@ return [
         'frame_form' => [
             'own_frame_toggle' => 'El cliente trae su montura',
             'select_frame' => 'Seleccionar montura',
+            'pick_base' => 'Elige el tipo de montura',
+            'no_variant' => 'Esa combinación no existe todavía en el inventario.',
         ],
 
         'customer_form' => [

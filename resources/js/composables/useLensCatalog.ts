@@ -22,6 +22,15 @@ export interface OptionGroupProp {
     options: OptionProp[];
 }
 
+export interface VariantProp {
+    id: number;
+    price: number;
+    cost: number;
+    stock: number | null;
+    is_stockable: boolean;
+    option_ids: number[];
+}
+
 export interface ProductProp {
     id: number;
     name: string;
@@ -33,6 +42,7 @@ export interface ProductProp {
     stock: number | null;
     specs: Record<string, string> | null;
     option_groups: OptionGroupProp[];
+    variants: VariantProp[];
 }
 
 export interface LensProduct {
