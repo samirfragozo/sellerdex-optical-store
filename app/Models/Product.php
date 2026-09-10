@@ -9,9 +9,10 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-#[Fillable(['company_id', 'name', 'sku', 'product_category_id', 'brand', 'price', 'cost', 'is_stockable', 'stock', 'is_active', 'is_pos_selectable', 'specs'])]
+#[Fillable(['company_id', 'name', 'sku', 'product_category_id', 'base_product_id', 'brand', 'price', 'cost', 'is_stockable', 'stock', 'is_active', 'is_pos_selectable', 'specs'])]
 class Product extends Model
 {
     /** @use HasFactory<ProductFactory> */
@@ -46,6 +47,22 @@ class Product extends Model
     {
         return $this->belongsToMany(OptionGroup::class, 'product_option_groups')
             ->withPivot(['sort_order'])
+            ->withTimestamps();
+    }
+
+    public function baseProduct(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'base_product_id');
+    }
+
+    public function variants(): HasMany
+    {
+        return $this->hasMany(self::class, 'base_product_id');
+    }
+
+    public function variantOptions(): BelongsToMany
+    {
+        return $this->belongsToMany(Option::class, 'product_variant_options')
             ->withTimestamps();
     }
 
