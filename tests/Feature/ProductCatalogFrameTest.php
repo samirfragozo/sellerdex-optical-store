@@ -12,7 +12,7 @@ beforeEach(fn () => $this->seed(ProductCategorySeeder::class));
 it('seeds 18 frame templates that are stockable with zero stock', function () {
     $this->seed(ProductCatalogSeeder::class);
 
-    $frames = Product::where('sku', 'like', 'MNT-%')->get();
+    $frames = Product::where('sku', 'like', 'MNT-%')->where('sku', '!=', 'MNT-BASE')->get();
     expect($frames)->toHaveCount(18)
         ->and($frames->every(fn ($f) => $f->is_stockable === true && (int) $f->stock === 0))->toBeTrue();
 

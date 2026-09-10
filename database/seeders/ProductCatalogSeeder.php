@@ -55,7 +55,7 @@ class ProductCatalogSeeder extends Seeder
         return $this->categoryIds[$key] ??= ProductCategory::where('key', $key)->value('id');
     }
 
-    private function upsert(string $sku, array $attributes): void
+    private function upsert(string $sku, array $attributes): Product
     {
         // Title-case the display name (first letter of each word) without lowercasing
         // acronyms/codes like LC, CR-39, TR-90, X1/X3.
@@ -63,19 +63,46 @@ class ProductCatalogSeeder extends Seeder
             $attributes['name'] = ucwords($attributes['name']);
         }
 
-        Product::updateOrCreate(['sku' => $sku], $attributes);
+        return Product::updateOrCreate(['sku' => $sku], $attributes);
     }
 
     private function seedFrames(): void
     {
+        $monturaId = $this->categoryId('Montura');
+
+        $base = Product::updateOrCreate(['sku' => 'MNT-BASE'], [
+            'product_category_id' => $monturaId,
+            'name' => 'Montura',
+            'cost' => 0,
+            'price' => 0,
+            'is_stockable' => false,
+            'stock' => null,
+            'is_active' => true,
+            'is_pos_selectable' => true,
+            'specs' => null,
+        ]);
+
         $structures = ['Completas', 'Semi Al Aire', 'Tres Piezas'];
         $materials = ['Pasta', 'TR-90', 'Acetato', 'Metal', 'Titanio', 'Aluminio'];
-        $monturaId = $this->categoryId('Montura');
+
+        $structureGroup = OptionGroup::firstOrCreate(['name' => 'Estructura'], ['is_required' => true, 'is_active' => true]);
+        foreach ($structures as $i => $structure) {
+            $this->upsertOption($structureGroup, $structure, 0, 0, $i + 1);
+        }
+
+        $materialGroup = OptionGroup::firstOrCreate(['name' => 'Material'], ['is_required' => true, 'is_active' => true]);
+        foreach ($materials as $i => $material) {
+            $this->upsertOption($materialGroup, $material, 0, 0, $i + 1);
+        }
+
+        $base->optionGroups()->syncWithPivotValues([$structureGroup->id, $materialGroup->id], []);
+        $base->optionGroups()->updateExistingPivot($structureGroup->id, ['sort_order' => 1]);
+        $base->optionGroups()->updateExistingPivot($materialGroup->id, ['sort_order' => 2]);
 
         foreach ($structures as $structure) {
             foreach ($materials as $material) {
                 $sku = 'MNT-'.strtoupper(Str::slug("{$structure}-{$material}"));
-                $this->upsert($sku, [
+                $variant = $this->upsert($sku, [
                     'product_category_id' => $monturaId,
                     'name' => "Montura {$structure} {$material}",
                     'cost' => 0,
@@ -83,8 +110,15 @@ class ProductCatalogSeeder extends Seeder
                     'is_stockable' => true,
                     'stock' => 0,
                     'is_active' => true,
+                    'is_pos_selectable' => false,
+                    'base_product_id' => $base->id,
                     'specs' => ['structure' => $structure, 'material' => $material, 'color' => null, 'brand' => null],
                 ]);
+
+                $structureOptionId = Option::where('option_group_id', $structureGroup->id)->where('name', $structure)->value('id');
+                $materialOptionId = Option::where('option_group_id', $materialGroup->id)->where('name', $material)->value('id');
+
+                $variant->variantOptions()->syncWithoutDetaching([$structureOptionId, $materialOptionId]);
             }
         }
     }
