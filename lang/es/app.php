@@ -101,6 +101,8 @@ return [
         'is_pos_selectable' => '¿Vendible en el POS?',
         'option_group_name' => 'Nombre del grupo',
         'option_groups' => 'Grupos de opciones aplicables',
+        'base_product' => 'Producto base',
+        'variant_options' => 'Opciones de la variante',
         'is_required' => '¿Obligatorio?',
         'options' => 'Opciones',
         'specs' => 'Especificaciones',
@@ -247,6 +249,11 @@ return [
         'mark_delivered' => 'Marcar como entregada',
         'delivered' => 'Venta entregada.',
         'cannot_deliver_pending_lens' => 'No se puede entregar: hay lentes pendientes por recibir del laboratorio.',
+    ],
+
+    'product_actions' => [
+        'generate_variants' => 'Generar variantes',
+        'variants_generated' => 'Se crearon :created variante(s) nueva(s) (:skipped ya existían).',
     ],
 
     'pos' => [

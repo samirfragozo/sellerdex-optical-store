@@ -98,6 +98,8 @@ return [
         'is_pos_selectable' => 'Sellable in POS?',
         'option_group_name' => 'Group name',
         'option_groups' => 'Applicable option groups',
+        'base_product' => 'Base product',
+        'variant_options' => 'Variant options',
         'is_required' => 'Required?',
         'options' => 'Options',
         'specs' => 'Specifications',
@@ -203,6 +205,11 @@ return [
         'converted' => 'Quote converted to sale.',
         'mark_delivered' => 'Mark as delivered',
         'delivered' => 'Sale delivered.',
+    ],
+
+    'product_actions' => [
+        'generate_variants' => 'Generate variants',
+        'variants_generated' => 'Created :created new variant(s) (:skipped already existed).',
     ],
 
     'pos' => [

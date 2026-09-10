@@ -9,6 +9,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Illuminate\Database\Eloquent\Builder;
 
 class ProductForm
 {
@@ -25,6 +26,14 @@ class ProductForm
                     ->label(__('app.fields.category'))
                     ->relationship('category', 'name')
                     ->required(),
+                Select::make('base_product_id')
+                    ->label(__('app.fields.base_product'))
+                    ->relationship(
+                        name: 'baseProduct',
+                        titleAttribute: 'name',
+                        modifyQueryUsing: fn (Builder $query) => $query->whereNull('base_product_id'),
+                    )
+                    ->searchable(),
                 TextInput::make('brand')
                     ->label(__('app.fields.brand')),
                 TextInput::make('price')
@@ -62,6 +71,10 @@ class ProductForm
                         CheckboxList::make('optionGroups')
                             ->label(__('app.fields.option_groups'))
                             ->relationship('optionGroups', 'name')
+                            ->columnSpanFull(),
+                        CheckboxList::make('variantOptions')
+                            ->label(__('app.fields.variant_options'))
+                            ->relationship('variantOptions', 'name')
                             ->columnSpanFull(),
                     ]),
             ]);
