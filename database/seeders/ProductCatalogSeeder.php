@@ -90,7 +90,7 @@ class ProductCatalogSeeder extends Seeder
             $this->upsertOption($structureGroup, $structure, 0, 0, $i + 1);
         }
 
-        $materialGroup = OptionGroup::firstOrCreate(['name' => 'Material'], ['is_required' => true, 'is_active' => true]);
+        $materialGroup = OptionGroup::firstOrCreate(['name' => 'Material de Montura'], ['is_required' => true, 'is_active' => true]);
         foreach ($materials as $i => $material) {
             $this->upsertOption($materialGroup, $material, 0, 0, $i + 1);
         }
