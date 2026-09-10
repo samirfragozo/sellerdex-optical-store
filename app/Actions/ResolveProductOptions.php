@@ -19,7 +19,7 @@ class ResolveProductOptions
      */
     public function handle(Product $product, array $optionIds): array
     {
-        $groups = $product->optionGroups()->with('options')->get();
+        $groups = $product->optionGroups()->where('option_groups.is_active', true)->with('options')->get();
 
         $options = Option::query()
             ->with('group')
@@ -30,7 +30,7 @@ class ResolveProductOptions
 
         if ($options->count() !== count($optionIds)) {
             throw ValidationException::withMessages([
-                'option_ids' => 'Una o más opciones seleccionadas no pertenecen a este producto.',
+                'option_ids' => __('app.pos.lens_form.invalid_option'),
             ]);
         }
 
@@ -38,7 +38,7 @@ class ResolveProductOptions
             $selectedInGroup = $options->where('option_group_id', $group->id)->count();
             if ($selectedInGroup !== 1) {
                 throw ValidationException::withMessages([
-                    'option_ids' => "Selecciona una opción del grupo \"{$group->name}\".",
+                    'option_ids' => __('app.pos.lens_form.option_group_required', ['group' => $group->name]),
                 ]);
             }
         }

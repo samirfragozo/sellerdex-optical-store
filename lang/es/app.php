@@ -332,6 +332,8 @@ return [
             'by_options' => 'Elegir por opciones',
             'pick_lens' => 'Elige el lente base',
             'no_combo' => 'Esa combinación no existe en el catálogo. Ajusta material o filtro.',
+            'invalid_option' => 'Una o más opciones seleccionadas no pertenecen a este producto.',
+            'option_group_required' => 'Selecciona una opción del grupo ":group".',
         ],
 
         'payment_form' => [

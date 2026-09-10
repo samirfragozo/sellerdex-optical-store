@@ -7,6 +7,7 @@ use App\Models\OptionGroup;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\User;
+use Illuminate\Validation\ValidationException;
 
 beforeEach(function () {
     $this->seller = User::factory()->seller()->create();
@@ -42,4 +43,41 @@ it('prices an armado lens from its chosen options and snapshots them', function 
         ->and($lensItem->unit_cost)->toBe(30000)
         ->and($lensItem->options)->toHaveCount(2)
         ->and($lensItem->options->pluck('option_name')->all())->toBe(['Policarbonato', 'Blue Cut']);
+});
+
+it('rejects an armado lens with required option groups when the client sends no option_ids', function () {
+    expect(fn () => app(RegisterSale::class)->handle([
+        'customer_id' => $this->customer->id,
+        'document_type' => 'order',
+        'armados' => [[
+            'lens' => [
+                'product_id' => $this->lens->id,
+                'description' => $this->lens->name,
+                'unit_price' => 1,
+            ],
+        ]],
+    ], $this->seller))->toThrow(ValidationException::class);
+});
+
+it('prices an armado lens for a product without option groups exactly as the client sent it', function () {
+    $flatLens = Product::factory()->create(['price' => 0, 'cost' => 0]);
+
+    $sale = app(RegisterSale::class)->handle([
+        'customer_id' => $this->customer->id,
+        'document_type' => 'order',
+        'armados' => [[
+            'lens' => [
+                'product_id' => $flatLens->id,
+                'description' => $flatLens->name,
+                'unit_price' => 150000,
+                'unit_cost' => 50000,
+            ],
+        ]],
+    ], $this->seller);
+
+    $lensItem = $sale->items->firstWhere('product_id', $flatLens->id);
+
+    expect($lensItem->unit_price)->toBe(150000)
+        ->and($lensItem->unit_cost)->toBe(50000)
+        ->and($lensItem->options)->toHaveCount(0);
 });

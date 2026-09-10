@@ -288,6 +288,8 @@ return [
             'by_options' => 'Choose by options',
             'pick_lens' => 'Pick the base lens',
             'no_combo' => 'That combination does not exist in the catalog. Adjust material or filter.',
+            'invalid_option' => 'One or more selected options do not belong to this product.',
+            'option_group_required' => 'Select an option from the ":group" group.',
         ],
 
         'payment_form' => [

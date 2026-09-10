@@ -55,6 +55,7 @@ function isRecommended(dim: keyof LensSpecs, value: string): boolean {
 // Reset downstream dimensions when an upstream one changes.
 function pickDesign(v: string) {
     selection.value = { design: v, process: '', material: '', filter: '' };
+    pickedOptionLens.value = null;
 }
 
 function pickProcess(v: string) {
@@ -112,6 +113,7 @@ const productOptions = useProductOptions(pickedOptionLens);
 
 function pickOptionLens(p: ProductProp): void {
     pickedOptionLens.value = p;
+    selection.value = { design: '', process: '', material: '', filter: '' };
 }
 
 watch(

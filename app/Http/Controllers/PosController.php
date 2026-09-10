@@ -26,7 +26,11 @@ class PosController extends Controller
         return Inertia::render('Pos', [
             'products' => Product::query()->where('is_active', true)
                 ->where('is_pos_selectable', true)
-                ->with(['category:id,name,key', 'optionGroups.options' => fn ($q) => $q->where('is_active', true)])
+                ->with([
+                    'category:id,name,key',
+                    'optionGroups' => fn ($q) => $q->where('option_groups.is_active', true),
+                    'optionGroups.options' => fn ($q) => $q->where('is_active', true),
+                ])
                 ->orderBy('name')
                 ->get(['id', 'name', 'price', 'is_stockable', 'stock', 'product_category_id', 'specs', 'cost'])
                 ->map(fn (Product $p) => [

@@ -43,3 +43,12 @@ it('rejects an inactive option', function () {
 
     app(ResolveProductOptions::class)->handle($this->product, [$this->materialOption->id, $this->filterOption->id]);
 })->throws(ValidationException::class);
+
+it('ignores an inactive option group when checking required selections', function () {
+    $this->filter->update(['is_active' => false]);
+
+    $result = app(ResolveProductOptions::class)->handle($this->product, [$this->materialOption->id]);
+
+    expect($result['price'])->toBe(30000)
+        ->and($result['options']->pluck('name')->all())->toBe(['Policarbonato']);
+});

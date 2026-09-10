@@ -205,8 +205,8 @@ class RegisterSale
             $unitCost = (int) ($lens['unit_cost'] ?? 0);
             $resolvedOptions = null;
 
-            if ($lensProduct !== null && ! empty($lens['option_ids'])) {
-                $resolved = (new ResolveProductOptions)->handle($lensProduct, $lens['option_ids']);
+            if ($lensProduct !== null && $lensProduct->optionGroups()->exists()) {
+                $resolved = (new ResolveProductOptions)->handle($lensProduct, $lens['option_ids'] ?? []);
                 $unitPrice = $lensProduct->price + $resolved['price'];
                 $unitCost = $lensProduct->cost + $resolved['cost'];
                 $resolvedOptions = $resolved['options'];
