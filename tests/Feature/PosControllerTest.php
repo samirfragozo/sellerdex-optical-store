@@ -588,3 +588,37 @@ it('includes lens product option groups on the pos payload', function () {
         ->and($lensData['option_groups'][0]['options'])->toHaveCount(1)
         ->and($lensData['option_groups'][0]['options'][0]['name'])->toBe('Blue Cut');
 });
+
+it('includes frame variant products on the pos payload', function () {
+    $company = Company::factory()->create();
+    $seller = User::factory()->forCompany($company)->seller()->create();
+    $this->actingAs($seller);
+
+    $category = ProductCategory::factory()->create(['company_id' => $company->id, 'key' => 'frame']);
+    $base = Product::factory()->create(['company_id' => $company->id, 'product_category_id' => $category->id, 'is_active' => true, 'is_pos_selectable' => true]);
+    $group = OptionGroup::factory()->create(['company_id' => $company->id, 'name' => 'Estructura', 'is_required' => true]);
+    $option = Option::factory()->for($group, 'group')->create(['name' => 'Completas']);
+    $base->optionGroups()->attach($group->id, ['sort_order' => 1]);
+
+    $variant = Product::factory()->create([
+        'company_id' => $company->id,
+        'product_category_id' => $category->id,
+        'base_product_id' => $base->id,
+        'price' => 90000,
+        'cost' => 40000,
+        'stock' => 5,
+        'is_pos_selectable' => false,
+    ]);
+    $variant->variantOptions()->attach($option->id);
+
+    $response = $this->get('/pos');
+    $products = collect($response->viewData('page')['props']['products']);
+    $baseData = $products->firstWhere('id', $base->id);
+
+    expect($baseData)->not->toBeNull()
+        ->and($baseData['variants'])->toHaveCount(1)
+        ->and($baseData['variants'][0]['id'])->toBe($variant->id)
+        ->and($baseData['variants'][0]['price'])->toBe(90000)
+        ->and($baseData['variants'][0]['option_ids'])->toBe([$option->id])
+        ->and($products->firstWhere('id', $variant->id))->toBeNull();
+});

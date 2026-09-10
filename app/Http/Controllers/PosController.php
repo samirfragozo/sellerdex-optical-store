@@ -30,6 +30,8 @@ class PosController extends Controller
                     'category:id,name,key',
                     'optionGroups' => fn ($q) => $q->where('option_groups.is_active', true),
                     'optionGroups.options' => fn ($q) => $q->where('is_active', true),
+                    'variants' => fn ($q) => $q->where('is_active', true),
+                    'variants.variantOptions',
                 ])
                 ->orderBy('name')
                 ->get(['id', 'name', 'price', 'is_stockable', 'stock', 'product_category_id', 'specs', 'cost'])
@@ -57,6 +59,16 @@ class PosController extends Controller
                                 'cost' => $o->cost,
                             ])->values(),
                         ]),
+                    'variants' => $p->variants
+                        ->map(fn (Product $v) => [
+                            'id' => $v->id,
+                            'price' => $v->price,
+                            'cost' => $v->cost,
+                            'stock' => $v->stock,
+                            'is_stockable' => $v->is_stockable,
+                            'option_ids' => $v->variantOptions->pluck('id')->sort()->values(),
+                        ])
+                        ->values(),
                 ]),
             'paymentMethods' => PaymentMethod::query()->where('is_active', true)
                 ->orderBy('sort_order')->get(['id', 'name', 'surcharge_percent']),

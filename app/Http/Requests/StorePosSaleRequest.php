@@ -72,6 +72,7 @@ class StorePosSaleRequest extends FormRequest
             'armados.*.frame.product_id' => ['nullable', 'exists:products,id'],
             'armados.*.frame.description' => ['nullable', 'string', 'max:255'],
             'armados.*.frame.unit_price' => ['nullable', 'integer', 'min:0'],
+            'armados.*.frame.unit_cost' => ['nullable', 'integer', 'min:0'],
             'armados.*.own_frame' => ['boolean'],
             'armados.*.combo' => ['nullable', 'array'],
             'armados.*.combo.with_exam' => ['boolean'],
