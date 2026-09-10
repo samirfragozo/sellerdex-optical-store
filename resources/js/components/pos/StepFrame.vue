@@ -66,7 +66,13 @@ function onFrameSelect(event: Event): void {
 watch(
     () => productOptions.optionIds.value,
     () => {
-        if (!pickedBase.value || !productOptions.isComplete.value) {
+        if (!pickedBase.value) {
+            noVariant.value = false;
+
+            return;
+        }
+
+        if (!productOptions.isComplete.value) {
             frame.value = null;
             noVariant.value = false;
 

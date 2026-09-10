@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Products\Schemas;
 
+use App\Models\Product;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -31,7 +32,9 @@ class ProductForm
                     ->relationship(
                         name: 'baseProduct',
                         titleAttribute: 'name',
-                        modifyQueryUsing: fn (Builder $query) => $query->whereNull('base_product_id'),
+                        modifyQueryUsing: fn (Builder $query, ?Product $record) => $query
+                            ->whereNull('base_product_id')
+                            ->when($record, fn (Builder $q) => $q->whereKeyNot($record->id)),
                     )
                     ->searchable(),
                 TextInput::make('brand')

@@ -49,7 +49,7 @@ const filteredProducts = computed<ProductProp[]>(() => {
         const matchesSearch =
             term === '' || p.name.toLowerCase().includes(term);
 
-        return matchesCategory && matchesSearch;
+        return p.option_groups.length === 0 && matchesCategory && matchesSearch;
     });
 });
 

@@ -25,7 +25,10 @@ class EditProduct extends EditRecord
             Action::make('generateVariants')
                 ->label(__('app.product_actions.generate_variants'))
                 ->icon('heroicon-o-squares-plus')
-                ->visible(fn (Product $record): bool => $record->optionGroups()->where('option_groups.is_required', true)->exists())
+                ->visible(fn (Product $record): bool => $record->optionGroups()
+                    ->where('option_groups.is_required', true)
+                    ->where('option_groups.selection_type', 'single')
+                    ->exists())
                 ->requiresConfirmation()
                 ->action(function (Product $record): void {
                     $result = app(GenerateProductVariants::class)->handle($record);
