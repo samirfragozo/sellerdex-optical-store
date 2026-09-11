@@ -257,6 +257,10 @@ return [
         'variants_generated' => 'Se crearon :created variante(s) nueva(s) (:skipped ya existían).',
     ],
 
+    'validation' => [
+        'addition_price_floor' => 'El precio resultante de esta adición no puede ser negativo. Reduce el descuento para que el precio quede en 0 o más.',
+    ],
+
     'pos' => [
         'title' => 'Nueva venta',
         'created' => 'Venta :number creada exitosamente',

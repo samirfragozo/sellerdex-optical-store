@@ -213,6 +213,10 @@ return [
         'variants_generated' => 'Created :created new variant(s) (:skipped already existed).',
     ],
 
+    'validation' => [
+        'addition_price_floor' => 'The resolved price of this addition cannot be negative. Lower the discount so the addition price stays at 0 or more.',
+    ],
+
     'pos' => [
         'title' => 'New sale',
         'created' => 'Sale :number created successfully',

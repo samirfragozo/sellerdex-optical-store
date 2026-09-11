@@ -2,12 +2,14 @@
 
 namespace App\Filament\Resources\Products\RelationManagers;
 
+use App\Models\Product;
 use Filament\Actions\AttachAction;
 use Filament\Actions\DetachAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Resources\RelationManagers\RelationManager;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
@@ -31,7 +33,8 @@ class AdditionsRelationManager extends RelationManager
                 ->label(__('app.fields.price'))
                 ->numeric()
                 ->required()
-                ->default(0),
+                ->default(0)
+                ->minValue(fn (?Model $record): ?int => $record instanceof Product ? -$record->price : null),
             TextInput::make('quantity')
                 ->label(__('app.fields.quantity'))
                 ->numeric()
@@ -49,7 +52,7 @@ class AdditionsRelationManager extends RelationManager
     {
         return $table
             ->recordTitleAttribute('name')
-            ->inverseRelationship('additions')
+            ->inverseRelationship('additionOf')
             ->columns([
                 TextColumn::make('name')
                     ->label(__('app.fields.name'))
@@ -69,7 +72,9 @@ class AdditionsRelationManager extends RelationManager
             ])
             ->headerActions([
                 AttachAction::make()
-                    ->recordSelectOptionsQuery(fn (Builder $query): Builder => $query->whereKeyNot($this->getOwnerRecord()->id))
+                    ->recordSelectOptionsQuery(fn (Builder $query): Builder => $query
+                        ->where('products.id', '!=', $this->getOwnerRecord()->id)
+                        ->whereNotIn('products.id', $this->getOwnerRecord()->additions()->pluck('products.id')))
                     ->preloadRecordSelect()
                     ->schema(fn (AttachAction $action): array => [
                         $action->getRecordSelect(),
@@ -77,7 +82,17 @@ class AdditionsRelationManager extends RelationManager
                             ->label(__('app.fields.price'))
                             ->numeric()
                             ->required()
-                            ->default(0),
+                            ->default(0)
+                            ->rule(function (Get $get): \Closure {
+                                return function (string $attribute, $value, \Closure $fail) use ($get): void {
+                                    $additionId = $get('recordId');
+                                    $addition = $additionId ? Product::find($additionId) : null;
+
+                                    if ($addition instanceof Product && ($addition->price + (int) $value) < 0) {
+                                        $fail(__('app.validation.addition_price_floor'));
+                                    }
+                                };
+                            }),
                         TextInput::make('quantity')
                             ->label(__('app.fields.quantity'))
                             ->numeric()
