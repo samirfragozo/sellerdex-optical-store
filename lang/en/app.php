@@ -62,6 +62,7 @@ return [
     'relations' => [
         'payments' => 'Payments',
         'products' => 'Products',
+        'additions' => 'Additions',
         'add_payment' => 'Add payment',
         'expenses' => 'Expenses',
         'sales' => 'Documents',

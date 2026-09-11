@@ -65,6 +65,7 @@ return [
     'relations' => [
         'payments' => 'Pagos / Abonos',
         'products' => 'Productos',
+        'additions' => 'Adiciones',
         'add_payment' => 'Agregar abono',
         'expenses' => 'Gastos',
         'sales' => 'Documentos',
