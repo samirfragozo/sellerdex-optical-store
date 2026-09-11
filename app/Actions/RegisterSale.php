@@ -54,7 +54,7 @@ class RegisterSale
                     ]);
                 }
                 $this->composeCombo($sale, $data['combo'] ?? null);
-                $this->applyIncludes($sale);
+                $this->applyAdditions($sale);
             } else {
                 $this->buildArmados($sale, $data['armados'] ?? []);
                 foreach ($data['products'] ?? [] as $product) {
@@ -66,7 +66,7 @@ class RegisterSale
                         'unit_cost' => $product['unit_cost'] ?? 0,
                     ]);
                 }
-                $this->applyIncludes($sale);
+                $this->applyAdditions($sale);
                 if (empty($data['armados'])) {
                     $sale->load('items.product.category');
                     $this->applyFunda($sale);
@@ -166,18 +166,43 @@ class RegisterSale
         $this->applyBag($sale);
     }
 
-    /** Add the per-product `specs.includes` bundle SKUs (e.g. contact-lens solution). */
-    private function applyIncludes(Sale $sale): void
+    /** Add each active `product_additions` bundle line for every sold product (e.g. contact-lens solution). */
+    private function applyAdditions(Sale $sale): void
     {
-        $sale->load('items.product');
+        $sale->load('items.product.additions');
         foreach ($sale->items as $item) {
-            $includes = $item->product?->specs['includes'] ?? null;
-            if (is_array($includes)) {
-                foreach ($includes as $sku) {
-                    $this->addZeroLine($sale, $sku);
-                }
+            $product = $item->product;
+            if ($product === null) {
+                continue;
+            }
+            foreach ($product->additions->where('pivot.is_active', true) as $addition) {
+                $this->addAdditionLine(
+                    $sale,
+                    $addition,
+                    $addition->price + $addition->pivot->price,
+                    $addition->pivot->quantity,
+                );
             }
         }
+    }
+
+    /** Add a resolved addition as its own sale line, skipping if already present. */
+    private function addAdditionLine(Sale $sale, Product $addition, int $unitPrice, int $quantity): void
+    {
+        $exists = $sale->items()
+            ->where('product_id', $addition->id)
+            ->whereNull('group_key')
+            ->exists();
+        if ($exists) {
+            return;
+        }
+        $sale->items()->create([
+            'product_id' => $addition->id,
+            'description' => $addition->name,
+            'quantity' => $quantity,
+            'unit_price' => $unitPrice,
+            'unit_cost' => $addition->cost,
+        ]);
     }
 
     /** A standalone frame/sunglasses sale (no lens) gets a funda. */
