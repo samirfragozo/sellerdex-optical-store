@@ -21,12 +21,12 @@ it('seeds consumables with real costs and prices', function () {
         ->and(Product::where('sku', 'ACC-FUNDA')->first())->cost->toBe(500)->price->toBe(0);
 });
 
-it('seeds contact lenses with includes bundle and services', function () {
+it('seeds contact lenses with a bundled addition and services', function () {
     $this->seed(ProductCatalogSeeder::class);
 
     $box = Product::where('sku', 'ACC-LC-AIROPTIX-CYL-X3')->first();
     expect($box->cost)->toBe(219000)->and($box->price)->toBe(450000)
-        ->and($box->specs['includes'])->toContain('ACC-SOLUCION-LC');
+        ->and($box->additions()->first()->sku)->toBe('ACC-SOLUCION-LC');
 
     expect(Product::where('sku', 'SRV-EXAMEN')->first())->price->toBe(35000)
         ->and(Product::where('sku', 'SRV-REPARACION-PATICA')->first())->cost->toBe(10000)->price->toBe(25000);

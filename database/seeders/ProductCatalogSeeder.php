@@ -191,7 +191,7 @@ class ProductCatalogSeeder extends Seeder
     private function seedContactLenses(): void
     {
         $accId = $this->categoryId('Accesorio');
-        // [sku, name, cost, price, includes(bool), correction]
+        // [sku, name, cost, price, bundlesSolution(bool), correction]
         $rows = [
             ['ACC-LC-COSMETICOS', 'Lentes de contacto cosméticos X1 par', 55000, 75000, false, null],
             ['ACC-LC-FORM-X1', 'Lentes de contacto formulados esféricos X1 par', 28000, 115000, true, 'spheric'],
@@ -200,15 +200,21 @@ class ProductCatalogSeeder extends Seeder
             ['ACC-LC-AIROPTIX-X3', 'Caja LC formulados esféricos X3 — Air Optix', 200000, 430000, true, 'spheric'],
             ['ACC-LC-AIROPTIX-CYL-X3', 'Caja LC formulados esféricos + cilindro X3 — Air Optix', 219000, 450000, true, 'spheric_cylinder'],
         ];
-        foreach ($rows as [$sku, $name, $cost, $price, $includes, $correction]) {
+
+        $solution = Product::where('sku', 'ACC-SOLUCION-LC')->first();
+
+        foreach ($rows as [$sku, $name, $cost, $price, $bundlesSolution, $correction]) {
             $specs = ['kind' => 'contact_lens', 'correction' => $correction];
-            if ($includes) {
-                $specs['includes'] = ['ACC-SOLUCION-LC'];
-            }
-            $this->upsert($sku, [
+            $product = $this->upsert($sku, [
                 'product_category_id' => $accId, 'name' => $name, 'cost' => $cost, 'price' => $price,
                 'is_stockable' => true, 'stock' => 0, 'is_active' => true, 'specs' => $specs,
             ]);
+
+            if ($bundlesSolution && $solution !== null) {
+                $product->additions()->syncWithoutDetaching([
+                    $solution->id => ['price' => -$solution->price, 'quantity' => 1, 'is_active' => true],
+                ]);
+            }
         }
     }
 
