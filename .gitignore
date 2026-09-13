@@ -30,3 +30,5 @@ yarn-error.log
 /docs
 /graphify-out
 /tests/Browser/Screenshots
+
+.worktrees/
