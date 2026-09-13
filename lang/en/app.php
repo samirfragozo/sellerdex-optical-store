@@ -129,6 +129,8 @@ return [
         'status' => 'Status',
         'subtotal' => 'Subtotal',
         'discount' => 'Discount',
+        'tip' => 'Tip',
+        'tax' => 'Tax',
         'total' => 'Total',
         'balance' => 'Balance',
         'sold_at' => 'Sale date',
@@ -269,6 +271,7 @@ return [
             'no_description' => '(no description)',
             'surcharge_note' => 'Total includes platform surcharge (:percent%)',
             'balance' => 'Balance due',
+            'discount_amount' => 'Discount amount',
         ],
 
         'combo_form' => [

@@ -224,6 +224,7 @@ function onAddProduct(product: ProductProp): void {
         id: product.id,
         name: product.name,
         price: product.price,
+        tax_rate: product.tax_rate,
     });
 }
 
@@ -295,7 +296,8 @@ async function confirmCheckout(): Promise<void> {
                 : null,
         armados: cartPayload.armados,
         products: cartPayload.products,
-        discount: cart.discount.value,
+        discount_percent: cart.discountPercent.value,
+        tip_percent: cart.tipPercent.value,
         surcharge_percent: cart.surchargePercent.value,
     });
 
@@ -308,7 +310,8 @@ async function confirmCheckout(): Promise<void> {
     checkout.reset();
     cart.armados.value = [];
     cart.products.value = [];
-    cart.discount.value = 0;
+    cart.discountPercent.value = 0;
+    cart.tipPercent.value = 0;
     cart.surchargePercent.value = 0;
     lensSelections.value = {};
     resolvedLenses.value = {};
@@ -479,11 +482,15 @@ async function confirmCheckout(): Promise<void> {
             </div>
 
             <CartSummary
-                v-model:discount="cart.discount.value"
+                v-model:discount-percent="cart.discountPercent.value"
+                v-model:tip-percent="cart.tipPercent.value"
                 :armados="cart.armados.value"
                 :products="cart.products.value"
                 :subtotal="cart.subtotal.value"
                 :total="cart.total.value"
+                :discount-amount="cart.discountAmount.value"
+                :tax-amount="cart.taxAmount.value"
+                :tip-amount="cart.tipAmount.value"
                 :surcharge-percent="cart.surchargePercent.value"
                 :balance="cart.total.value"
                 :format-c-o-p="formatCOP"

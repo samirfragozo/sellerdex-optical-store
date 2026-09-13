@@ -132,6 +132,8 @@ return [
         'status' => 'Estado',
         'subtotal' => 'Subtotal',
         'discount' => 'Descuento',
+        'tip' => 'Propina',
+        'tax' => 'Impuesto',
         'total' => 'Total',
         'balance' => 'Saldo',
         'sold_at' => 'Fecha de venta',
@@ -313,6 +315,7 @@ return [
             'no_description' => '(sin descripción)',
             'surcharge_note' => 'Total incluye recargo de plataforma (:percent%)',
             'balance' => 'Saldo pendiente',
+            'discount_amount' => 'Monto de descuento',
         ],
 
         'combo_form' => [
