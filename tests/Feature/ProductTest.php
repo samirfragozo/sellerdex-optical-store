@@ -32,3 +32,15 @@ it('el admin gestiona el catálogo', function () {
     expect(PermissionsTeam::runAs($admin->company, fn () => $admin->can('Create:Product')))->toBeTrue()
         ->and(PermissionsTeam::runAs($admin->company, fn () => $admin->can('Delete:Product')))->toBeTrue();
 });
+
+it('defaults tax_rate to zero and casts it as decimal', function () {
+    $product = Product::factory()->create();
+
+    expect($product->fresh()->tax_rate)->toBe('0.00');
+});
+
+it('accepts a positive tax_rate', function () {
+    $product = Product::factory()->create(['tax_rate' => 19]);
+
+    expect($product->fresh()->tax_rate)->toBe('19.00');
+});
