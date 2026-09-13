@@ -59,6 +59,8 @@ class StorePosSaleRequest extends FormRequest
             'prescription.os_add' => ['nullable', new Diopter(0.25, 4)],
             'prescription.os_pd' => ['nullable', 'numeric', 'between:20,40'],
             'discount' => ['nullable', 'integer', 'min:0'],
+            'discount_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'tip_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'notes' => ['nullable', 'string'],
             'armados' => ['nullable', 'array'],
             'armados.*.lens.product_id' => ['required', 'exists:products,id'],

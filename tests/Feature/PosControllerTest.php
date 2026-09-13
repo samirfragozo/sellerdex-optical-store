@@ -622,3 +622,28 @@ it('includes frame variant products on the pos payload', function () {
         ->and($baseData['variants'][0]['option_ids'])->toBe([$option->id])
         ->and($products->firstWhere('id', $variant->id))->toBeNull();
 });
+
+it('applies discount percent, tip percent and per-line tax when registering a pos sale', function () {
+    $seller = User::factory()->seller()->create();
+    openCashRegisterSession($seller);
+    $customer = Customer::factory()->create();
+    $product = Product::factory()->create(['company_id' => $seller->company_id, 'price' => 100_000, 'tax_rate' => 19, 'is_pos_selectable' => true]);
+
+    $this->actingAs($seller)->postJson('/pos', [
+        'customer_id' => $customer->id,
+        'document_type' => 'order',
+        'discount_percent' => 10,
+        'tip_percent' => 5,
+        'products' => [[
+            'product_id' => $product->id,
+            'description' => $product->name,
+            'quantity' => 1,
+            'unit_price' => 100_000,
+        ]],
+    ])->assertOk();
+
+    $sale = Sale::first();
+    expect($sale->discount_percent)->toBe('10.00')
+        ->and($sale->tip_percent)->toBe('5.00')
+        ->and($sale->items()->where('product_id', $product->id)->first()->tax_amount)->toBe(19_000);
+});
