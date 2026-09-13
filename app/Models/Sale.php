@@ -20,7 +20,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 
-#[Fillable(['company_id', 'number', 'customer_id', 'seller_id', 'prescription_id', 'document_type', 'status', 'subtotal', 'discount', 'surcharge_percent', 'total', 'is_delivered', 'delivered_at', 'sold_at', 'notes', 'created_by'])]
+#[Fillable(['company_id', 'number', 'customer_id', 'seller_id', 'prescription_id', 'document_type', 'status', 'subtotal', 'discount', 'discount_percent', 'surcharge_percent', 'tip_percent', 'tip', 'tax_amount', 'total', 'is_delivered', 'delivered_at', 'sold_at', 'notes', 'created_by'])]
 class Sale extends Model
 {
     /** @use HasFactory<SaleFactory> */
@@ -33,7 +33,11 @@ class Sale extends Model
             'status' => SaleStatus::class,
             'subtotal' => 'integer',
             'discount' => 'integer',
+            'discount_percent' => 'decimal:2',
             'surcharge_percent' => 'decimal:2',
+            'tip_percent' => 'decimal:2',
+            'tip' => 'integer',
+            'tax_amount' => 'integer',
             'total' => 'integer',
             'is_delivered' => 'boolean',
             'delivered_at' => 'date',
@@ -161,8 +165,20 @@ class Sale extends Model
     {
         $subtotal = (int) $this->items()->sum('line_total');
         $this->subtotal = $subtotal;
+
+        $this->discount = (int) round($subtotal * ((float) $this->discount_percent) / 100);
         $base = max(0, $subtotal - $this->discount);
-        $this->total = (int) round($base * (1 + ((float) $this->surcharge_percent) / 100));
+
+        $rawTax = (int) $this->items()->sum('tax_amount');
+        $this->tax_amount = $subtotal > 0
+            ? (int) round($rawTax * ($base / $subtotal))
+            : 0;
+
+        $this->tip = (int) round($base * ((float) $this->tip_percent) / 100);
+
+        $preSurcharge = $base + $this->tax_amount + $this->tip;
+        $this->total = (int) round($preSurcharge * (1 + ((float) $this->surcharge_percent) / 100));
+
         $this->saveQuietly();
         $this->recalculateStatus();
     }
