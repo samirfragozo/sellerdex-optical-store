@@ -647,3 +647,16 @@ it('applies discount percent, tip percent and per-line tax when registering a po
         ->and($sale->tip_percent)->toBe('5.00')
         ->and($sale->items()->where('product_id', $product->id)->first()->tax_amount)->toBe(19_000);
 });
+
+it('rejects a discount_percent over 100', function () {
+    $seller = User::factory()->seller()->create();
+    openCashRegisterSession($seller);
+    $customer = Customer::factory()->create();
+
+    $this->actingAs($seller)->postJson('/pos', [
+        'customer_id' => $customer->id,
+        'document_type' => 'order',
+        'discount_percent' => 150,
+        'products' => [['description' => 'Item', 'quantity' => 1, 'unit_price' => 10_000]],
+    ])->assertJsonValidationErrors('discount_percent');
+});

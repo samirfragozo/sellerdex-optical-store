@@ -58,9 +58,8 @@ class StorePosSaleRequest extends FormRequest
             'prescription.os_axis' => ['nullable', 'integer', 'between:1,180'],
             'prescription.os_add' => ['nullable', new Diopter(0.25, 4)],
             'prescription.os_pd' => ['nullable', 'numeric', 'between:20,40'],
-            'discount' => ['nullable', 'integer', 'min:0'],
-            'discount_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
-            'tip_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'discount_percent' => ['nullable', 'numeric', 'between:0,100'],
+            'tip_percent' => ['nullable', 'numeric', 'between:0,100'],
             'notes' => ['nullable', 'string'],
             'armados' => ['nullable', 'array'],
             'armados.*.lens.product_id' => ['required', 'exists:products,id'],
@@ -171,7 +170,11 @@ class StorePosSaleRequest extends FormRequest
     }
 
     /**
-     * Compute the sale total from the submitted armados and products, discount and surcharge.
+     * Compute an estimated sale total from the submitted armados/products, discount,
+     * tip and surcharge — used only to bound the sum of split payments. Tax is
+     * intentionally omitted here (this request doesn't have resolved Product models,
+     * only raw payload), which makes this a slight underestimate; the authoritative
+     * total (including tax) is computed server-side by RegisterSale afterward.
      */
     protected function saleTotal(): int
     {
@@ -187,9 +190,12 @@ class StorePosSaleRequest extends FormRequest
         $products = collect($this->input('products', []))
             ->sum(fn ($p): int => (int) ($p['quantity'] ?? 0) * (int) ($p['unit_price'] ?? 0));
 
-        $base = max(0, ($armados + $products) - (int) $this->input('discount', 0));
+        $subtotal = $armados + $products;
+        $discount = (int) round($subtotal * ((float) $this->input('discount_percent', 0)) / 100);
+        $base = max(0, $subtotal - $discount);
+        $tip = (int) round($base * ((float) $this->input('tip_percent', 0)) / 100);
 
-        return (int) round($base * (1 + ((float) $this->input('surcharge_percent', 0)) / 100));
+        return (int) round(($base + $tip) * (1 + ((float) $this->input('surcharge_percent', 0)) / 100));
     }
 
     /**
@@ -241,7 +247,8 @@ class StorePosSaleRequest extends FormRequest
             'prescription.os_axis' => 'eje OS',
             'prescription.os_add' => 'adición OS',
             'prescription.os_pd' => 'DP OS',
-            'discount' => 'descuento',
+            'discount_percent' => 'descuento',
+            'tip_percent' => 'propina',
             'notes' => 'observaciones',
             'armados.*.lens.product_id' => 'lente',
             'armados.*.lens.description' => 'descripción del lente',
