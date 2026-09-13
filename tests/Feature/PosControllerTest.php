@@ -27,6 +27,38 @@ it('renders the pos page for an authenticated seller', function () {
         ->assertSuccessful();
 });
 
+it('paginates the pos product list and filters by search and category', function () {
+    $seller = User::factory()->seller()->create();
+    $category = ProductCategory::factory()->create(['key' => 'frame', 'company_id' => $seller->company_id]);
+    Product::factory()->count(25)->create([
+        'product_category_id' => $category->id,
+        'company_id' => $seller->company_id,
+        'is_active' => true,
+        'is_pos_selectable' => true,
+    ]);
+    Product::factory()->create([
+        'name' => 'Gafas Ray-Ban Aviator',
+        'product_category_id' => $category->id,
+        'company_id' => $seller->company_id,
+        'is_active' => true,
+        'is_pos_selectable' => true,
+    ]);
+
+    $page1 = $this->actingAs($seller)->get('/pos')->assertOk();
+    $page1->assertInertia(fn ($page) => $page
+        ->has('products.data', 20) // default per_page
+        ->where('products.meta.total', 26)
+        ->where('products.meta.last_page', 2));
+
+    $filtered = $this->actingAs($seller)->get('/pos?search=Aviator')->assertOk();
+    $filtered->assertInertia(fn ($page) => $page
+        ->has('products.data', 1)
+        ->where('products.data.0.name', 'Gafas Ray-Ban Aviator'));
+
+    $byCategory = $this->actingAs($seller)->get("/pos?category={$category->key}&page=2")->assertOk();
+    $byCategory->assertInertia(fn ($page) => $page->where('products.meta.current_page', 2));
+});
+
 it('rejects sale creation when the seller has no open cash register session', function () {
     $seller = User::factory()->seller()->create();
     $customer = Customer::factory()->create();
@@ -191,7 +223,7 @@ it('hides non-pos-selectable products from the pos picker', function () {
     $hidden = Product::factory()->create(['is_pos_selectable' => false]);
 
     $response = $this->get('/pos');
-    $ids = collect($response->viewData('page')['props']['products'])->pluck('id');
+    $ids = collect($response->viewData('page')['props']['products']['data'])->pluck('id');
 
     expect($ids)->toContain($sellable->id)
         ->and($ids)->not->toContain($hidden->id);
@@ -500,7 +532,7 @@ it('a seller only sees products from their own company in pos props', function (
     $seller = User::factory()->forCompany($companyA)->seller()->create();
 
     $ids = collect(
-        $this->actingAs($seller)->get('/pos')->viewData('page')['props']['products']
+        $this->actingAs($seller)->get('/pos')->viewData('page')['props']['products']['data']
     )->pluck('id');
 
     expect($ids)->toContain($productA->id)
@@ -518,7 +550,7 @@ it('exposes lens specs in the POS props', function () {
         ->get('/pos')
         ->assertInertia(fn ($page) => $page
             ->component('Pos')
-            ->where('products.0.category_key', fn ($key) => is_string($key) || $key === null)
+            ->where('products.data.0.category_key', fn ($key) => is_string($key) || $key === null)
         );
 });
 
@@ -580,7 +612,7 @@ it('includes lens product option groups on the pos payload', function () {
     $lens->optionGroups()->attach($group->id, ['sort_order' => 1]);
 
     $response = $this->get('/pos');
-    $products = collect($response->viewData('page')['props']['products']);
+    $products = collect($response->viewData('page')['props']['products']['data']);
     $lensData = $products->firstWhere('id', $lens->id);
 
     expect($lensData)->not->toBeNull()
@@ -612,7 +644,7 @@ it('includes frame variant products on the pos payload', function () {
     $variant->variantOptions()->attach($option->id);
 
     $response = $this->get('/pos');
-    $products = collect($response->viewData('page')['props']['products']);
+    $products = collect($response->viewData('page')['props']['products']['data']);
     $baseData = $products->firstWhere('id', $base->id);
 
     expect($baseData)->not->toBeNull()
