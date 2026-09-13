@@ -32,6 +32,7 @@ function onProductSelect(value: string): void {
 
 <template>
     <div
+        data-testid="cart-product-row"
         class="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_2fr_4rem_5rem_2rem] sm:items-center"
     >
         <select

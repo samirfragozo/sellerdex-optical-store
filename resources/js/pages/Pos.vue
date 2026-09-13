@@ -220,11 +220,11 @@ function removeArmado(id: number): void {
 
 // --- Catalog -> cart wiring ---
 function onAddProduct(product: ProductProp): void {
-    cart.addProduct();
-    const item = cart.products.value[cart.products.value.length - 1];
-    item.product_id = product.id;
-    item.description = product.name;
-    item.unit_price = product.price;
+    cart.addOrIncrementProduct({
+        id: product.id,
+        name: product.name,
+        price: product.price,
+    });
 }
 
 function removeLooseProduct(index: number): void {

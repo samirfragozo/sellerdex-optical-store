@@ -68,6 +68,29 @@ export function usePosCart() {
         });
     }
 
+    function addOrIncrementProduct(product: {
+        id: number;
+        name: string;
+        price: number;
+    }): void {
+        const existing = products.value.find(
+            (p) => p.product_id === product.id,
+        );
+
+        if (existing) {
+            existing.quantity += 1;
+
+            return;
+        }
+
+        products.value.push({
+            product_id: product.id,
+            description: product.name,
+            quantity: 1,
+            unit_price: product.price,
+        });
+    }
+
     function removeProduct(index: number): void {
         products.value.splice(index, 1);
     }
@@ -116,6 +139,7 @@ export function usePosCart() {
         updateArmado,
         removeArmado,
         addProduct,
+        addOrIncrementProduct,
         removeProduct,
         buildPayload,
     };
