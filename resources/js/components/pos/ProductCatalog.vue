@@ -32,6 +32,12 @@ const categoryOptions = computed(() => [
     ...props.categories.map((c) => ({ key: c.key, name: c.name })),
 ]);
 
+// Products with option groups (e.g. frames with a color option) require a
+// dedicated selection flow and must never be click-to-added from this grid.
+const filteredProducts = computed(() =>
+    props.products.data.filter((product) => product.option_groups.length === 0),
+);
+
 function reload(page = 1): void {
     router.reload({
         only: ['products'],
@@ -99,11 +105,11 @@ function onProductClick(product: ProductProp): void {
 
         <div class="flex-1 overflow-y-auto p-3">
             <div
-                v-if="products.data.length > 0"
+                v-if="filteredProducts.length > 0"
                 class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4"
             >
                 <ProductCard
-                    v-for="product in products.data"
+                    v-for="product in filteredProducts"
                     :key="product.id"
                     :product="product"
                     @click="onProductClick(product)"
