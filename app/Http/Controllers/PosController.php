@@ -10,6 +10,7 @@ use App\Models\Customer;
 use App\Models\PaymentMethod;
 use App\Models\Prescription;
 use App\Models\Product;
+use App\Models\ProductCategory;
 use App\Support\Optics\LensRecommender;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -88,6 +89,8 @@ class PosController extends Controller
                     'total' => $products->total(),
                 ],
             ],
+            'categories' => ProductCategory::query()->where('is_active', true)
+                ->orderBy('name')->get(['id', 'name', 'key']),
             'paymentMethods' => PaymentMethod::query()->where('is_active', true)
                 ->orderBy('sort_order')->get(['id', 'name', 'surcharge_percent']),
             'customers' => $customers,

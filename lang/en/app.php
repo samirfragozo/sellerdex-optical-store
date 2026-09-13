@@ -338,6 +338,9 @@ return [
             'uncategorized' => 'Uncategorized',
             'out_of_stock' => 'Out of stock',
             'empty' => 'No products match your search.',
+            'pagination_summary' => ':from–:to of :total',
+            'pagination_prev' => 'Previous',
+            'pagination_next' => 'Next',
         ],
 
         'checkout' => [

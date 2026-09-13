@@ -36,6 +36,7 @@ export interface ProductProp {
     name: string;
     price: number;
     cost: number;
+    tax_rate: number;
     category_key: string | null;
     category_name: string | null;
     is_stockable: boolean;
@@ -43,6 +44,17 @@ export interface ProductProp {
     specs: Record<string, string> | null;
     option_groups: OptionGroupProp[];
     variants: VariantProp[];
+}
+
+export interface PaginatedProducts {
+    data: ProductProp[];
+    meta: {
+        current_page: number;
+        last_page: number;
+        from: number | null;
+        to: number | null;
+        total: number;
+    };
 }
 
 export interface LensProduct {

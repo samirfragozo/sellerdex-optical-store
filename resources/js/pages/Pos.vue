@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import type {
     LensProduct,
     LensSpecs,
+    PaginatedProducts,
     ProductProp,
 } from '@/composables/useLensCatalog';
 import { useLensRecommendation } from '@/composables/useLensRecommendation';
@@ -52,7 +53,8 @@ interface PrescriptionOption {
 }
 
 const props = defineProps<{
-    products: ProductProp[];
+    products: PaginatedProducts;
+    categories: { id: number; name: string; key: string }[];
     paymentMethods: PaymentMethod[];
     customers: Customer[];
     prescriptions: PrescriptionOption[];
@@ -164,14 +166,14 @@ const documentTypes = [
 
 // --- Frame products (used inside the armado modal) ---
 const frameProducts = computed<ProductProp[]>(() =>
-    props.products.filter((p) => p.category_key === 'frame'),
+    props.products.data.filter((p) => p.category_key === 'frame'),
 );
 
 // Lenses are only selectable through the armado wizard, not as loose
 // products — otherwise the customer/prescription requirement is bypassed
 // (StorePosSaleRequest's cartHasLens() only inspects the armados array).
 const looseProducts = computed<ProductProp[]>(() =>
-    props.products.filter((p) => p.category_key !== 'lens'),
+    props.products.data.filter((p) => p.category_key !== 'lens'),
 );
 
 // --- Armado management ---
@@ -345,6 +347,7 @@ async function confirmCheckout(): Promise<void> {
         >
             <ProductCatalog
                 :products="products"
+                :categories="categories"
                 @select-lens-category="openArmadoModal(null)"
                 @add-product="onAddProduct"
             />
@@ -445,7 +448,7 @@ async function confirmCheckout(): Promise<void> {
                         ? (resolvedLenses[editingArmadoId] ?? null)
                         : null
                 "
-                :products="products"
+                :products="products.data"
                 :frame-products="frameProducts"
                 :recommended="recommended"
                 :warnings="warnings"

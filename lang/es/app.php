@@ -382,6 +382,9 @@ return [
             'uncategorized' => 'Sin categoría',
             'out_of_stock' => 'Sin stock',
             'empty' => 'No hay productos que coincidan con la búsqueda.',
+            'pagination_summary' => ':from–:to de :total',
+            'pagination_prev' => 'Anterior',
+            'pagination_next' => 'Siguiente',
         ],
 
         'checkout' => [
