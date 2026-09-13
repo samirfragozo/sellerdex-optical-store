@@ -90,6 +90,30 @@ it('adds the free exam surcharge per armado when requested', function () {
         ->and($sale->items->contains(fn ($i) => Product::find($i->product_id)?->sku === 'SRV-EXAMEN'))->toBeTrue();
 });
 
+it('does not tax armado lens or frame lines even when the product has a tax_rate', function () {
+    seedCatalog();
+    $lens = Product::where('sku', 'ML-001')->first();
+    $frame = Product::where('sku', 'MNT-COMPLETAS-ACETATO')->first();
+    $lens->update(['tax_rate' => 19]);
+    $frame->update(['tax_rate' => 19]);
+
+    $sale = app(RegisterSale::class)->handle([
+        'customer_id' => Customer::factory()->create()->id,
+        'document_type' => 'order',
+        'armados' => [[
+            'lens' => ['product_id' => $lens->id, 'description' => $lens->name, 'unit_price' => $lens->price],
+            'frame' => ['product_id' => $frame->id, 'description' => $frame->name, 'unit_price' => $frame->price],
+            'combo' => ['with_exam' => false, 'forro' => 'small', 'include_liquid' => false],
+        ]],
+    ], User::factory()->seller()->create());
+
+    $lensLine = $sale->items->firstWhere('product_id', $lens->id);
+    $frameLine = $sale->items->firstWhere('product_id', $frame->id);
+
+    expect($lensLine->tax_amount)->toBe(0)
+        ->and($frameLine->tax_amount)->toBe(0);
+});
+
 it('mixes an armado with a standalone product line', function () {
     seedCatalog();
     $lens = Product::where('sku', 'ML-001')->first();

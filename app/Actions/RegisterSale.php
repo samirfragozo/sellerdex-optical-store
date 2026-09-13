@@ -207,7 +207,9 @@ class RegisterSale
             'quantity' => $quantity,
             'unit_price' => $unitPrice,
             'unit_cost' => $addition->cost,
-            'tax_amount' => $this->taxFor($addition, $unitPrice, $quantity),
+            // Additions ride along with an armado (lens/frame), which is tax-exempt
+            // in this business — see the lens/frame lines below for the same reasoning.
+            'tax_amount' => 0,
         ]);
     }
 
@@ -230,11 +232,11 @@ class RegisterSale
         foreach ($armados as $index => $armado) {
             $groupKey = 'g'.($index + 1);
             $lens = $armado['lens'];
-            $lensProduct = Product::find($lens['product_id'] ?? null);
 
             $unitPrice = (int) $lens['unit_price'];
             $unitCost = (int) ($lens['unit_cost'] ?? 0);
             $resolvedOptions = null;
+            $lensProduct = Product::find($lens['product_id'] ?? null);
 
             if ($lensProduct !== null && $lensProduct->optionGroups()->exists()) {
                 $resolved = (new ResolveProductOptions)->handle($lensProduct, $lens['option_ids'] ?? []);
@@ -250,7 +252,10 @@ class RegisterSale
                 'quantity' => $lens['quantity'] ?? 1,
                 'unit_price' => $unitPrice,
                 'unit_cost' => $unitCost,
-                'tax_amount' => $this->taxFor($lensProduct, $unitPrice, (int) ($lens['quantity'] ?? 1)),
+                // Lenses are tax-exempt in this business (see Product::$tax_rate on the
+                // lens product, which is never applied here — matches the client-side
+                // cart preview, which never taxes armado lines either).
+                'tax_amount' => 0,
             ]);
 
             if ($resolvedOptions !== null) {
@@ -268,7 +273,6 @@ class RegisterSale
 
             if (empty($armado['own_frame']) && ! empty($armado['frame'])) {
                 $frame = $armado['frame'];
-                $frameProduct = Product::find($frame['product_id'] ?? null);
                 $sale->items()->create([
                     'group_key' => $groupKey,
                     'product_id' => $frame['product_id'] ?? null,
@@ -276,7 +280,8 @@ class RegisterSale
                     'quantity' => $frame['quantity'] ?? 1,
                     'unit_price' => $frame['unit_price'],
                     'unit_cost' => $frame['unit_cost'] ?? 0,
-                    'tax_amount' => $this->taxFor($frameProduct, (int) $frame['unit_price'], (int) ($frame['quantity'] ?? 1)),
+                    // Frames are tax-exempt in this business, same as lenses above.
+                    'tax_amount' => 0,
                 ]);
             }
 
