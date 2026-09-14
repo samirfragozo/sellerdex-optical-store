@@ -6,6 +6,7 @@ use App\Models\PaymentMethod;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\User;
+use App\Support\LensPricing;
 use Illuminate\Support\Facades\DB;
 
 class RegisterSale
@@ -226,14 +227,26 @@ class RegisterSale
             $lens = $armado['lens'];
             $lensProduct = Product::find($lens['product_id'] ?? null);
 
-            $unitPrice = (int) $lens['unit_price'];
+            $unitPrice = (int) ($lens['unit_price'] ?? 0);
             $unitCost = (int) ($lens['unit_cost'] ?? 0);
             $resolvedOptions = null;
 
             if ($lensProduct !== null && $lensProduct->optionGroups()->exists()) {
                 $resolved = (new ResolveProductOptions)->handle($lensProduct, $lens['option_ids'] ?? []);
-                $unitPrice = $lensProduct->price + $resolved['price'];
                 $unitCost = $lensProduct->cost + $resolved['cost'];
+
+                if ($lensProduct->category?->key === 'lens' && isset($lensProduct->specs['design'])) {
+                    // A design-based lens (seeded by ProductCatalogSeeder) prices by
+                    // formula, not by flat option sum: cost×markup floored by the
+                    // chosen filter's tier (see LensPricing). Other lens-category
+                    // option products (e.g. ad-hoc ones without a design) keep the
+                    // generic flat-sum behavior in the else branch below.
+                    $filterName = $resolved['options']->first(fn ($o) => str_starts_with($o->group->name, 'Filtro'))?->name;
+                    $unitPrice = LensPricing::price($unitCost, $filterName);
+                } else {
+                    $unitPrice = $lensProduct->price + $resolved['price'];
+                }
+
                 $resolvedOptions = $resolved['options'];
             }
 
