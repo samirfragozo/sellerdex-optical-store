@@ -18,7 +18,7 @@ it('seeds consumables with real costs and prices', function () {
         ->and(Product::where('sku', 'ACC-PANO')->first())->cost->toBe(600)->price->toBe(2000)
         ->and(Product::where('sku', 'ACC-LIQUIDO')->first())->cost->toBe(2000)->price->toBe(8000)
         ->and(Product::where('sku', 'ACC-BOLSA-PAPEL')->first())->cost->toBe(1000)->price->toBe(0)
-        ->and(Product::where('sku', 'ACC-FUNDA')->first())->cost->toBe(500)->price->toBe(0);
+        ->and(Product::where('sku', 'ACC-FUNDA')->first())->cost->toBe(1000)->price->toBe(3000);
 });
 
 it('seeds contact lenses with a bundled addition and services', function () {

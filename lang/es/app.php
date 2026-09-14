@@ -310,7 +310,7 @@ return [
             'own_frame' => 'Montura propia',
             'exam_included' => '+ Examen incluido',
             'liquid_included' => '+ Líquido incluido',
-            'lining' => 'Forro',
+            'lining' => 'Estuche',
             'small' => 'Pequeño',
             'large' => 'Grande',
             'no_description' => '(sin descripción)',

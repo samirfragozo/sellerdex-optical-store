@@ -160,16 +160,18 @@ class ProductCatalogSeeder extends Seeder
         $accId = $this->categoryId('Accesorio');
         // [sku, name, cost, price]
         $rows = [
-            ['ACC-FORRO-SMALL', 'Forro pequeño', 2900, 10000],
-            ['ACC-FORRO-LARGE', 'Forro grande', 4000, 15000],
+            ['ACC-FORRO-SMALL', 'Estuche pequeño', 2900, 10000],
+            ['ACC-FORRO-LARGE', 'Estuche grande', 4000, 15000],
             ['ACC-PANO', 'Paño', 600, 2000],
             ['ACC-LIQUIDO', 'Líquido de limpieza', 2000, 8000],
             ['ACC-BOLSA-PAPEL', 'Bolsa de papel', 1000, 0],
             ['ACC-BOLSA-PLASTICO', 'Bolsa de plástico', 240, 0],
-            ['ACC-FUNDA', 'Funda', 500, 0],
+            ['ACC-FUNDA', 'Funda', 1000, 3000],
         ];
         // Auto-included by combos and never sold on their own → hidden from the POS picker.
-        $nonSellable = ['ACC-BOLSA-PAPEL', 'ACC-BOLSA-PLASTICO', 'ACC-FUNDA', 'ACC-PANO'];
+        // Funda is also given away free inside combos (see RegisterSale::applyBag), but stays
+        // sellable on its own, so it's excluded from this list.
+        $nonSellable = ['ACC-BOLSA-PAPEL', 'ACC-BOLSA-PLASTICO', 'ACC-PANO'];
 
         foreach ($rows as [$sku, $name, $cost, $price]) {
             $this->upsert($sku, [

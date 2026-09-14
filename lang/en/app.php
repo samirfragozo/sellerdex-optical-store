@@ -266,7 +266,7 @@ return [
             'own_frame' => 'Own frame',
             'exam_included' => '+ Exam included',
             'liquid_included' => '+ Cleaning liquid included',
-            'lining' => 'Lining',
+            'lining' => 'Case',
             'small' => 'Small',
             'large' => 'Large',
             'no_description' => '(no description)',
