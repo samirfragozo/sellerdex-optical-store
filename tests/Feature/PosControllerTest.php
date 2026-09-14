@@ -379,14 +379,16 @@ it('passes combo options and applies a paper bag', function () {
     $seller = User::factory()->forCompany($company)->seller()->create();
     openCashRegisterSession($seller);
     $this->actingAs($seller);
-    // ML-022 = 1,000,000 (≥ bag threshold of 215,000)
-    $lens = Product::where('sku', 'ML-022')->first();
+    $lens = Product::where('sku', 'ML-MONOFOCAL')->first();
 
     $this->postJson('/pos', [
         'customer_id' => Customer::factory()->create()->id,
         'document_type' => 'order',
         'armados' => [[
-            'lens' => ['product_id' => $lens->id, 'description' => $lens->name, 'unit_price' => $lens->price],
+            // Manual override ≥ bag threshold of 215,000 — this product's own optionGroups
+            // are still company_id=null (untouched by the reassignment above), so they're
+            // scoped away for this seller and RegisterSale falls back to this raw price.
+            'lens' => ['product_id' => $lens->id, 'description' => $lens->name, 'unit_price' => 1_000_000],
             'own_frame' => true,
             'combo' => ['forro' => 'small', 'include_liquid' => false, 'with_exam' => true],
         ]],
@@ -401,7 +403,7 @@ it('passes combo options and applies a paper bag', function () {
 it('rejects a lens armado without a customer', function () {
     $this->seed(ProductCategorySeeder::class);
     $this->seed(ProductCatalogSeeder::class);
-    $lens = Product::where('sku', 'ML-001')->first();
+    $lens = Product::where('sku', 'ML-MONOFOCAL')->first();
 
     $this->actingAs(User::factory()->seller()->create())
         ->postJson('/pos', [
@@ -417,8 +419,8 @@ it('rejects a lens armado without a customer', function () {
 it('accepts two armados where only one carries a frame', function () {
     $this->seed(ProductCategorySeeder::class);
     $this->seed(ProductCatalogSeeder::class);
-    $lensA = Product::where('sku', 'ML-001')->first();
-    $lensB = Product::where('sku', 'ML-052')->first();
+    $lensA = Product::where('sku', 'ML-MONOFOCAL')->first();
+    $lensB = Product::where('sku', 'ML-PROGRESIVO')->first();
     $frame = Product::where('sku', 'MNT-COMPLETAS-ACETATO')->first();
     $customer = Customer::factory()->create();
     $seller = User::factory()->seller()->create();
@@ -448,7 +450,7 @@ it('accepts two armados where only one carries a frame', function () {
 it('rejects a lens armado without a prescription', function () {
     $this->seed(ProductCategorySeeder::class);
     $this->seed(ProductCatalogSeeder::class);
-    $lens = Product::where('sku', 'ML-001')->first();
+    $lens = Product::where('sku', 'ML-MONOFOCAL')->first();
 
     $this->actingAs(User::factory()->seller()->create())
         ->postJson('/pos', [
@@ -465,7 +467,7 @@ it('rejects a lens armado without a prescription', function () {
 it('creates a sale from an armado with a new prescription', function () {
     $this->seed(ProductCategorySeeder::class);
     $this->seed(ProductCatalogSeeder::class);
-    $lens = Product::where('sku', 'ML-052')->first();
+    $lens = Product::where('sku', 'ML-PROGRESIVO')->first();
     $customer = Customer::factory()->create();
     $seller = User::factory()->seller()->create();
     openCashRegisterSession($seller);

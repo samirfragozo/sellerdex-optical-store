@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Product;
+use App\Support\LensPricing;
 use Database\Seeders\ProductCatalogSeeder;
 use Database\Seeders\ProductCategorySeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -11,25 +12,27 @@ beforeEach(function () {
     $this->seed(ProductCategorySeeder::class);
 });
 
-it('seeds 69 made-to-order lenses with tier-floored prices', function () {
+it('seeds one base lens product per design, priced at the Sin Filtro floor', function () {
     $this->seed(ProductCatalogSeeder::class);
     $this->seed(ProductCatalogSeeder::class); // idempotent
 
-    expect(Product::where('sku', 'like', 'ML-%')->count())->toBe(69);
+    $monofocal = Product::where('sku', 'ML-MONOFOCAL')->first();
+    $bifocal = Product::where('sku', 'ML-BIFOCAL')->first();
+    $progresivo = Product::where('sku', 'ML-PROGRESIVO')->first();
 
-    $base = Product::where('sku', 'ML-001')->first(); // 1.56 Sin Filtro, cost 6000
-    expect($base->cost)->toBe(6000)
-        ->and($base->price)->toBe(125000)       // max(24000, 125000)
-        ->and($base->is_stockable)->toBeFalse()
-        ->and($base->specs['filter'])->toBe('Sin Filtro');
-
-    expect(Product::where('sku', 'ML-002')->value('price'))->toBe(195000)  // blue floor
-        ->and(Product::where('sku', 'ML-003')->value('price'))->toBe(295000) // foto blue floor
-        ->and(Product::where('sku', 'ML-069')->value('price'))->toBe(2228000); // 557000*4
+    expect($monofocal->cost)->toBe(6000)
+        ->and($monofocal->price)->toBe(125000) // floored, cost×4 = 24000
+        ->and($monofocal->is_stockable)->toBeFalse()
+        ->and($monofocal->specs['design'])->toBe('Monofocal')
+        ->and($bifocal->cost)->toBe(8000)
+        ->and($bifocal->price)->toBe(125000)
+        ->and($progresivo->cost)->toBe(30000)
+        ->and($progresivo->price)->toBe(125000);
 });
 
-it('computes lensPrice with the tier floor', function () {
-    expect(ProductCatalogSeeder::lensPrice(6000, 'Sin Filtro'))->toBe(125000)
-        ->and(ProductCatalogSeeder::lensPrice(50000, 'Foto Blue Cut'))->toBe(295000)
-        ->and(ProductCatalogSeeder::lensPrice(557000, 'Foto Blue Cut'))->toBe(2228000);
+it('computes LensPricing::price with the tier floor', function () {
+    expect(LensPricing::price(6000, 'Sin Filtro'))->toBe(125000)
+        ->and(LensPricing::price(50000, 'Foto Blue Cut'))->toBe(295000)
+        ->and(LensPricing::price(557000, 'Foto Blue Cut'))->toBe(2228000)
+        ->and(LensPricing::price(6000, null))->toBe(24000); // no floor for an unknown/missing filter
 });

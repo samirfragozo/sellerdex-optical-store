@@ -18,6 +18,12 @@ function seedCatalog(): void
     test()->seed(ProductCatalogSeeder::class);
 }
 
+/** Picks the first (zero-delta) option in every required group — resolves to the base lens price. */
+function defaultLensOptionIds(Product $lens): array
+{
+    return $lens->optionGroups->map(fn ($g) => $g->options->first()->id)->all();
+}
+
 it('has a nullable group_key column on sale_items', function () {
     expect(Schema::hasColumn('sale_items', 'group_key'))->toBeTrue();
 });
@@ -36,8 +42,8 @@ it('persists group_key on a sale item', function () {
 
 it('builds two armados, each with its own grouped combo lines', function () {
     seedCatalog();
-    $lensA = Product::where('sku', 'ML-001')->first();   // Monofocal 1.56
-    $lensB = Product::where('sku', 'ML-052')->first();   // Progresivo 1.56
+    $lensA = Product::where('sku', 'ML-MONOFOCAL')->first();
+    $lensB = Product::where('sku', 'ML-PROGRESIVO')->first();
     $frame = Product::where('sku', 'MNT-COMPLETAS-ACETATO')->first();
 
     $sale = app(RegisterSale::class)->handle([
@@ -45,12 +51,12 @@ it('builds two armados, each with its own grouped combo lines', function () {
         'document_type' => 'order',
         'armados' => [
             [
-                'lens' => ['product_id' => $lensA->id, 'description' => $lensA->name, 'unit_price' => $lensA->price],
+                'lens' => ['product_id' => $lensA->id, 'description' => $lensA->name, 'option_ids' => defaultLensOptionIds($lensA)],
                 'frame' => ['product_id' => $frame->id, 'description' => $frame->name, 'unit_price' => $frame->price],
                 'combo' => ['with_exam' => false, 'forro' => 'small', 'include_liquid' => true],
             ],
             [
-                'lens' => ['product_id' => $lensB->id, 'description' => $lensB->name, 'unit_price' => $lensB->price],
+                'lens' => ['product_id' => $lensB->id, 'description' => $lensB->name, 'option_ids' => defaultLensOptionIds($lensB)],
                 'own_frame' => true,
                 'combo' => ['with_exam' => false, 'forro' => 'large', 'include_liquid' => false],
             ],
@@ -73,13 +79,13 @@ it('builds two armados, each with its own grouped combo lines', function () {
 
 it('adds the free exam surcharge per armado when requested', function () {
     seedCatalog();
-    $lens = Product::where('sku', 'ML-001')->first();
+    $lens = Product::where('sku', 'ML-MONOFOCAL')->first();
 
     $sale = app(RegisterSale::class)->handle([
         'customer_id' => Customer::factory()->create()->id,
         'document_type' => 'order',
         'armados' => [[
-            'lens' => ['product_id' => $lens->id, 'description' => $lens->name, 'unit_price' => $lens->price],
+            'lens' => ['product_id' => $lens->id, 'description' => $lens->name, 'option_ids' => defaultLensOptionIds($lens)],
             'own_frame' => true,
             'combo' => ['with_exam' => true, 'forro' => 'small', 'include_liquid' => false],
         ]],
@@ -92,14 +98,14 @@ it('adds the free exam surcharge per armado when requested', function () {
 
 it('mixes an armado with a standalone product line', function () {
     seedCatalog();
-    $lens = Product::where('sku', 'ML-001')->first();
+    $lens = Product::where('sku', 'ML-MONOFOCAL')->first();
     $accessory = Product::where('sku', 'ACC-LIQUIDO')->first();
 
     $sale = app(RegisterSale::class)->handle([
         'customer_id' => Customer::factory()->create()->id,
         'document_type' => 'order',
         'armados' => [[
-            'lens' => ['product_id' => $lens->id, 'description' => $lens->name, 'unit_price' => $lens->price],
+            'lens' => ['product_id' => $lens->id, 'description' => $lens->name, 'option_ids' => defaultLensOptionIds($lens)],
             'own_frame' => true,
             'combo' => ['with_exam' => false, 'forro' => 'small', 'include_liquid' => false],
         ]],
@@ -115,13 +121,13 @@ it('mixes an armado with a standalone product line', function () {
 
 it('adds a single global bag for the whole sale', function () {
     seedCatalog();
-    $lens = Product::where('sku', 'ML-052')->first(); // 125k
+    $lens = Product::where('sku', 'ML-PROGRESIVO')->first(); // 125k
 
     $sale = app(RegisterSale::class)->handle([
         'customer_id' => Customer::factory()->create()->id,
         'document_type' => 'order',
         'armados' => [[
-            'lens' => ['product_id' => $lens->id, 'description' => $lens->name, 'unit_price' => $lens->price],
+            'lens' => ['product_id' => $lens->id, 'description' => $lens->name, 'option_ids' => defaultLensOptionIds($lens)],
             'own_frame' => true,
             'combo' => ['with_exam' => false, 'forro' => 'small', 'include_liquid' => false],
         ]],

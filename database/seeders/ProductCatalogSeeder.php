@@ -6,38 +6,42 @@ use App\Models\Option;
 use App\Models\OptionGroup;
 use App\Models\Product;
 use App\Models\ProductCategory;
+use App\Support\LensPricing;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
 
 class ProductCatalogSeeder extends Seeder
 {
+    /** Null outside a company-scoped run (dev/test fixtures, unscoped like the rest of that data). */
+    private ?int $companyId = null;
+
     /** @var array<string,int> */
     private array $categoryIds = [];
 
-    private const LENS_TIER_MIN = [
-        'Sin Filtro' => 125000,
-        'Blue Cut' => 195000,
-        'Foto Blue Cut' => 295000,
-    ];
-
+    /** Entry point for `php artisan db:seed` (dev/local): unscoped, matches the rest of the dev fixtures. */
     public function run(): void
     {
+        $this->seed();
+    }
+
+    /** Entry point for provisioning a real company's catalog (see SeedCompanyDefaults). */
+    public function handle(int $companyId): void
+    {
+        $this->companyId = $companyId;
+        $this->seed();
+    }
+
+    private function seed(): void
+    {
+        $this->categoryIds = [];
+
         $this->seedLenses();
-        $this->seedLensOptions();
         $this->seedFrames();
         $this->seedSunglasses();
         $this->seedConsumables();
         $this->seedAccessories();
         $this->seedContactLenses();
         $this->seedServices();
-    }
-
-    /** Retail price for a lens: the greater of cost×4 (rounded to 1.000) or the filter floor. */
-    public static function lensPrice(int $cost, string $filter): int
-    {
-        $markup = (int) (round($cost * 4 / 1000) * 1000);
-
-        return max($markup, self::LENS_TIER_MIN[$filter] ?? 0);
     }
 
     /** Map the human label used in this seeder to the stable category key. */
@@ -48,11 +52,17 @@ class ProductCatalogSeeder extends Seeder
         'Servicio' => 'service',
     ];
 
+    /** Adds company_id to a lookup key when scoped, leaving unscoped (dev/test) lookups untouched. */
+    private function scopedKey(array $key): array
+    {
+        return $this->companyId !== null ? ['company_id' => $this->companyId, ...$key] : $key;
+    }
+
     private function categoryId(string $name): int
     {
         $key = self::CATEGORY_KEY[$name] ?? $name;
 
-        return $this->categoryIds[$key] ??= ProductCategory::where('key', $key)->value('id');
+        return $this->categoryIds[$key] ??= ProductCategory::where($this->scopedKey(['key' => $key]))->value('id');
     }
 
     private function upsert(string $sku, array $attributes): Product
@@ -63,14 +73,14 @@ class ProductCatalogSeeder extends Seeder
             $attributes['name'] = ucwords($attributes['name']);
         }
 
-        return Product::updateOrCreate(['sku' => $sku], $attributes);
+        return Product::updateOrCreate($this->scopedKey(['sku' => $sku]), $attributes);
     }
 
     private function seedFrames(): void
     {
         $monturaId = $this->categoryId('Montura');
 
-        $base = Product::updateOrCreate(['sku' => 'MNT-BASE'], [
+        $base = $this->upsert('MNT-BASE', [
             'product_category_id' => $monturaId,
             'name' => 'Montura',
             'cost' => 0,
@@ -85,12 +95,12 @@ class ProductCatalogSeeder extends Seeder
         $structures = ['Completas', 'Semi Al Aire', 'Tres Piezas'];
         $materials = ['Pasta', 'TR-90', 'Acetato', 'Metal', 'Titanio', 'Aluminio'];
 
-        $structureGroup = OptionGroup::firstOrCreate(['name' => 'Estructura'], ['is_required' => true, 'is_active' => true]);
+        $structureGroup = OptionGroup::firstOrCreate($this->scopedKey(['name' => 'Estructura']), ['is_required' => true, 'is_active' => true]);
         foreach ($structures as $i => $structure) {
             $this->upsertOption($structureGroup, $structure, 0, 0, $i + 1);
         }
 
-        $materialGroup = OptionGroup::firstOrCreate(['name' => 'Material de Montura'], ['is_required' => true, 'is_active' => true]);
+        $materialGroup = OptionGroup::firstOrCreate($this->scopedKey(['name' => 'Material de Montura']), ['is_required' => true, 'is_active' => true]);
         foreach ($materials as $i => $material) {
             $this->upsertOption($materialGroup, $material, 0, 0, $i + 1);
         }
@@ -201,7 +211,7 @@ class ProductCatalogSeeder extends Seeder
             ['ACC-LC-AIROPTIX-CYL-X3', 'Caja LC formulados esféricos + cilindro X3 — Air Optix', 219000, 450000, true, 'spheric_cylinder'],
         ];
 
-        $solution = Product::where('sku', 'ACC-SOLUCION-LC')->first();
+        $solution = Product::where($this->scopedKey(['sku' => 'ACC-SOLUCION-LC']))->first();
 
         foreach ($rows as [$sku, $name, $cost, $price, $bundlesSolution, $correction]) {
             $specs = ['kind' => 'contact_lens', 'correction' => $correction];
@@ -235,127 +245,78 @@ class ProductCatalogSeeder extends Seeder
         }
     }
 
+    /**
+     * One base product per design + Proceso/Material/Filtro option groups (cost
+     * deltas only — the final price is computed by LensPricing from the
+     * resolved cost and chosen filter, not summed like other option-driven
+     * products). Deltas are the least-squares fit against the original flat
+     * 69-SKU catalog's real costs per design, floored at 0 and rounded to
+     * 1.000; the fit isn't exact (costs aren't additive across dimensions in
+     * the original data) but it's the closest additive approximation.
+     */
     private function seedLenses(): void
     {
-        // [sku, design, process, material, filter, cost]
-        $rows = [
-            ['ML-001', 'Monofocal', 'Terminado', 'Material 1.56', 'Sin Filtro', 6000],
-            ['ML-002', 'Monofocal', 'Terminado', 'Material 1.56', 'Blue Cut', 20000],
-            ['ML-003', 'Monofocal', 'Terminado', 'Material 1.56', 'Foto Blue Cut', 50000],
-            ['ML-004', 'Monofocal', 'Terminado', 'Policarbonato', 'Sin Filtro', 13000],
-            ['ML-005', 'Monofocal', 'Terminado', 'Policarbonato', 'Blue Cut', 50000],
-            ['ML-006', 'Monofocal', 'Terminado', 'Policarbonato', 'Foto Blue Cut', 110000],
-            ['ML-007', 'Monofocal', 'Rango Extendido', 'CR-39', 'Sin Filtro', 12000],
-            ['ML-008', 'Monofocal', 'Rango Extendido', 'CR-39', 'Blue Cut', 50000],
-            ['ML-009', 'Monofocal', 'Rango Extendido', 'Material 1.56', 'Foto Blue Cut', 80000],
-            ['ML-010', 'Monofocal', 'Rango Extendido', 'Policarbonato', 'Sin Filtro', 30000],
-            ['ML-011', 'Monofocal', 'Rango Extendido', 'Policarbonato', 'Blue Cut', 70000],
-            ['ML-012', 'Monofocal', 'Rango Extendido', 'Material 1.61', 'Blue Cut', 70000],
-            ['ML-013', 'Monofocal', 'Rango Extendido', 'Policarbonato', 'Foto Blue Cut', 130000],
-            ['ML-014', 'Monofocal', 'Tallado Convencional', 'CR-39', 'Sin Filtro', 20000],
-            ['ML-015', 'Monofocal', 'Tallado Convencional', 'Material 1.56', 'Blue Cut', 85000],
-            ['ML-016', 'Monofocal', 'Tallado Convencional', 'Material 1.56', 'Foto Blue Cut', 110000],
-            ['ML-017', 'Monofocal', 'Tallado Convencional', 'Policarbonato', 'Sin Filtro', 65000],
-            ['ML-018', 'Monofocal', 'Tallado Convencional', 'Policarbonato', 'Blue Cut', 90000],
-            ['ML-019', 'Monofocal', 'Tallado Convencional', 'Policarbonato', 'Foto Blue Cut', 150000],
-            ['ML-020', 'Monofocal', 'Tallado Convencional', 'Material 1.61', 'Blue Cut', 120000],
-            ['ML-021', 'Monofocal', 'Tallado Convencional', 'Material 1.67', 'Blue Cut', 150000],
-            ['ML-022', 'Monofocal', 'Tallado Convencional', 'Material 1.67', 'Foto Blue Cut', 250000],
-            ['ML-023', 'Monofocal', 'Tallado Convencional', 'Material 1.74', 'Sin Filtro', 250000],
-            ['ML-024', 'Monofocal', 'Digital Plus (Freeform)', 'CR-39', 'Sin Filtro', 74000],
-            ['ML-025', 'Monofocal', 'Digital Plus (Freeform)', 'Material 1.56', 'Blue Cut', 105000],
-            ['ML-026', 'Monofocal', 'Digital Plus (Freeform)', 'Material 1.56', 'Foto Blue Cut', 126000],
-            ['ML-027', 'Monofocal', 'Digital Plus (Freeform)', 'Policarbonato', 'Sin Filtro', 84000],
-            ['ML-028', 'Monofocal', 'Digital Plus (Freeform)', 'Policarbonato', 'Blue Cut', 116000],
-            ['ML-029', 'Monofocal', 'Digital Plus (Freeform)', 'Policarbonato', 'Foto Blue Cut', 174000],
-            ['ML-030', 'Monofocal', 'Digital Plus (Freeform)', 'Material 1.61', 'Blue Cut', 137000],
-            ['ML-031', 'Monofocal', 'Digital Plus (Freeform)', 'Material 1.67', 'Blue Cut', 195000],
-            ['ML-032', 'Monofocal', 'Digital Plus (Freeform)', 'Material 1.67', 'Foto Blue Cut', 247000],
-            ['ML-033', 'Monofocal', 'Digital Plus (Freeform)', 'Material 1.74', 'Blue Cut', 473000],
-            ['ML-034', 'Monofocal', 'Digital Plus (Freeform)', 'Material 1.74', 'Foto Blue Cut', 578000],
-            ['ML-035', 'Bifocal', 'Terminado', 'Material 1.56', 'Sin Filtro', 8000],
-            ['ML-036', 'Bifocal', 'Terminado', 'Material 1.56', 'Blue Cut', 65000],
-            ['ML-037', 'Bifocal', 'Terminado', 'Material 1.56', 'Foto Blue Cut', 110000],
-            ['ML-038', 'Bifocal', 'Tallado Convencional', 'Material 1.56', 'Sin Filtro', 25000],
-            ['ML-039', 'Bifocal', 'Tallado Convencional', 'Material 1.56', 'Blue Cut', 90000],
-            ['ML-040', 'Bifocal', 'Tallado Convencional', 'Material 1.56', 'Foto Blue Cut', 125000],
-            ['ML-041', 'Bifocal', 'Tallado Convencional', 'Policarbonato', 'Sin Filtro', 70000],
-            ['ML-042', 'Bifocal', 'Digital', 'CR-39', 'Sin Filtro', 74000],
-            ['ML-043', 'Bifocal', 'Digital', 'Material 1.56', 'Blue Cut', 105000],
-            ['ML-044', 'Bifocal', 'Digital', 'Material 1.56', 'Foto Blue Cut', 126000],
-            ['ML-045', 'Bifocal', 'Digital', 'Policarbonato', 'Sin Filtro', 84000],
-            ['ML-046', 'Bifocal', 'Digital', 'Policarbonato', 'Blue Cut', 116000],
-            ['ML-047', 'Bifocal', 'Digital', 'Policarbonato', 'Foto Blue Cut', 174000],
-            ['ML-048', 'Bifocal', 'Digital', 'Material 1.61', 'Blue Cut', 137000],
-            ['ML-049', 'Bifocal', 'Digital', 'Material 1.67', 'Blue Cut', 195000],
-            ['ML-050', 'Bifocal', 'Digital', 'Material 1.67', 'Foto Blue Cut', 242000],
-            ['ML-051', 'Bifocal', 'Digital', 'Material 1.74', 'Blue Cut', 420000],
-            ['ML-052', 'Progresivo', 'Terminado', 'Material 1.56', 'Sin Filtro', 30000],
-            ['ML-053', 'Progresivo', 'Terminado', 'Material 1.56', 'Blue Cut', 65000],
-            ['ML-054', 'Progresivo', 'Terminado', 'Material 1.56', 'Foto Blue Cut', 100000],
-            ['ML-055', 'Progresivo', 'Tallado Convencional', 'Material 1.56', 'Sin Filtro', 40000],
-            ['ML-056', 'Progresivo', 'Tallado Convencional', 'Material 1.56', 'Blue Cut', 100000],
-            ['ML-057', 'Progresivo', 'Tallado Convencional', 'Material 1.56', 'Foto Blue Cut', 140000],
-            ['ML-058', 'Progresivo', 'Tallado Convencional', 'Policarbonato', 'Sin Filtro', 90000],
-            ['ML-059', 'Progresivo', 'Digital', 'CR-39', 'Sin Filtro', 83000],
-            ['ML-060', 'Progresivo', 'Digital', 'Material 1.56', 'Blue Cut', 125000],
-            ['ML-061', 'Progresivo', 'Digital', 'Material 1.56', 'Foto Blue Cut', 154000],
-            ['ML-062', 'Progresivo', 'Digital', 'Policarbonato', 'Sin Filtro', 104000],
-            ['ML-063', 'Progresivo', 'Digital', 'Policarbonato', 'Blue Cut', 143000],
-            ['ML-064', 'Progresivo', 'Digital', 'Policarbonato', 'Foto Blue Cut', 201000],
-            ['ML-065', 'Progresivo', 'Digital', 'Material 1.61', 'Blue Cut', 147000],
-            ['ML-066', 'Progresivo', 'Digital', 'Material 1.67', 'Blue Cut', 221000],
-            ['ML-067', 'Progresivo', 'Digital', 'Material 1.67', 'Foto Blue Cut', 273000],
-            ['ML-068', 'Progresivo', 'Digital', 'Material 1.74', 'Blue Cut', 441000],
-            ['ML-069', 'Progresivo', 'Digital', 'Material 1.74', 'Foto Blue Cut', 557000],
+        // [design, sku, baseCost, processes[name => costDelta], materials[name => costDelta], filters[name => costDelta]]
+        $designs = [
+            [
+                'Monofocal', 'ML-MONOFOCAL', 6000,
+                ['Terminado' => 0, 'Rango Extendido' => 0, 'Tallado Convencional' => 17000, 'Digital Plus (Freeform)' => 65000],
+                ['Material 1.56' => 0, 'CR-39' => 4000, 'Policarbonato' => 21000, 'Material 1.61' => 39000, 'Material 1.67' => 99000, 'Material 1.74' => 336000],
+                ['Sin Filtro' => 0, 'Blue Cut' => 37000, 'Foto Blue Cut' => 92000],
+            ],
+            [
+                'Bifocal', 'ML-BIFOCAL', 8000,
+                ['Terminado' => 0, 'Tallado Convencional' => 22000, 'Digital' => 30000],
+                ['Material 1.56' => 0, 'CR-39' => 36000, 'Policarbonato' => 37000, 'Material 1.61' => 44000, 'Material 1.67' => 104000, 'Material 1.74' => 327000],
+                ['Sin Filtro' => 0, 'Blue Cut' => 56000, 'Foto Blue Cut' => 97000],
+            ],
+            [
+                'Progresivo', 'ML-PROGRESIVO', 30000,
+                ['Terminado' => 0, 'Tallado Convencional' => 24000, 'Digital' => 47000],
+                ['Material 1.56' => 0, 'CR-39' => 6000, 'Policarbonato' => 33000, 'Material 1.61' => 37000, 'Material 1.67' => 109000, 'Material 1.74' => 361000],
+                ['Sin Filtro' => 0, 'Blue Cut' => 33000, 'Foto Blue Cut' => 88000],
+            ],
         ];
 
         $lenteId = $this->categoryId('Lente');
 
-        foreach ($rows as [$sku, $design, $process, $material, $filter, $cost]) {
-            $this->upsert($sku, [
+        foreach ($designs as [$design, $sku, $baseCost, $processes, $materials, $filters]) {
+            $base = $this->upsert($sku, [
                 'product_category_id' => $lenteId,
-                'name' => trim("Lente {$design} {$process} {$material} {$filter}"),
-                'cost' => $cost,
-                'price' => self::lensPrice($cost, $filter),
+                'name' => "Lente {$design}",
+                'cost' => $baseCost,
+                'price' => LensPricing::price($baseCost, 'Sin Filtro'),
                 'is_stockable' => false,
                 'stock' => null,
                 'is_active' => true,
-                'specs' => compact('design', 'process', 'material', 'filter'),
+                'specs' => ['design' => $design],
             ]);
+
+            $processGroup = $this->upsertOptionGroup("Proceso {$design}", $processes);
+            $materialGroup = $this->upsertOptionGroup("Material {$design}", $materials);
+            $filterGroup = $this->upsertOptionGroup("Filtro {$design}", $filters);
+
+            $base->optionGroups()->syncWithPivotValues(
+                [$processGroup->id, $materialGroup->id, $filterGroup->id],
+                [],
+            );
+            $base->optionGroups()->updateExistingPivot($processGroup->id, ['sort_order' => 1]);
+            $base->optionGroups()->updateExistingPivot($materialGroup->id, ['sort_order' => 2]);
+            $base->optionGroups()->updateExistingPivot($filterGroup->id, ['sort_order' => 3]);
         }
     }
 
-    /** Demo of the option-group mechanism: one base lens + 2 reusable option groups. */
-    private function seedLensOptions(): void
+    /** @param  array<string,int>  $costDeltas */
+    private function upsertOptionGroup(string $name, array $costDeltas): OptionGroup
     {
-        $lenteId = $this->categoryId('Lente');
+        $group = OptionGroup::firstOrCreate($this->scopedKey(['name' => $name]), ['is_required' => true, 'is_active' => true]);
 
-        $product = Product::updateOrCreate(['sku' => 'LOPT-MONOFOCAL'], [
-            'product_category_id' => $lenteId,
-            'name' => 'Lente Monofocal (por opciones)',
-            'cost' => 0,
-            'price' => 0,
-            'is_stockable' => false,
-            'stock' => null,
-            'is_active' => true,
-            'specs' => null,
-        ]);
+        $i = 1;
+        foreach ($costDeltas as $optionName => $costDelta) {
+            $this->upsertOption($group, $optionName, 0, $costDelta, $i++);
+        }
 
-        $material = OptionGroup::firstOrCreate(['name' => 'Material'], ['is_required' => true, 'is_active' => true]);
-        $this->upsertOption($material, 'CR-39', 0, 0, 1);
-        $this->upsertOption($material, 'Policarbonato', 30000, 10000, 2);
-
-        $filter = OptionGroup::firstOrCreate(['name' => 'Filtro'], ['is_required' => true, 'is_active' => true]);
-        $this->upsertOption($filter, 'Sin Filtro', 0, 0, 1);
-        $this->upsertOption($filter, 'Blue Cut', 70000, 20000, 2);
-
-        $product->optionGroups()->syncWithPivotValues(
-            [$material->id, $filter->id],
-            [], // no extra pivot columns beyond the defaults
-        );
-        $product->optionGroups()->updateExistingPivot($material->id, ['sort_order' => 1]);
-        $product->optionGroups()->updateExistingPivot($filter->id, ['sort_order' => 2]);
+        return $group;
     }
 
     private function upsertOption(OptionGroup $group, string $name, int $price, int $cost, int $sortOrder): void

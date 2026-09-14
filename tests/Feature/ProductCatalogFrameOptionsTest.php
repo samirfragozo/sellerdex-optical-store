@@ -21,9 +21,9 @@ it('seeds a frame base with structured options and materializes its 18 known var
         ->and($variant->variantOptions)->toHaveCount(2)
         ->and($variant->is_pos_selectable)->toBeFalse();
 
-    // Guards against the frame's material group colliding with the lens's own
-    // "Material" group (they must remain two separate OptionGroup rows).
-    expect(OptionGroup::where('name', 'Material')->first()->options)->toHaveCount(2)
+    // Guards against the frame's material group colliding with a lens design's
+    // own "Material {design}" group (they must remain separate OptionGroup rows).
+    expect(OptionGroup::where('name', 'Material Monofocal')->first()->options)->toHaveCount(6)
         ->and(OptionGroup::where('name', 'Material de Montura')->first()->options)->toHaveCount(6);
 });
 

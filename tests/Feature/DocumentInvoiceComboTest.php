@@ -28,14 +28,14 @@ it('renders a combo invoice with free exam, included lines and the surcharged to
     $admin = User::factory()->forCompany($company)->admin()->create();
     $this->actingAs($seller);
 
-    $lens = Product::where('sku', 'ML-003')->first(); // Foto Blue, 295000
+    $lens = Product::where('sku', 'ML-MONOFOCAL')->first();
     $addi = PaymentMethod::where('name', 'Addi')->first(); // 7%
 
     $sale = app(RegisterSale::class)->handle([
         'customer_id' => Customer::factory()->create()->id,
         'document_type' => 'order',
         'items' => [
-            ['product_id' => $lens->id, 'description' => $lens->name, 'quantity' => 1, 'unit_price' => $lens->price, 'unit_cost' => $lens->cost],
+            ['product_id' => $lens->id, 'description' => $lens->name, 'quantity' => 1, 'unit_price' => 295000, 'unit_cost' => $lens->cost],
         ],
         'combo' => ['with_exam' => true, 'forro' => 'small', 'include_liquid' => false],
         'surcharge_percent' => $addi->surcharge_percent,

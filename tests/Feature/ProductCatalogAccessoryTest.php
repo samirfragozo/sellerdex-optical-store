@@ -36,5 +36,5 @@ it('seeds contact lenses with a bundled addition and services', function () {
 
 it('runs from DatabaseSeeder', function () {
     $this->seed(DatabaseSeeder::class);
-    expect(Product::where('sku', 'ML-001')->exists())->toBeTrue();
+    expect(Product::where('sku', 'ML-MONOFOCAL')->exists())->toBeTrue();
 });

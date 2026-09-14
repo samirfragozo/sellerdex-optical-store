@@ -4,6 +4,7 @@ use App\Actions\SeedCompanyDefaults;
 use App\Models\Company;
 use App\Models\ExpenseCategory;
 use App\Models\PaymentMethod;
+use App\Models\Product;
 use App\Models\ProductCategory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Role;
@@ -59,4 +60,29 @@ it('does not leak defaults into another company', function () {
     expect(PaymentMethod::where('company_id', $companyB->id)->count())->toBe(0)
         ->and(ProductCategory::where('company_id', $companyB->id)->count())->toBe(0)
         ->and(ExpenseCategory::where('company_id', $companyB->id)->count())->toBe(0);
+});
+
+it('seeds the reference product catalog for the company', function () {
+    $company = Company::factory()->create();
+
+    (new SeedCompanyDefaults)->handle($company);
+
+    $products = Product::where('company_id', $company->id)->get();
+    expect($products->count())->toBeGreaterThan(30)
+        ->and($products->pluck('sku'))->toContain('ML-MONOFOCAL', 'ACC-LC-FORM-X1', 'MNT-BASE', 'SRV-EXAMEN');
+});
+
+it('does not let two companies collide on the same product sku', function () {
+    $companyA = Company::factory()->create();
+    $companyB = Company::factory()->create();
+
+    (new SeedCompanyDefaults)->handle($companyA);
+    (new SeedCompanyDefaults)->handle($companyB);
+
+    $productsA = Product::where('company_id', $companyA->id)->where('sku', 'ML-MONOFOCAL')->get();
+    $productsB = Product::where('company_id', $companyB->id)->where('sku', 'ML-MONOFOCAL')->get();
+
+    expect($productsA)->toHaveCount(1)
+        ->and($productsB)->toHaveCount(1)
+        ->and($productsA->first()->id)->not->toBe($productsB->first()->id);
 });

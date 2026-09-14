@@ -5,15 +5,24 @@ use App\Models\Product;
 use Database\Seeders\ProductCatalogSeeder;
 use Database\Seeders\ProductCategorySeeder;
 
-it('seeds a demo option-driven lens alongside the flat lens catalog', function () {
+it('seeds one option-driven base product per lens design', function () {
     $this->seed(ProductCategorySeeder::class);
     $this->seed(ProductCatalogSeeder::class);
 
-    $product = Product::where('sku', 'LOPT-MONOFOCAL')->first();
-    expect($product)->not->toBeNull()
-        ->and($product->optionGroups)->toHaveCount(2)
-        ->and(OptionGroup::where('name', 'Material')->exists())->toBeTrue();
+    foreach (['ML-MONOFOCAL', 'ML-BIFOCAL', 'ML-PROGRESIVO'] as $sku) {
+        $product = Product::where('sku', $sku)->first();
+        expect($product)->not->toBeNull()
+            ->and($product->optionGroups)->toHaveCount(3)
+            ->and($product->optionGroups->pluck('name'))
+            ->each(fn ($name) => $name->toContain($product->specs['design']));
+    }
 
-    // The existing flat catalog is untouched.
-    expect(Product::where('sku', 'ML-001')->exists())->toBeTrue();
+    expect(OptionGroup::where('name', 'Filtro Monofocal')->exists())->toBeTrue();
+});
+
+it('does not seed the old flat per-combination lens SKUs', function () {
+    $this->seed(ProductCategorySeeder::class);
+    $this->seed(ProductCatalogSeeder::class);
+
+    expect(Product::where('sku', 'like', 'ML-0%')->count())->toBe(0);
 });

@@ -20,9 +20,9 @@ beforeEach(function () {
 
 function sellCombo(array $combo, array $extraItems = []): Sale
 {
-    $lens = Product::where('sku', 'ML-002')->first(); // mono blue, price 195000
+    $lens = Product::where('sku', 'ML-MONOFOCAL')->first();
     $items = array_merge([
-        ['product_id' => $lens->id, 'description' => $lens->name, 'quantity' => 1, 'unit_price' => $lens->price, 'unit_cost' => $lens->cost],
+        ['product_id' => $lens->id, 'description' => $lens->name, 'quantity' => 1, 'unit_price' => 195000, 'unit_cost' => $lens->cost],
     ], $extraItems);
 
     return app(RegisterSale::class)->handle([
@@ -48,13 +48,13 @@ it('auto-includes forro, paño and a bag for a lens combo', function () {
 });
 
 it('uses the paper bag when the total is >= 215000', function () {
-    $lens = Product::where('sku', 'ML-003')->first(); // Foto Blue Cut, price 295000
+    $lens = Product::where('sku', 'ML-MONOFOCAL')->first();
 
     $sale = app(RegisterSale::class)->handle([
         'customer_id' => test()->customer->id,
         'document_type' => 'order',
         'items' => [
-            ['product_id' => $lens->id, 'description' => $lens->name, 'quantity' => 1, 'unit_price' => $lens->price, 'unit_cost' => $lens->cost],
+            ['product_id' => $lens->id, 'description' => $lens->name, 'quantity' => 1, 'unit_price' => 295000, 'unit_cost' => $lens->cost],
         ],
         'combo' => ['forro' => 'large', 'include_liquid' => true, 'with_exam' => false],
     ], test()->seller);
@@ -67,7 +67,7 @@ it('uses the paper bag when the total is >= 215000', function () {
 it('adds the free-exam surcharge and a $0 exam line', function () {
     $sale = sellCombo(['forro' => 'small', 'include_liquid' => false, 'with_exam' => true]);
 
-    $lensLine = $sale->items->first(fn ($i) => Product::find($i->product_id)?->sku === 'ML-002');
+    $lensLine = $sale->items->first(fn ($i) => Product::find($i->product_id)?->sku === 'ML-MONOFOCAL');
     expect($lensLine->unit_price)->toBe(215000); // 195000 + 20000
 
     $examLine = $sale->items->first(fn ($i) => Product::find($i->product_id)?->sku === 'SRV-EXAMEN');
