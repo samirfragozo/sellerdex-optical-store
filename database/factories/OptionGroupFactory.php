@@ -16,7 +16,6 @@ class OptionGroupFactory extends Factory
     {
         return [
             'name' => fake()->words(2, true),
-            'selection_type' => 'single',
             'is_required' => true,
             'is_active' => true,
         ];

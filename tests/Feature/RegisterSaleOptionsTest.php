@@ -21,7 +21,7 @@ beforeEach(function () {
     $this->materialOption = Option::factory()->for($material, 'group')->create(['name' => 'Policarbonato', 'price' => 30000, 'cost' => 10000]);
     $filter = OptionGroup::factory()->create(['name' => 'Filtro']);
     $this->filterOption = Option::factory()->for($filter, 'group')->create(['name' => 'Blue Cut', 'price' => 70000, 'cost' => 20000]);
-    $this->lens->optionGroups()->attach([$material->id => ['sort_order' => 1], $filter->id => ['sort_order' => 2]]);
+    $this->lens->optionGroups()->attach([$material->id, $filter->id]);
 });
 
 it('prices an armado lens from its chosen options and snapshots them', function () {

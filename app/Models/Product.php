@@ -47,7 +47,6 @@ class Product extends Model
     public function optionGroups(): BelongsToMany
     {
         return $this->belongsToMany(OptionGroup::class, 'product_option_groups')
-            ->withPivot(['sort_order'])
             ->withTimestamps();
     }
 

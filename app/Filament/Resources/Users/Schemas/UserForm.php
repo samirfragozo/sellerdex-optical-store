@@ -15,11 +15,13 @@ class UserForm
             ->components([
                 TextInput::make('name')
                     ->label(__('app.fields.name'))
-                    ->required(),
+                    ->required()
+                    ->maxLength(255),
                 TextInput::make('email')
                     ->label(__('app.fields.email'))
                     ->email()
                     ->required()
+                    ->maxLength(255)
                     ->unique(ignoreRecord: true),
                 Select::make('role')
                     ->label(__('app.fields.role'))

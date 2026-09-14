@@ -20,9 +20,11 @@ class ProductForm
             ->components([
                 TextInput::make('name')
                     ->label(__('app.fields.name'))
-                    ->required(),
+                    ->required()
+                    ->maxLength(255),
                 TextInput::make('sku')
-                    ->label(__('app.fields.sku')),
+                    ->label(__('app.fields.sku'))
+                    ->maxLength(255),
                 Select::make('product_category_id')
                     ->label(__('app.fields.category'))
                     ->relationship('category', 'name')
@@ -38,23 +40,34 @@ class ProductForm
                     )
                     ->searchable(),
                 TextInput::make('brand')
-                    ->label(__('app.fields.brand')),
+                    ->label(__('app.fields.brand'))
+                    ->maxLength(255),
                 TextInput::make('price')
                     ->label(__('app.fields.price'))
                     ->required()
                     ->numeric()
+                    ->minValue(0)
                     ->default(0)
                     ->prefix('$'),
                 TextInput::make('cost')
                     ->label(__('app.fields.cost'))
                     ->required()
                     ->numeric()
+                    ->minValue(0)
                     ->default(0)
                     ->prefix('$')
                     ->visible(fn () => auth()->user()?->isAdmin() === true),
+                TextInput::make('tax_rate')
+                    ->label(__('app.fields.tax_rate'))
+                    ->numeric()
+                    ->minValue(0)
+                    ->maxValue(100)
+                    ->default(0)
+                    ->suffix('%'),
                 TextInput::make('stock')
                     ->label(__('app.fields.stock'))
-                    ->numeric(),
+                    ->numeric()
+                    ->minValue(0),
                 Textarea::make('specs')
                     ->label(__('app.fields.specs'))
                     ->columnSpanFull(),

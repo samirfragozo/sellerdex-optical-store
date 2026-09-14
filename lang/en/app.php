@@ -156,6 +156,8 @@ return [
         'type' => 'Type',
         'profit' => 'Profit',
         'tax_id' => 'Tax ID',
+        'tax_rate' => 'Tax rate (%)',
+        'surcharge_percent' => 'Surcharge (%)',
         'logo' => 'Logo',
     ],
 

@@ -17,30 +17,42 @@ class CustomerForm
             ->components([
                 TextInput::make('name')
                     ->label(__('app.fields.first_name'))
-                    ->required(),
+                    ->required()
+                    ->maxLength(255),
                 TextInput::make('last_name')
-                    ->label(__('app.fields.last_name')),
+                    ->label(__('app.fields.last_name'))
+                    ->maxLength(255),
                 Select::make('document_type')
                     ->label(__('app.fields.document_type'))
                     ->options(DocumentType::options())
                     ->default(DocumentType::CC->value)
                     ->required(),
                 TextInput::make('id_number')
-                    ->label(__('app.fields.id_number')),
+                    ->label(__('app.fields.id_number'))
+                    ->required()
+                    ->maxLength(255)
+                    ->unique(ignoreRecord: true),
                 TextInput::make('phone')
                     ->label(__('app.fields.phone'))
-                    ->tel(),
+                    ->tel()
+                    ->required()
+                    ->maxLength(255),
                 TextInput::make('address')
-                    ->label(__('app.fields.address')),
+                    ->label(__('app.fields.address'))
+                    ->maxLength(255),
                 TextInput::make('city')
-                    ->label(__('app.fields.city')),
+                    ->label(__('app.fields.city'))
+                    ->maxLength(255),
                 DatePicker::make('birth_date')
-                    ->label(__('app.fields.birth_date')),
+                    ->label(__('app.fields.birth_date'))
+                    ->maxDate(now()),
                 TextInput::make('email')
                     ->label(__('app.fields.email'))
-                    ->email(),
+                    ->email()
+                    ->maxLength(255),
                 Textarea::make('notes')
                     ->label(__('app.fields.notes'))
+                    ->maxLength(1000)
                     ->columnSpanFull(),
             ]);
     }

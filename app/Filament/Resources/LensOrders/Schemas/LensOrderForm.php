@@ -38,9 +38,11 @@ class LensOrderForm
                 DatePicker::make('expected_date')
                     ->label(__('app.fields.expected_date')),
                 DatePicker::make('received_date')
-                    ->label(__('app.fields.received_date')),
+                    ->label(__('app.fields.received_date'))
+                    ->afterOrEqual('expected_date'),
                 Textarea::make('notes')
                     ->label(__('app.fields.notes'))
+                    ->maxLength(1000)
                     ->columnSpanFull(),
             ]);
     }

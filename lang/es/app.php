@@ -159,6 +159,8 @@ return [
         'type' => 'Tipo',
         'profit' => 'Utilidad',
         'tax_id' => 'NIT',
+        'tax_rate' => 'Tasa de impuesto (%)',
+        'surcharge_percent' => 'Recargo (%)',
         'logo' => 'Logo',
         'category_key' => 'Clave (interna)',
         'requires_prescription' => 'Exige prescripción',

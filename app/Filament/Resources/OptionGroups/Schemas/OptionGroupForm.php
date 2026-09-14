@@ -15,7 +15,8 @@ class OptionGroupForm
             ->components([
                 TextInput::make('name')
                     ->label(__('app.fields.name'))
-                    ->required(),
+                    ->required()
+                    ->maxLength(255),
                 Toggle::make('is_required')
                     ->label(__('app.fields.is_required'))
                     ->default(true)
@@ -30,16 +31,19 @@ class OptionGroupForm
                     ->schema([
                         TextInput::make('name')
                             ->label(__('app.fields.name'))
-                            ->required(),
+                            ->required()
+                            ->maxLength(255),
                         TextInput::make('price')
                             ->label(__('app.fields.price'))
                             ->numeric()
+                            ->minValue(0)
                             ->default(0)
                             ->required()
                             ->prefix('$'),
                         TextInput::make('cost')
                             ->label(__('app.fields.cost'))
                             ->numeric()
+                            ->minValue(0)
                             ->default(0)
                             ->required()
                             ->prefix('$'),

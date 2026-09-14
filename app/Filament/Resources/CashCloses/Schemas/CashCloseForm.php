@@ -27,10 +27,12 @@ class CashCloseForm
                 DatePicker::make('period_end')
                     ->label(__('app.fields.period_end'))
                     ->default(now())
+                    ->afterOrEqual('period_start')
                     ->required(),
                 TextInput::make('opening_cash')
                     ->label(__('app.fields.opening_cash'))
                     ->numeric()
+                    ->minValue(0)
                     ->default(0)
                     ->prefix('$'),
                 TextInput::make('total_sales')
@@ -66,6 +68,7 @@ class CashCloseForm
                 TextInput::make('counted_cash')
                     ->label(__('app.fields.counted_cash'))
                     ->numeric()
+                    ->minValue(0)
                     ->default(0)
                     ->prefix('$'),
                 TextInput::make('difference')
@@ -76,6 +79,7 @@ class CashCloseForm
                     ->dehydrated(false),
                 Textarea::make('notes')
                     ->label(__('app.fields.notes'))
+                    ->maxLength(1000)
                     ->columnSpanFull(),
             ]);
     }

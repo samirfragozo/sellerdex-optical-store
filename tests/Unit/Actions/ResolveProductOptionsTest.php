@@ -16,7 +16,7 @@ beforeEach(function () {
     $this->filter = OptionGroup::factory()->create(['name' => 'Filtro', 'is_required' => true]);
     $this->filterOption = Option::factory()->for($this->filter, 'group')->create(['name' => 'Blue Cut', 'price' => 70000, 'cost' => 20000]);
 
-    $this->product->optionGroups()->attach([$this->material->id => ['sort_order' => 1], $this->filter->id => ['sort_order' => 2]]);
+    $this->product->optionGroups()->attach([$this->material->id, $this->filter->id]);
 });
 
 it('sums price and cost deltas across the chosen options', function () {

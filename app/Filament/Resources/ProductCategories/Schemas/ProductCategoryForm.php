@@ -16,11 +16,13 @@ class ProductCategoryForm
             ->components([
                 TextInput::make('name')
                     ->label(__('app.fields.name'))
-                    ->required(),
+                    ->required()
+                    ->maxLength(255),
                 TextInput::make('key')
                     ->label(__('app.fields.category_key'))
                     ->disabled(fn (?ProductCategory $record): bool => (bool) $record?->is_system)
-                    ->required(),
+                    ->required()
+                    ->maxLength(255),
                 Section::make(__('app.sections.options'))
                     ->schema([
                         Toggle::make('is_active')

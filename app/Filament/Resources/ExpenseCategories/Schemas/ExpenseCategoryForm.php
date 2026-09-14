@@ -15,7 +15,8 @@ class ExpenseCategoryForm
             ->components([
                 TextInput::make('name')
                     ->label(__('app.fields.name'))
-                    ->required(),
+                    ->required()
+                    ->maxLength(255),
                 Section::make(__('app.sections.options'))
                     ->schema([
                         Toggle::make('is_active')

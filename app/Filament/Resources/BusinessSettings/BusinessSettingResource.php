@@ -52,13 +52,17 @@ class BusinessSettingResource extends Resource
             ->components([
                 TextInput::make('name')
                     ->label(__('app.fields.name'))
-                    ->required(),
+                    ->required()
+                    ->maxLength(255),
                 TextInput::make('tax_id')
-                    ->label(__('app.fields.tax_id')),
+                    ->label(__('app.fields.tax_id'))
+                    ->maxLength(255),
                 TextInput::make('address')
-                    ->label(__('app.fields.address')),
+                    ->label(__('app.fields.address'))
+                    ->maxLength(255),
                 TextInput::make('phones')
-                    ->label(__('app.fields.phone')),
+                    ->label(__('app.fields.phone'))
+                    ->maxLength(255),
                 FileUpload::make('logo')
                     ->label(__('app.fields.logo'))
                     ->image()

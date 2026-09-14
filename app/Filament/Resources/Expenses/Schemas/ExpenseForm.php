@@ -20,11 +20,13 @@ class ExpenseForm
                     ->required(),
                 TextInput::make('description')
                     ->label(__('app.fields.description'))
-                    ->required(),
+                    ->required()
+                    ->maxLength(255),
                 TextInput::make('amount')
                     ->label(__('app.fields.amount'))
                     ->required()
-                    ->numeric(),
+                    ->numeric()
+                    ->minValue(0),
                 Select::make('payment_method_id')
                     ->label(__('app.fields.payment_method'))
                     ->relationship('paymentMethod', 'name')
@@ -34,6 +36,7 @@ class ExpenseForm
                     ->required(),
                 Textarea::make('notes')
                     ->label(__('app.fields.notes'))
+                    ->maxLength(1000)
                     ->columnSpanFull(),
             ]);
     }

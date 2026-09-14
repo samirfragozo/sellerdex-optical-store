@@ -118,8 +118,6 @@ class PosController extends Controller
             'category_key' => $p->category?->key,
             'specs' => $p->specs,
             'option_groups' => $p->optionGroups
-                ->sortBy(fn ($g) => $g->pivot->sort_order ?? PHP_INT_MAX)
-                ->values()
                 ->map(fn ($g) => [
                     'id' => $g->id,
                     'name' => $g->name,

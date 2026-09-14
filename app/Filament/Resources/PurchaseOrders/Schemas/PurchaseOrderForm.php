@@ -18,7 +18,8 @@ class PurchaseOrderForm
             ->components([
                 TextInput::make('number')
                     ->label(__('app.fields.number'))
-                    ->maxLength(255),
+                    ->maxLength(255)
+                    ->unique(ignoreRecord: true),
                 Select::make('supplier_id')
                     ->label(__('app.fields.supplier'))
                     ->relationship('supplier', 'name')
@@ -44,6 +45,7 @@ class PurchaseOrderForm
                             ->label(__('app.fields.quantity'))
                             ->numeric()
                             ->minValue(1)
+                            ->maxValue(10000)
                             ->default(1)
                             ->required(),
                         TextInput::make('unit_cost')
@@ -57,6 +59,7 @@ class PurchaseOrderForm
                     ->columnSpanFull(),
                 Textarea::make('notes')
                     ->label(__('app.fields.notes'))
+                    ->maxLength(1000)
                     ->columnSpanFull(),
             ]);
     }

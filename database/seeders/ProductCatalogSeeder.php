@@ -106,8 +106,6 @@ class ProductCatalogSeeder extends Seeder
         }
 
         $base->optionGroups()->syncWithPivotValues([$structureGroup->id, $materialGroup->id], []);
-        $base->optionGroups()->updateExistingPivot($structureGroup->id, ['sort_order' => 1]);
-        $base->optionGroups()->updateExistingPivot($materialGroup->id, ['sort_order' => 2]);
 
         foreach ($structures as $structure) {
             foreach ($materials as $material) {
@@ -302,9 +300,6 @@ class ProductCatalogSeeder extends Seeder
                 [$processGroup->id, $materialGroup->id, $filterGroup->id],
                 [],
             );
-            $base->optionGroups()->updateExistingPivot($processGroup->id, ['sort_order' => 1]);
-            $base->optionGroups()->updateExistingPivot($materialGroup->id, ['sort_order' => 2]);
-            $base->optionGroups()->updateExistingPivot($filterGroup->id, ['sort_order' => 3]);
         }
     }
 

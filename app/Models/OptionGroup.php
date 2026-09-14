@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['company_id', 'name', 'selection_type', 'is_required', 'is_active'])]
+#[Fillable(['company_id', 'name', 'is_required', 'is_active'])]
 class OptionGroup extends Model
 {
     /** @use HasFactory<OptionGroupFactory> */

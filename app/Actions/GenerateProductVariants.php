@@ -20,7 +20,6 @@ class GenerateProductVariants
     {
         $groups = $base->optionGroups()
             ->where('option_groups.is_required', true)
-            ->where('option_groups.selection_type', 'single')
             ->with('options')
             ->get();
 

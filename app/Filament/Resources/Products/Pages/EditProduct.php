@@ -27,7 +27,6 @@ class EditProduct extends EditRecord
                 ->icon('heroicon-o-squares-plus')
                 ->visible(fn (Product $record): bool => $record->optionGroups()
                     ->where('option_groups.is_required', true)
-                    ->where('option_groups.selection_type', 'single')
                     ->exists())
                 ->requiresConfirmation()
                 ->action(function (Product $record): void {

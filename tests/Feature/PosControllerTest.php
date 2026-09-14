@@ -631,7 +631,7 @@ it('includes lens product option groups on the pos payload', function () {
     $lens = Product::factory()->create(['company_id' => $company->id, 'product_category_id' => $category->id, 'is_active' => true, 'is_pos_selectable' => true]);
     $group = OptionGroup::factory()->create(['company_id' => $company->id, 'name' => 'Filtro', 'is_required' => true]);
     $option = Option::factory()->for($group, 'group')->create(['name' => 'Blue Cut', 'price' => 70000, 'cost' => 20000]);
-    $lens->optionGroups()->attach($group->id, ['sort_order' => 1]);
+    $lens->optionGroups()->attach($group->id);
 
     $response = $this->get('/pos');
     $products = collect($response->viewData('page')['props']['armadoProducts']);
@@ -651,7 +651,7 @@ it('excludes products with an active option group from the pos catalog payload a
         'is_active' => true,
         'is_pos_selectable' => true,
     ]);
-    $withGroup->optionGroups()->attach($group->id, ['sort_order' => 1]);
+    $withGroup->optionGroups()->attach($group->id);
 
     $plain = Product::factory()->create([
         'company_id' => $seller->company_id,
@@ -675,7 +675,7 @@ it('includes frame variant products on the pos payload', function () {
     $base = Product::factory()->create(['company_id' => $company->id, 'product_category_id' => $category->id, 'is_active' => true, 'is_pos_selectable' => true]);
     $group = OptionGroup::factory()->create(['company_id' => $company->id, 'name' => 'Estructura', 'is_required' => true]);
     $option = Option::factory()->for($group, 'group')->create(['name' => 'Completas']);
-    $base->optionGroups()->attach($group->id, ['sort_order' => 1]);
+    $base->optionGroups()->attach($group->id);
 
     $variant = Product::factory()->create([
         'company_id' => $company->id,
