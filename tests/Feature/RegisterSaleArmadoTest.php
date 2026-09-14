@@ -98,7 +98,7 @@ it('adds the free exam surcharge per armado when requested', function () {
 
 it('does not tax armado lens or frame lines even when the product has a tax_rate', function () {
     seedCatalog();
-    $lens = Product::where('sku', 'ML-001')->first();
+    $lens = Product::where('sku', 'ML-MONOFOCAL')->first();
     $frame = Product::where('sku', 'MNT-COMPLETAS-ACETATO')->first();
     $lens->update(['tax_rate' => 19]);
     $frame->update(['tax_rate' => 19]);
@@ -107,7 +107,7 @@ it('does not tax armado lens or frame lines even when the product has a tax_rate
         'customer_id' => Customer::factory()->create()->id,
         'document_type' => 'order',
         'armados' => [[
-            'lens' => ['product_id' => $lens->id, 'description' => $lens->name, 'unit_price' => $lens->price],
+            'lens' => ['product_id' => $lens->id, 'description' => $lens->name, 'option_ids' => defaultLensOptionIds($lens)],
             'frame' => ['product_id' => $frame->id, 'description' => $frame->name, 'unit_price' => $frame->price],
             'combo' => ['with_exam' => false, 'forro' => 'small', 'include_liquid' => false],
         ]],
