@@ -268,6 +268,7 @@ return [
     'pos' => [
         'title' => 'Nueva venta',
         'created' => 'Venta :number creada exitosamente',
+        'lab_order_pending_notice' => 'Se generó una orden de laboratorio pendiente para el lente vendido.',
         'view_cart' => 'Ver carrito',
         'no_customer' => 'Sin cliente',
         'new_customer' => 'Cliente nuevo',

@@ -32,6 +32,13 @@ defineEmits<{
                 <X class="size-4" />
             </button>
         </div>
+
+        <p
+            v-if="sale.has_pending_lab_order"
+            class="mb-3 text-sm text-green-800 dark:text-green-300"
+        >
+            {{ trans('app.pos.lab_order_pending_notice') }}
+        </p>
         <div class="flex flex-wrap gap-2">
             <a
                 :href="sale.invoice_url"

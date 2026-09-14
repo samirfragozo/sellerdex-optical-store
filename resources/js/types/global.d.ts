@@ -20,6 +20,7 @@ export interface CreatedSale {
     invoice_url: string;
     invoice_pdf_url: string;
     formula_url: string | null;
+    has_pending_lab_order: boolean;
 }
 
 export interface CashRegisterSession {
