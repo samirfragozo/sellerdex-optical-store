@@ -260,6 +260,13 @@ class RegisterSale
                 $resolvedOptions = $resolved['options'];
             }
 
+            // A seller-entered override always wins over the computed price above —
+            // it's a distinct field from unit_price precisely so a client can never
+            // silently swap out the protected computed price (see RegisterSaleOptionsTest).
+            if (isset($lens['price_override'])) {
+                $unitPrice = (int) $lens['price_override'];
+            }
+
             $lensItem = $sale->items()->create([
                 'group_key' => $groupKey,
                 'product_id' => $lens['product_id'] ?? null,

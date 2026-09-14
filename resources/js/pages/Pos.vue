@@ -11,6 +11,7 @@ import ProductCatalog from '@/components/pos/ProductCatalog.vue';
 import SaleCreatedPanel from '@/components/pos/SaleCreatedPanel.vue';
 import StepCustomer from '@/components/pos/StepCustomer.vue';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import type {
     LensProduct,
     LensSpecs,
@@ -200,6 +201,23 @@ function removeArmado(id: number): void {
     delete resolvedLenses.value[id];
 }
 
+// Manual price override for an armado's total. The frame is always $0
+// inside a combo (see RegisterSale), so the lens line absorbs the edit —
+// stored separately from unit_price so it survives re-render without
+// masking the underlying computed price, and is dropped whenever the
+// armado is reconfigured through the wizard (see ArmadoModal's
+// onLensSelectionChange, which rebuilds the lens line from scratch).
+function updateArmadoTotal(armado: Armado, value: number): void {
+    if (!armado.lens) {
+        return;
+    }
+
+    const frameContribution = !armado.own_frame
+        ? (armado.frame?.unit_price ?? 0)
+        : 0;
+    armado.lens.price_override = Math.max(0, value - frameContribution);
+}
+
 // --- Catalog -> cart wiring ---
 function onAddProduct(product: ProductProp): void {
     cart.addOrIncrementProduct({
@@ -382,23 +400,32 @@ async function confirmCheckout(): Promise<void> {
                 <div
                     v-for="armado in cart.armados.value"
                     :key="armado.id"
-                    class="flex items-center justify-between rounded-xl border border-sidebar-border/70 bg-white p-3 dark:border-sidebar-border dark:bg-zinc-900"
+                    class="flex items-center justify-between gap-2 rounded-xl border border-sidebar-border/70 bg-white p-3 dark:border-sidebar-border dark:bg-zinc-900"
                 >
-                    <div>
-                        <p class="text-sm font-medium">
+                    <div class="min-w-0 flex-1">
+                        <p class="truncate text-sm font-medium">
                             {{ armado.lens?.description }}
                         </p>
-                        <p class="text-xs text-muted-foreground">
+                        <p class="truncate text-xs text-muted-foreground">
                             {{
                                 armado.own_frame
                                     ? trans('app.pos.summary.own_frame')
                                     : (armado.frame?.description ??
                                       trans('app.pos.none_option'))
                             }}
-                            · {{ formatCOP(armadoTotal(armado)) }}
                         </p>
                     </div>
-                    <div class="flex items-center gap-1">
+                    <Input
+                        :model-value="armadoTotal(armado)"
+                        type="number"
+                        min="0"
+                        class="w-28 shrink-0 text-right"
+                        :aria-label="trans('app.pos.edit_armado_price')"
+                        @update:model-value="
+                            (value) => updateArmadoTotal(armado, Number(value))
+                        "
+                    />
+                    <div class="flex shrink-0 items-center gap-1">
                         <Button
                             type="button"
                             variant="ghost"

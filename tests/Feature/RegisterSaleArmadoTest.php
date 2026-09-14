@@ -96,6 +96,29 @@ it('adds the free exam surcharge per armado when requested', function () {
         ->and($sale->items->contains(fn ($i) => Product::find($i->product_id)?->sku === 'SRV-EXAMEN'))->toBeTrue();
 });
 
+it('lets a seller-entered price_override win over the formula price for a design-based lens', function () {
+    seedCatalog();
+    $lens = Product::where('sku', 'ML-MONOFOCAL')->first();
+
+    $sale = app(RegisterSale::class)->handle([
+        'customer_id' => Customer::factory()->create()->id,
+        'document_type' => 'order',
+        'armados' => [[
+            'lens' => [
+                'product_id' => $lens->id,
+                'description' => $lens->name,
+                'option_ids' => defaultLensOptionIds($lens),
+                'price_override' => 90000,
+            ],
+            'own_frame' => true,
+            'combo' => ['with_exam' => false, 'estuche' => 'small', 'include_liquid' => false, 'include_pano' => true],
+        ]],
+    ], User::factory()->seller()->create());
+
+    $lensLine = $sale->items->firstWhere('product_id', $lens->id);
+    expect($lensLine->unit_price)->toBe(90000);
+});
+
 it('does not tax armado lens or frame lines even when the product has a tax_rate', function () {
     seedCatalog();
     $lens = Product::where('sku', 'ML-MONOFOCAL')->first();

@@ -301,6 +301,7 @@ return [
         'cancel' => 'Cancelar',
         'save_armado' => 'Guardar ítem',
         'edit_armado' => 'Editar ítem',
+        'edit_armado_price' => 'Precio del armado',
         'remove_armado' => 'Quitar este armado',
 
         'summary' => [

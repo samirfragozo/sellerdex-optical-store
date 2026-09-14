@@ -7,6 +7,8 @@ export interface ArmadoLine {
     unit_price: number;
     unit_cost?: number;
     option_ids?: number[];
+    /** Manual price override for the armado total, set from the cart row. */
+    price_override?: number;
 }
 
 export interface Armado {
@@ -31,7 +33,9 @@ export interface LooseProduct {
 }
 
 export function armadoTotal(armado: Armado): number {
-    const lens = armado.lens?.unit_price ?? 0;
+    const lens = armado.lens
+        ? (armado.lens.price_override ?? armado.lens.unit_price)
+        : 0;
     const frame = !armado.own_frame ? (armado.frame?.unit_price ?? 0) : 0;
 
     return lens + frame;

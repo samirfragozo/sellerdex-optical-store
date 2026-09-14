@@ -257,6 +257,7 @@ return [
         'cancel' => 'Cancel',
         'save_armado' => 'Save item',
         'edit_armado' => 'Edit item',
+        'edit_armado_price' => 'Armado price',
         'remove_armado' => 'Remove this armado',
 
         'summary' => [

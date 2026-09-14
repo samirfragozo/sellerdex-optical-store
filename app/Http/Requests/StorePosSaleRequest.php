@@ -68,6 +68,7 @@ class StorePosSaleRequest extends FormRequest
             'armados.*.lens.quantity' => ['nullable', 'integer', 'min:1'],
             'armados.*.lens.unit_price' => ['required', 'integer', 'min:0'],
             'armados.*.lens.unit_cost' => ['nullable', 'integer', 'min:0'],
+            'armados.*.lens.price_override' => ['nullable', 'integer', 'min:0'],
             'armados.*.lens.option_ids' => ['nullable', 'array'],
             'armados.*.lens.option_ids.*' => ['integer', 'exists:options,id'],
             'armados.*.frame' => ['nullable', 'array'],

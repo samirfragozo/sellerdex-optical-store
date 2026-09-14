@@ -45,6 +45,28 @@ it('prices an armado lens from its chosen options and snapshots them', function 
         ->and($lensItem->options->pluck('option_name')->all())->toBe(['Policarbonato', 'Blue Cut']);
 });
 
+it('lets a seller-entered price_override win over the computed option price', function () {
+    $sale = app(RegisterSale::class)->handle([
+        'customer_id' => $this->customer->id,
+        'document_type' => 'order',
+        'armados' => [[
+            'lens' => [
+                'product_id' => $this->lens->id,
+                'description' => $this->lens->name,
+                'unit_price' => 1,
+                'price_override' => 80000,
+                'option_ids' => [$this->materialOption->id, $this->filterOption->id],
+            ],
+        ]],
+    ], $this->seller);
+
+    $lensItem = $sale->items->firstWhere('product_id', $this->lens->id);
+
+    expect($lensItem->unit_price)->toBe(80000)
+        // cost tracking still reflects the real resolved option cost, override or not.
+        ->and($lensItem->unit_cost)->toBe(30000);
+});
+
 it('rejects an armado lens with required option groups when the client sends no option_ids', function () {
     expect(fn () => app(RegisterSale::class)->handle([
         'customer_id' => $this->customer->id,
