@@ -298,6 +298,7 @@ return [
         'continue_to_frame' => 'Continuar a la montura',
         'continue_to_combo' => 'Continuar al combo',
         'back' => 'Atrás',
+        'cancel' => 'Cancelar',
         'save_armado' => 'Guardar ítem',
         'edit_armado' => 'Editar ítem',
         'remove_armado' => 'Quitar este armado',
@@ -342,6 +343,8 @@ return [
             'email_placeholder' => 'correo@ejemplo.com',
             'address_placeholder' => 'Calle 1 # 2-3',
             'notes_placeholder' => 'Opcional...',
+            'new_customer_title' => 'Nuevo cliente',
+            'save_customer' => 'Guardar cliente',
         ],
 
         'lens_form' => [

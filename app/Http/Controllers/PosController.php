@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Actions\RegisterSale;
 use App\Enums\LensType;
+use App\Http\Requests\StorePosCustomerRequest;
 use App\Http\Requests\StorePosSaleRequest;
 use App\Models\CashRegisterSession;
 use App\Models\Customer;
@@ -184,6 +185,18 @@ class PosController extends Controller
             'invoice_pdf_url' => route('documents.invoice.pdf', $sale),
             'formula_url' => $sale->prescription_id ? route('documents.formula', $sale->prescription_id) : null,
         ]);
+    }
+
+    public function storeCustomer(StorePosCustomerRequest $request): JsonResponse
+    {
+        $customer = Customer::create($request->validated());
+
+        return response()->json([
+            'id' => $customer->id,
+            'name' => $customer->name,
+            'last_name' => $customer->last_name,
+            'id_number' => $customer->id_number,
+        ], 201);
     }
 
     public function lensRecommendation(Request $request, LensRecommender $recommender): JsonResponse

@@ -86,39 +86,17 @@ const lensSelections = ref<Record<number, LensSpecs>>({});
 const resolvedLenses = ref<Record<number, LensProduct | null>>({});
 
 // --- Customer (fixed panel, no longer a collapsible step) ---
-const customerMode = ref<'none' | 'existing' | 'new'>('existing');
+const customerMode = ref<'none' | 'existing'>('existing');
 const customerId = ref<number | null>(null);
-const newCustomer = ref({
-    name: '',
-    last_name: '',
-    document_type: 'cc',
-    id_number: '',
-    phone: '',
-    address: '',
-    city: '',
-    birth_date: '',
-    email: '',
-    notes: '',
-});
+// Seeded from the page prop, then grown locally as customers are created
+// on the fly via CreateCustomerModal — no full page reload needed.
+const customers = ref<Customer[]>([...props.customers]);
+
+function onCustomerCreated(customer: Customer): void {
+    customers.value = [customer, ...customers.value];
+}
 
 watch(customerMode, (mode) => {
-    if (mode === 'new') {
-        customerId.value = null;
-    } else {
-        newCustomer.value = {
-            name: '',
-            last_name: '',
-            document_type: 'cc',
-            id_number: '',
-            phone: '',
-            address: '',
-            city: '',
-            birth_date: '',
-            email: '',
-            notes: '',
-        };
-    }
-
     if (mode !== 'existing') {
         customerId.value = null;
     }
@@ -288,7 +266,7 @@ async function confirmCheckout(): Promise<void> {
     const result = await checkout.submit({
         customer_id:
             customerMode.value === 'existing' ? customerId.value : null,
-        customer: customerMode.value === 'new' ? newCustomer.value : null,
+        customer: null,
         prescription_id:
             cart.armados.value.length > 0 &&
             prescriptionMode.value === 'existing'
@@ -395,9 +373,9 @@ async function confirmCheckout(): Promise<void> {
             <StepCustomer
                 v-model:customer-mode="customerMode"
                 v-model:customer-id="customerId"
-                v-model:customer="newCustomer"
                 :customers="customers"
                 :today="today"
+                @customer-created="onCustomerCreated"
             />
 
             <template v-if="cart.armados.value.length > 0">

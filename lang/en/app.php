@@ -254,6 +254,7 @@ return [
         'continue_to_frame' => 'Continue to frame',
         'continue_to_combo' => 'Continue to combo',
         'back' => 'Back',
+        'cancel' => 'Cancel',
         'save_armado' => 'Save item',
         'edit_armado' => 'Edit item',
         'remove_armado' => 'Remove this armado',
@@ -298,6 +299,8 @@ return [
             'email_placeholder' => 'email@example.com',
             'address_placeholder' => 'Street 1 # 2-3',
             'notes_placeholder' => 'Optional...',
+            'new_customer_title' => 'New customer',
+            'save_customer' => 'Save customer',
         ],
 
         'lens_form' => [

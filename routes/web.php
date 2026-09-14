@@ -13,6 +13,7 @@ Route::post('locale/{locale}', [LocaleController::class, 'update'])->name('local
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('pos', [PosController::class, 'index'])->name('pos.index');
     Route::post('pos', [PosController::class, 'store'])->name('pos.store');
+    Route::post('pos/customers', [PosController::class, 'storeCustomer'])->name('pos.customers.store');
     Route::post('pos/lens-recommendation', [PosController::class, 'lensRecommendation'])
         ->name('pos.lens-recommendation');
     Route::post('pos/cash-sessions', [CashRegisterSessionController::class, 'store'])
