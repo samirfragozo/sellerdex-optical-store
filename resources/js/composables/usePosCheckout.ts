@@ -25,11 +25,15 @@ export function usePosCheckout(total: Ref<number>) {
     const documentType = ref('order');
     const notes = ref('');
     const payments = ref<PaymentEntry[]>([]);
+    const amount = ref(0);
     const errors: Ref<Record<string, string>> = ref({});
     const submitting = ref(false);
 
-    function addPayment(): void {
-        payments.value.push({ payment_method_id: null, amount: 0 });
+    function addPayment(paymentMethodId: number, paymentAmount: number): void {
+        payments.value.push({
+            payment_method_id: paymentMethodId,
+            amount: paymentAmount,
+        });
     }
 
     function removePayment(index: number): void {
@@ -42,6 +46,12 @@ export function usePosCheckout(total: Ref<number>) {
 
     const remaining: ComputedRef<number> = computed(
         () => total.value - totalPayments.value,
+    );
+
+    // The amount tendered beyond what's owed — meaningful once the last
+    // payment (typically cash) overshoots the remaining balance.
+    const change: ComputedRef<number> = computed(() =>
+        Math.max(0, -remaining.value),
     );
 
     async function submit(
@@ -98,6 +108,7 @@ export function usePosCheckout(total: Ref<number>) {
         documentType.value = 'order';
         notes.value = '';
         payments.value = [];
+        amount.value = 0;
         errors.value = {};
     }
 
@@ -105,12 +116,14 @@ export function usePosCheckout(total: Ref<number>) {
         documentType,
         notes,
         payments,
+        amount,
         errors,
         submitting,
         addPayment,
         removePayment,
         totalPayments,
         remaining,
+        change,
         submit,
         reset,
     };
