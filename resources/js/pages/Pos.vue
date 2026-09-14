@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import type {
     LensProduct,
     LensSpecs,
+    PaginatedProducts,
     ProductProp,
 } from '@/composables/useLensCatalog';
 import { useLensRecommendation } from '@/composables/useLensRecommendation';
@@ -52,7 +53,9 @@ interface PrescriptionOption {
 }
 
 const props = defineProps<{
-    products: ProductProp[];
+    products: PaginatedProducts;
+    armadoProducts: ProductProp[];
+    categories: { id: number; name: string; key: string }[];
     paymentMethods: PaymentMethod[];
     customers: Customer[];
     prescriptions: PrescriptionOption[];
@@ -163,15 +166,18 @@ const documentTypes = [
 ];
 
 // --- Frame products (used inside the armado modal) ---
+// Sourced from armadoProducts (unpaginated, option groups intact) rather
+// than products.data: the general catalog grid excludes option-group
+// products, but the armado wizard needs them to offer color/filter picks.
 const frameProducts = computed<ProductProp[]>(() =>
-    props.products.filter((p) => p.category_key === 'frame'),
+    props.armadoProducts.filter((p) => p.category_key === 'frame'),
 );
 
 // Lenses are only selectable through the armado wizard, not as loose
 // products — otherwise the customer/prescription requirement is bypassed
 // (StorePosSaleRequest's cartHasLens() only inspects the armados array).
 const looseProducts = computed<ProductProp[]>(() =>
-    props.products.filter((p) => p.category_key !== 'lens'),
+    props.products.data.filter((p) => p.category_key !== 'lens'),
 );
 
 // --- Armado management ---
@@ -218,11 +224,12 @@ function removeArmado(id: number): void {
 
 // --- Catalog -> cart wiring ---
 function onAddProduct(product: ProductProp): void {
-    cart.addProduct();
-    const item = cart.products.value[cart.products.value.length - 1];
-    item.product_id = product.id;
-    item.description = product.name;
-    item.unit_price = product.price;
+    cart.addOrIncrementProduct({
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        tax_rate: product.tax_rate,
+    });
 }
 
 function removeLooseProduct(index: number): void {
@@ -293,7 +300,8 @@ async function confirmCheckout(): Promise<void> {
                 : null,
         armados: cartPayload.armados,
         products: cartPayload.products,
-        discount: cart.discount.value,
+        discount_percent: cart.discountPercent.value,
+        tip_percent: cart.tipPercent.value,
         surcharge_percent: cart.surchargePercent.value,
     });
 
@@ -306,7 +314,8 @@ async function confirmCheckout(): Promise<void> {
     checkout.reset();
     cart.armados.value = [];
     cart.products.value = [];
-    cart.discount.value = 0;
+    cart.discountPercent.value = 0;
+    cart.tipPercent.value = 0;
     cart.surchargePercent.value = 0;
     lensSelections.value = {};
     resolvedLenses.value = {};
@@ -345,6 +354,7 @@ async function confirmCheckout(): Promise<void> {
         >
             <ProductCatalog
                 :products="products"
+                :categories="categories"
                 @select-lens-category="openArmadoModal(null)"
                 @add-product="onAddProduct"
             />
@@ -445,7 +455,7 @@ async function confirmCheckout(): Promise<void> {
                         ? (resolvedLenses[editingArmadoId] ?? null)
                         : null
                 "
-                :products="products"
+                :products="armadoProducts"
                 :frame-products="frameProducts"
                 :recommended="recommended"
                 :warnings="warnings"
@@ -476,11 +486,15 @@ async function confirmCheckout(): Promise<void> {
             </div>
 
             <CartSummary
-                v-model:discount="cart.discount.value"
+                v-model:discount-percent="cart.discountPercent.value"
+                v-model:tip-percent="cart.tipPercent.value"
                 :armados="cart.armados.value"
                 :products="cart.products.value"
                 :subtotal="cart.subtotal.value"
                 :total="cart.total.value"
+                :discount-amount="cart.discountAmount.value"
+                :tax-amount="cart.taxAmount.value"
+                :tip-amount="cart.tipAmount.value"
                 :surcharge-percent="cart.surchargePercent.value"
                 :balance="cart.total.value"
                 :format-c-o-p="formatCOP"

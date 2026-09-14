@@ -26,12 +26,14 @@ function onProductSelect(value: string): void {
         product_id: id,
         description: product ? product.name : props.item.description,
         unit_price: product ? product.price : props.item.unit_price,
+        tax_rate: product ? product.tax_rate : props.item.tax_rate,
     });
 }
 </script>
 
 <template>
     <div
+        data-testid="cart-product-row"
         class="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_2fr_4rem_5rem_2rem] sm:items-center"
     >
         <select

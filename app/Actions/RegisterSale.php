@@ -38,7 +38,8 @@ class RegisterSale
                 'created_by' => $seller->id,
                 'prescription_id' => $data['prescription_id'] ?? null,
                 'document_type' => $data['document_type'] ?? 'order',
-                'discount' => $data['discount'] ?? 0,
+                'discount_percent' => $data['discount_percent'] ?? 0,
+                'tip_percent' => $data['tip_percent'] ?? 0,
                 'surcharge_percent' => $this->resolveSurcharge($data),
                 'sold_at' => $data['sold_at'] ?? now()->toDateString(),
                 'notes' => $data['notes'] ?? null,
@@ -46,25 +47,29 @@ class RegisterSale
 
             if (array_key_exists('items', $data)) {
                 foreach ($data['items'] as $item) {
+                    $product = Product::find($item['product_id'] ?? null);
                     $sale->items()->create([
                         'product_id' => $item['product_id'] ?? null,
                         'description' => $item['description'],
                         'quantity' => $item['quantity'],
                         'unit_price' => $item['unit_price'],
                         'unit_cost' => $item['unit_cost'] ?? 0,
+                        'tax_amount' => $this->taxFor($product, (int) $item['unit_price'], (int) $item['quantity']),
                     ]);
                 }
                 $this->composeCombo($sale, $data['combo'] ?? null);
                 $this->applyAdditions($sale);
             } else {
                 $this->buildArmados($sale, $data['armados'] ?? []);
-                foreach ($data['products'] ?? [] as $product) {
+                foreach ($data['products'] ?? [] as $productLine) {
+                    $product = Product::find($productLine['product_id'] ?? null);
                     $sale->items()->create([
-                        'product_id' => $product['product_id'] ?? null,
-                        'description' => $product['description'],
-                        'quantity' => $product['quantity'] ?? 1,
-                        'unit_price' => $product['unit_price'],
-                        'unit_cost' => $product['unit_cost'] ?? 0,
+                        'product_id' => $productLine['product_id'] ?? null,
+                        'description' => $productLine['description'],
+                        'quantity' => $productLine['quantity'] ?? 1,
+                        'unit_price' => $productLine['unit_price'],
+                        'unit_cost' => $productLine['unit_cost'] ?? 0,
+                        'tax_amount' => $this->taxFor($product, (int) $productLine['unit_price'], (int) ($productLine['quantity'] ?? 1)),
                     ]);
                 }
                 $this->applyAdditions($sale);
@@ -203,6 +208,9 @@ class RegisterSale
             'quantity' => $quantity,
             'unit_price' => $unitPrice,
             'unit_cost' => $addition->cost,
+            // Additions ride along with an armado (lens/frame), which is tax-exempt
+            // in this business — see the lens/frame lines below for the same reasoning.
+            'tax_amount' => 0,
         ]);
     }
 
@@ -225,11 +233,11 @@ class RegisterSale
         foreach ($armados as $index => $armado) {
             $groupKey = 'g'.($index + 1);
             $lens = $armado['lens'];
-            $lensProduct = Product::find($lens['product_id'] ?? null);
 
             $unitPrice = (int) ($lens['unit_price'] ?? 0);
             $unitCost = (int) ($lens['unit_cost'] ?? 0);
             $resolvedOptions = null;
+            $lensProduct = Product::find($lens['product_id'] ?? null);
 
             if ($lensProduct !== null && $lensProduct->optionGroups()->exists()) {
                 $resolved = (new ResolveProductOptions)->handle($lensProduct, $lens['option_ids'] ?? []);
@@ -257,6 +265,10 @@ class RegisterSale
                 'quantity' => $lens['quantity'] ?? 1,
                 'unit_price' => $unitPrice,
                 'unit_cost' => $unitCost,
+                // Lenses are tax-exempt in this business (see Product::$tax_rate on the
+                // lens product, which is never applied here — matches the client-side
+                // cart preview, which never taxes armado lines either).
+                'tax_amount' => 0,
             ]);
 
             if ($resolvedOptions !== null) {
@@ -281,6 +293,8 @@ class RegisterSale
                     'quantity' => $frame['quantity'] ?? 1,
                     'unit_price' => $frame['unit_price'],
                     'unit_cost' => $frame['unit_cost'] ?? 0,
+                    // Frames are tax-exempt in this business, same as lenses above.
+                    'tax_amount' => 0,
                 ]);
             }
 
@@ -354,7 +368,18 @@ class RegisterSale
             'quantity' => 1,
             'unit_price' => 0,
             'unit_cost' => $product->cost,
+            'tax_amount' => 0,
         ]);
         $sale->load('items.product.category');
+    }
+
+    /** Per-line tax snapshot, based on the product's tax rate at sale time. */
+    private function taxFor(?Product $product, int $unitPrice, int $quantity): int
+    {
+        if ($product === null || (float) $product->tax_rate <= 0) {
+            return 0;
+        }
+
+        return (int) round($unitPrice * $quantity * ((float) $product->tax_rate) / 100);
     }
 }

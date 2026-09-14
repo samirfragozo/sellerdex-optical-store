@@ -14,13 +14,19 @@ const props = defineProps<{
     products: LooseProduct[];
     subtotal: number;
     total: number;
+    discountAmount: number;
+    taxAmount: number;
+    tipAmount: number;
     surchargePercent: number;
     balance: number;
     formatCOP: (value: number) => string;
     discountError?: string;
 }>();
 
-const discount = defineModel<number>('discount', { required: true });
+const discountPercent = defineModel<number>('discountPercent', {
+    required: true,
+});
+const tipPercent = defineModel<number>('tipPercent', { required: true });
 
 const openArmados = ref<Set<number>>(new Set());
 
@@ -169,16 +175,66 @@ function toggleArmado(id: number): void {
                 <Label for="discount" class="text-muted-foreground">{{
                     trans('app.fields.discount')
                 }}</Label>
-                <Input
-                    id="discount"
-                    v-model.number="discount"
-                    type="number"
-                    min="0"
-                    class="w-28 text-right"
-                    placeholder="0"
-                />
+                <div class="flex items-center gap-1">
+                    <Input
+                        id="discount"
+                        v-model.number="discountPercent"
+                        data-testid="discount-percent-input"
+                        type="number"
+                        min="0"
+                        max="100"
+                        class="w-20 text-right"
+                        placeholder="0"
+                    />
+                    <span class="text-sm text-muted-foreground">%</span>
+                </div>
             </div>
             <InputError :message="props.discountError" />
+            <div
+                v-if="discountPercent > 0"
+                class="flex justify-between text-xs text-muted-foreground"
+            >
+                <span>{{ trans('app.pos.summary.discount_amount') }}</span>
+                <span class="tabular-nums">{{
+                    props.formatCOP(discountAmount)
+                }}</span>
+            </div>
+
+            <div class="flex items-center justify-between gap-2">
+                <Label for="tip" class="text-muted-foreground">{{
+                    trans('app.fields.tip')
+                }}</Label>
+                <div class="flex items-center gap-1">
+                    <Input
+                        id="tip"
+                        v-model.number="tipPercent"
+                        data-testid="tip-percent-input"
+                        type="number"
+                        min="0"
+                        max="100"
+                        class="w-20 text-right"
+                        placeholder="0"
+                    />
+                    <span class="text-sm text-muted-foreground">%</span>
+                </div>
+            </div>
+
+            <div v-if="taxAmount > 0" class="flex justify-between">
+                <span class="text-muted-foreground">{{
+                    trans('app.fields.tax')
+                }}</span>
+                <span class="font-medium tabular-nums">{{
+                    props.formatCOP(taxAmount)
+                }}</span>
+            </div>
+            <div v-if="tipAmount > 0" class="flex justify-between">
+                <span class="text-muted-foreground">{{
+                    trans('app.fields.tip')
+                }}</span>
+                <span class="font-medium tabular-nums">{{
+                    props.formatCOP(tipAmount)
+                }}</span>
+            </div>
 
             <!-- Surcharge note -->
             <div

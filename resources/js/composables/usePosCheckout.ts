@@ -16,7 +16,8 @@ export interface CheckoutBasePayload {
     prescription: Record<string, unknown> | null;
     armados: unknown[];
     products: unknown[];
-    discount: number;
+    discount_percent: number;
+    tip_percent: number;
     surcharge_percent: number;
 }
 

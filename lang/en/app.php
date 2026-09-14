@@ -129,6 +129,9 @@ return [
         'status' => 'Status',
         'subtotal' => 'Subtotal',
         'discount' => 'Discount',
+        'discount_percent' => 'Discount percentage',
+        'tip' => 'Tip',
+        'tax' => 'Tax',
         'total' => 'Total',
         'balance' => 'Balance',
         'sold_at' => 'Sale date',
@@ -269,6 +272,7 @@ return [
             'no_description' => '(no description)',
             'surcharge_note' => 'Total includes platform surcharge (:percent%)',
             'balance' => 'Balance due',
+            'discount_amount' => 'Discount amount',
         ],
 
         'combo_form' => [
@@ -338,6 +342,9 @@ return [
             'uncategorized' => 'Uncategorized',
             'out_of_stock' => 'Out of stock',
             'empty' => 'No products match your search.',
+            'pagination_summary' => ':from–:to of :total',
+            'pagination_prev' => 'Previous',
+            'pagination_next' => 'Next',
         ],
 
         'checkout' => [

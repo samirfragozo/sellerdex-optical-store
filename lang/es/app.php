@@ -132,6 +132,9 @@ return [
         'status' => 'Estado',
         'subtotal' => 'Subtotal',
         'discount' => 'Descuento',
+        'discount_percent' => 'Porcentaje de descuento',
+        'tip' => 'Propina',
+        'tax' => 'Impuesto',
         'total' => 'Total',
         'balance' => 'Saldo',
         'sold_at' => 'Fecha de venta',
@@ -313,6 +316,7 @@ return [
             'no_description' => '(sin descripción)',
             'surcharge_note' => 'Total incluye recargo de plataforma (:percent%)',
             'balance' => 'Saldo pendiente',
+            'discount_amount' => 'Monto de descuento',
         ],
 
         'combo_form' => [
@@ -382,6 +386,9 @@ return [
             'uncategorized' => 'Sin categoría',
             'out_of_stock' => 'Sin stock',
             'empty' => 'No hay productos que coincidan con la búsqueda.',
+            'pagination_summary' => ':from–:to de :total',
+            'pagination_prev' => 'Anterior',
+            'pagination_next' => 'Siguiente',
         ],
 
         'checkout' => [

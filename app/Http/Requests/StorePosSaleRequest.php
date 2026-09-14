@@ -6,6 +6,7 @@ use App\Enums\DocumentType;
 use App\Enums\LensType;
 use App\Enums\SaleDocumentType;
 use App\Models\Prescription;
+use App\Models\Product;
 use App\Models\Sale;
 use App\Rules\Diopter;
 use Illuminate\Foundation\Http\FormRequest;
@@ -58,7 +59,8 @@ class StorePosSaleRequest extends FormRequest
             'prescription.os_axis' => ['nullable', 'integer', 'between:1,180'],
             'prescription.os_add' => ['nullable', new Diopter(0.25, 4)],
             'prescription.os_pd' => ['nullable', 'numeric', 'between:20,40'],
-            'discount' => ['nullable', 'integer', 'min:0'],
+            'discount_percent' => ['nullable', 'numeric', 'between:0,100'],
+            'tip_percent' => ['nullable', 'numeric', 'between:0,100'],
             'notes' => ['nullable', 'string'],
             'armados' => ['nullable', 'array'],
             'armados.*.lens.product_id' => ['required', 'exists:products,id'],
@@ -169,7 +171,13 @@ class StorePosSaleRequest extends FormRequest
     }
 
     /**
-     * Compute the sale total from the submitted armados and products, discount and surcharge.
+     * Compute an estimated sale total from the submitted armados/products, discount,
+     * tip, tax and surcharge — used only to bound the sum of split payments.
+     *
+     * Armado lens/frame lines and addition lines are never taxed (RegisterSale
+     * stamps tax_amount = 0 on them — lenses/frames are tax-exempt in this
+     * business), so only loose `products.*` lines contribute tax here, matching
+     * what RegisterSale actually computes. This mirrors Sale::recalculateTotals().
      */
     protected function saleTotal(): int
     {
@@ -182,12 +190,29 @@ class StorePosSaleRequest extends FormRequest
             return $lens + $frame;
         });
 
-        $products = collect($this->input('products', []))
-            ->sum(fn ($p): int => (int) ($p['quantity'] ?? 0) * (int) ($p['unit_price'] ?? 0));
+        $productLines = collect($this->input('products', []));
+        $products = $productLines->sum(fn ($p): int => (int) ($p['quantity'] ?? 0) * (int) ($p['unit_price'] ?? 0));
 
-        $base = max(0, ($armados + $products) - (int) $this->input('discount', 0));
+        $taxRates = Product::query()
+            ->whereIn('id', $productLines->pluck('product_id')->filter()->unique())
+            ->pluck('tax_rate', 'id');
 
-        return (int) round($base * (1 + ((float) $this->input('surcharge_percent', 0)) / 100));
+        $rawTax = $productLines->sum(function ($p) use ($taxRates): int {
+            $rate = (float) ($taxRates[$p['product_id'] ?? null] ?? 0);
+            if ($rate <= 0) {
+                return 0;
+            }
+
+            return (int) round((int) ($p['quantity'] ?? 0) * (int) ($p['unit_price'] ?? 0) * $rate / 100);
+        });
+
+        $subtotal = $armados + $products;
+        $discount = (int) round($subtotal * ((float) $this->input('discount_percent', 0)) / 100);
+        $base = max(0, $subtotal - $discount);
+        $tax = $subtotal > 0 ? (int) round($rawTax * ($base / $subtotal)) : 0;
+        $tip = (int) round($base * ((float) $this->input('tip_percent', 0)) / 100);
+
+        return (int) round(($base + $tax + $tip) * (1 + ((float) $this->input('surcharge_percent', 0)) / 100));
     }
 
     /**
@@ -239,7 +264,8 @@ class StorePosSaleRequest extends FormRequest
             'prescription.os_axis' => 'eje OS',
             'prescription.os_add' => 'adición OS',
             'prescription.os_pd' => 'DP OS',
-            'discount' => 'descuento',
+            'discount_percent' => 'descuento',
+            'tip_percent' => 'propina',
             'notes' => 'observaciones',
             'armados.*.lens.product_id' => 'lente',
             'armados.*.lens.description' => 'descripción del lente',

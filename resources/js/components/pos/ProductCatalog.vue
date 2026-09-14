@@ -1,14 +1,21 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { router } from '@inertiajs/vue3';
+import { computed, ref, watch } from 'vue';
+import Pagination from '@/components/pos/Pagination.vue';
 import ProductCard from '@/components/pos/ProductCard.vue';
 import { Input } from '@/components/ui/input';
-import type { ProductProp } from '@/composables/useLensCatalog';
+import type {
+    PaginatedProducts,
+    ProductProp,
+} from '@/composables/useLensCatalog';
 import { useTranslations } from '@/composables/useTranslations';
 
 const { trans } = useTranslations();
 
 const props = defineProps<{
-    products: ProductProp[];
+    products: PaginatedProducts;
+    categories: { key: string | null; name: string }[];
+    isLoading?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -18,40 +25,41 @@ const emit = defineEmits<{
 
 const search = ref('');
 const selectedCategoryKey = ref<string | null>(null);
+let debounceHandle: ReturnType<typeof setTimeout> | null = null;
 
-interface CategoryOption {
-    key: string | null;
-    name: string;
+const categoryOptions = computed(() => [
+    { key: null, name: trans('app.pos.catalog.all_categories') },
+    ...props.categories.map((c) => ({ key: c.key, name: c.name })),
+]);
+
+// Products with option groups (e.g. frames with a color option) require a
+// dedicated selection flow and must never be click-to-added from this grid.
+const filteredProducts = computed(() =>
+    props.products.data.filter((product) => product.option_groups.length === 0),
+);
+
+function reload(page = 1): void {
+    router.reload({
+        only: ['products'],
+        data: {
+            search: search.value || undefined,
+            category: selectedCategoryKey.value || undefined,
+            page,
+        },
+        preserveState: true,
+        preserveScroll: true,
+    });
 }
 
-const categories = computed<CategoryOption[]>(() => {
-    const seen = new Map<string, string>();
-
-    for (const p of props.products) {
-        if (p.category_key && !seen.has(p.category_key)) {
-            seen.set(p.category_key, p.category_name ?? p.category_key);
-        }
+watch(search, () => {
+    if (debounceHandle) {
+        clearTimeout(debounceHandle);
     }
 
-    return [
-        { key: null, name: trans('app.pos.catalog.all_categories') },
-        ...Array.from(seen, ([key, name]) => ({ key, name })),
-    ];
+    debounceHandle = setTimeout(() => reload(1), 400);
 });
 
-const filteredProducts = computed<ProductProp[]>(() => {
-    const term = search.value.trim().toLowerCase();
-
-    return props.products.filter((p) => {
-        const matchesCategory =
-            selectedCategoryKey.value === null ||
-            p.category_key === selectedCategoryKey.value;
-        const matchesSearch =
-            term === '' || p.name.toLowerCase().includes(term);
-
-        return p.option_groups.length === 0 && matchesCategory && matchesSearch;
-    });
-});
+watch(selectedCategoryKey, () => reload(1));
 
 function onProductClick(product: ProductProp): void {
     if (product.category_key === 'lens') {
@@ -80,7 +88,7 @@ function onProductClick(product: ProductProp): void {
             class="flex gap-2 overflow-x-auto border-b border-sidebar-border/70 p-3 dark:border-sidebar-border"
         >
             <button
-                v-for="category in categories"
+                v-for="category in categoryOptions"
                 :key="category.key ?? 'all'"
                 type="button"
                 :class="[
@@ -111,5 +119,14 @@ function onProductClick(product: ProductProp): void {
                 {{ trans('app.pos.catalog.empty') }}
             </p>
         </div>
+
+        <Pagination
+            :current-page="products.meta.current_page"
+            :last-page="products.meta.last_page"
+            :from="products.meta.from ?? 0"
+            :to="products.meta.to ?? 0"
+            :total="products.meta.total"
+            @turn-page="reload"
+        />
     </div>
 </template>

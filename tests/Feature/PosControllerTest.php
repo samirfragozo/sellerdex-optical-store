@@ -27,6 +27,38 @@ it('renders the pos page for an authenticated seller', function () {
         ->assertSuccessful();
 });
 
+it('paginates the pos product list and filters by search and category', function () {
+    $seller = User::factory()->seller()->create();
+    $category = ProductCategory::factory()->create(['key' => 'frame', 'company_id' => $seller->company_id]);
+    Product::factory()->count(25)->create([
+        'product_category_id' => $category->id,
+        'company_id' => $seller->company_id,
+        'is_active' => true,
+        'is_pos_selectable' => true,
+    ]);
+    Product::factory()->create([
+        'name' => 'Gafas Ray-Ban Aviator',
+        'product_category_id' => $category->id,
+        'company_id' => $seller->company_id,
+        'is_active' => true,
+        'is_pos_selectable' => true,
+    ]);
+
+    $page1 = $this->actingAs($seller)->get('/pos')->assertOk();
+    $page1->assertInertia(fn ($page) => $page
+        ->has('products.data', 20) // default per_page
+        ->where('products.meta.total', 26)
+        ->where('products.meta.last_page', 2));
+
+    $filtered = $this->actingAs($seller)->get('/pos?search=Aviator')->assertOk();
+    $filtered->assertInertia(fn ($page) => $page
+        ->has('products.data', 1)
+        ->where('products.data.0.name', 'Gafas Ray-Ban Aviator'));
+
+    $byCategory = $this->actingAs($seller)->get("/pos?category={$category->key}&page=2")->assertOk();
+    $byCategory->assertInertia(fn ($page) => $page->where('products.meta.current_page', 2));
+});
+
 it('rejects sale creation when the seller has no open cash register session', function () {
     $seller = User::factory()->seller()->create();
     $customer = Customer::factory()->create();
@@ -191,7 +223,7 @@ it('hides non-pos-selectable products from the pos picker', function () {
     $hidden = Product::factory()->create(['is_pos_selectable' => false]);
 
     $response = $this->get('/pos');
-    $ids = collect($response->viewData('page')['props']['products'])->pluck('id');
+    $ids = collect($response->viewData('page')['props']['products']['data'])->pluck('id');
 
     expect($ids)->toContain($sellable->id)
         ->and($ids)->not->toContain($hidden->id);
@@ -502,7 +534,7 @@ it('a seller only sees products from their own company in pos props', function (
     $seller = User::factory()->forCompany($companyA)->seller()->create();
 
     $ids = collect(
-        $this->actingAs($seller)->get('/pos')->viewData('page')['props']['products']
+        $this->actingAs($seller)->get('/pos')->viewData('page')['props']['products']['data']
     )->pluck('id');
 
     expect($ids)->toContain($productA->id)
@@ -520,7 +552,7 @@ it('exposes lens specs in the POS props', function () {
         ->get('/pos')
         ->assertInertia(fn ($page) => $page
             ->component('Pos')
-            ->where('products.0.category_key', fn ($key) => is_string($key) || $key === null)
+            ->where('products.data.0.category_key', fn ($key) => is_string($key) || $key === null)
         );
 });
 
@@ -582,13 +614,36 @@ it('includes lens product option groups on the pos payload', function () {
     $lens->optionGroups()->attach($group->id, ['sort_order' => 1]);
 
     $response = $this->get('/pos');
-    $products = collect($response->viewData('page')['props']['products']);
+    $products = collect($response->viewData('page')['props']['armadoProducts']);
     $lensData = $products->firstWhere('id', $lens->id);
 
     expect($lensData)->not->toBeNull()
         ->and($lensData['option_groups'])->toHaveCount(1)
         ->and($lensData['option_groups'][0]['options'])->toHaveCount(1)
         ->and($lensData['option_groups'][0]['options'][0]['name'])->toBe('Blue Cut');
+});
+
+it('excludes products with an active option group from the pos catalog payload and pagination count', function () {
+    $seller = User::factory()->seller()->create();
+    $group = OptionGroup::factory()->create(['company_id' => $seller->company_id, 'is_active' => true]);
+    $withGroup = Product::factory()->create([
+        'company_id' => $seller->company_id,
+        'is_active' => true,
+        'is_pos_selectable' => true,
+    ]);
+    $withGroup->optionGroups()->attach($group->id, ['sort_order' => 1]);
+
+    $plain = Product::factory()->create([
+        'company_id' => $seller->company_id,
+        'is_active' => true,
+        'is_pos_selectable' => true,
+    ]);
+
+    $response = $this->actingAs($seller)->get('/pos')->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->has('products.data', 1)
+        ->where('products.meta.total', 1)
+        ->where('products.data.0.id', $plain->id));
 });
 
 it('includes frame variant products on the pos payload', function () {
@@ -614,7 +669,7 @@ it('includes frame variant products on the pos payload', function () {
     $variant->variantOptions()->attach($option->id);
 
     $response = $this->get('/pos');
-    $products = collect($response->viewData('page')['props']['products']);
+    $products = collect($response->viewData('page')['props']['armadoProducts']);
     $baseData = $products->firstWhere('id', $base->id);
 
     expect($baseData)->not->toBeNull()
@@ -623,4 +678,73 @@ it('includes frame variant products on the pos payload', function () {
         ->and($baseData['variants'][0]['price'])->toBe(90000)
         ->and($baseData['variants'][0]['option_ids'])->toBe([$option->id])
         ->and($products->firstWhere('id', $variant->id))->toBeNull();
+});
+
+it('applies discount percent, tip percent and per-line tax when registering a pos sale', function () {
+    $seller = User::factory()->seller()->create();
+    openCashRegisterSession($seller);
+    $customer = Customer::factory()->create();
+    $product = Product::factory()->create(['company_id' => $seller->company_id, 'price' => 100_000, 'tax_rate' => 19, 'is_pos_selectable' => true]);
+
+    $this->actingAs($seller)->postJson('/pos', [
+        'customer_id' => $customer->id,
+        'document_type' => 'order',
+        'discount_percent' => 10,
+        'tip_percent' => 5,
+        'products' => [[
+            'product_id' => $product->id,
+            'description' => $product->name,
+            'quantity' => 1,
+            'unit_price' => 100_000,
+        ]],
+    ])->assertOk();
+
+    $sale = Sale::first();
+    expect($sale->discount_percent)->toBe('10.00')
+        ->and($sale->tip_percent)->toBe('5.00')
+        ->and($sale->items()->where('product_id', $product->id)->first()->tax_amount)->toBe(19_000);
+});
+
+it('accepts a single payment covering the full total of a taxed sale', function () {
+    $seller = User::factory()->seller()->create();
+    openCashRegisterSession($seller);
+    $customer = Customer::factory()->create();
+    $method = PaymentMethod::factory()->create();
+    $product = Product::factory()->create([
+        'company_id' => $seller->company_id,
+        'price' => 100_000,
+        'tax_rate' => 19,
+        'is_active' => true,
+        'is_pos_selectable' => true,
+    ]);
+
+    // subtotal 100_000, no discount/tip/surcharge, tax = 19% -> total = 119_000.
+    $this->actingAs($seller)->postJson('/pos', [
+        'customer_id' => $customer->id,
+        'document_type' => 'order',
+        'products' => [[
+            'product_id' => $product->id,
+            'description' => $product->name,
+            'quantity' => 1,
+            'unit_price' => 100_000,
+        ]],
+        'payments' => [['payment_method_id' => $method->id, 'amount' => 119_000]],
+    ])->assertOk();
+
+    $sale = Sale::first();
+    expect($sale->total)->toBe(119_000)
+        ->and($sale->balance)->toBe(0);
+});
+
+it('rejects a discount_percent over 100', function () {
+    $seller = User::factory()->seller()->create();
+    openCashRegisterSession($seller);
+    $customer = Customer::factory()->create();
+
+    $this->actingAs($seller)->postJson('/pos', [
+        'customer_id' => $customer->id,
+        'document_type' => 'order',
+        'discount_percent' => 150,
+        'products' => [['description' => 'Item', 'quantity' => 1, 'unit_price' => 10_000]],
+    ])->assertJsonValidationErrors('discount_percent');
 });
