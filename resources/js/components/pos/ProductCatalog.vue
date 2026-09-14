@@ -62,13 +62,21 @@ watch(search, () => {
 watch(selectedCategoryKey, () => reload(1));
 
 function onProductClick(product: ProductProp): void {
-    if (product.category_key === 'lens') {
+    emit('add-product', product);
+}
+
+// Lens products always carry option groups, so the general catalog query
+// excludes them entirely (see ProductCatalog::index) — filtering by this
+// category would only ever show an empty grid. Route it to the armado flow
+// instead of selecting it as a filter.
+function onCategoryClick(key: string | null): void {
+    if (key === 'lens') {
         emit('select-lens-category');
 
         return;
     }
 
-    emit('add-product', product);
+    selectedCategoryKey.value = key;
 }
 </script>
 
@@ -97,7 +105,7 @@ function onProductClick(product: ProductProp): void {
                         ? 'bg-primary text-primary-foreground'
                         : 'border border-input bg-transparent hover:bg-accent',
                 ]"
-                @click="selectedCategoryKey = category.key"
+                @click="onCategoryClick(category.key)"
             >
                 {{ category.name }}
             </button>
