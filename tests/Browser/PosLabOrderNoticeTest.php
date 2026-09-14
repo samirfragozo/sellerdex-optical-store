@@ -29,5 +29,6 @@ it('does not show the lab order notice after selling a plain product', function 
         ->click('text=Cobrar')
         ->click('button:has-text("Confirmar venta")')
         ->assertNoJavaScriptErrors()
+        ->assertSee('creada exitosamente')
         ->assertDontSee('orden de laboratorio pendiente');
 });
