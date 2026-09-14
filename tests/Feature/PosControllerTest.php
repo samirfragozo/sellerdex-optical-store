@@ -680,6 +680,37 @@ it('applies discount percent, tip percent and per-line tax when registering a po
         ->and($sale->items()->where('product_id', $product->id)->first()->tax_amount)->toBe(19_000);
 });
 
+it('accepts a single payment covering the full total of a taxed sale', function () {
+    $seller = User::factory()->seller()->create();
+    openCashRegisterSession($seller);
+    $customer = Customer::factory()->create();
+    $method = PaymentMethod::factory()->create();
+    $product = Product::factory()->create([
+        'company_id' => $seller->company_id,
+        'price' => 100_000,
+        'tax_rate' => 19,
+        'is_active' => true,
+        'is_pos_selectable' => true,
+    ]);
+
+    // subtotal 100_000, no discount/tip/surcharge, tax = 19% -> total = 119_000.
+    $this->actingAs($seller)->postJson('/pos', [
+        'customer_id' => $customer->id,
+        'document_type' => 'order',
+        'products' => [[
+            'product_id' => $product->id,
+            'description' => $product->name,
+            'quantity' => 1,
+            'unit_price' => 100_000,
+        ]],
+        'payments' => [['payment_method_id' => $method->id, 'amount' => 119_000]],
+    ])->assertOk();
+
+    $sale = Sale::first();
+    expect($sale->total)->toBe(119_000)
+        ->and($sale->balance)->toBe(0);
+});
+
 it('rejects a discount_percent over 100', function () {
     $seller = User::factory()->seller()->create();
     openCashRegisterSession($seller);

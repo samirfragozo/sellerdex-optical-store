@@ -6,6 +6,7 @@ use App\Enums\DocumentType;
 use App\Enums\LensType;
 use App\Enums\SaleDocumentType;
 use App\Models\Prescription;
+use App\Models\Product;
 use App\Models\Sale;
 use App\Rules\Diopter;
 use Illuminate\Foundation\Http\FormRequest;
@@ -171,10 +172,12 @@ class StorePosSaleRequest extends FormRequest
 
     /**
      * Compute an estimated sale total from the submitted armados/products, discount,
-     * tip and surcharge — used only to bound the sum of split payments. Tax is
-     * intentionally omitted here (this request doesn't have resolved Product models,
-     * only raw payload), which makes this a slight underestimate; the authoritative
-     * total (including tax) is computed server-side by RegisterSale afterward.
+     * tip, tax and surcharge — used only to bound the sum of split payments.
+     *
+     * Armado lens/frame lines and addition lines are never taxed (RegisterSale
+     * stamps tax_amount = 0 on them — lenses/frames are tax-exempt in this
+     * business), so only loose `products.*` lines contribute tax here, matching
+     * what RegisterSale actually computes. This mirrors Sale::recalculateTotals().
      */
     protected function saleTotal(): int
     {
@@ -187,15 +190,29 @@ class StorePosSaleRequest extends FormRequest
             return $lens + $frame;
         });
 
-        $products = collect($this->input('products', []))
-            ->sum(fn ($p): int => (int) ($p['quantity'] ?? 0) * (int) ($p['unit_price'] ?? 0));
+        $productLines = collect($this->input('products', []));
+        $products = $productLines->sum(fn ($p): int => (int) ($p['quantity'] ?? 0) * (int) ($p['unit_price'] ?? 0));
+
+        $taxRates = Product::query()
+            ->whereIn('id', $productLines->pluck('product_id')->filter()->unique())
+            ->pluck('tax_rate', 'id');
+
+        $rawTax = $productLines->sum(function ($p) use ($taxRates): int {
+            $rate = (float) ($taxRates[$p['product_id'] ?? null] ?? 0);
+            if ($rate <= 0) {
+                return 0;
+            }
+
+            return (int) round((int) ($p['quantity'] ?? 0) * (int) ($p['unit_price'] ?? 0) * $rate / 100);
+        });
 
         $subtotal = $armados + $products;
         $discount = (int) round($subtotal * ((float) $this->input('discount_percent', 0)) / 100);
         $base = max(0, $subtotal - $discount);
+        $tax = $subtotal > 0 ? (int) round($rawTax * ($base / $subtotal)) : 0;
         $tip = (int) round($base * ((float) $this->input('tip_percent', 0)) / 100);
 
-        return (int) round(($base + $tip) * (1 + ((float) $this->input('surcharge_percent', 0)) / 100));
+        return (int) round(($base + $tax + $tip) * (1 + ((float) $this->input('surcharge_percent', 0)) / 100));
     }
 
     /**
