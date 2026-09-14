@@ -30,7 +30,7 @@ it('compone el combo de lente aunque la categoría haya sido renombrada', functi
         'items' => [
             ['product_id' => $lens->id, 'description' => $lens->name, 'quantity' => 1, 'unit_price' => $lens->price, 'unit_cost' => $lens->cost],
         ],
-        'combo' => ['forro' => 'small', 'include_liquid' => false, 'with_exam' => false],
+        'combo' => ['estuche' => 'small', 'include_liquid' => false, 'include_pano' => true, 'with_exam' => false],
     ], $seller);
 
     // El combo agrega líneas $0 (paño, bolsa) sólo si reconoció el lente por key.

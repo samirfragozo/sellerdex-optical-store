@@ -266,6 +266,7 @@ return [
             'own_frame' => 'Own frame',
             'exam_included' => '+ Exam included',
             'liquid_included' => '+ Cleaning liquid included',
+            'pano_included' => '+ Cleaning cloth included',
             'lining' => 'Case',
             'small' => 'Small',
             'large' => 'Large',
@@ -278,6 +279,7 @@ return [
         'combo_form' => [
             'include_exam' => 'Include exam (free)',
             'include_liquid' => 'Include cleaning liquid',
+            'include_pano' => 'Include cleaning cloth',
         ],
 
         'frame_form' => [

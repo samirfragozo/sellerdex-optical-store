@@ -145,7 +145,7 @@ class RegisterSale
             return;
         }
 
-        $combo ??= ['forro' => 'small', 'include_liquid' => false, 'with_exam' => false];
+        $combo ??= ['estuche' => 'small', 'include_liquid' => false, 'include_pano' => true, 'with_exam' => false];
 
         // Free exam: +20k once on the lens, $0 exam line.
         if (! empty($combo['with_exam'])) {
@@ -161,9 +161,11 @@ class RegisterSale
         }
 
         // Consumables.
-        $forroSku = ($combo['forro'] ?? 'small') === 'large' ? 'ACC-FORRO-LARGE' : 'ACC-FORRO-SMALL';
-        $this->addZeroLine($sale, $forroSku);
-        $this->addZeroLine($sale, self::SKU_PANO);
+        $estucheSku = ($combo['estuche'] ?? 'small') === 'large' ? 'ACC-ESTUCHE-LARGE' : 'ACC-ESTUCHE-SMALL';
+        $this->addZeroLine($sale, $estucheSku);
+        if (! empty($combo['include_pano'])) {
+            $this->addZeroLine($sale, self::SKU_PANO);
+        }
         if (! empty($combo['include_liquid'])) {
             $this->addZeroLine($sale, self::SKU_LIQUIDO);
         }
@@ -309,7 +311,7 @@ class RegisterSale
      */
     private function composeArmadoCombo(Sale $sale, string $groupKey, ?array $combo): void
     {
-        $combo ??= ['forro' => 'small', 'include_liquid' => false, 'with_exam' => false];
+        $combo ??= ['estuche' => 'small', 'include_liquid' => false, 'include_pano' => true, 'with_exam' => false];
         $sale->load('items.product.category');
 
         $groupItems = $sale->items->where('group_key', $groupKey);
@@ -330,9 +332,11 @@ class RegisterSale
             }
         }
 
-        $forroSku = ($combo['forro'] ?? 'small') === 'large' ? 'ACC-FORRO-LARGE' : 'ACC-FORRO-SMALL';
-        $this->addZeroLine($sale, $forroSku, $groupKey);
-        $this->addZeroLine($sale, self::SKU_PANO, $groupKey);
+        $estucheSku = ($combo['estuche'] ?? 'small') === 'large' ? 'ACC-ESTUCHE-LARGE' : 'ACC-ESTUCHE-SMALL';
+        $this->addZeroLine($sale, $estucheSku, $groupKey);
+        if (! empty($combo['include_pano'])) {
+            $this->addZeroLine($sale, self::SKU_PANO, $groupKey);
+        }
         if (! empty($combo['include_liquid'])) {
             $this->addZeroLine($sale, self::SKU_LIQUIDO, $groupKey);
         }

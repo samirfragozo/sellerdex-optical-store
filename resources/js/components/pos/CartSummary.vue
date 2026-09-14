@@ -120,6 +120,12 @@ function toggleArmado(id: number): void {
                             {{ trans('app.pos.summary.exam_included') }}
                         </div>
                         <div
+                            v-if="armado.combo.include_pano"
+                            class="text-xs text-muted-foreground"
+                        >
+                            {{ trans('app.pos.summary.pano_included') }}
+                        </div>
+                        <div
                             v-if="armado.combo.include_liquid"
                             class="text-xs text-muted-foreground"
                         >
@@ -128,7 +134,7 @@ function toggleArmado(id: number): void {
                         <div class="text-xs text-muted-foreground">
                             {{ trans('app.pos.summary.lining') }}:
                             {{
-                                armado.combo.forro === 'small'
+                                armado.combo.estuche === 'small'
                                     ? trans('app.pos.summary.small')
                                     : trans('app.pos.summary.large')
                             }}

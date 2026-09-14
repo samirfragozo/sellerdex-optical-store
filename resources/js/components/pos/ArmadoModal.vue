@@ -94,7 +94,7 @@ const emptyArmado = (): Armado => ({
     lens: null,
     frame: null,
     own_frame: false,
-    combo: { with_exam: false, forro: 'small', include_liquid: true },
+    combo: { with_exam: false, estuche: 'small', include_liquid: true, include_pano: true },
 });
 
 type WizardStep = 'prescription' | 'lens' | 'frame' | 'combo';

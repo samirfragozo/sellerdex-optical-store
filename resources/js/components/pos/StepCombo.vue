@@ -4,8 +4,9 @@ import { useTranslations } from '@/composables/useTranslations';
 
 interface Combo {
     with_exam: boolean;
-    forro: 'small' | 'large';
+    estuche: 'small' | 'large';
     include_liquid: boolean;
+    include_pano: boolean;
 }
 
 const combo = defineModel<Combo>('combo', { required: true });
@@ -20,7 +21,7 @@ const { trans } = useTranslations();
             {{ trans('app.pos.combo_form.include_exam') }}
         </label>
 
-        <!-- Forro -->
+        <!-- Estuche -->
         <div>
             <span class="mb-1 block text-sm font-medium">{{
                 trans('app.pos.summary.lining')
@@ -28,7 +29,7 @@ const { trans } = useTranslations();
             <div class="flex gap-4">
                 <label class="flex cursor-pointer items-center gap-2 text-sm">
                     <input
-                        v-model="combo.forro"
+                        v-model="combo.estuche"
                         type="radio"
                         value="small"
                         class="size-4 accent-primary"
@@ -37,7 +38,7 @@ const { trans } = useTranslations();
                 </label>
                 <label class="flex cursor-pointer items-center gap-2 text-sm">
                     <input
-                        v-model="combo.forro"
+                        v-model="combo.estuche"
                         type="radio"
                         value="large"
                         class="size-4 accent-primary"
@@ -46,6 +47,12 @@ const { trans } = useTranslations();
                 </label>
             </div>
         </div>
+
+        <!-- Paño -->
+        <label class="flex cursor-pointer items-center gap-2 text-sm">
+            <Checkbox v-model="combo.include_pano" />
+            {{ trans('app.pos.combo_form.include_pano') }}
+        </label>
 
         <!-- Líquido -->
         <label class="flex cursor-pointer items-center gap-2 text-sm">

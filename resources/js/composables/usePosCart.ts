@@ -16,8 +16,9 @@ export interface Armado {
     own_frame: boolean;
     combo: {
         with_exam: boolean;
-        forro: 'small' | 'large';
+        estuche: 'small' | 'large';
         include_liquid: boolean;
+        include_pano: boolean;
     };
 }
 

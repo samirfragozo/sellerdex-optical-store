@@ -422,14 +422,14 @@ it('passes combo options and applies a paper bag', function () {
             // scoped away for this seller and RegisterSale falls back to this raw price.
             'lens' => ['product_id' => $lens->id, 'description' => $lens->name, 'unit_price' => 1_000_000],
             'own_frame' => true,
-            'combo' => ['forro' => 'small', 'include_liquid' => false, 'with_exam' => true],
+            'combo' => ['estuche' => 'small', 'include_liquid' => false, 'include_pano' => true, 'with_exam' => true],
         ]],
         'prescription' => ['exam_date' => '2026-06-20'],
     ])->assertOk();
 
     $sale = Sale::latest('id')->first();
     $skus = $sale->items->map(fn ($i) => Product::withoutGlobalScopes()->find($i->product_id)?->sku)->filter();
-    expect($skus)->toContain('ACC-FORRO-SMALL', 'ACC-PANO', 'ACC-BOLSA-PAPEL', 'SRV-EXAMEN');
+    expect($skus)->toContain('ACC-ESTUCHE-SMALL', 'ACC-PANO', 'ACC-BOLSA-PAPEL', 'SRV-EXAMEN');
 });
 
 it('rejects a lens armado without a customer', function () {
@@ -512,7 +512,7 @@ it('creates a sale from an armado with a new prescription', function () {
             'armados' => [[
                 'lens' => ['product_id' => $lens->id, 'description' => $lens->name, 'unit_price' => $lens->price],
                 'own_frame' => true,
-                'combo' => ['with_exam' => false, 'forro' => 'small', 'include_liquid' => false],
+                'combo' => ['with_exam' => false, 'estuche' => 'small', 'include_liquid' => false, 'include_pano' => true],
             ]],
         ])
         ->assertOk();

@@ -37,7 +37,7 @@ it('renders a combo invoice with free exam, included lines and the surcharged to
         'items' => [
             ['product_id' => $lens->id, 'description' => $lens->name, 'quantity' => 1, 'unit_price' => 295000, 'unit_cost' => $lens->cost],
         ],
-        'combo' => ['with_exam' => true, 'forro' => 'small', 'include_liquid' => false],
+        'combo' => ['with_exam' => true, 'estuche' => 'small', 'include_liquid' => false, 'include_pano' => true],
         'surcharge_percent' => $addi->surcharge_percent,
     ], $seller);
 
@@ -48,7 +48,7 @@ it('renders a combo invoice with free exam, included lines and the surcharged to
         ->get(route('documents.invoice', $sale))
         ->assertSuccessful()
         ->assertSee('GRATIS')       // examen visual line
-        ->assertSee('Incluido')     // forro / paño / bolsa $0 lines
+        ->assertSee('Incluido')     // estuche / paño / bolsa $0 lines
         ->assertSee('337.050')      // surcharged total
         ->assertDontSee('Subtotal'); // hidden when surcharged
 });

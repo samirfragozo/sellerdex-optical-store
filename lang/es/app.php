@@ -310,6 +310,7 @@ return [
             'own_frame' => 'Montura propia',
             'exam_included' => '+ Examen incluido',
             'liquid_included' => '+ Líquido incluido',
+            'pano_included' => '+ Paño incluido',
             'lining' => 'Estuche',
             'small' => 'Pequeño',
             'large' => 'Grande',
@@ -322,6 +323,7 @@ return [
         'combo_form' => [
             'include_exam' => 'Incluir examen (gratis)',
             'include_liquid' => 'Incluir líquido',
+            'include_pano' => 'Incluir paño',
         ],
 
         'frame_form' => [

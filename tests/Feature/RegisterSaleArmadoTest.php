@@ -53,12 +53,12 @@ it('builds two armados, each with its own grouped combo lines', function () {
             [
                 'lens' => ['product_id' => $lensA->id, 'description' => $lensA->name, 'option_ids' => defaultLensOptionIds($lensA)],
                 'frame' => ['product_id' => $frame->id, 'description' => $frame->name, 'unit_price' => $frame->price],
-                'combo' => ['with_exam' => false, 'forro' => 'small', 'include_liquid' => true],
+                'combo' => ['with_exam' => false, 'estuche' => 'small', 'include_liquid' => true, 'include_pano' => true],
             ],
             [
                 'lens' => ['product_id' => $lensB->id, 'description' => $lensB->name, 'option_ids' => defaultLensOptionIds($lensB)],
                 'own_frame' => true,
-                'combo' => ['with_exam' => false, 'forro' => 'large', 'include_liquid' => false],
+                'combo' => ['with_exam' => false, 'estuche' => 'large', 'include_liquid' => false, 'include_pano' => true],
             ],
         ],
     ], User::factory()->seller()->create());
@@ -70,11 +70,11 @@ it('builds two armados, each with its own grouped combo lines', function () {
     $frameLine = $sale->items->firstWhere('product_id', $frame->id);
     expect($frameLine->unit_price)->toBe(0);
 
-    // Armado 1 has a small forro + liquid; armado 2 has a large forro + no liquid.
-    $smallForro = Product::where('sku', 'ACC-FORRO-SMALL')->first();
-    $largeForro = Product::where('sku', 'ACC-FORRO-LARGE')->first();
-    expect($sale->items->where('product_id', $smallForro->id))->toHaveCount(1);
-    expect($sale->items->where('product_id', $largeForro->id))->toHaveCount(1);
+    // Armado 1 has a small estuche + liquid; armado 2 has a large estuche + no liquid.
+    $smallEstuche = Product::where('sku', 'ACC-ESTUCHE-SMALL')->first();
+    $largeEstuche = Product::where('sku', 'ACC-ESTUCHE-LARGE')->first();
+    expect($sale->items->where('product_id', $smallEstuche->id))->toHaveCount(1);
+    expect($sale->items->where('product_id', $largeEstuche->id))->toHaveCount(1);
 });
 
 it('adds the free exam surcharge per armado when requested', function () {
@@ -87,7 +87,7 @@ it('adds the free exam surcharge per armado when requested', function () {
         'armados' => [[
             'lens' => ['product_id' => $lens->id, 'description' => $lens->name, 'option_ids' => defaultLensOptionIds($lens)],
             'own_frame' => true,
-            'combo' => ['with_exam' => true, 'forro' => 'small', 'include_liquid' => false],
+            'combo' => ['with_exam' => true, 'estuche' => 'small', 'include_liquid' => false, 'include_pano' => true],
         ]],
     ], User::factory()->seller()->create());
 
@@ -109,7 +109,7 @@ it('does not tax armado lens or frame lines even when the product has a tax_rate
         'armados' => [[
             'lens' => ['product_id' => $lens->id, 'description' => $lens->name, 'option_ids' => defaultLensOptionIds($lens)],
             'frame' => ['product_id' => $frame->id, 'description' => $frame->name, 'unit_price' => $frame->price],
-            'combo' => ['with_exam' => false, 'forro' => 'small', 'include_liquid' => false],
+            'combo' => ['with_exam' => false, 'estuche' => 'small', 'include_liquid' => false, 'include_pano' => true],
         ]],
     ], User::factory()->seller()->create());
 
@@ -131,7 +131,7 @@ it('mixes an armado with a standalone product line', function () {
         'armados' => [[
             'lens' => ['product_id' => $lens->id, 'description' => $lens->name, 'option_ids' => defaultLensOptionIds($lens)],
             'own_frame' => true,
-            'combo' => ['with_exam' => false, 'forro' => 'small', 'include_liquid' => false],
+            'combo' => ['with_exam' => false, 'estuche' => 'small', 'include_liquid' => false, 'include_pano' => true],
         ]],
         'products' => [
             ['product_id' => $accessory->id, 'description' => $accessory->name, 'quantity' => 2, 'unit_price' => $accessory->price],
@@ -153,7 +153,7 @@ it('adds a single global bag for the whole sale', function () {
         'armados' => [[
             'lens' => ['product_id' => $lens->id, 'description' => $lens->name, 'option_ids' => defaultLensOptionIds($lens)],
             'own_frame' => true,
-            'combo' => ['with_exam' => false, 'forro' => 'small', 'include_liquid' => false],
+            'combo' => ['with_exam' => false, 'estuche' => 'small', 'include_liquid' => false, 'include_pano' => true],
         ]],
     ], User::factory()->seller()->create());
 

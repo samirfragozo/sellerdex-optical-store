@@ -160,8 +160,8 @@ class ProductCatalogSeeder extends Seeder
         $accId = $this->categoryId('Accesorio');
         // [sku, name, cost, price]
         $rows = [
-            ['ACC-FORRO-SMALL', 'Estuche pequeño', 2900, 10000],
-            ['ACC-FORRO-LARGE', 'Estuche grande', 4000, 15000],
+            ['ACC-ESTUCHE-SMALL', 'Estuche pequeño', 2900, 10000],
+            ['ACC-ESTUCHE-LARGE', 'Estuche grande', 4000, 15000],
             ['ACC-PANO', 'Paño', 600, 2000],
             ['ACC-LIQUIDO', 'Líquido de limpieza', 2000, 8000],
             ['ACC-BOLSA-PAPEL', 'Bolsa de papel', 1000, 0],

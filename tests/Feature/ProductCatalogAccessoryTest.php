@@ -13,8 +13,8 @@ beforeEach(fn () => $this->seed(ProductCategorySeeder::class));
 it('seeds consumables with real costs and prices', function () {
     $this->seed(ProductCatalogSeeder::class);
 
-    expect(Product::where('sku', 'ACC-FORRO-SMALL')->first())->cost->toBe(2900)->price->toBe(10000)
-        ->and(Product::where('sku', 'ACC-FORRO-LARGE')->first())->cost->toBe(4000)->price->toBe(15000)
+    expect(Product::where('sku', 'ACC-ESTUCHE-SMALL')->first())->cost->toBe(2900)->price->toBe(10000)
+        ->and(Product::where('sku', 'ACC-ESTUCHE-LARGE')->first())->cost->toBe(4000)->price->toBe(15000)
         ->and(Product::where('sku', 'ACC-PANO')->first())->cost->toBe(600)->price->toBe(2000)
         ->and(Product::where('sku', 'ACC-LIQUIDO')->first())->cost->toBe(2000)->price->toBe(8000)
         ->and(Product::where('sku', 'ACC-BOLSA-PAPEL')->first())->cost->toBe(1000)->price->toBe(0)
