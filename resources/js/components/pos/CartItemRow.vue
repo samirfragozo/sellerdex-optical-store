@@ -26,6 +26,7 @@ function onProductSelect(value: string): void {
         product_id: id,
         description: product ? product.name : props.item.description,
         unit_price: product ? product.price : props.item.unit_price,
+        tax_rate: product ? product.tax_rate : props.item.tax_rate,
     });
 }
 </script>
