@@ -366,6 +366,7 @@ return [
             'remaining' => 'Remaining',
             'add_payment' => 'Add payment method',
             'confirm' => 'Confirm sale',
+            'unexpected_error' => 'The sale could not be saved. Check your connection and try again.',
         ],
     ],
 

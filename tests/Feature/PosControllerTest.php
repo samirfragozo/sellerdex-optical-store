@@ -73,6 +73,17 @@ it('rejects sale creation when the seller has no open cash register session', fu
     expect(Sale::count())->toBe(0);
 });
 
+it('still returns a plain message field on a 403 cash-session error for the frontend fallback to key off of', function () {
+    $seller = User::factory()->seller()->create();
+    $customer = Customer::factory()->create();
+
+    $this->actingAs($seller)->postJson('/pos', [
+        'customer_id' => $customer->id,
+        'document_type' => 'order',
+        'products' => [['description' => 'Item', 'quantity' => 1, 'unit_price' => 10_000]],
+    ])->assertForbidden()->assertJsonStructure(['message']);
+});
+
 it('stores a sale from the pos with an existing customer and split payments', function () {
     $seller = User::factory()->seller()->create();
     openCashRegisterSession($seller);

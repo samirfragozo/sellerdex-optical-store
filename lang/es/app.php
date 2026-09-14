@@ -404,6 +404,7 @@ return [
             'remaining' => 'Saldo',
             'add_payment' => 'Agregar método de pago',
             'confirm' => 'Confirmar venta',
+            'unexpected_error' => 'No se pudo registrar la venta. Verifica tu conexión e inténtalo de nuevo.',
         ],
     ],
 

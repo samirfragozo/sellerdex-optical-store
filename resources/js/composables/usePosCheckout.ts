@@ -2,6 +2,7 @@ import { computed, ref } from 'vue';
 import type { ComputedRef, Ref } from 'vue';
 import { csrfFetch } from '@/lib/csrfFetch';
 import { store } from '@/routes/pos';
+import { useTranslations } from '@/composables/useTranslations';
 import type { CreatedSale } from '@/types/global';
 
 export interface PaymentEntry {
@@ -27,6 +28,7 @@ export function usePosCheckout(total: Ref<number>) {
     const payments = ref<PaymentEntry[]>([]);
     const errors: Ref<Record<string, string>> = ref({});
     const submitting = ref(false);
+    const { trans } = useTranslations();
 
     function addPayment(): void {
         payments.value.push({ payment_method_id: null, amount: 0 });
@@ -83,12 +85,20 @@ export function usePosCheckout(total: Ref<number>) {
             }
 
             if (!response.ok) {
-                throw new Error(
-                    `Unexpected POS checkout response: ${response.status}`,
-                );
+                errors.value = {
+                    general: trans('app.pos.checkout.unexpected_error'),
+                };
+
+                return null;
             }
 
             return (await response.json()) as CreatedSale;
+        } catch {
+            errors.value = {
+                general: trans('app.pos.checkout.unexpected_error'),
+            };
+
+            return null;
         } finally {
             submitting.value = false;
         }
