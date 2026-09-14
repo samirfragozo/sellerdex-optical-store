@@ -18,6 +18,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('pos.lens-recommendation');
     Route::post('pos/cash-sessions', [CashRegisterSessionController::class, 'store'])
         ->name('pos.cash-sessions.store');
+    Route::get('pos/cash-sessions/{cashRegisterSession}/preview', [CashRegisterSessionController::class, 'preview'])
+        ->name('pos.cash-sessions.preview');
     Route::post('pos/cash-sessions/{cashRegisterSession}/close', [CashRegisterSessionController::class, 'close'])
         ->name('pos.cash-sessions.close');
 });

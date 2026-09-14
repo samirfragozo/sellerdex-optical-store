@@ -1,6 +1,12 @@
 <script setup lang="ts">
 import { Link, router, usePage } from '@inertiajs/vue3';
-import { LogOut, Settings, ShieldCheck, ShoppingCart } from '@lucide/vue';
+import {
+    Banknote,
+    LogOut,
+    Settings,
+    ShieldCheck,
+    ShoppingCart,
+} from '@lucide/vue';
 import { computed } from 'vue';
 import {
     DropdownMenuGroup,
@@ -9,6 +15,7 @@ import {
     DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import UserInfo from '@/components/UserInfo.vue';
+import { useCashRegisterSession } from '@/composables/useCashRegisterSession';
 import { useTranslations } from '@/composables/useTranslations';
 import { logout } from '@/routes';
 import { index as pos } from '@/routes/pos';
@@ -22,6 +29,7 @@ type Props = {
 const page = usePage();
 const isAdmin = computed(() => page.props.auth?.is_admin === true);
 const { trans } = useTranslations();
+const { session, openCloseModal } = useCashRegisterSession();
 
 const handleLogout = () => {
     router.flushAll();
@@ -55,6 +63,14 @@ defineProps<Props>();
                 <ShieldCheck class="mr-2 h-4 w-4" />
                 {{ trans('app.nav.admin') }}
             </a>
+        </DropdownMenuItem>
+        <DropdownMenuItem
+            v-if="session !== null"
+            class="cursor-pointer"
+            @select="openCloseModal"
+        >
+            <Banknote class="mr-2 h-4 w-4" />
+            {{ trans('app.pos.cash_session.close_action') }}
         </DropdownMenuItem>
     </DropdownMenuGroup>
     <DropdownMenuSeparator />

@@ -43,6 +43,18 @@ class CashRegisterSession extends Model
         return $this->belongsTo(User::class);
     }
 
+    public static function openFor(?User $user): ?self
+    {
+        if ($user === null) {
+            return null;
+        }
+
+        return static::query()
+            ->where('user_id', $user->id)
+            ->whereNull('closed_at')
+            ->first();
+    }
+
     public function resolveRouteBinding($value, $field = null)
     {
         // ponytail: implicit route binding must bypass global scopes so the controller's own

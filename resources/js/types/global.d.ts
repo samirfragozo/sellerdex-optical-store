@@ -40,6 +40,7 @@ declare module '@inertiajs/core' {
             business: { name: string };
             auth: Auth;
             sidebarOpen: boolean;
+            cashRegisterSession: CashRegisterSession | null;
             flash: {
                 success: string | null;
             };

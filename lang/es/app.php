@@ -383,6 +383,18 @@ return [
             'open_notice' => 'Debes abrir una sesión de caja para empezar a vender.',
             'opening_cash' => 'Monto inicial',
             'open_action' => 'Abrir caja',
+            'close_action' => 'Cerrar caja',
+            'close_title' => 'Cerrar caja',
+            'count_notice' => 'Cuenta el efectivo en caja e ingresa el total. El sistema mostrará el monto esperado después de que confirmes tu conteo.',
+            'counted_cash' => 'Efectivo contado',
+            'continue_action' => 'Continuar',
+            'opening_amount' => 'Monto de apertura',
+            'expected_cash' => 'Efectivo esperado',
+            'difference' => 'Diferencia',
+            'difference_notice' => 'Hay una diferencia entre el efectivo esperado y el contado.',
+            'notes_required' => 'Explica el motivo de la diferencia.',
+            'confirm_close_action' => 'Confirmar cierre',
+            'closed_notice' => 'Caja cerrada correctamente.',
         ],
 
         'catalog' => [

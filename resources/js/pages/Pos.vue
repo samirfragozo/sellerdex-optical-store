@@ -12,6 +12,7 @@ import SaleCreatedPanel from '@/components/pos/SaleCreatedPanel.vue';
 import StepCustomer from '@/components/pos/StepCustomer.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { useCashRegisterSession } from '@/composables/useCashRegisterSession';
 import type {
     LensProduct,
     LensSpecs,
@@ -24,7 +25,7 @@ import { armadoTotal, usePosCart } from '@/composables/usePosCart';
 import { usePosCheckout } from '@/composables/usePosCheckout';
 import { useTranslations } from '@/composables/useTranslations';
 import { index } from '@/routes/pos';
-import type { CashRegisterSession, CreatedSale } from '@/types/global';
+import type { CreatedSale } from '@/types/global';
 
 const { trans } = useTranslations();
 
@@ -61,7 +62,6 @@ const props = defineProps<{
     customers: Customer[];
     prescriptions: PrescriptionOption[];
     lensTypes: Record<string, string>;
-    cashRegisterSession: CashRegisterSession | null;
 }>();
 
 const today = new Date().toISOString().slice(0, 10);
@@ -73,11 +73,7 @@ const minExamDate = (() => {
 })();
 
 // --- Cash register session gate ---
-const session = ref<CashRegisterSession | null>(props.cashRegisterSession);
-
-function onSessionOpened(opened: CashRegisterSession): void {
-    session.value = opened;
-}
+const { session, onSessionOpened } = useCashRegisterSession();
 
 // --- Cart + recommendation composables ---
 const cart = usePosCart();

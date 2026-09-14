@@ -61,6 +61,48 @@ it('closes a session and computes expected cash from the cash payments received 
     expect($session->fresh()->closed_at)->not->toBeNull();
 });
 
+it('previews the expected cash without closing the session', function () {
+    $seller = User::factory()->seller()->create();
+    $this->actingAs($seller);
+
+    $cashMethod = PaymentMethod::factory()->create(['is_default' => true]);
+    $session = openCashRegisterSession($seller, 50_000);
+
+    $sale = Sale::factory()->create();
+    Payment::factory()->create([
+        'sale_id' => $sale->id,
+        'payment_method_id' => $cashMethod->id,
+        'received_by' => $seller->id,
+        'amount' => 80_000,
+    ]);
+
+    $this->getJson("/pos/cash-sessions/{$session->id}/preview")
+        ->assertOk()
+        ->assertJson(['opening_cash' => 50_000, 'expected_cash' => 130_000]);
+
+    expect($session->fresh()->closed_at)->toBeNull();
+});
+
+it('rejects previewing another user session', function () {
+    $owner = User::factory()->seller()->create();
+    $intruder = User::factory()->seller()->create();
+    $session = openCashRegisterSession($owner);
+
+    $this->actingAs($intruder)
+        ->getJson("/pos/cash-sessions/{$session->id}/preview")
+        ->assertForbidden();
+});
+
+it('rejects previewing an already closed session', function () {
+    $seller = User::factory()->seller()->create();
+    $session = openCashRegisterSession($seller);
+    $session->update(['closed_at' => now(), 'closed_cash' => 0, 'expected_cash' => 0]);
+
+    $this->actingAs($seller)
+        ->getJson("/pos/cash-sessions/{$session->id}/preview")
+        ->assertStatus(422);
+});
+
 it('forbids closing another user session', function () {
     $owner = User::factory()->seller()->create();
     $intruder = User::factory()->seller()->create();

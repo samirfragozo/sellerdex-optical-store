@@ -2,6 +2,7 @@
 import AppContent from '@/components/AppContent.vue';
 import AppHeader from '@/components/AppHeader.vue';
 import AppShell from '@/components/AppShell.vue';
+import CashSessionCloseModal from '@/components/pos/CashSessionCloseModal.vue';
 import { Toaster } from '@/components/ui/sonner';
 import type { BreadcrumbItem } from '@/types';
 
@@ -21,5 +22,6 @@ withDefaults(defineProps<Props>(), {
             <slot />
         </AppContent>
         <Toaster />
+        <CashSessionCloseModal />
     </AppShell>
 </template>

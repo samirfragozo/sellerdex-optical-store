@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\CashRegisterSession;
 use App\Models\Company;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -48,6 +49,9 @@ class HandleInertiaRequests extends Middleware
                 'is_admin' => (bool) $request->user()?->isAdmin(),
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
+            'cashRegisterSession' => fn () => CashRegisterSession::openFor($request->user())?->only([
+                'id', 'opened_at', 'opening_cash', 'closed_at', 'closed_cash', 'expected_cash', 'difference',
+            ]),
             'translations' => [
                 'auth' => trans('auth'),
                 'settings' => trans('settings'),

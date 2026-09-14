@@ -345,6 +345,18 @@ return [
             'open_notice' => 'You must open a cash session before you can start selling.',
             'opening_cash' => 'Opening amount',
             'open_action' => 'Open register',
+            'close_action' => 'Close register',
+            'close_title' => 'Close register',
+            'count_notice' => 'Count the cash in the register and enter the total. The system will show the expected amount after you confirm your count.',
+            'counted_cash' => 'Counted cash',
+            'continue_action' => 'Continue',
+            'opening_amount' => 'Opening amount',
+            'expected_cash' => 'Expected cash',
+            'difference' => 'Difference',
+            'difference_notice' => 'There is a difference between the expected and counted cash.',
+            'notes_required' => 'Explain the reason for the difference.',
+            'confirm_close_action' => 'Confirm close',
+            'closed_notice' => 'Register closed successfully.',
         ],
 
         'catalog' => [

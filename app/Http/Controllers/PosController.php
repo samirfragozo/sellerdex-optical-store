@@ -92,9 +92,6 @@ class PosController extends Controller
                     'lens_type' => $p->lens_type?->value,
                     'summary' => sprintf('OD %s / OS %s', $p->od_sphere ?? '—', $p->os_sphere ?? '—'),
                 ]),
-            'cashRegisterSession' => $this->openSessionFor($request)?->only([
-                'id', 'opened_at', 'opening_cash', 'closed_at', 'closed_cash', 'expected_cash', 'difference',
-            ]),
         ]);
     }
 
@@ -210,9 +207,6 @@ class PosController extends Controller
 
     private function openSessionFor(Request $request): ?CashRegisterSession
     {
-        return CashRegisterSession::query()
-            ->where('user_id', $request->user()->id)
-            ->whereNull('closed_at')
-            ->first();
+        return CashRegisterSession::openFor($request->user());
     }
 }
