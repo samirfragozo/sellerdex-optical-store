@@ -170,7 +170,7 @@ watch(
                             }}</span>
                             <button
                                 type="button"
-                                class="shrink-0 text-muted-foreground hover:text-destructive"
+                                class="shrink-0 rounded-sm text-muted-foreground outline-none hover:text-destructive focus-visible:ring-2 focus-visible:ring-ring/50"
                                 :aria-label="
                                     trans('app.pos.checkout.remove_payment')
                                 "

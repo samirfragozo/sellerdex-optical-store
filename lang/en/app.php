@@ -228,6 +228,7 @@ return [
     'pos' => [
         'title' => 'New sale',
         'created' => 'Sale :number created successfully',
+        'lab_order_pending_notice' => 'A pending lab order was generated for the lens sold.',
         'view_cart' => 'View cart',
         'no_customer' => 'No customer',
         'new_customer' => 'New customer',
@@ -382,6 +383,7 @@ return [
             'change' => 'Change',
             'keypad_clear' => 'Clear all',
             'keypad_backspace' => 'Delete last digit',
+            'unexpected_error' => 'The sale could not be saved. Check your connection and try again.',
         ],
     ],
 

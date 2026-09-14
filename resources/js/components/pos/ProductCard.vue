@@ -20,7 +20,7 @@ function formatCOP(value: number): string {
 <template>
     <button
         type="button"
-        class="flex flex-col items-start gap-1 rounded-xl border border-sidebar-border/70 bg-white p-3 text-left transition-colors hover:border-primary hover:bg-accent dark:border-sidebar-border dark:bg-zinc-900"
+        class="flex flex-col items-start gap-1 rounded-xl border border-sidebar-border/70 bg-white p-3 text-left outline-none transition-colors hover:border-primary hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring/50 dark:border-sidebar-border dark:bg-zinc-900"
         @click="$emit('click')"
     >
         <span class="text-xs text-muted-foreground">{{
