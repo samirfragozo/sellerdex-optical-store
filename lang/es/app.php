@@ -220,6 +220,7 @@ return [
     ],
 
     'lens_order_status' => [
+        'pending_assignment' => 'Pendiente de asignación',
         'sent' => 'Enviado',
         'in_process' => 'En proceso',
         'received' => 'Recibido',

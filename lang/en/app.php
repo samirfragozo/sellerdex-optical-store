@@ -184,6 +184,13 @@ return [
         'nit' => 'Tax ID (NIT)',
     ],
 
+    'lens_order_status' => [
+        'pending_assignment' => 'Pending assignment',
+        'sent' => 'Sent',
+        'in_process' => 'In process',
+        'received' => 'Received',
+    ],
+
     'sale_status' => [
         'draft' => 'Unpaid',
         'partial' => 'Partial',

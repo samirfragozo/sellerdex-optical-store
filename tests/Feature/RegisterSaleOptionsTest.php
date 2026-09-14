@@ -1,6 +1,7 @@
 <?php
 
 use App\Actions\RegisterSale;
+use App\Enums\LensOrderStatus;
 use App\Models\Customer;
 use App\Models\Option;
 use App\Models\OptionGroup;
@@ -65,6 +66,26 @@ it('lets a seller-entered price_override win over the computed option price', fu
     expect($lensItem->unit_price)->toBe(80000)
         // cost tracking still reflects the real resolved option cost, override or not.
         ->and($lensItem->unit_cost)->toBe(30000);
+});
+
+it('auto-creates a pending-assignment lens order when the lens category generates lab orders', function () {
+    $sale = app(RegisterSale::class)->handle([
+        'customer_id' => $this->customer->id,
+        'document_type' => 'order',
+        'armados' => [[
+            'lens' => [
+                'product_id' => $this->lens->id,
+                'description' => $this->lens->name,
+                'option_ids' => [$this->materialOption->id, $this->filterOption->id],
+            ],
+        ]],
+    ], $this->seller);
+
+    $lensItem = $sale->items->firstWhere('product_id', $this->lens->id);
+
+    expect($lensItem->lensOrder)->not->toBeNull()
+        ->and($lensItem->lensOrder->supplier_id)->toBeNull()
+        ->and($lensItem->lensOrder->lab_status)->toBe(LensOrderStatus::PendingAssignment);
 });
 
 it('rejects an armado lens with required option groups when the client sends no option_ids', function () {

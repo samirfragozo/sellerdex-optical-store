@@ -7,6 +7,7 @@ use Filament\Support\Contracts\HasLabel;
 
 enum LensOrderStatus: string implements HasColor, HasLabel
 {
+    case PendingAssignment = 'pending_assignment';
     case Sent = 'sent';
     case InProcess = 'in_process';
     case Received = 'received';
@@ -24,6 +25,7 @@ enum LensOrderStatus: string implements HasColor, HasLabel
     public function getColor(): string
     {
         return match ($this) {
+            self::PendingAssignment => 'danger',
             self::Sent => 'gray',
             self::InProcess => 'warning',
             self::Received => 'success',

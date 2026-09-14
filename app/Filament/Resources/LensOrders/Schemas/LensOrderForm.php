@@ -29,12 +29,11 @@ class LensOrderForm
                         titleAttribute: 'name',
                         modifyQueryUsing: fn (Builder $query) => $query->laboratories(),
                     )
-                    ->searchable()
-                    ->required(),
+                    ->searchable(),
                 Select::make('lab_status')
                     ->label(__('app.fields.lab_status'))
                     ->options(LensOrderStatus::options())
-                    ->default(LensOrderStatus::Sent->value)
+                    ->default(LensOrderStatus::PendingAssignment->value)
                     ->required(),
                 DatePicker::make('expected_date')
                     ->label(__('app.fields.expected_date')),

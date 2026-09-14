@@ -2,6 +2,7 @@
 
 namespace App\Actions;
 
+use App\Enums\LensOrderStatus;
 use App\Models\PaymentMethod;
 use App\Models\Product;
 use App\Models\Sale;
@@ -291,6 +292,13 @@ class RegisterSale
                         'cost' => $option->cost,
                     ]);
                 }
+            }
+
+            if ($lensProduct?->category?->generates_lab_order) {
+                $lensItem->lensOrder()->create([
+                    'supplier_id' => null,
+                    'lab_status' => LensOrderStatus::PendingAssignment,
+                ]);
             }
 
             if (empty($armado['own_frame']) && ! empty($armado['frame'])) {
