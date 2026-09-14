@@ -104,7 +104,7 @@ function formatCOP(value: number): string {
                         />
                         <button
                             type="button"
-                            class="flex size-8 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                            class="flex size-8 items-center justify-center rounded-md text-muted-foreground outline-none hover:bg-destructive/10 hover:text-destructive focus-visible:ring-2 focus-visible:ring-ring/50"
                             @click="checkout.removePayment(index)"
                         >
                             <Trash2 class="size-4" />
