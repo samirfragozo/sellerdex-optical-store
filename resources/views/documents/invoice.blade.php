@@ -45,6 +45,12 @@
             @if ($sale->discount > 0)
                 <tr><td class="right">{{ __('app.fields.discount') }}</td><td class="right">{{ $fmt($sale->discount) }}</td></tr>
             @endif
+            @if ($sale->tax_amount > 0)
+                <tr><td class="right">{{ __('app.fields.tax') }}</td><td class="right">{{ $fmt($sale->tax_amount) }}</td></tr>
+            @endif
+            @if ($sale->tip > 0)
+                <tr><td class="right">{{ __('app.fields.tip') }}</td><td class="right">{{ $fmt($sale->tip) }}</td></tr>
+            @endif
         @endif
         <tr><td class="right"><strong>{{ __('app.fields.total') }}</strong></td><td class="right" style="width:90px"><strong>{{ $fmt($sale->total) }}</strong></td></tr>
         <tr><td class="right">{{ __('app.documents.paid') }}</td><td class="right">{{ $fmt($sale->totalPaid()) }}</td></tr>
