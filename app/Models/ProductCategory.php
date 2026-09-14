@@ -25,7 +25,7 @@ class ProductCategory extends Model
      * @var array<int,array{key:string,name:string,requires_prescription:bool,generates_lab_order:bool,is_made_to_order:bool}>
      */
     public const SYSTEM_CATEGORIES = [
-        ['key' => 'lens', 'name' => 'Lente', 'requires_prescription' => true, 'generates_lab_order' => true, 'is_made_to_order' => true],
+        ['key' => 'lens', 'name' => 'Lentes', 'requires_prescription' => true, 'generates_lab_order' => true, 'is_made_to_order' => true],
         ['key' => 'frame', 'name' => 'Montura', 'requires_prescription' => false, 'generates_lab_order' => false, 'is_made_to_order' => false],
         ['key' => 'accessory', 'name' => 'Accesorio', 'requires_prescription' => false, 'generates_lab_order' => false, 'is_made_to_order' => false],
         ['key' => 'service', 'name' => 'Servicio', 'requires_prescription' => false, 'generates_lab_order' => false, 'is_made_to_order' => false],

@@ -22,10 +22,10 @@ it('siembra las categorías de producto base sin duplicar', function () {
     $this->seed(ProductCategorySeeder::class);
 
     expect(ProductCategory::pluck('name')->all())
-        ->toContain('Lente', 'Montura', 'Accesorio', 'Servicio')
+        ->toContain('Lentes', 'Montura', 'Accesorio', 'Servicio')
         ->not->toContain('Filtro')
         ->not->toContain('Promoción')
-        ->and(ProductCategory::where('name', 'Lente')->count())->toBe(1);
+        ->and(ProductCategory::where('name', 'Lentes')->count())->toBe(1);
 });
 
 it('agrega key y flags de regla a las categorías', function () {
