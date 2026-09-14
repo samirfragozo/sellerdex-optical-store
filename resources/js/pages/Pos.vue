@@ -502,6 +502,7 @@ async function confirmCheckout(): Promise<void> {
                 :tip-amount="cart.tipAmount.value"
                 :surcharge-percent="cart.surchargePercent.value"
                 :balance="cart.total.value"
+                :discount-error="checkout.errors.value.discount_percent"
                 :format-c-o-p="formatCOP"
             />
 

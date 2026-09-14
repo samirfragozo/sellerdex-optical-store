@@ -748,3 +748,19 @@ it('rejects a discount_percent over 100', function () {
         'products' => [['description' => 'Item', 'quantity' => 1, 'unit_price' => 10_000]],
     ])->assertJsonValidationErrors('discount_percent');
 });
+
+it('returns a discount_percent validation error usable by the pos frontend', function () {
+    $seller = User::factory()->seller()->create();
+    openCashRegisterSession($seller);
+    $customer = Customer::factory()->create();
+
+    $response = $this->actingAs($seller)->postJson('/pos', [
+        'customer_id' => $customer->id,
+        'document_type' => 'order',
+        'discount_percent' => 150,
+        'products' => [['description' => 'Item', 'quantity' => 1, 'unit_price' => 10_000]],
+    ]);
+
+    $response->assertJsonValidationErrors('discount_percent');
+    expect($response->json('errors.discount_percent.0'))->toBeString()->not->toBeEmpty();
+});
