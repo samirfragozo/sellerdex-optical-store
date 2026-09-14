@@ -26,7 +26,7 @@ defineEmits<{
             </p>
             <button
                 type="button"
-                class="text-green-700 hover:text-green-900 dark:text-green-400"
+                class="rounded-sm text-green-700 outline-none hover:text-green-900 focus-visible:ring-2 focus-visible:ring-ring/50 dark:text-green-400"
                 @click="$emit('dismiss')"
             >
                 <X class="size-4" />

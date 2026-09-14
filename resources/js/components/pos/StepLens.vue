@@ -112,7 +112,7 @@ const formatCOP = (value: number): string =>
 // Chip button class helper.
 const chip = (active: boolean) =>
     [
-        'relative rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
+        'relative rounded-md px-3 py-1.5 text-sm font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring/50',
         active
             ? 'bg-primary text-primary-foreground'
             : 'border border-input bg-transparent hover:bg-accent',

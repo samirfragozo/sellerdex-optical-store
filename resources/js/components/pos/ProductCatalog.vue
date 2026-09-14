@@ -100,7 +100,7 @@ function onCategoryClick(key: string | null): void {
                 :key="category.key ?? 'all'"
                 type="button"
                 :class="[
-                    'shrink-0 rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
+                    'shrink-0 rounded-md px-3 py-1.5 text-sm font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring/50',
                     selectedCategoryKey === category.key
                         ? 'bg-primary text-primary-foreground'
                         : 'border border-input bg-transparent hover:bg-accent',
