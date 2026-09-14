@@ -14,7 +14,7 @@ it('decrements a real frame stock when sold via RegisterSale', function () {
     $this->seed(ProductCategorySeeder::class);
     $this->seed(ProductCatalogSeeder::class);
 
-    $frame = Product::where('sku', 'MNT-COMPLETAS-ACETATO')->first();
+    $frame = Product::where('sku', 'MNT-COMPLETA-ACETATO')->first();
     $frame->update(['stock' => 5]);
 
     $sale = app(RegisterSale::class)->handle([

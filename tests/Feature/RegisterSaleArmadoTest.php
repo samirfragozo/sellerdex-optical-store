@@ -44,7 +44,7 @@ it('builds two armados, each with its own grouped combo lines', function () {
     seedCatalog();
     $lensA = Product::where('sku', 'ML-MONOFOCAL')->first();
     $lensB = Product::where('sku', 'ML-PROGRESIVO')->first();
-    $frame = Product::where('sku', 'MNT-COMPLETAS-ACETATO')->first();
+    $frame = Product::where('sku', 'MNT-COMPLETA-ACETATO')->first();
 
     $sale = app(RegisterSale::class)->handle([
         'customer_id' => Customer::factory()->create()->id,
@@ -99,7 +99,7 @@ it('adds the free exam surcharge per armado when requested', function () {
 it('does not tax armado lens or frame lines even when the product has a tax_rate', function () {
     seedCatalog();
     $lens = Product::where('sku', 'ML-MONOFOCAL')->first();
-    $frame = Product::where('sku', 'MNT-COMPLETAS-ACETATO')->first();
+    $frame = Product::where('sku', 'MNT-COMPLETA-ACETATO')->first();
     $lens->update(['tax_rate' => 19]);
     $frame->update(['tax_rate' => 19]);
 
@@ -163,7 +163,7 @@ it('adds a single global bag for the whole sale', function () {
 
 it('sells standalone products via the new payload and adds a funda for a frame', function () {
     seedCatalog();
-    $frame = Product::where('sku', 'MNT-COMPLETAS-ACETATO')->first();
+    $frame = Product::where('sku', 'MNT-COMPLETA-ACETATO')->first();
     $frame->update(['stock' => 5]);
 
     $sale = app(RegisterSale::class)->handle([

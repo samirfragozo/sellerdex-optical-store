@@ -92,7 +92,7 @@ class ProductCatalogSeeder extends Seeder
             'specs' => null,
         ]);
 
-        $structures = ['Completas', 'Semi Al Aire', 'Tres Piezas'];
+        $structures = ['Completa', 'Semi Al Aire', 'Tres Piezas'];
         $materials = ['Pasta', 'TR-90', 'Acetato', 'Metal', 'Titanio', 'Aluminio'];
 
         $structureGroup = OptionGroup::firstOrCreate($this->scopedKey(['name' => 'Estructura']), ['is_required' => true, 'is_active' => true]);

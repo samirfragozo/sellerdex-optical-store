@@ -15,7 +15,7 @@ it('seeds a frame base with structured options and materializes its 18 known var
         ->and(OptionGroup::where('name', 'Estructura')->exists())->toBeTrue()
         ->and($base->variants()->count())->toBe(18);
 
-    $variant = Product::where('sku', 'MNT-COMPLETAS-ACETATO')->first();
+    $variant = Product::where('sku', 'MNT-COMPLETA-ACETATO')->first();
     expect($variant)->not->toBeNull()
         ->and($variant->base_product_id)->toBe($base->id)
         ->and($variant->variantOptions)->toHaveCount(2)

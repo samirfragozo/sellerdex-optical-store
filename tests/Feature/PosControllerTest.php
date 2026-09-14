@@ -453,7 +453,7 @@ it('accepts two armados where only one carries a frame', function () {
     $this->seed(ProductCatalogSeeder::class);
     $lensA = Product::where('sku', 'ML-MONOFOCAL')->first();
     $lensB = Product::where('sku', 'ML-PROGRESIVO')->first();
-    $frame = Product::where('sku', 'MNT-COMPLETAS-ACETATO')->first();
+    $frame = Product::where('sku', 'MNT-COMPLETA-ACETATO')->first();
     $customer = Customer::factory()->create();
     $seller = User::factory()->seller()->create();
     openCashRegisterSession($seller);

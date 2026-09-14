@@ -75,7 +75,7 @@ it('adds the free-exam surcharge and a $0 exam line', function () {
 });
 
 it('forces the montura line to $0 inside a combo and decrements its stock', function () {
-    $frame = Product::where('sku', 'MNT-COMPLETAS-ACETATO')->first();
+    $frame = Product::where('sku', 'MNT-COMPLETA-ACETATO')->first();
     $frame->update(['stock' => 5]);
 
     $sale = sellCombo(

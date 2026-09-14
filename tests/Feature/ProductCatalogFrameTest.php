@@ -16,8 +16,8 @@ it('seeds 18 frame templates that are stockable with zero stock', function () {
     expect($frames)->toHaveCount(18)
         ->and($frames->every(fn ($f) => $f->is_stockable === true && (int) $f->stock === 0))->toBeTrue();
 
-    $one = Product::where('sku', 'MNT-COMPLETAS-ACETATO')->first();
-    expect($one->specs['structure'])->toBe('Completas')
+    $one = Product::where('sku', 'MNT-COMPLETA-ACETATO')->first();
+    expect($one->specs['structure'])->toBe('Completa')
         ->and($one->specs['material'])->toBe('Acetato');
 
     $semiTr90 = Product::where('sku', 'MNT-SEMI-AL-AIRE-TR-90')->first();
