@@ -26,9 +26,9 @@ class ProductCategory extends Model
      */
     public const SYSTEM_CATEGORIES = [
         ['key' => 'lens', 'name' => 'Lentes', 'requires_prescription' => true, 'generates_lab_order' => true, 'is_made_to_order' => true],
-        ['key' => 'frame', 'name' => 'Montura', 'requires_prescription' => false, 'generates_lab_order' => false, 'is_made_to_order' => false],
-        ['key' => 'accessory', 'name' => 'Accesorio', 'requires_prescription' => false, 'generates_lab_order' => false, 'is_made_to_order' => false],
-        ['key' => 'service', 'name' => 'Servicio', 'requires_prescription' => false, 'generates_lab_order' => false, 'is_made_to_order' => false],
+        ['key' => 'frame', 'name' => 'Monturas', 'requires_prescription' => false, 'generates_lab_order' => false, 'is_made_to_order' => false],
+        ['key' => 'accessory', 'name' => 'Accesorios', 'requires_prescription' => false, 'generates_lab_order' => false, 'is_made_to_order' => false],
+        ['key' => 'service', 'name' => 'Servicios', 'requires_prescription' => false, 'generates_lab_order' => false, 'is_made_to_order' => false],
     ];
 
     /** A system category, or one that still has products, cannot be deleted. */

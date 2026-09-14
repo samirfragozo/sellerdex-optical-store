@@ -22,7 +22,7 @@ it('siembra las categorías de producto base sin duplicar', function () {
     $this->seed(ProductCategorySeeder::class);
 
     expect(ProductCategory::pluck('name')->all())
-        ->toContain('Lentes', 'Montura', 'Accesorio', 'Servicio')
+        ->toContain('Lentes', 'Monturas', 'Accesorios', 'Servicios')
         ->not->toContain('Filtro')
         ->not->toContain('Promoción')
         ->and(ProductCategory::where('name', 'Lentes')->count())->toBe(1);
