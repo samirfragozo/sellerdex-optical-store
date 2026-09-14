@@ -31,11 +31,7 @@ class PrescriptionFactory extends Factory
             'os_axis' => '0',
             'lens_type' => LensType::ExtendedRange->value,
             'filters' => ['Fotocromático', 'Antirreflejo Blue'],
-            'usage' => 'Prolongado',
-            'control_period' => 'Anual',
             'diagnosis' => 'Paciente refiere mala visión en VL y VP',
-            'drops' => null,
-            'lensometry' => null,
         ];
     }
 }

@@ -25,10 +25,6 @@
     </table>
     <p style="margin-top:8px">
         @if ($rx->lens_type) <strong>{{ __('app.fields.lens_type') }}:</strong> {{ $rx->lens_type->label() }}<br> @endif
-        @if ($rx->filters) <strong>{{ __('app.fields.filters') }}:</strong> {{ implode(', ', (array) $rx->filters) }}<br> @endif
-        @if ($rx->usage) <strong>{{ __('app.fields.usage') }}:</strong> {{ $rx->usage }}<br> @endif
-        @if ($rx->control_period) <strong>{{ __('app.documents.control') }}:</strong> {{ $rx->control_period }}<br> @endif
-        @if ($rx->drops) <strong>{{ __('app.fields.drops') }}:</strong> {{ $rx->drops }}<br> @endif
-        @if ($rx->lensometry) <strong>{{ __('app.fields.lensometry') }}:</strong> {{ $rx->lensometry }} @endif
+        @if ($rx->filters) <strong>{{ __('app.fields.filters') }}:</strong> {{ implode(', ', (array) $rx->filters) }} @endif
     </p>
 @endsection

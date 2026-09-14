@@ -77,12 +77,14 @@ class PrescriptionForm
                 ->prefix('+')
                 ->rule(new Diopter(0.25, 4)),
             TextInput::make("{$eye}_va")
-                ->label(__('app.fields.va')),
+                ->label(__('app.fields.va'))
+                ->maxLength(10),
             TextInput::make("{$eye}_pd")
                 ->label(__('app.fields.pd'))
                 ->numeric()
                 ->minValue(20)
-                ->maxValue(40),
+                ->maxValue(40)
+                ->rule(new Diopter(20, 40, 0.5)),
         ];
     }
 

@@ -343,6 +343,26 @@ it('rejects prescription diopters out of range or off-step', function () {
     ])->assertJsonValidationErrors(['prescription.od_sphere', 'prescription.os_sphere']);
 });
 
+it('rejects a pupillary distance off its 0.5 step or an overlong visual acuity value', function () {
+    $seller = User::factory()->seller()->create();
+    $customer = Customer::factory()->create();
+    $lens = lensProduct();
+
+    $this->actingAs($seller)->postJson('/pos', [
+        'customer_id' => $customer->id,
+        'document_type' => 'order',
+        'armados' => [[
+            'lens' => ['product_id' => $lens->id, 'description' => 'Lente', 'unit_price' => 100_000],
+            'own_frame' => true,
+        ]],
+        'prescription' => [
+            'exam_date' => '2026-06-20',
+            'od_pd' => '32.3',
+            'od_va' => str_repeat('x', 11),
+        ],
+    ])->assertJsonValidationErrors(['prescription.od_pd', 'prescription.od_va']);
+});
+
 it('requires the axis when a cylinder is provided', function () {
     $seller = User::factory()->seller()->create();
     $customer = Customer::factory()->create();

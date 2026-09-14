@@ -16,7 +16,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
     'company_id', 'customer_id', 'sale_id', 'created_by', 'exam_date',
     'od_sphere', 'od_cylinder', 'od_axis', 'od_add', 'od_va', 'od_pd',
     'os_sphere', 'os_cylinder', 'os_axis', 'os_add', 'os_va', 'os_pd',
-    'lens_type', 'filters', 'usage', 'control_period', 'diagnosis', 'drops', 'lensometry',
+    'lens_type', 'filters', 'diagnosis',
 ])]
 class Prescription extends Model
 {
