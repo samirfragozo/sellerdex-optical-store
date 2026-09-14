@@ -185,7 +185,7 @@ return [
     ],
 
     'lens_order_status' => [
-        'pending_assignment' => 'Pending assignment',
+        'pending_assignment' => 'Pending shipment to lab',
         'sent' => 'Sent',
         'in_process' => 'In process',
         'received' => 'Received',
