@@ -124,28 +124,6 @@ const chip = (active: boolean) =>
         </label>
 
         <div v-if="!ownFrame" class="flex flex-col gap-4">
-            <!-- Standalone frame products (no variants), e.g. sunglasses -->
-            <div>
-                <Label for="frame_product">{{
-                    trans('app.pos.frame_form.select_frame')
-                }}</Label>
-                <select
-                    id="frame_product"
-                    :value="frame && !pickedBase ? frame.product_id : ''"
-                    class="mt-1 h-9 w-full rounded-md border border-input bg-transparent px-2 py-1 text-sm shadow-xs outline-none focus-visible:ring-2 focus-visible:ring-ring/50 dark:bg-input/30"
-                    @change="onFrameSelect"
-                >
-                    <option value="">{{ trans('app.pos.none_option') }}</option>
-                    <option
-                        v-for="product in standaloneFrames"
-                        :key="product.id"
-                        :value="product.id"
-                    >
-                        {{ product.name }}
-                    </option>
-                </select>
-            </div>
-
             <!-- Frame bases with variants (structure, material, ...) -->
             <div v-if="variantBases.length > 0">
                 <span class="mb-1 block text-sm font-medium">{{
@@ -192,6 +170,28 @@ const chip = (active: boolean) =>
                 <p v-if="noVariant" class="mt-2 text-sm text-muted-foreground">
                     {{ trans('app.pos.frame_form.no_variant') }}
                 </p>
+            </div>
+
+            <!-- Standalone frame products (no variants), e.g. sunglasses -->
+            <div>
+                <Label for="frame_product">{{
+                    trans('app.pos.frame_form.select_frame')
+                }}</Label>
+                <select
+                    id="frame_product"
+                    :value="frame && !pickedBase ? frame.product_id : ''"
+                    class="mt-1 h-9 w-full rounded-md border border-input bg-transparent px-2 py-1 text-sm shadow-xs outline-none focus-visible:ring-2 focus-visible:ring-ring/50 dark:bg-input/30"
+                    @change="onFrameSelect"
+                >
+                    <option value="">{{ trans('app.pos.none_option') }}</option>
+                    <option
+                        v-for="product in standaloneFrames"
+                        :key="product.id"
+                        :value="product.id"
+                    >
+                        {{ product.name }}
+                    </option>
+                </select>
             </div>
         </div>
     </div>

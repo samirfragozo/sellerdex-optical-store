@@ -282,7 +282,7 @@ return [
 
         'frame_form' => [
             'own_frame_toggle' => 'Customer brings their own frame',
-            'select_frame' => 'Select frame',
+            'select_frame' => 'Sunglasses or another frame without variants',
             'pick_base' => 'Choose the frame base',
             'no_variant' => 'That combination does not exist in inventory yet.',
         ],
