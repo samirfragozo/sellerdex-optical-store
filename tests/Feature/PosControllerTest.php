@@ -775,3 +775,42 @@ it('returns a discount_percent validation error usable by the pos frontend', fun
     $response->assertJsonValidationErrors('discount_percent');
     expect($response->json('errors.discount_percent.0'))->toBeString()->not->toBeEmpty();
 });
+
+it('flags the sale response when a lens item generates a pending lab order', function () {
+    $company = Company::factory()->create();
+    $this->seed(ProductCategorySeeder::class);
+    $this->seed(ProductCatalogSeeder::class);
+    ProductCategory::withoutGlobalScopes()->whereNull('company_id')->update(['company_id' => $company->id]);
+    Product::withoutGlobalScopes()->whereNull('company_id')->update(['company_id' => $company->id]);
+
+    $lens = Product::where('sku', 'ML-MONOFOCAL')->first();
+    $customer = Customer::factory()->create();
+    $seller = User::factory()->forCompany($company)->seller()->create();
+    openCashRegisterSession($seller);
+
+    $response = $this->actingAs($seller)->postJson('/pos', [
+        'document_type' => 'order',
+        'customer_id' => $customer->id,
+        'prescription' => ['exam_date' => now()->toDateString(), 'od_sphere' => '-1.00'],
+        'armados' => [[
+            'lens' => ['product_id' => $lens->id, 'description' => $lens->name, 'unit_price' => $lens->price],
+            'own_frame' => true,
+        ]],
+    ])->assertOk();
+
+    expect($response->json('has_pending_lab_order'))->toBeTrue();
+});
+
+it('does not flag a plain-product sale as having a pending lab order', function () {
+    $seller = User::factory()->seller()->create();
+    openCashRegisterSession($seller);
+    $customer = Customer::factory()->create();
+
+    $response = $this->actingAs($seller)->postJson('/pos', [
+        'customer_id' => $customer->id,
+        'document_type' => 'order',
+        'products' => [['description' => 'Estuche', 'quantity' => 1, 'unit_price' => 10_000]],
+    ])->assertOk();
+
+    expect($response->json('has_pending_lab_order'))->toBeFalse();
+});

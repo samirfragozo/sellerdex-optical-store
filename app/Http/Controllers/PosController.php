@@ -184,6 +184,7 @@ class PosController extends Controller
             'invoice_url' => route('documents.invoice', $sale),
             'invoice_pdf_url' => route('documents.invoice.pdf', $sale),
             'formula_url' => $sale->prescription_id ? route('documents.formula', $sale->prescription_id) : null,
+            'has_pending_lab_order' => $sale->hasPendingLensWork(),
         ]);
     }
 
