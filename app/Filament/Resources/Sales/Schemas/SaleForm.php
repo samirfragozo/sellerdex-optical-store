@@ -41,11 +41,13 @@ class SaleForm
                     ->label(__('app.fields.sold_at'))
                     ->default(now())
                     ->required(),
-                TextInput::make('discount')
-                    ->label(__('app.fields.discount'))
+                TextInput::make('discount_percent')
+                    ->label(__('app.fields.discount_percent'))
                     ->numeric()
                     ->default(0)
-                    ->prefix('$'),
+                    ->minValue(0)
+                    ->maxValue(100)
+                    ->suffix('%'),
                 Placeholder::make('total')
                     ->label(__('app.fields.total'))
                     ->visibleOn('edit')

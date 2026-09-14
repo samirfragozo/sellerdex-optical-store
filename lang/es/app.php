@@ -132,6 +132,7 @@ return [
         'status' => 'Estado',
         'subtotal' => 'Subtotal',
         'discount' => 'Descuento',
+        'discount_percent' => 'Porcentaje de descuento',
         'tip' => 'Propina',
         'tax' => 'Impuesto',
         'total' => 'Total',

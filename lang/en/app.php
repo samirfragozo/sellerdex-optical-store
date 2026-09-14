@@ -129,6 +129,7 @@ return [
         'status' => 'Status',
         'subtotal' => 'Subtotal',
         'discount' => 'Discount',
+        'discount_percent' => 'Discount percentage',
         'tip' => 'Tip',
         'tax' => 'Tax',
         'total' => 'Total',
