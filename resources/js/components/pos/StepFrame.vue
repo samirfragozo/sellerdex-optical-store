@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, nextTick, ref, watch } from 'vue';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import type { ProductProp } from '@/composables/useLensCatalog';
@@ -62,6 +62,47 @@ function onFrameSelect(event: Event): void {
         };
     }
 }
+
+// When editing an existing armado, preselect the frame base and its options
+// that were already chosen instead of starting the wizard step blank.
+// Standalone frames (sunglasses) need no extra work: the <select> already
+// binds to `frame.product_id` directly.
+watch(
+    () => variantBases.value,
+    async (bases) => {
+        if (pickedBase.value || !frame.value || ownFrame.value) {
+            return;
+        }
+
+        for (const base of bases) {
+            const variant = base.variants.find(
+                (v) => v.id === frame.value?.product_id,
+            );
+
+            if (!variant) {
+                continue;
+            }
+
+            pickedBase.value = base;
+            await nextTick(); // let useProductOptions' own product watcher reset `selected` first.
+
+            const ids = new Set(variant.option_ids);
+            const selected: Record<number, number> = {};
+
+            for (const group of base.option_groups) {
+                const opt = group.options.find((o) => ids.has(o.id));
+
+                if (opt) {
+                    selected[group.id] = opt.id;
+                }
+            }
+
+            productOptions.selected.value = selected;
+            break;
+        }
+    },
+    { immediate: true },
+);
 
 watch(
     () => productOptions.optionIds.value,

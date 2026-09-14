@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, nextTick, ref, watch } from 'vue';
 import type {
     LensProduct,
     LensSpecs,
@@ -42,6 +42,40 @@ function pickLens(p: ProductProp): void {
         filter: '',
     };
 }
+
+// When editing an existing armado, preselect the lens and its options that
+// were already chosen instead of starting the wizard step blank.
+watch(
+    () => lenses.value,
+    async (candidates) => {
+        if (pickedLens.value || !resolvedLens.value) {
+            return;
+        }
+
+        const match = candidates.find((p) => p.id === resolvedLens.value?.id);
+
+        if (!match) {
+            return;
+        }
+
+        pickedLens.value = match;
+        await nextTick(); // let useProductOptions' own product watcher reset `selected` first.
+
+        const ids = new Set(resolvedLens.value.option_ids ?? []);
+        const selected: Record<number, number> = {};
+
+        for (const group of match.option_groups) {
+            const opt = group.options.find((o) => ids.has(o.id));
+
+            if (opt) {
+                selected[group.id] = opt.id;
+            }
+        }
+
+        pricing.selected.value = selected;
+    },
+    { immediate: true },
+);
 
 // ponytail: only the design chip reflects `recommended` (prescription-driven
 // hint); per-option (process/material/filter) highlighting was dropped when
