@@ -1,12 +1,11 @@
 <script setup lang="ts">
-import { computed, ref, toRef, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import type {
     LensProduct,
     LensSpecs,
     ProductProp,
 } from '@/composables/useLensCatalog';
-import { useLensCatalog } from '@/composables/useLensCatalog';
-import { useProductOptions } from '@/composables/useProductOptions';
+import { useLensOptionPricing } from '@/composables/useLensOptionPricing';
 import { useTranslations } from '@/composables/useTranslations';
 
 const { trans } = useTranslations();
@@ -26,66 +25,51 @@ const resolvedLens = defineModel<LensProduct | null>('resolvedLens', {
     default: null,
 });
 
-const catalog = useLensCatalog(toRef(props, 'products'));
-
-const processes = computed(() =>
-    selection.value.design ? catalog.processesFor(selection.value.design) : [],
+const lenses = computed<ProductProp[]>(() =>
+    props.products.filter(
+        (p) => p.category_key === 'lens' && p.option_groups.length > 0,
+    ),
 );
-const materials = computed(() =>
-    selection.value.design && selection.value.process
-        ? catalog.materialsFor(selection.value.design, selection.value.process)
-        : [],
-);
-const filters = computed(() =>
-    selection.value.design &&
-    selection.value.process &&
-    selection.value.material
-        ? catalog.filtersFor(
-              selection.value.design,
-              selection.value.process,
-              selection.value.material,
-          )
-        : [],
-);
+const pickedLens = ref<ProductProp | null>(null);
+const pricing = useLensOptionPricing(pickedLens);
 
-function isRecommended(dim: keyof LensSpecs, value: string): boolean {
-    return props.recommended?.[dim] === value;
-}
-
-// Reset downstream dimensions when an upstream one changes.
-function pickDesign(v: string) {
-    selection.value = { design: v, process: '', material: '', filter: '' };
-    pickedOptionLens.value = null;
-}
-
-function pickProcess(v: string) {
+function pickLens(p: ProductProp): void {
+    pickedLens.value = p;
     selection.value = {
-        ...selection.value,
-        process: v,
+        design: (p.specs?.design as string) ?? '',
+        process: '',
         material: '',
         filter: '',
     };
 }
 
-function pickMaterial(v: string) {
-    selection.value = { ...selection.value, material: v, filter: '' };
-}
-
-function pickFilter(v: string) {
-    selection.value = { ...selection.value, filter: v };
+// ponytail: only the design chip reflects `recommended` (prescription-driven
+// hint); per-option (process/material/filter) highlighting was dropped when
+// the flat lens catalog was replaced by option groups. Reinstate if a cashier
+// needs the star hint deeper in the flow.
+function isRecommendedDesign(p: ProductProp): boolean {
+    return props.recommended?.design === p.specs?.design;
 }
 
 watch(
-    selection,
-    (sel) => {
-        // Update the resolvedLens model BEFORE emitting change: the parent's @change handler reads resolvedLens.
-        resolvedLens.value =
-            sel.design && sel.process && sel.material && sel.filter
-                ? catalog.resolve(sel)
-                : null;
-        emit('change', sel);
+    () => pricing.optionIds.value,
+    () => {
+        if (!pricing.isComplete.value || !pickedLens.value) {
+            resolvedLens.value = null;
+
+            return;
+        }
+
+        resolvedLens.value = {
+            id: pickedLens.value.id,
+            name: pricing.resolvedName.value,
+            price: pricing.resolvedPrice.value,
+            cost: pricing.resolvedCost.value,
+            specs: pickedLens.value.specs as never,
+            option_ids: pricing.optionIds.value,
+        };
+        emit('change', selection.value);
     },
-    { deep: true },
 );
 
 const formatCOP = (value: number): string =>
@@ -99,47 +83,6 @@ const chip = (active: boolean) =>
             ? 'bg-primary text-primary-foreground'
             : 'border border-input bg-transparent hover:bg-accent',
     ].join(' ');
-
-const designs = catalog.designs;
-const noCombo = ref(false);
-
-const optionLenses = computed<ProductProp[]>(() =>
-    props.products.filter(
-        (p) => p.category_key === 'lens' && p.option_groups.length > 0,
-    ),
-);
-const pickedOptionLens = ref<ProductProp | null>(null);
-const productOptions = useProductOptions(pickedOptionLens);
-
-function pickOptionLens(p: ProductProp): void {
-    pickedOptionLens.value = p;
-    selection.value = { design: '', process: '', material: '', filter: '' };
-}
-
-watch(
-    () => productOptions.optionIds.value,
-    () => {
-        if (!productOptions.isComplete.value || !pickedOptionLens.value) {
-            resolvedLens.value = null;
-
-            return;
-        }
-
-        resolvedLens.value = {
-            id: pickedOptionLens.value.id,
-            name: productOptions.resolvedName.value,
-            price: productOptions.resolvedPrice.value,
-            cost: productOptions.resolvedCost.value,
-            specs: pickedOptionLens.value.specs as never,
-            option_ids: productOptions.optionIds.value,
-        };
-        emit('change', selection.value);
-    },
-);
-
-watch(filters, (f) => {
-    noCombo.value = selection.value.material !== '' && f.length === 0;
-});
 </script>
 
 <template>
@@ -153,46 +96,28 @@ watch(filters, (f) => {
             {{ w }}
         </div>
 
-        <!-- Diseño -->
+        <!-- Tipo de lente -->
         <div>
-            <span class="mb-1 block text-sm font-medium">{{
-                trans('app.pos.lens_form.design')
-            }}</span>
-            <div class="flex flex-wrap gap-2">
-                <button
-                    v-for="d in designs"
-                    :key="d"
-                    type="button"
-                    :class="chip(selection.design === d)"
-                    @click="pickDesign(d)"
-                >
-                    {{ d }}
-                    <span v-if="isRecommended('design', d)" class="ml-1 text-xs"
-                        >★</span
-                    >
-                </button>
-            </div>
-        </div>
-
-        <!-- Elegir por opciones (mecanismo nuevo, adicional al flujo de specs) -->
-        <div v-if="optionLenses.length > 0">
             <span class="mb-1 block text-sm font-medium">{{
                 trans('app.pos.lens_form.pick_lens')
             }}</span>
             <div class="flex flex-wrap gap-2">
                 <button
-                    v-for="p in optionLenses"
+                    v-for="p in lenses"
                     :key="p.id"
                     type="button"
-                    :class="chip(pickedOptionLens?.id === p.id)"
-                    @click="pickOptionLens(p)"
+                    :class="chip(pickedLens?.id === p.id)"
+                    @click="pickLens(p)"
                 >
                     {{ p.name }}
+                    <span v-if="isRecommendedDesign(p)" class="ml-1 text-xs"
+                        >★</span
+                    >
                 </button>
             </div>
 
             <div
-                v-for="group in pickedOptionLens?.option_groups ?? []"
+                v-for="group in pickedLens?.option_groups ?? []"
                 :key="group.id"
                 class="mt-3"
             >
@@ -204,81 +129,12 @@ watch(filters, (f) => {
                         v-for="opt in group.options"
                         :key="opt.id"
                         type="button"
-                        :class="
-                            chip(productOptions.selected.value[group.id] === opt.id)
-                        "
-                        @click="productOptions.select(group.id, opt.id)"
+                        :class="chip(pricing.selected.value[group.id] === opt.id)"
+                        @click="pricing.select(group.id, opt.id)"
                     >
                         {{ opt.name }}
                     </button>
                 </div>
-            </div>
-        </div>
-
-        <!-- Gama / proceso -->
-        <div v-if="selection.design">
-            <span class="mb-1 block text-sm font-medium">{{
-                trans('app.pos.lens_form.range')
-            }}</span>
-            <div class="flex flex-wrap gap-2">
-                <button
-                    v-for="p in processes"
-                    :key="p"
-                    type="button"
-                    :class="chip(selection.process === p)"
-                    @click="pickProcess(p)"
-                >
-                    {{ p }}
-                    <span
-                        v-if="isRecommended('process', p)"
-                        class="ml-1 text-xs"
-                        >★</span
-                    >
-                </button>
-            </div>
-        </div>
-
-        <!-- Material -->
-        <div v-if="selection.process">
-            <span class="mb-1 block text-sm font-medium">{{
-                trans('app.pos.lens_form.material')
-            }}</span>
-            <div class="flex flex-wrap gap-2">
-                <button
-                    v-for="m in materials"
-                    :key="m"
-                    type="button"
-                    :class="chip(selection.material === m)"
-                    @click="pickMaterial(m)"
-                >
-                    {{ m }}
-                    <span
-                        v-if="isRecommended('material', m)"
-                        class="ml-1 text-xs"
-                        >★</span
-                    >
-                </button>
-            </div>
-        </div>
-
-        <!-- Filtro -->
-        <div v-if="selection.material">
-            <span class="mb-1 block text-sm font-medium">{{
-                trans('app.pos.lens_form.filter')
-            }}</span>
-            <div class="flex flex-wrap gap-2">
-                <button
-                    v-for="f in filters"
-                    :key="f"
-                    type="button"
-                    :class="chip(selection.filter === f)"
-                    @click="pickFilter(f)"
-                >
-                    {{ f }}
-                    <span v-if="isRecommended('filter', f)" class="ml-1 text-xs"
-                        >★</span
-                    >
-                </button>
             </div>
         </div>
 
@@ -292,8 +148,5 @@ watch(filters, (f) => {
                 formatCOP(resolvedLens.price)
             }}</span>
         </div>
-        <p v-else-if="noCombo" class="text-sm text-muted-foreground">
-            {{ trans('app.pos.lens_form.no_combo') }}
-        </p>
     </div>
 </template>
