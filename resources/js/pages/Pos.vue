@@ -54,6 +54,7 @@ interface PrescriptionOption {
 
 const props = defineProps<{
     products: PaginatedProducts;
+    armadoProducts: ProductProp[];
     categories: { id: number; name: string; key: string }[];
     paymentMethods: PaymentMethod[];
     customers: Customer[];
@@ -165,8 +166,11 @@ const documentTypes = [
 ];
 
 // --- Frame products (used inside the armado modal) ---
+// Sourced from armadoProducts (unpaginated, option groups intact) rather
+// than products.data: the general catalog grid excludes option-group
+// products, but the armado wizard needs them to offer color/filter picks.
 const frameProducts = computed<ProductProp[]>(() =>
-    props.products.data.filter((p) => p.category_key === 'frame'),
+    props.armadoProducts.filter((p) => p.category_key === 'frame'),
 );
 
 // Lenses are only selectable through the armado wizard, not as loose
@@ -451,7 +455,7 @@ async function confirmCheckout(): Promise<void> {
                         ? (resolvedLenses[editingArmadoId] ?? null)
                         : null
                 "
-                :products="products.data"
+                :products="armadoProducts"
                 :frame-products="frameProducts"
                 :recommended="recommended"
                 :warnings="warnings"

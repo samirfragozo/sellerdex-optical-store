@@ -612,13 +612,36 @@ it('includes lens product option groups on the pos payload', function () {
     $lens->optionGroups()->attach($group->id, ['sort_order' => 1]);
 
     $response = $this->get('/pos');
-    $products = collect($response->viewData('page')['props']['products']['data']);
+    $products = collect($response->viewData('page')['props']['armadoProducts']);
     $lensData = $products->firstWhere('id', $lens->id);
 
     expect($lensData)->not->toBeNull()
         ->and($lensData['option_groups'])->toHaveCount(1)
         ->and($lensData['option_groups'][0]['options'])->toHaveCount(1)
         ->and($lensData['option_groups'][0]['options'][0]['name'])->toBe('Blue Cut');
+});
+
+it('excludes products with an active option group from the pos catalog payload and pagination count', function () {
+    $seller = User::factory()->seller()->create();
+    $group = OptionGroup::factory()->create(['company_id' => $seller->company_id, 'is_active' => true]);
+    $withGroup = Product::factory()->create([
+        'company_id' => $seller->company_id,
+        'is_active' => true,
+        'is_pos_selectable' => true,
+    ]);
+    $withGroup->optionGroups()->attach($group->id, ['sort_order' => 1]);
+
+    $plain = Product::factory()->create([
+        'company_id' => $seller->company_id,
+        'is_active' => true,
+        'is_pos_selectable' => true,
+    ]);
+
+    $response = $this->actingAs($seller)->get('/pos')->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->has('products.data', 1)
+        ->where('products.meta.total', 1)
+        ->where('products.data.0.id', $plain->id));
 });
 
 it('includes frame variant products on the pos payload', function () {
@@ -644,7 +667,7 @@ it('includes frame variant products on the pos payload', function () {
     $variant->variantOptions()->attach($option->id);
 
     $response = $this->get('/pos');
-    $products = collect($response->viewData('page')['props']['products']['data']);
+    $products = collect($response->viewData('page')['props']['armadoProducts']);
     $baseData = $products->firstWhere('id', $base->id);
 
     expect($baseData)->not->toBeNull()
