@@ -4,6 +4,8 @@ namespace App\Providers;
 
 use BezhanSalleh\LanguageSwitch\LanguageSwitch;
 use Carbon\CarbonImmutable;
+use Illuminate\Auth\Notifications\ResetPassword;
+use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
@@ -27,6 +29,25 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->configureDefaults();
         $this->configureLanguageSwitch();
+        $this->configureMail();
+    }
+
+    /**
+     * Send system emails translated into the currently active locale.
+     */
+    protected function configureMail(): void
+    {
+        ResetPassword::toMailUsing(function (object $notifiable, string $url): MailMessage {
+            $expireMinutes = config('auth.passwords.users.expire');
+
+            return (new MailMessage)
+                ->subject(__('mail.reset_password.subject'))
+                ->greeting(__('mail.reset_password.greeting'))
+                ->line(__('mail.reset_password.line_1'))
+                ->action(__('mail.reset_password.action'), $url)
+                ->line(__('mail.reset_password.line_2', ['count' => $expireMinutes]))
+                ->line(__('mail.reset_password.line_3'));
+        });
     }
 
     /**
