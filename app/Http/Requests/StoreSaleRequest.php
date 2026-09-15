@@ -13,7 +13,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
-class StorePosSaleRequest extends FormRequest
+class StoreSaleRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

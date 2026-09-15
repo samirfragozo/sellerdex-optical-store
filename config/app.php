@@ -86,6 +86,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Supported Locales
+    |--------------------------------------------------------------------------
+    |
+    | Locales the user can switch to, shared by the app's own locale switch
+    | and the Filament language switch (see AppServiceProvider).
+    |
+    */
+
+    'supported_locales' => ['es', 'en'],
+
+    /*
+    |--------------------------------------------------------------------------
     | Encryption Key
     |--------------------------------------------------------------------------
     |

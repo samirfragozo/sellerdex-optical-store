@@ -64,4 +64,38 @@ class CashRegisterSession extends Model
             ->where($field ?? $this->getRouteKeyName(), $value)
             ->first();
     }
+
+    /** Cash payments received by this session's cashier since it opened. */
+    public function cashCollected(): int
+    {
+        $cashMethodId = PaymentMethod::where('is_default', true)->value('id');
+
+        return $cashMethodId
+            ? (int) Payment::where('received_by', $this->user_id)
+                ->where('payment_method_id', $cashMethodId)
+                ->where('created_at', '>=', $this->opened_at)
+                ->sum('amount')
+            : 0;
+    }
+
+    public function expectedCash(): int
+    {
+        return $this->opening_cash + $this->cashCollected();
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function toSummary(): array
+    {
+        return [
+            'id' => $this->id,
+            'opened_at' => $this->opened_at->toIso8601String(),
+            'opening_cash' => $this->opening_cash,
+            'closed_at' => $this->closed_at?->toIso8601String(),
+            'closed_cash' => $this->closed_cash,
+            'expected_cash' => $this->expected_cash,
+            'difference' => $this->difference,
+        ];
+    }
 }

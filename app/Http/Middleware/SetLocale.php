@@ -2,7 +2,6 @@
 
 namespace App\Http\Middleware;
 
-use App\Http\Controllers\LocaleController;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -19,7 +18,7 @@ class SetLocale
         $locale = $request->session()->get('locale')
             ?? $request->cookie('filament_language_switch_locale');
 
-        if (in_array($locale, LocaleController::SUPPORTED, true)) {
+        if (in_array($locale, config('app.supported_locales'), true)) {
             app()->setLocale($locale);
         }
 
