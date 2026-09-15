@@ -17,7 +17,7 @@ const isOpen = usePage().props.sidebarOpen;
 <template>
     <div
         v-if="variant === 'header'"
-        class="flex min-h-screen w-full flex-col bg-zinc-50 dark:bg-zinc-950"
+        class="flex h-dvh w-full flex-col bg-zinc-50 dark:bg-zinc-950"
     >
         <slot />
     </div>

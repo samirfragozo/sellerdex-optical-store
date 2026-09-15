@@ -81,7 +81,7 @@ function onCategoryClick(key: string | null): void {
 </script>
 
 <template>
-    <div class="flex h-full flex-col">
+    <div class="flex h-full min-h-0 flex-col">
         <div
             class="border-b border-sidebar-border/70 bg-white p-3 dark:border-sidebar-border dark:bg-zinc-900"
         >

@@ -361,7 +361,7 @@ async function confirmCheckout(): Promise<void> {
         <!-- Catalog -->
         <div
             :class="[
-                'h-full w-full min-w-sm flex-col transition-all duration-300',
+                'h-full min-h-0 w-full min-w-sm flex-col transition-all duration-300',
                 showMobileCart ? 'hidden md:flex' : 'flex',
             ]"
         >
@@ -376,165 +376,176 @@ async function confirmCheckout(): Promise<void> {
         <!-- Cart -->
         <div
             :class="[
-                'h-full min-w-sm flex-col gap-4 overflow-y-auto border-l border-sidebar-border/70 p-4 dark:border-sidebar-border',
+                'h-full min-h-0 min-w-sm flex-col border-l border-sidebar-border/70 dark:border-sidebar-border',
                 showMobileCart ? 'flex w-full' : 'hidden md:flex',
             ]"
         >
-            <div class="flex items-center justify-between gap-3">
-                <div class="flex items-center gap-2">
-                    <ShoppingCart class="size-5 text-muted-foreground" />
-                    <h1 class="text-lg font-semibold">
-                        {{ trans('app.pos.title') }}
-                    </h1>
+            <div
+                class="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-4"
+            >
+                <div class="flex items-center justify-between gap-3">
+                    <div class="flex items-center gap-2">
+                        <ShoppingCart class="size-5 text-muted-foreground" />
+                        <h1 class="text-lg font-semibold">
+                            {{ trans('app.pos.title') }}
+                        </h1>
+                    </div>
+                    <Button
+                        v-if="showMobileCart"
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        class="md:hidden"
+                        @click="showMobileCart = false"
+                    >
+                        {{ trans('app.pos.catalog.all_categories') }}
+                    </Button>
                 </div>
-                <Button
-                    v-if="showMobileCart"
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    class="md:hidden"
-                    @click="showMobileCart = false"
-                >
-                    {{ trans('app.pos.catalog.all_categories') }}
-                </Button>
-            </div>
 
-            <SaleCreatedPanel
-                v-if="createdSale"
-                :sale="createdSale"
-                @dismiss="createdSale = null"
-            />
+                <SaleCreatedPanel
+                    v-if="createdSale"
+                    :sale="createdSale"
+                    @dismiss="createdSale = null"
+                />
 
-            <StepCustomer
-                v-model:customer-mode="customerMode"
-                v-model:customer-id="customerId"
-                :customers="customers"
-                :today="today"
-                @customer-created="onCustomerCreated"
-            />
+                <StepCustomer
+                    v-model:customer-mode="customerMode"
+                    v-model:customer-id="customerId"
+                    :customers="customers"
+                    :today="today"
+                    @customer-created="onCustomerCreated"
+                />
 
-            <template v-if="cart.armados.value.length > 0">
+                <template v-if="cart.armados.value.length > 0">
+                    <div
+                        v-for="armado in cart.armados.value"
+                        :key="armado.id"
+                        class="flex items-center justify-between gap-2 rounded-xl border border-sidebar-border/70 bg-white p-3 dark:border-sidebar-border dark:bg-zinc-900"
+                    >
+                        <div class="min-w-0 flex-1">
+                            <p class="truncate text-sm font-medium">
+                                {{ armado.lens?.description }}
+                            </p>
+                            <p class="truncate text-xs text-muted-foreground">
+                                {{
+                                    armado.own_frame
+                                        ? trans('app.pos.summary.own_frame')
+                                        : (armado.frame?.description ??
+                                          trans('app.pos.none_option'))
+                                }}
+                            </p>
+                        </div>
+                        <Input
+                            :model-value="armadoTotal(armado)"
+                            type="number"
+                            min="0"
+                            class="w-28 shrink-0 text-right"
+                            :aria-label="trans('app.pos.edit_armado_price')"
+                            @update:model-value="
+                                (value) =>
+                                    updateArmadoTotal(armado, Number(value))
+                            "
+                        />
+                        <div class="flex shrink-0 items-center gap-1">
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                @click="openArmadoModal(armado.id)"
+                            >
+                                {{ trans('app.pos.edit_armado') }}
+                            </Button>
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                class="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                                @click="removeArmado(armado.id)"
+                            >
+                                {{ trans('app.pos.remove_armado') }}
+                            </Button>
+                        </div>
+                    </div>
+                </template>
+
+                <ArmadoModal
+                    :open="armadoModalOpen"
+                    :armado="editingArmado"
+                    :lens-selection="
+                        editingArmadoId !== null
+                            ? (lensSelections[editingArmadoId] ?? null)
+                            : null
+                    "
+                    :resolved-lens="
+                        editingArmadoId !== null
+                            ? (resolvedLenses[editingArmadoId] ?? null)
+                            : null
+                    "
+                    :products="armadoProducts"
+                    :frame-products="frameProducts"
+                    :recommended="recommended"
+                    :warnings="warnings"
+                    :customer-prescriptions="customerPrescriptions"
+                    :lens-needs-customer="lensNeedsCustomer"
+                    :today="today"
+                    :min-exam-date="minExamDate"
+                    v-model:prescription-mode="prescriptionMode"
+                    v-model:prescription-id="prescriptionId"
+                    v-model:prescription="newPrescription"
+                    @update:open="armadoModalOpen = $event"
+                    @refresh-recommendation="onRefreshRecommendation"
+                    @save="onArmadoSave"
+                />
+
                 <div
-                    v-for="armado in cart.armados.value"
-                    :key="armado.id"
-                    class="flex items-center justify-between gap-2 rounded-xl border border-sidebar-border/70 bg-white p-3 dark:border-sidebar-border dark:bg-zinc-900"
+                    v-if="cart.products.value.length > 0"
+                    class="flex flex-col gap-2 rounded-xl border border-sidebar-border/70 bg-white p-3 dark:border-sidebar-border dark:bg-zinc-900"
                 >
-                    <div class="min-w-0 flex-1">
-                        <p class="truncate text-sm font-medium">
-                            {{ armado.lens?.description }}
-                        </p>
-                        <p class="truncate text-xs text-muted-foreground">
-                            {{
-                                armado.own_frame
-                                    ? trans('app.pos.summary.own_frame')
-                                    : (armado.frame?.description ??
-                                      trans('app.pos.none_option'))
-                            }}
-                        </p>
-                    </div>
-                    <Input
-                        :model-value="armadoTotal(armado)"
-                        type="number"
-                        min="0"
-                        class="w-28 shrink-0 text-right"
-                        :aria-label="trans('app.pos.edit_armado_price')"
-                        @update:model-value="
-                            (value) => updateArmadoTotal(armado, Number(value))
+                    <CartItemRow
+                        v-for="(item, idx) in cart.products.value"
+                        :key="idx"
+                        :item="item"
+                        :products="looseProducts"
+                        @update:item="
+                            (value) => (cart.products.value[idx] = value)
                         "
+                        @remove="removeLooseProduct(idx)"
                     />
-                    <div class="flex shrink-0 items-center gap-1">
-                        <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            @click="openArmadoModal(armado.id)"
-                        >
-                            {{ trans('app.pos.edit_armado') }}
-                        </Button>
-                        <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            class="text-destructive hover:bg-destructive/10 hover:text-destructive"
-                            @click="removeArmado(armado.id)"
-                        >
-                            {{ trans('app.pos.remove_armado') }}
-                        </Button>
-                    </div>
                 </div>
-            </template>
-
-            <ArmadoModal
-                :open="armadoModalOpen"
-                :armado="editingArmado"
-                :lens-selection="
-                    editingArmadoId !== null
-                        ? (lensSelections[editingArmadoId] ?? null)
-                        : null
-                "
-                :resolved-lens="
-                    editingArmadoId !== null
-                        ? (resolvedLenses[editingArmadoId] ?? null)
-                        : null
-                "
-                :products="armadoProducts"
-                :frame-products="frameProducts"
-                :recommended="recommended"
-                :warnings="warnings"
-                :customer-prescriptions="customerPrescriptions"
-                :lens-needs-customer="lensNeedsCustomer"
-                :today="today"
-                :min-exam-date="minExamDate"
-                v-model:prescription-mode="prescriptionMode"
-                v-model:prescription-id="prescriptionId"
-                v-model:prescription="newPrescription"
-                @update:open="armadoModalOpen = $event"
-                @refresh-recommendation="onRefreshRecommendation"
-                @save="onArmadoSave"
-            />
+            </div>
 
             <div
-                v-if="cart.products.value.length > 0"
-                class="flex flex-col gap-2 rounded-xl border border-sidebar-border/70 bg-white p-3 dark:border-sidebar-border dark:bg-zinc-900"
+                class="flex shrink-0 flex-col gap-4 border-t border-sidebar-border/70 p-4 dark:border-sidebar-border"
             >
-                <CartItemRow
-                    v-for="(item, idx) in cart.products.value"
-                    :key="idx"
-                    :item="item"
-                    :products="looseProducts"
-                    @update:item="(value) => (cart.products.value[idx] = value)"
-                    @remove="removeLooseProduct(idx)"
+                <CartSummary
+                    v-model:discount-percent="cart.discountPercent.value"
+                    v-model:tip-percent="cart.tipPercent.value"
+                    :armados="cart.armados.value"
+                    :products="cart.products.value"
+                    :subtotal="cart.subtotal.value"
+                    :total="cart.total.value"
+                    :discount-amount="cart.discountAmount.value"
+                    :tax-amount="cart.taxAmount.value"
+                    :tip-amount="cart.tipAmount.value"
+                    :surcharge-percent="cart.surchargePercent.value"
+                    :balance="cart.total.value"
+                    :discount-error="checkout.errors.value.discount_percent"
+                    :format-c-o-p="formatCOP"
                 />
+
+                <Button
+                    type="button"
+                    class="w-full"
+                    :disabled="
+                        (cart.armados.value.length === 0 &&
+                            cart.products.value.length === 0) ||
+                        session === null
+                    "
+                    @click="checkoutModalOpen = true"
+                >
+                    {{ trans('app.pos.checkout.title') }}
+                </Button>
             </div>
-
-            <CartSummary
-                v-model:discount-percent="cart.discountPercent.value"
-                v-model:tip-percent="cart.tipPercent.value"
-                :armados="cart.armados.value"
-                :products="cart.products.value"
-                :subtotal="cart.subtotal.value"
-                :total="cart.total.value"
-                :discount-amount="cart.discountAmount.value"
-                :tax-amount="cart.taxAmount.value"
-                :tip-amount="cart.tipAmount.value"
-                :surcharge-percent="cart.surchargePercent.value"
-                :balance="cart.total.value"
-                :discount-error="checkout.errors.value.discount_percent"
-                :format-c-o-p="formatCOP"
-            />
-
-            <Button
-                type="button"
-                class="w-full"
-                :disabled="
-                    (cart.armados.value.length === 0 &&
-                        cart.products.value.length === 0) ||
-                    session === null
-                "
-                @click="checkoutModalOpen = true"
-            >
-                {{ trans('app.pos.checkout.title') }}
-            </Button>
         </div>
 
         <!-- Mobile cart toggle -->
