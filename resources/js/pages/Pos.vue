@@ -93,6 +93,10 @@ function onCustomerCreated(customer: Customer): void {
     customers.value = [customer, ...customers.value];
 }
 
+// Seeded from the page prop, then grown locally as prescriptions are
+// created on the fly during checkout — no full page reload needed.
+const prescriptions = ref<PrescriptionOption[]>([...props.prescriptions]);
+
 watch(customerMode, (mode) => {
     if (mode !== 'existing') {
         customerId.value = null;
@@ -119,7 +123,7 @@ const newPrescription = ref({
 const customerPrescriptions = computed<PrescriptionOption[]>(() =>
     customerId.value === null
         ? []
-        : props.prescriptions.filter((p) => p.customer_id === customerId.value),
+        : prescriptions.value.filter((p) => p.customer_id === customerId.value),
 );
 
 const lensNeedsCustomer = computed(() => customerMode.value === 'none');
@@ -299,6 +303,23 @@ async function confirmCheckout(): Promise<void> {
 
     if (result === null) {
         return;
+    }
+
+    if (
+        result.prescription_id !== null &&
+        prescriptionMode.value === 'new' &&
+        customerId.value !== null
+    ) {
+        prescriptions.value = [
+            {
+                id: result.prescription_id,
+                customer_id: customerId.value,
+                exam_date: newPrescription.value.exam_date,
+                lens_type: newPrescription.value.lens_type,
+                summary: `OD ${newPrescription.value.od_sphere || '—'} / OS ${newPrescription.value.os_sphere || '—'}`,
+            },
+            ...prescriptions.value,
+        ];
     }
 
     createdSale.value = result;

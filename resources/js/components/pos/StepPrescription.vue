@@ -138,7 +138,7 @@ function onRefractionChange(): void {
             <div v-else class="flex flex-col gap-3">
                 <div class="grid gap-3 sm:grid-cols-2">
                     <div>
-                        <Label for="rx_exam_date">{{
+                        <Label for="rx_exam_date" class="text-xs">{{
                             trans('app.fields.exam_date')
                         }}</Label>
                         <Input
@@ -147,7 +147,7 @@ function onRefractionChange(): void {
                             type="date"
                             :min="props.minExamDate"
                             :max="props.today"
-                            class="mt-1 w-full"
+                            class="mt-1 h-8 w-full text-sm"
                         />
                         <InputError
                             class="mt-1"
@@ -155,13 +155,13 @@ function onRefractionChange(): void {
                         />
                     </div>
                     <div>
-                        <Label for="rx_lens_type">{{
+                        <Label for="rx_lens_type" class="text-xs">{{
                             trans('app.fields.lens_type')
                         }}</Label>
                         <select
                             id="rx_lens_type"
                             v-model="prescription.lens_type"
-                            class="mt-1 h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs outline-none focus-visible:ring-2 focus-visible:ring-ring/50 dark:bg-input/30"
+                            class="mt-1 h-8 w-full rounded-md border border-input bg-transparent px-2 py-1 text-sm shadow-xs outline-none focus-visible:ring-2 focus-visible:ring-ring/50 dark:bg-input/30"
                         >
                             <option value="">
                                 {{ trans('app.pos.select_option') }}
@@ -189,7 +189,7 @@ function onRefractionChange(): void {
                 <!-- Refraction grid -->
                 <div class="overflow-x-auto">
                     <div
-                        class="grid min-w-[26rem] grid-cols-[2rem_1fr_1fr_1fr_1fr] gap-2 text-xs font-medium text-muted-foreground"
+                        class="grid min-w-[22rem] grid-cols-[1.5rem_1fr_1fr_1fr_1fr] gap-1.5 text-xs font-medium text-muted-foreground"
                     >
                         <span></span>
                         <span>{{ trans('app.fields.sphere') }}</span>
@@ -198,9 +198,9 @@ function onRefractionChange(): void {
                         <span>{{ trans('app.fields.add') }}</span>
                     </div>
                     <div
-                        class="mt-1 grid min-w-[26rem] grid-cols-[2rem_1fr_1fr_1fr_1fr] items-center gap-2"
+                        class="mt-1 grid min-w-[22rem] grid-cols-[1.5rem_1fr_1fr_1fr_1fr] items-center gap-1.5"
                     >
-                        <span class="text-sm font-medium">OD</span>
+                        <span class="text-xs font-medium">OD</span>
                         <DiopterInput
                             v-model="prescription.od_sphere"
                             :min="0"
@@ -218,7 +218,7 @@ function onRefractionChange(): void {
                             type="number"
                             min="1"
                             max="180"
-                            class="w-full text-right"
+                            class="h-8 w-full px-1.5 text-right text-xs"
                             @update:model-value="onRefractionChange"
                         />
                         <DiopterInput
@@ -230,9 +230,9 @@ function onRefractionChange(): void {
                         />
                     </div>
                     <div
-                        class="mt-2 grid min-w-[26rem] grid-cols-[2rem_1fr_1fr_1fr_1fr] items-center gap-2"
+                        class="mt-1.5 grid min-w-[22rem] grid-cols-[1.5rem_1fr_1fr_1fr_1fr] items-center gap-1.5"
                     >
-                        <span class="text-sm font-medium">OS</span>
+                        <span class="text-xs font-medium">OS</span>
                         <DiopterInput
                             v-model="prescription.os_sphere"
                             :min="0"
@@ -250,7 +250,7 @@ function onRefractionChange(): void {
                             type="number"
                             min="1"
                             max="180"
-                            class="w-full text-right"
+                            class="h-8 w-full px-1.5 text-right text-xs"
                             @update:model-value="onRefractionChange"
                         />
                         <DiopterInput

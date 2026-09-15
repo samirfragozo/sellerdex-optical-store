@@ -65,7 +65,7 @@ function setSign(next: '+' | '-'): void {
 
 function signClass(value: '+' | '-'): string {
     return [
-        'flex h-9 w-8 items-center justify-center border border-input text-sm font-semibold transition-colors',
+        'flex h-8 w-6 shrink-0 items-center justify-center border border-input text-xs font-semibold transition-colors',
         sign.value === value
             ? 'bg-primary text-primary-foreground'
             : 'bg-transparent hover:bg-accent',
@@ -78,7 +78,7 @@ function signClass(value: '+' | '-'): string {
         <!-- Fixed sign (e.g. Add is always positive) -->
         <span
             v-if="fixedSign"
-            class="flex h-9 w-8 items-center justify-center rounded-l-md border border-r-0 border-input bg-muted text-sm font-semibold text-muted-foreground"
+            class="flex h-8 w-6 shrink-0 items-center justify-center rounded-l-md border border-r-0 border-input bg-muted text-xs font-semibold text-muted-foreground"
         >
             {{ fixedSign === '-' ? '−' : '+' }}
         </span>
@@ -105,7 +105,7 @@ function signClass(value: '+' | '-'): string {
             :max="max"
             :step="step"
             :placeholder="placeholder"
-            class="h-9 w-full min-w-0 rounded-r-md border border-input bg-transparent px-2 py-1 text-right text-sm shadow-xs outline-none focus-visible:ring-2 focus-visible:ring-ring/50 dark:bg-input/30"
+            class="h-8 w-full min-w-0 rounded-r-md border border-input bg-transparent px-1.5 py-1 text-right text-xs shadow-xs outline-none focus-visible:ring-2 focus-visible:ring-ring/50 dark:bg-input/30"
             @input="emitValue"
         />
     </div>
