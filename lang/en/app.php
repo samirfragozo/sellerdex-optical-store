@@ -230,9 +230,6 @@ return [
         'created' => 'Sale :number created successfully',
         'lab_order_pending_notice' => 'A pending lab order was generated for the lens sold.',
         'view_cart' => 'View cart',
-        'no_customer' => 'No customer',
-        'new_customer' => 'New customer',
-        'existing_customer' => 'Existing customer',
         'selected_customer' => 'Selected customer',
         'take_payment' => 'Take payment',
         'save' => 'Save sale',
@@ -299,7 +296,8 @@ return [
 
         'customer_form' => [
             'select_customer' => 'Select customer',
-            'no_customer_option' => '— No customer —',
+            'search_placeholder' => 'Search by name or ID number...',
+            'no_results' => 'No customers found.',
             'no_customer_notice' => 'The sale will be recorded without a customer.',
             'id_number_placeholder' => 'Number',
             'phone_placeholder' => '3001234567',

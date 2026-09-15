@@ -1,10 +1,16 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { useDebounceFn } from '@vueuse/core';
+import { computed, ref, watch } from 'vue';
 import InputError from '@/components/InputError.vue';
 import CreateCustomerModal from '@/components/pos/CreateCustomerModal.vue';
+import { Button } from '@/components/ui/button';
+import { Combobox } from '@/components/ui/combobox';
+import type { ComboboxOption } from '@/components/ui/combobox';
 import { Label } from '@/components/ui/label';
 import type { CreatedCustomer } from '@/composables/useCreateCustomer';
 import { useTranslations } from '@/composables/useTranslations';
+import { csrfFetch } from '@/lib/csrfFetch';
+import { search as searchCustomers } from '@/routes/pos/customers';
 
 const { trans } = useTranslations();
 
@@ -16,87 +22,110 @@ interface Customer {
 }
 
 const props = defineProps<{
-    customers: Customer[];
     errors?: { customer_id?: string };
     today?: string;
 }>();
 
-const emit = defineEmits<{ 'customer-created': [CreatedCustomer] }>();
-
-const customerMode = defineModel<'none' | 'existing'>('customerMode', {
-    required: true,
-});
 const customerId = defineModel<number | null>('customerId', { required: true });
 
+const selectedCustomer = ref<Customer | null>(null);
+const results = ref<Customer[]>([]);
+const isSearching = ref(false);
 const showCreateModal = ref(false);
 
+const customerLabel = (customer: Customer): string =>
+    `${customer.name} ${customer.last_name}`.trim() +
+    (customer.id_number ? ` — ${customer.id_number}` : '');
+
+const items = computed<ComboboxOption[]>(() =>
+    results.value.map((c) => ({ value: c.id, label: customerLabel(c) })),
+);
+
+async function runSearch(query: string): Promise<void> {
+    if (query.trim() === '') {
+        results.value = [];
+
+        return;
+    }
+
+    isSearching.value = true;
+
+    try {
+        const response = await csrfFetch(
+            searchCustomers.url({ query: { q: query } }),
+        );
+        results.value = response.ok
+            ? ((await response.json()) as Customer[])
+            : [];
+    } finally {
+        isSearching.value = false;
+    }
+}
+
+const debouncedSearch = useDebounceFn(runSearch, 400);
+
+function onSelect(id: number | null): void {
+    customerId.value = id;
+    selectedCustomer.value =
+        id === null
+            ? null
+            : (results.value.find((c) => c.id === id) ??
+              selectedCustomer.value);
+}
+
+// The parent resets customerId to null after a sale completes — clear the
+// stale label/results so the field visually resets too, instead of still
+// showing the previous customer's name.
+watch(customerId, (id) => {
+    if (id === null) {
+        selectedCustomer.value = null;
+        results.value = [];
+    }
+});
+
 function onCustomerCreated(customer: CreatedCustomer): void {
-    emit('customer-created', customer);
-    customerMode.value = 'existing';
     customerId.value = customer.id;
+    selectedCustomer.value = customer;
+    results.value = [customer];
+    showCreateModal.value = false;
 }
 </script>
 
 <template>
     <div>
-        <!-- Toggle buttons -->
-        <div class="mb-4 flex flex-wrap gap-2">
-            <button
+        <Label for="customer_id">{{
+            trans('app.pos.customer_form.select_customer')
+        }}</Label>
+        <div class="mt-1 flex items-center gap-2">
+            <Combobox
+                id="customer_id"
+                class="flex-1"
+                :items="items"
+                :model-value="customerId"
+                :model-label="
+                    selectedCustomer ? customerLabel(selectedCustomer) : ''
+                "
+                :loading="isSearching"
+                :placeholder="trans('app.pos.customer_form.search_placeholder')"
+                :empty-text="trans('app.pos.customer_form.no_results')"
+                @update:model-value="onSelect"
+                @search="debouncedSearch"
+            />
+            <Button
                 type="button"
-                :class="[
-                    'rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
-                    customerMode === 'none'
-                        ? 'bg-primary text-primary-foreground'
-                        : 'border border-input bg-transparent hover:bg-accent',
-                ]"
-                @click="customerMode = 'none'"
-            >
-                {{ trans('app.pos.no_customer') }}
-            </button>
-            <button
-                type="button"
-                :class="[
-                    'rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
-                    customerMode === 'existing'
-                        ? 'bg-primary text-primary-foreground'
-                        : 'border border-input bg-transparent hover:bg-accent',
-                ]"
-                @click="customerMode = 'existing'"
-            >
-                {{ trans('app.pos.existing_customer') }}
-            </button>
-            <button
-                type="button"
-                class="rounded-md border border-input bg-transparent px-3 py-1.5 text-sm font-medium transition-colors hover:bg-accent"
+                variant="outline"
+                size="icon"
+                :aria-label="trans('app.pos.customer_form.new_customer_title')"
                 @click="showCreateModal = true"
             >
-                + {{ trans('app.pos.new_customer') }}
-            </button>
+                +
+            </Button>
         </div>
-
-        <!-- Existing customer select -->
-        <div v-if="customerMode === 'existing'">
-            <Label for="customer_id">{{
-                trans('app.pos.customer_form.select_customer')
-            }}</Label>
-            <select
-                id="customer_id"
-                v-model="customerId"
-                class="mt-1 h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs outline-none focus-visible:ring-2 focus-visible:ring-ring/50 dark:bg-input/30"
-            >
-                <option :value="null">
-                    {{ trans('app.pos.customer_form.no_customer_option') }}
-                </option>
-                <option v-for="c in customers" :key="c.id" :value="c.id">
-                    {{ c.name }} {{ c.last_name }}
-                    <template v-if="c.id_number"> — {{ c.id_number }}</template>
-                </option>
-            </select>
-            <InputError class="mt-1" :message="props.errors?.customer_id" />
-        </div>
-
-        <!-- No customer -->
-        <p v-else class="text-sm text-muted-foreground">
+        <InputError class="mt-1" :message="props.errors?.customer_id" />
+        <p
+            v-if="customerId === null"
+            class="mt-1 text-sm text-muted-foreground"
+        >
             {{ trans('app.pos.customer_form.no_customer_notice') }}
         </p>
 

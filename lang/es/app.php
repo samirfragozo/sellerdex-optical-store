@@ -268,9 +268,6 @@ return [
         'created' => 'Venta :number creada exitosamente',
         'lab_order_pending_notice' => 'Se generó una orden de laboratorio pendiente para el lente vendido.',
         'view_cart' => 'Ver carrito',
-        'no_customer' => 'Sin cliente',
-        'new_customer' => 'Cliente nuevo',
-        'existing_customer' => 'Cliente existente',
         'selected_customer' => 'Cliente seleccionado',
         'take_payment' => 'Registrar abono',
         'save' => 'Guardar venta',
@@ -337,7 +334,8 @@ return [
 
         'customer_form' => [
             'select_customer' => 'Seleccionar cliente',
-            'no_customer_option' => '— Sin cliente —',
+            'search_placeholder' => 'Buscar por nombre o documento...',
+            'no_results' => 'No se encontraron clientes.',
             'no_customer_notice' => 'La venta se registrará sin cliente.',
             'id_number_placeholder' => 'Número',
             'phone_placeholder' => '3001234567',

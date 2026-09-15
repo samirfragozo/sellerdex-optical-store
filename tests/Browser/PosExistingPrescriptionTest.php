@@ -30,12 +30,14 @@ it('offers a prescription created earlier in the session as an existing option',
     $option = Option::factory()->create(['option_group_id' => $group->id, 'name' => 'Basico', 'price' => 0]);
     $lens->optionGroups()->attach($group->id);
 
-    $customer = Customer::factory()->create(['company_id' => $seller->company_id, 'name' => 'Ana', 'last_name' => 'Gómez']);
+    $customer = Customer::factory()->create(['company_id' => $seller->company_id, 'name' => 'Ana', 'last_name' => 'Gómez', 'id_number' => '99999999']);
 
     $this->actingAs($seller);
 
     $page = visit('/pos');
-    $page->select('#customer_id', (string) $customer->id)
+    $page->fill('#customer_id', 'Ana')
+        ->wait(1)
+        ->click('text=Ana Gómez')
         ->click('Lentes')
         ->assertButtonDisabled('Usar existente')
         ->fill('#rx_exam_date', now()->toDateString())
@@ -53,7 +55,9 @@ it('offers a prescription created earlier in the session as an existing option',
 
     // Start a new sale for the same customer — the prescription just
     // created must now be selectable, without a full page reload.
-    $page->select('#customer_id', (string) $customer->id)
+    $page->fill('#customer_id', 'Ana')
+        ->wait(1)
+        ->click('text=Ana Gómez')
         ->click('Lentes')
         ->assertButtonEnabled('Usar existente')
         ->click('Usar existente');

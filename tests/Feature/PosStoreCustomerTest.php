@@ -38,3 +38,20 @@ it('validates required fields when creating a customer from the pos modal', func
 it('requires authentication to create a customer from the pos modal', function () {
     $this->postJson('/pos/customers', [])->assertUnauthorized();
 });
+
+it('searches customers by name, last name, or id number', function () {
+    $seller = User::factory()->seller()->create();
+    Customer::factory()->create(['company_id' => $seller->company_id, 'name' => 'Ana', 'last_name' => 'Gómez', 'id_number' => '111']);
+    Customer::factory()->create(['company_id' => $seller->company_id, 'name' => 'Carlos', 'last_name' => 'Ana', 'id_number' => '222']);
+    Customer::factory()->create(['company_id' => $seller->company_id, 'name' => 'Luis', 'last_name' => 'Pérez', 'id_number' => '333']);
+
+    $response = $this->actingAs($seller)->getJson('/pos/customers/search?q=ana');
+
+    $response->assertOk();
+    expect($response->json())->toHaveCount(2)
+        ->and(collect($response->json())->pluck('name')->sort()->values()->all())->toBe(['Ana', 'Carlos']);
+});
+
+it('requires authentication to search customers from the pos modal', function () {
+    $this->getJson('/pos/customers/search?q=ana')->assertUnauthorized();
+});

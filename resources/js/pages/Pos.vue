@@ -39,13 +39,6 @@ interface PaymentMethod {
     surcharge_percent: number;
 }
 
-interface Customer {
-    id: number;
-    name: string;
-    last_name: string;
-    id_number: string | null;
-}
-
 interface PrescriptionOption {
     id: number;
     customer_id: number;
@@ -59,7 +52,6 @@ const props = defineProps<{
     armadoProducts: ProductProp[];
     categories: { id: number; name: string; key: string }[];
     paymentMethods: PaymentMethod[];
-    customers: Customer[];
     prescriptions: PrescriptionOption[];
     lensTypes: Record<string, string>;
 }>();
@@ -83,25 +75,11 @@ const lensSelections = ref<Record<number, LensSpecs>>({});
 const resolvedLenses = ref<Record<number, LensProduct | null>>({});
 
 // --- Customer (fixed panel, no longer a collapsible step) ---
-const customerMode = ref<'none' | 'existing'>('existing');
 const customerId = ref<number | null>(null);
-// Seeded from the page prop, then grown locally as customers are created
-// on the fly via CreateCustomerModal — no full page reload needed.
-const customers = ref<Customer[]>([...props.customers]);
-
-function onCustomerCreated(customer: Customer): void {
-    customers.value = [customer, ...customers.value];
-}
 
 // Seeded from the page prop, then grown locally as prescriptions are
 // created on the fly during checkout — no full page reload needed.
 const prescriptions = ref<PrescriptionOption[]>([...props.prescriptions]);
-
-watch(customerMode, (mode) => {
-    if (mode !== 'existing') {
-        customerId.value = null;
-    }
-});
 
 // --- Prescription mode (used inside the armado modal) ---
 const prescriptionMode = ref<'existing' | 'new'>('new');
@@ -126,9 +104,9 @@ const customerPrescriptions = computed<PrescriptionOption[]>(() =>
         : prescriptions.value.filter((p) => p.customer_id === customerId.value),
 );
 
-const lensNeedsCustomer = computed(() => customerMode.value === 'none');
+const lensNeedsCustomer = computed(() => customerId.value === null);
 
-watch([customerMode, customerPrescriptions], () => {
+watch(customerPrescriptions, () => {
     if (
         prescriptionMode.value === 'existing' &&
         customerPrescriptions.value.length === 0
@@ -282,8 +260,7 @@ async function confirmCheckout(): Promise<void> {
     const cartPayload = cart.buildPayload();
 
     const result = await checkout.submit({
-        customer_id:
-            customerMode.value === 'existing' ? customerId.value : null,
+        customer_id: customerId.value,
         customer: null,
         prescription_id:
             cart.armados.value.length > 0 &&
@@ -332,7 +309,6 @@ async function confirmCheckout(): Promise<void> {
     cart.surchargePercent.value = 0;
     lensSelections.value = {};
     resolvedLenses.value = {};
-    customerMode.value = 'existing';
     customerId.value = null;
     prescriptionMode.value = 'new';
     prescriptionId.value = null;
@@ -380,9 +356,7 @@ async function confirmCheckout(): Promise<void> {
                 showMobileCart ? 'flex w-full' : 'hidden md:flex',
             ]"
         >
-            <div
-                class="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-4"
-            >
+            <div class="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-4">
                 <div class="flex items-center justify-between gap-3">
                     <div class="flex items-center gap-2">
                         <ShoppingCart class="size-5 text-muted-foreground" />
@@ -408,13 +382,7 @@ async function confirmCheckout(): Promise<void> {
                     @dismiss="createdSale = null"
                 />
 
-                <StepCustomer
-                    v-model:customer-mode="customerMode"
-                    v-model:customer-id="customerId"
-                    :customers="customers"
-                    :today="today"
-                    @customer-created="onCustomerCreated"
-                />
+                <StepCustomer v-model:customer-id="customerId" :today="today" />
 
                 <template v-if="cart.armados.value.length > 0">
                     <div

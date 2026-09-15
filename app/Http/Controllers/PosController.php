@@ -22,9 +22,6 @@ class PosController extends Controller
 {
     public function index(Request $request): Response
     {
-        $customers = Customer::query()->orderBy('name')
-            ->limit(50)->get(['id', 'name', 'last_name', 'id_number']);
-
         $withCatalogRelations = [
             'category:id,name,key',
             'optionGroups' => fn ($q) => $q->where('option_groups.is_active', true),
@@ -79,11 +76,10 @@ class PosController extends Controller
                 ->orderBy('name')->get(['id', 'name', 'key']),
             'paymentMethods' => PaymentMethod::query()->where('is_active', true)
                 ->orderBy('sort_order')->get(['id', 'name', 'surcharge_percent']),
-            'customers' => $customers,
             'lensTypes' => LensType::options(),
             'prescriptions' => Prescription::query()
-                ->whereIn('customer_id', $customers->pluck('id'))
                 ->orderByDesc('exam_date')
+                ->limit(200)
                 ->get(['id', 'customer_id', 'exam_date', 'od_sphere', 'os_sphere', 'lens_type'])
                 ->map(fn (Prescription $p) => [
                     'id' => $p->id,
@@ -181,6 +177,22 @@ class PosController extends Controller
             'formula_url' => $sale->prescription_id ? route('documents.formula', $sale->prescription_id) : null,
             'has_pending_lab_order' => $sale->hasPendingLensWork(),
         ]);
+    }
+
+    public function searchCustomers(Request $request): JsonResponse
+    {
+        $search = $request->string('q');
+
+        $customers = Customer::query()
+            ->when($search->isNotEmpty(), fn ($q) => $q->where(fn ($q) => $q
+                ->where('name', 'like', "%{$search}%")
+                ->orWhere('last_name', 'like', "%{$search}%")
+                ->orWhere('id_number', 'like', "%{$search}%")))
+            ->orderBy('name')
+            ->limit(20)
+            ->get(['id', 'name', 'last_name', 'id_number']);
+
+        return response()->json($customers);
     }
 
     public function storeCustomer(StorePosCustomerRequest $request): JsonResponse
