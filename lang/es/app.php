@@ -273,6 +273,10 @@ return [
         'save' => 'Guardar venta',
         'saving' => 'Guardando...',
         'no_items' => 'Agrega al menos un ítem',
+        'empty_cart' => [
+            'title' => 'El carrito está vacío',
+            'description' => 'Agrega productos desde el catálogo para iniciar la venta.',
+        ],
         'add_armado' => 'Agregar gafas / lente',
         'add_product' => 'Agregar producto',
         'none_option' => '— Ninguno —',

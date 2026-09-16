@@ -235,6 +235,10 @@ return [
         'save' => 'Save sale',
         'saving' => 'Saving...',
         'no_items' => 'Add at least one item',
+        'empty_cart' => [
+            'title' => 'The cart is empty',
+            'description' => 'Add products from the catalog to start the sale.',
+        ],
         'add_armado' => 'Add glasses / lens',
         'add_product' => 'Add product',
         'none_option' => '— None —',

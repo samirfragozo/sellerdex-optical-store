@@ -384,6 +384,22 @@ async function confirmCheckout(): Promise<void> {
 
                 <StepCustomer v-model:customer-id="customerId" :today="today" />
 
+                <div
+                    v-if="
+                        cart.armados.value.length === 0 &&
+                        cart.products.value.length === 0
+                    "
+                    class="flex flex-1 flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-sidebar-border/70 p-6 text-center dark:border-sidebar-border"
+                >
+                    <ShoppingCart class="size-6 text-muted-foreground" />
+                    <p class="text-sm font-medium">
+                        {{ trans('app.pos.empty_cart.title') }}
+                    </p>
+                    <p class="text-xs text-muted-foreground">
+                        {{ trans('app.pos.empty_cart.description') }}
+                    </p>
+                </div>
+
                 <template v-if="cart.armados.value.length > 0">
                     <div
                         v-for="armado in cart.armados.value"
