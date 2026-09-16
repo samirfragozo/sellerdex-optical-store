@@ -81,6 +81,9 @@ const prescriptionId = defineModel<number | null>('prescriptionId', {
 const prescription = defineModel<NewPrescription>('prescription', {
     required: true,
 });
+const customerId = defineModel<number | null>('customerId', {
+    required: true,
+});
 
 const emptySelection = (): LensSpecs => ({
     design: '',
@@ -130,9 +133,15 @@ watch(
 );
 
 const canSave = computed(() => draft.value.lens !== null);
+const canLeavePrescriptionStep = computed(
+    () => !props.lensNeedsCustomer || customerId.value !== null,
+);
 
 function goNext(): void {
-    if (stepIndex.value < steps.length - 1) {
+    if (
+        stepIndex.value < steps.length - 1 &&
+        (step.value !== 'prescription' || canLeavePrescriptionStep.value)
+    ) {
         step.value = steps[stepIndex.value + 1];
     }
 }
@@ -185,6 +194,7 @@ function save(): void {
                 v-model:prescription-mode="prescriptionMode"
                 v-model:prescription-id="prescriptionId"
                 v-model:prescription="prescription"
+                v-model:customer-id="customerId"
                 :customer-prescriptions="customerPrescriptions"
                 :lens-needs-customer="lensNeedsCustomer"
                 :errors="errors"
@@ -228,6 +238,9 @@ function save(): void {
                     v-if="stepIndex < steps.length - 1"
                     type="button"
                     size="sm"
+                    :disabled="
+                        step === 'prescription' && !canLeavePrescriptionStep
+                    "
                     @click="goNext"
                 >
                     {{ trans(`app.pos.continue_to_${steps[stepIndex + 1]}`) }}

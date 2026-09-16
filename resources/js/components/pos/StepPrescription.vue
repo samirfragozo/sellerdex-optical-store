@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import DiopterInput from '@/components/DiopterInput.vue';
 import InputError from '@/components/InputError.vue';
+import StepCustomer from '@/components/pos/StepCustomer.vue';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useTranslations } from '@/composables/useTranslations';
@@ -57,6 +58,9 @@ const prescriptionId = defineModel<number | null>('prescriptionId', {
 const prescription = defineModel<NewPrescription>('prescription', {
     required: true,
 });
+const customerId = defineModel<number | null>('customerId', {
+    required: true,
+});
 
 function onRefractionChange(): void {
     emit('change');
@@ -70,11 +74,17 @@ function onRefractionChange(): void {
         </p>
 
         <!-- A lens sale requires a customer -->
-        <div
-            v-if="props.lensNeedsCustomer"
-            class="rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-700 dark:bg-amber-900/20 dark:text-amber-400"
-        >
-            {{ trans('app.pos.prescription_form.needs_customer') }}
+        <div v-if="props.lensNeedsCustomer">
+            <div
+                class="mb-3 rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-700 dark:bg-amber-900/20 dark:text-amber-400"
+            >
+                {{ trans('app.pos.prescription_form.needs_customer') }}
+            </div>
+            <StepCustomer
+                v-model:customer-id="customerId"
+                :today="props.today"
+                :optional="false"
+            />
         </div>
 
         <template v-else>

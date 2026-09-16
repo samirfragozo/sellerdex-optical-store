@@ -471,6 +471,7 @@ async function confirmCheckout(): Promise<void> {
                     v-model:prescription-mode="prescriptionMode"
                     v-model:prescription-id="prescriptionId"
                     v-model:prescription="newPrescription"
+                    v-model:customer-id="customerId"
                     @update:open="armadoModalOpen = $event"
                     @refresh-recommendation="onRefreshRecommendation"
                     @save="onArmadoSave"

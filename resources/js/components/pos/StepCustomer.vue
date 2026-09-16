@@ -21,10 +21,14 @@ interface Customer {
     id_number: string | null;
 }
 
-const props = defineProps<{
-    errors?: { customer_id?: string };
-    today?: string;
-}>();
+const props = withDefaults(
+    defineProps<{
+        errors?: { customer_id?: string };
+        today?: string;
+        optional?: boolean;
+    }>(),
+    { optional: true },
+);
 
 const customerId = defineModel<number | null>('customerId', { required: true });
 
@@ -93,10 +97,10 @@ function onCustomerCreated(customer: CreatedCustomer): void {
 
 <template>
     <div>
-        <Label for="customer_id">{{
+        <Label for="customer_id" class="sr-only">{{
             trans('app.pos.customer_form.select_customer')
         }}</Label>
-        <div class="mt-1 flex items-center gap-2">
+        <div class="flex items-center gap-2">
             <Combobox
                 id="customer_id"
                 class="flex-1"
@@ -123,7 +127,7 @@ function onCustomerCreated(customer: CreatedCustomer): void {
         </div>
         <InputError class="mt-1" :message="props.errors?.customer_id" />
         <p
-            v-if="customerId === null"
+            v-if="customerId === null && props.optional"
             class="mt-1 text-sm text-muted-foreground"
         >
             {{ trans('app.pos.customer_form.no_customer_notice') }}
