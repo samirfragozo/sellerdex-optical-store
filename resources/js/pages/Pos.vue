@@ -357,19 +357,14 @@ async function confirmCheckout(): Promise<void> {
             ]"
         >
             <div class="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-4">
-                <div class="flex items-center justify-between gap-3">
-                    <div class="flex items-center gap-2">
-                        <ShoppingCart class="size-5 text-muted-foreground" />
-                        <h1 class="text-lg font-semibold">
-                            {{ trans('app.pos.title') }}
-                        </h1>
-                    </div>
+                <div
+                    v-if="showMobileCart"
+                    class="flex items-center justify-end gap-3 md:hidden"
+                >
                     <Button
-                        v-if="showMobileCart"
                         type="button"
                         variant="ghost"
                         size="sm"
-                        class="md:hidden"
                         @click="showMobileCart = false"
                     >
                         {{ trans('app.pos.catalog.all_categories') }}

@@ -83,7 +83,7 @@ function onCategoryClick(key: string | null): void {
 <template>
     <div class="flex h-full min-h-0 flex-col">
         <div
-            class="border-b border-sidebar-border/70 bg-white p-3 dark:border-sidebar-border dark:bg-zinc-900"
+            class="border-b border-sidebar-border/70 p-3 dark:border-sidebar-border"
         >
             <Input
                 v-model="search"
@@ -100,7 +100,7 @@ function onCategoryClick(key: string | null): void {
                 :key="category.key ?? 'all'"
                 type="button"
                 :class="[
-                    'shrink-0 rounded-md px-3 py-1.5 text-sm font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring/50',
+                    'shrink-0 rounded-md px-3 py-1.5 text-sm font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring/50',
                     selectedCategoryKey === category.key
                         ? 'bg-primary text-primary-foreground'
                         : 'border border-input bg-transparent hover:bg-accent',

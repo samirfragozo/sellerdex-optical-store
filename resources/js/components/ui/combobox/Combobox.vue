@@ -43,6 +43,7 @@ const emit = defineEmits<{
     <ComboboxRoot
         :model-value="modelValue ?? undefined"
         ignore-filter
+        class="flex-1"
         @update:model-value="
             (value) => emit('update:modelValue', (value as number) ?? null)
         "
