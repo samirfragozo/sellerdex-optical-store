@@ -137,6 +137,7 @@ async function save(): Promise<void> {
                     <Input
                         id="new_customer_id_number"
                         v-model="form.id_number"
+                        name="id_number"
                         class="mt-1 w-full"
                         :placeholder="
                             trans('app.pos.customer_form.id_number_placeholder')
