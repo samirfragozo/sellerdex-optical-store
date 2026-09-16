@@ -338,7 +338,7 @@ return [
 
         'customer_form' => [
             'select_customer' => 'Seleccionar cliente',
-            'search_placeholder' => 'Buscar por nombre o documento...',
+            'search_placeholder' => 'Buscar cliente por nombre o documento...',
             'no_results' => 'No se encontraron clientes.',
             'no_customer_notice' => 'La venta se registrará sin cliente.',
             'id_number_placeholder' => 'Número',

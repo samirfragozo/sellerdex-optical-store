@@ -300,7 +300,7 @@ return [
 
         'customer_form' => [
             'select_customer' => 'Select customer',
-            'search_placeholder' => 'Search by name or ID number...',
+            'search_placeholder' => 'Search customer by name or ID number...',
             'no_results' => 'No customers found.',
             'no_customer_notice' => 'The sale will be recorded without a customer.',
             'id_number_placeholder' => 'Number',
