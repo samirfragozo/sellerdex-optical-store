@@ -169,4 +169,8 @@
     body {
         @apply bg-background text-foreground;
     }
+
+    .dark input::-webkit-calendar-picker-indicator {
+        filter: invert(1);
+    }
 }
