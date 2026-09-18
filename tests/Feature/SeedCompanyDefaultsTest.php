@@ -69,7 +69,7 @@ it('seeds the reference product catalog for the company', function () {
 
     $products = Product::where('company_id', $company->id)->get();
     expect($products->count())->toBeGreaterThan(30)
-        ->and($products->pluck('sku'))->toContain('ML-MONOFOCAL', 'ACC-LC-FORM-X1', 'MNT-BASE', 'SRV-EXAMEN');
+        ->and($products->pluck('sku'))->toContain('ACC-LC-FORM-X1', 'MNT-BASE', 'SRV-EXAMEN');
 });
 
 it('does not let two companies collide on the same product sku', function () {
@@ -79,8 +79,8 @@ it('does not let two companies collide on the same product sku', function () {
     (new SeedCompanyDefaults)->handle($companyA);
     (new SeedCompanyDefaults)->handle($companyB);
 
-    $productsA = Product::where('company_id', $companyA->id)->where('sku', 'ML-MONOFOCAL')->get();
-    $productsB = Product::where('company_id', $companyB->id)->where('sku', 'ML-MONOFOCAL')->get();
+    $productsA = Product::where('company_id', $companyA->id)->where('sku', 'MNT-BASE')->get();
+    $productsB = Product::where('company_id', $companyB->id)->where('sku', 'MNT-BASE')->get();
 
     expect($productsA)->toHaveCount(1)
         ->and($productsB)->toHaveCount(1)

@@ -467,7 +467,7 @@ it('passes combo options and applies a paper bag', function () {
 it('rejects a lens armado without a customer', function () {
     $this->seed(ProductCategorySeeder::class);
     $this->seed(ProductCatalogSeeder::class);
-    $lens = Product::where('sku', 'ML-MONOFOCAL')->first();
+    $lens = Product::where('sku', 'MNT-BASE')->first();
 
     $this->actingAs(User::factory()->seller()->create())
         ->postJson('/pos', [
@@ -514,7 +514,7 @@ it('accepts two armados where only one carries a frame', function () {
 it('rejects a lens armado without a prescription', function () {
     $this->seed(ProductCategorySeeder::class);
     $this->seed(ProductCatalogSeeder::class);
-    $lens = Product::where('sku', 'ML-MONOFOCAL')->first();
+    $lens = Product::where('sku', 'MNT-BASE')->first();
 
     $this->actingAs(User::factory()->seller()->create())
         ->postJson('/pos', [

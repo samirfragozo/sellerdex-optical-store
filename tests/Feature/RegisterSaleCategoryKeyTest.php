@@ -18,8 +18,10 @@ it('compone el combo de lente aunque la categoría haya sido renombrada', functi
     // Renombrar el label visible NO debe romper la lógica (que ahora usa key='lens').
     ProductCategory::keyed('lens')->update(['name' => 'Lentes oftálmicos']);
 
-    $lens = Product::whereHas('category', fn ($q) => $q->where('key', 'lens'))->first();
-    expect($lens)->not->toBeNull();
+    $lens = Product::factory()->create([
+        'product_category_id' => ProductCategory::keyed('lens')->id,
+        'name' => 'Lente Monofocal',
+    ]);
 
     $seller = User::factory()->seller()->create();
     $customer = Customer::factory()->create();

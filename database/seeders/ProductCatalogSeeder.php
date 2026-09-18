@@ -6,7 +6,6 @@ use App\Models\Option;
 use App\Models\OptionGroup;
 use App\Models\Product;
 use App\Models\ProductCategory;
-use App\Support\LensPricing;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
 
@@ -35,7 +34,6 @@ class ProductCatalogSeeder extends Seeder
     {
         $this->categoryIds = [];
 
-        $this->seedLenses();
         $this->seedFrames();
         $this->seedSunglasses();
         $this->seedConsumables();
@@ -243,77 +241,6 @@ class ProductCatalogSeeder extends Seeder
                 'is_stockable' => false, 'stock' => null, 'is_active' => true, 'specs' => null,
             ]);
         }
-    }
-
-    /**
-     * One base product per design + Proceso/Material/Filtro option groups (cost
-     * deltas only — the final price is computed by LensPricing from the
-     * resolved cost and chosen filter, not summed like other option-driven
-     * products). Deltas are the least-squares fit against the original flat
-     * 69-SKU catalog's real costs per design, floored at 0 and rounded to
-     * 1.000; the fit isn't exact (costs aren't additive across dimensions in
-     * the original data) but it's the closest additive approximation.
-     */
-    private function seedLenses(): void
-    {
-        // [design, sku, baseCost, processes[name => costDelta], materials[name => costDelta], filters[name => costDelta]]
-        $designs = [
-            [
-                'Monofocal', 'ML-MONOFOCAL', 6000,
-                ['Terminado' => 0, 'Rango Extendido' => 0, 'Tallado Convencional' => 17000, 'Digital Plus (Freeform)' => 65000],
-                ['Material 1.56' => 0, 'CR-39' => 4000, 'Policarbonato' => 21000, 'Material 1.61' => 39000, 'Material 1.67' => 99000, 'Material 1.74' => 336000],
-                ['Sin Filtro' => 0, 'Blue Cut' => 37000, 'Foto Blue Cut' => 92000],
-            ],
-            [
-                'Bifocal', 'ML-BIFOCAL', 8000,
-                ['Terminado' => 0, 'Tallado Convencional' => 22000, 'Digital' => 30000],
-                ['Material 1.56' => 0, 'CR-39' => 36000, 'Policarbonato' => 37000, 'Material 1.61' => 44000, 'Material 1.67' => 104000, 'Material 1.74' => 327000],
-                ['Sin Filtro' => 0, 'Blue Cut' => 56000, 'Foto Blue Cut' => 97000],
-            ],
-            [
-                'Progresivo', 'ML-PROGRESIVO', 30000,
-                ['Terminado' => 0, 'Tallado Convencional' => 24000, 'Digital' => 47000],
-                ['Material 1.56' => 0, 'CR-39' => 6000, 'Policarbonato' => 33000, 'Material 1.61' => 37000, 'Material 1.67' => 109000, 'Material 1.74' => 361000],
-                ['Sin Filtro' => 0, 'Blue Cut' => 33000, 'Foto Blue Cut' => 88000],
-            ],
-        ];
-
-        $lenteId = $this->categoryId('Lente');
-
-        foreach ($designs as [$design, $sku, $baseCost, $processes, $materials, $filters]) {
-            $base = $this->upsert($sku, [
-                'product_category_id' => $lenteId,
-                'name' => "Lente {$design}",
-                'cost' => $baseCost,
-                'price' => LensPricing::price($baseCost, 'Sin Filtro'),
-                'is_stockable' => false,
-                'stock' => null,
-                'is_active' => true,
-                'specs' => ['design' => $design],
-            ]);
-
-            $processGroup = $this->upsertOptionGroup("Proceso {$design}", $processes);
-            $materialGroup = $this->upsertOptionGroup("Material {$design}", $materials);
-            $filterGroup = $this->upsertOptionGroup("Filtro {$design}", $filters);
-
-            $base->optionGroups()->syncWithPivotValues(
-                [$processGroup->id, $materialGroup->id, $filterGroup->id],
-                [],
-            );
-        }
-    }
-
-    /** @param  array<string,int>  $costDeltas */
-    private function upsertOptionGroup(string $name, array $costDeltas): OptionGroup
-    {
-        $group = OptionGroup::firstOrCreate($this->scopedKey(['name' => $name]), ['is_required' => true, 'is_active' => true]);
-
-        $i = 1;
-        foreach ($costDeltas as $optionName => $costDelta) {
-            $this->upsertOption($group, $optionName, 0, $costDelta, $i++);
-        }
-
-        return $group;
     }
 
     private function upsertOption(OptionGroup $group, string $name, int $price, int $cost, int $sortOrder): void

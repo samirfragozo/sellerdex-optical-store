@@ -28,7 +28,11 @@ it('renders a combo invoice with free exam, included lines and the surcharged to
     $admin = User::factory()->forCompany($company)->admin()->create();
     $this->actingAs($seller);
 
-    $lens = Product::where('sku', 'ML-MONOFOCAL')->first();
+    $lens = Product::factory()->create([
+        'product_category_id' => ProductCategory::keyed('lens')->id,
+        'name' => 'Lente Monofocal',
+        'cost' => 6000,
+    ]);
     $addi = PaymentMethod::where('name', 'Addi')->first(); // 7%
 
     $sale = app(RegisterSale::class)->handle([

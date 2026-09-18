@@ -3,6 +3,7 @@
 use App\Actions\RegisterSale;
 use App\Models\Customer;
 use App\Models\Product;
+use App\Models\ProductCategory;
 use App\Models\Sale;
 use App\Models\User;
 use Database\Seeders\ProductCatalogSeeder;
@@ -16,11 +17,20 @@ beforeEach(function () {
     $this->seed(ProductCatalogSeeder::class);
     $this->seller = User::factory()->seller()->create();
     $this->customer = Customer::factory()->create();
+    // The lens catalog is no longer seeded by ProductCatalogSeeder (see the new
+    // lens combination/pricing mechanism); the legacy `items` combo path only
+    // needs a plain lens-category Product to key off of.
+    $this->lens = Product::factory()->create([
+        'product_category_id' => ProductCategory::keyed('lens')->id,
+        'sku' => 'ML-MONOFOCAL',
+        'name' => 'Lente Monofocal',
+        'cost' => 6000,
+    ]);
 });
 
 function sellCombo(array $combo, array $extraItems = []): Sale
 {
-    $lens = Product::where('sku', 'ML-MONOFOCAL')->first();
+    $lens = test()->lens;
     $items = array_merge([
         ['product_id' => $lens->id, 'description' => $lens->name, 'quantity' => 1, 'unit_price' => 195000, 'unit_cost' => $lens->cost],
     ], $extraItems);
@@ -56,7 +66,7 @@ it('omits the paño line when include_pano is false', function () {
 });
 
 it('uses the paper bag when the total is >= 215000', function () {
-    $lens = Product::where('sku', 'ML-MONOFOCAL')->first();
+    $lens = test()->lens;
 
     $sale = app(RegisterSale::class)->handle([
         'customer_id' => test()->customer->id,
