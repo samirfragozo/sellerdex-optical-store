@@ -31,10 +31,14 @@ class PosController extends Controller
                 'category',
                 fn ($cq) => $cq->where('key', $request->string('category')),
             ))
-            // Products with an active option group need the dedicated armado
-            // selection flow (see $armadoProducts below) and must never be
-            // click-to-added from the general catalog grid.
-            ->whereDoesntHave('optionGroups', fn ($q) => $q->where('option_groups.is_active', true))
+            // Lens products always carry option groups and must go through the
+            // armado wizard (see $armadoProducts below) to enforce the
+            // prescription requirement — never click-to-added from this grid.
+            // Frames with option groups (type/material variants) are allowed
+            // through: a frame can be sold on its own, unlike a lens.
+            ->where(fn ($q) => $q
+                ->whereDoesntHave('optionGroups', fn ($oq) => $oq->where('option_groups.is_active', true))
+                ->orWhereHas('category', fn ($cq) => $cq->where('key', 'frame')))
             ->with($withCatalogRelations)
             ->orderBy('name')
             ->paginate(20, $catalogColumns)

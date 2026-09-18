@@ -206,6 +206,17 @@ function onAddProduct(product: ProductProp): void {
     });
 }
 
+// A product with option groups (e.g. a frame) resolves to a variant via the
+// catalog's picker dialog instead of being added as-is.
+function onAddResolvedProduct(resolved: {
+    id: number;
+    name: string;
+    price: number;
+    tax_rate?: number;
+}): void {
+    cart.addOrIncrementProduct(resolved);
+}
+
 function removeLooseProduct(index: number): void {
     cart.removeProduct(index);
 }
@@ -346,6 +357,7 @@ async function confirmCheckout(): Promise<void> {
                 :categories="categories"
                 @select-lens-category="openArmadoModal(null)"
                 @add-product="onAddProduct"
+                @add-resolved-product="onAddResolvedProduct"
             />
         </div>
 

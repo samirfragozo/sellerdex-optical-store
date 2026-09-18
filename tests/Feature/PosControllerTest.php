@@ -677,6 +677,24 @@ it('excludes products with an active option group from the pos catalog payload a
         ->where('products.data.0.id', $plain->id));
 });
 
+it('includes a frame base with option groups in the general catalog payload', function () {
+    $seller = User::factory()->seller()->create();
+    $category = ProductCategory::factory()->create(['key' => 'frame', 'company_id' => $seller->company_id]);
+    $base = Product::factory()->create([
+        'company_id' => $seller->company_id,
+        'product_category_id' => $category->id,
+        'is_active' => true,
+        'is_pos_selectable' => true,
+    ]);
+    $group = OptionGroup::factory()->create(['company_id' => $seller->company_id, 'is_active' => true]);
+    $base->optionGroups()->attach($group->id);
+
+    $response = $this->actingAs($seller)->get('/pos')->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->has('products.data', 1)
+        ->where('products.data.0.id', $base->id));
+});
+
 it('includes frame variant products on the pos payload', function () {
     $company = Company::factory()->create();
     $seller = User::factory()->forCompany($company)->seller()->create();

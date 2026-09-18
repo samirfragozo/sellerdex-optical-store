@@ -404,6 +404,7 @@ return [
             'all_categories' => 'Todos',
             'uncategorized' => 'Sin categoría',
             'out_of_stock' => 'Sin stock',
+            'pick_variant' => 'Elegir opciones',
             'empty' => 'No hay productos que coincidan con la búsqueda.',
             'pagination_summary' => ':from–:to de :total',
             'pagination_prev' => 'Anterior',

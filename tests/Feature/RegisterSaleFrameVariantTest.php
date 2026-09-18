@@ -63,3 +63,45 @@ it('sells a frame variant and decrements its own stock, not the base or a siblin
         ->and($sibling->fresh()->stock)->toBe(5)
         ->and($base->fresh()->stock)->toBeNull();
 });
+
+it('sells a frame variant as a standalone loose product and adds a free funda', function () {
+    $frameCategory = ProductCategory::factory()->create(['key' => 'frame']);
+    $base = Product::factory()->create(['product_category_id' => $frameCategory->id, 'is_stockable' => false, 'stock' => null]);
+
+    $structure = OptionGroup::factory()->create(['name' => 'Estructura']);
+    $completas = Option::factory()->for($structure, 'group')->create(['name' => 'Completas']);
+    $base->optionGroups()->attach($structure->id);
+
+    $variant = Product::factory()->create([
+        'product_category_id' => $frameCategory->id,
+        'base_product_id' => $base->id,
+        'name' => 'Montura Completas Pasta',
+        'price' => 90000,
+        'cost' => 40000,
+        'is_stockable' => true,
+        'stock' => 5,
+    ]);
+    $variant->variantOptions()->attach($completas->id);
+
+    $accessoryCategory = ProductCategory::factory()->create(['key' => 'accessory']);
+    $funda = Product::factory()->create(['product_category_id' => $accessoryCategory->id, 'sku' => 'ACC-FUNDA', 'price' => 3000]);
+
+    $customer = Customer::factory()->create();
+    $seller = User::factory()->seller()->create();
+
+    $sale = app(RegisterSale::class)->handle([
+        'customer_id' => $customer->id,
+        'document_type' => 'order',
+        'products' => [[
+            'product_id' => $variant->id,
+            'description' => $variant->name,
+            'quantity' => 1,
+            'unit_price' => $variant->price,
+            'unit_cost' => $variant->cost,
+        ]],
+    ], $seller);
+
+    expect($variant->fresh()->stock)->toBe(4)
+        ->and($sale->items->firstWhere('product_id', $variant->id)->unit_price)->toBe(90000)
+        ->and($sale->items->firstWhere('product_id', $funda->id))->not->toBeNull();
+});

@@ -366,6 +366,7 @@ return [
             'all_categories' => 'All',
             'uncategorized' => 'Uncategorized',
             'out_of_stock' => 'Out of stock',
+            'pick_variant' => 'Pick options',
             'empty' => 'No products match your search.',
             'pagination_summary' => ':from–:to of :total',
             'pagination_prev' => 'Previous',

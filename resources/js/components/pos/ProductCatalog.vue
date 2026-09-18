@@ -3,10 +3,12 @@ import { router } from '@inertiajs/vue3';
 import { computed, ref, watch } from 'vue';
 import Pagination from '@/components/pos/Pagination.vue';
 import ProductCard from '@/components/pos/ProductCard.vue';
+import VariantPickerDialog from '@/components/pos/VariantPickerDialog.vue';
 import { Input } from '@/components/ui/input';
 import type {
     PaginatedProducts,
     ProductProp,
+    VariantOption,
 } from '@/composables/useLensCatalog';
 import { useTranslations } from '@/composables/useTranslations';
 
@@ -21,6 +23,9 @@ const props = defineProps<{
 const emit = defineEmits<{
     'select-lens-category': [];
     'add-product': [ProductProp];
+    'add-resolved-product': [
+        { id: number; name: string; price: number; tax_rate?: number },
+    ];
 }>();
 
 const search = ref('');
@@ -32,11 +37,10 @@ const categoryOptions = computed(() => [
     ...props.categories.map((c) => ({ key: c.key, name: c.name })),
 ]);
 
-// Products with option groups (e.g. frames with a color option) require a
-// dedicated selection flow and must never be click-to-added from this grid.
-const filteredProducts = computed(() =>
-    props.products.data.filter((product) => product.option_groups.length === 0),
-);
+// A product with option groups (e.g. a frame with type/material variants)
+// can't be click-to-added directly — its own price is a placeholder, only a
+// resolved variant is sellable — so it opens the variant picker instead.
+const variantPickerProduct = ref<ProductProp | null>(null);
 
 function reload(page = 1): void {
     router.reload({
@@ -62,7 +66,22 @@ watch(search, () => {
 watch(selectedCategoryKey, () => reload(1));
 
 function onProductClick(product: ProductProp): void {
+    if (product.option_groups.length > 0) {
+        variantPickerProduct.value = product;
+
+        return;
+    }
+
     emit('add-product', product);
+}
+
+function onVariantSelected(option: VariantOption): void {
+    emit('add-resolved-product', {
+        id: option.value,
+        name: option.label,
+        price: option.unit_price,
+        tax_rate: variantPickerProduct.value?.tax_rate,
+    });
 }
 
 // Lens products always carry option groups, so the general catalog query
@@ -113,11 +132,11 @@ function onCategoryClick(key: string | null): void {
 
         <div class="flex-1 overflow-y-auto p-3">
             <div
-                v-if="filteredProducts.length > 0"
+                v-if="products.data.length > 0"
                 class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4"
             >
                 <ProductCard
-                    v-for="product in filteredProducts"
+                    v-for="product in products.data"
                     :key="product.id"
                     :product="product"
                     @click="onProductClick(product)"
@@ -127,6 +146,13 @@ function onCategoryClick(key: string | null): void {
                 {{ trans('app.pos.catalog.empty') }}
             </p>
         </div>
+
+        <VariantPickerDialog
+            :open="variantPickerProduct !== null"
+            :product="variantPickerProduct"
+            @update:open="(open) => !open && (variantPickerProduct = null)"
+            @select="onVariantSelected"
+        />
 
         <Pagination
             :current-page="products.meta.current_page"

@@ -27,7 +27,13 @@ function formatCOP(value: number): string {
             product.category_name ?? trans('app.pos.catalog.uncategorized')
         }}</span>
         <span class="line-clamp-2 text-sm font-medium">{{ product.name }}</span>
-        <span class="mt-auto text-sm font-semibold tabular-nums">{{
+        <span
+            v-if="product.option_groups.length > 0"
+            class="mt-auto text-sm font-medium text-muted-foreground"
+        >
+            {{ trans('app.pos.catalog.pick_variant') }}
+        </span>
+        <span v-else class="mt-auto text-sm font-semibold tabular-nums">{{
             formatCOP(product.price)
         }}</span>
         <span
