@@ -7,7 +7,6 @@ use App\Models\PaymentMethod;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\User;
-use App\Support\LensPricing;
 use Illuminate\Support\Facades\DB;
 
 class RegisterSale
@@ -137,8 +136,11 @@ class RegisterSale
      */
     private function composeCombo(Sale $sale, ?array $combo): void
     {
+        // Still eager-loaded for the frame check below.
         $sale->load('items.product.category');
-        $lensLine = $sale->items->first(fn ($i) => $i->product?->category?->key === 'lens');
+        // The legacy `items` payload sells a lens as a plain lens-category Product (no
+        // lensConfig snapshot); the armado payload sells it as a configured lens line.
+        $lensLine = $sale->items->first(fn ($i) => $i->isLens() || $i->product?->category?->key === 'lens');
 
         if ($lensLine === null) {
             $this->applyFunda($sale);
@@ -237,69 +239,66 @@ class RegisterSale
             $groupKey = 'g'.($index + 1);
             $lens = $armado['lens'];
 
-            $unitPrice = (int) ($lens['unit_price'] ?? 0);
-            $unitCost = (int) ($lens['unit_cost'] ?? 0);
-            $resolvedOptions = null;
-            $lensProduct = Product::find($lens['product_id'] ?? null);
+            $resolved = (new ResolveLensPricing)->handle(
+                (int) $lens['lens_type_id'],
+                (int) $lens['lens_technology_id'],
+                (int) $lens['lens_material_id'],
+                (int) $lens['lens_package_id'],
+                $lens['treatment_ids'] ?? [],
+            );
 
-            if ($lensProduct !== null && $lensProduct->optionGroups()->exists()) {
-                $resolved = (new ResolveProductOptions)->handle($lensProduct, $lens['option_ids'] ?? []);
-                $unitCost = $lensProduct->cost + $resolved['cost'];
-
-                if ($lensProduct->category?->key === 'lens' && isset($lensProduct->specs['design'])) {
-                    // A design-based lens (seeded by ProductCatalogSeeder) prices by
-                    // formula, not by flat option sum: cost×markup floored by the
-                    // chosen filter's tier (see LensPricing). Other lens-category
-                    // option products (e.g. ad-hoc ones without a design) keep the
-                    // generic flat-sum behavior in the else branch below.
-                    $filterName = $resolved['options']->first(fn ($o) => str_starts_with($o->group->name, 'Filtro'))?->name;
-                    $unitPrice = LensPricing::price($unitCost, $filterName);
-                } else {
-                    $unitPrice = $lensProduct->price + $resolved['price'];
-                }
-
-                $resolvedOptions = $resolved['options'];
-            }
+            $unitPrice = $resolved['price'];
 
             // A seller-entered override always wins over the computed price above —
             // it's a distinct field from unit_price precisely so a client can never
-            // silently swap out the protected computed price (see RegisterSaleOptionsTest).
+            // silently swap out the protected computed price.
             if (isset($lens['price_override'])) {
                 $unitPrice = (int) $lens['price_override'];
             }
 
             $lensItem = $sale->items()->create([
                 'group_key' => $groupKey,
-                'product_id' => $lens['product_id'] ?? null,
+                'product_id' => null,
                 'description' => $lens['description'],
                 'quantity' => $lens['quantity'] ?? 1,
                 'unit_price' => $unitPrice,
-                'unit_cost' => $unitCost,
-                // Lenses are tax-exempt in this business (see Product::$tax_rate on the
-                // lens product, which is never applied here — matches the client-side
-                // cart preview, which never taxes armado lines either).
+                'unit_cost' => $resolved['cost'],
+                // Lenses are tax-exempt in this business — matches the client-side
+                // cart preview, which never taxes armado lines either.
                 'tax_amount' => 0,
             ]);
 
-            if ($resolvedOptions !== null) {
-                foreach ($resolvedOptions as $option) {
-                    $lensItem->options()->create([
-                        'option_group_id' => $option->option_group_id,
-                        'option_id' => $option->id,
-                        'option_group_name' => $option->group->name,
-                        'option_name' => $option->name,
-                        'price' => $option->price,
-                        'cost' => $option->cost,
-                    ]);
-                }
-            }
+            $combination = $resolved['combination'];
+            $package = $resolved['package'];
 
-            if ($lensProduct?->category?->generates_lab_order) {
-                $lensItem->lensOrder()->create([
-                    'supplier_id' => null,
-                    'lab_status' => LensOrderStatus::PendingAssignment,
+            $lensConfig = $lensItem->lensConfig()->create([
+                'lens_combination_id' => $combination->id,
+                'type_name' => $combination->lensType->name,
+                'technology_name' => $combination->lensTechnology->name,
+                'material_name' => $combination->lensMaterial->name,
+                'combination_cost' => $combination->cost,
+                'combination_price' => $combination->price,
+                'installation_price' => $combination->installation_price,
+                'lens_package_id' => $package->id,
+                'package_name' => $package->name,
+                'package_price' => $package->price,
+                'package_cost' => $package->cost,
+            ]);
+
+            foreach ($resolved['treatments'] as $treatment) {
+                $lensConfig->treatments()->create([
+                    'lens_treatment_id' => $treatment->id,
+                    'name' => $treatment->name,
+                    'price' => $treatment->price,
+                    'cost' => $treatment->cost,
                 ]);
             }
+
+            // Every lens in this business is made-to-order and needs a lab order.
+            $lensItem->lensOrder()->create([
+                'supplier_id' => null,
+                'lab_status' => LensOrderStatus::PendingAssignment,
+            ]);
 
             if (empty($armado['own_frame']) && ! empty($armado['frame'])) {
                 $frame = $armado['frame'];
@@ -330,7 +329,7 @@ class RegisterSale
         $sale->load('items.product.category');
 
         $groupItems = $sale->items->where('group_key', $groupKey);
-        $lensLine = $groupItems->first(fn ($i) => $i->product?->category?->key === 'lens');
+        $lensLine = $groupItems->first(fn ($i) => $i->isLens());
 
         if ($lensLine === null) {
             return;

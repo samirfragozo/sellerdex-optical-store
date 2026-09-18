@@ -2,6 +2,9 @@
 
 use App\Actions\RegisterSale;
 use App\Models\Customer;
+use App\Models\LensCombination;
+use App\Models\LensPackage;
+use App\Models\LensTreatment;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\User;
@@ -12,16 +15,40 @@ use Illuminate\Support\Facades\Schema;
 
 uses(RefreshDatabase::class);
 
+beforeEach(function () {
+    // Lens catalog rows are company-scoped (BelongsToCompany), so both the fixtures
+    // and RegisterSale must run as the same authenticated seller.
+    $this->seller = User::factory()->seller()->create();
+    $this->actingAs($this->seller);
+});
+
 function seedCatalog(): void
 {
     test()->seed(ProductCategorySeeder::class);
     test()->seed(ProductCatalogSeeder::class);
 }
 
-/** Picks the first (zero-delta) option in every required group — resolves to the base lens price. */
-function defaultLensOptionIds(Product $lens): array
+/**
+ * A valid `armados.*.lens` payload backed by a freshly created catalog combination,
+ * package and treatment. `$prices` overrides the combination's own price/cost.
+ *
+ * @param  array<string,int>  $prices
+ * @return array<string,mixed>
+ */
+function lensPayload(array $prices = [], array $extra = []): array
 {
-    return $lens->optionGroups->map(fn ($g) => $g->options->first()->id)->all();
+    $combination = LensCombination::factory()->create($prices);
+    $package = LensPackage::factory()->create(['price' => 0, 'cost' => 0]);
+
+    return array_merge([
+        'description' => 'Lente formulado',
+        'quantity' => 1,
+        'lens_type_id' => $combination->lens_type_id,
+        'lens_technology_id' => $combination->lens_technology_id,
+        'lens_material_id' => $combination->lens_material_id,
+        'lens_package_id' => $package->id,
+        'treatment_ids' => [],
+    ], $extra);
 }
 
 it('has a nullable group_key column on sale_items', function () {
@@ -40,10 +67,37 @@ it('persists group_key on a sale item', function () {
     expect($item->fresh()->group_key)->toBe('g1');
 });
 
+it('registra un lente con su configuración y tratamientos resueltos', function () {
+    $combination = LensCombination::factory()->create(['cost' => 60000, 'price' => 180000, 'installation_price' => 3000]);
+    $package = LensPackage::factory()->create(['price' => 40000, 'cost' => 15000]);
+    $treatment = LensTreatment::factory()->create(['price' => 50000, 'cost' => 20000]);
+
+    $sale = (new RegisterSale)->handle([
+        'document_type' => 'order',
+        'armados' => [[
+            'lens' => [
+                'description' => 'Lente formulado',
+                'quantity' => 1,
+                'lens_type_id' => $combination->lens_type_id,
+                'lens_technology_id' => $combination->lens_technology_id,
+                'lens_material_id' => $combination->lens_material_id,
+                'lens_package_id' => $package->id,
+                'treatment_ids' => [$treatment->id],
+            ],
+            'own_frame' => true,
+        ]],
+    ], $this->seller);
+
+    $lensItem = $sale->items->first(fn ($i) => $i->isLens());
+
+    expect($lensItem->unit_price)->toBe(180000 + 3000 + 40000 + 50000)
+        ->and($lensItem->unit_cost)->toBe(60000 + 15000 + 20000)
+        ->and($lensItem->lensConfig->treatments()->count())->toBe(1)
+        ->and($lensItem->lensOrder)->not->toBeNull();
+});
+
 it('builds two armados, each with its own grouped combo lines', function () {
     seedCatalog();
-    $lensA = Product::where('sku', 'ML-MONOFOCAL')->first();
-    $lensB = Product::where('sku', 'ML-PROGRESIVO')->first();
     $frame = Product::where('sku', 'MNT-COMPLETA-ACETATO')->first();
 
     $sale = app(RegisterSale::class)->handle([
@@ -51,17 +105,17 @@ it('builds two armados, each with its own grouped combo lines', function () {
         'document_type' => 'order',
         'armados' => [
             [
-                'lens' => ['product_id' => $lensA->id, 'description' => $lensA->name, 'option_ids' => defaultLensOptionIds($lensA)],
+                'lens' => lensPayload(),
                 'frame' => ['product_id' => $frame->id, 'description' => $frame->name, 'unit_price' => $frame->price],
                 'combo' => ['with_exam' => false, 'estuche' => 'small', 'include_liquid' => true, 'include_pano' => true],
             ],
             [
-                'lens' => ['product_id' => $lensB->id, 'description' => $lensB->name, 'option_ids' => defaultLensOptionIds($lensB)],
+                'lens' => lensPayload(),
                 'own_frame' => true,
                 'combo' => ['with_exam' => false, 'estuche' => 'large', 'include_liquid' => false, 'include_pano' => true],
             ],
         ],
-    ], User::factory()->seller()->create());
+    ], $this->seller);
 
     // Each armado gets its own group_key; the frame in armado 1 is dropped to $0.
     $groups = $sale->items->pluck('group_key')->filter()->unique();
@@ -79,64 +133,55 @@ it('builds two armados, each with its own grouped combo lines', function () {
 
 it('adds the free exam surcharge per armado when requested', function () {
     seedCatalog();
-    $lens = Product::where('sku', 'ML-MONOFOCAL')->first();
 
     $sale = app(RegisterSale::class)->handle([
         'customer_id' => Customer::factory()->create()->id,
         'document_type' => 'order',
         'armados' => [[
-            'lens' => ['product_id' => $lens->id, 'description' => $lens->name, 'option_ids' => defaultLensOptionIds($lens)],
+            'lens' => lensPayload(['price' => 100000, 'installation_price' => 0]),
             'own_frame' => true,
             'combo' => ['with_exam' => true, 'estuche' => 'small', 'include_liquid' => false, 'include_pano' => true],
         ]],
-    ], User::factory()->seller()->create());
+    ], $this->seller);
 
-    $lensLine = $sale->items->firstWhere('product_id', $lens->id);
-    expect($lensLine->unit_price)->toBe($lens->price + 20000)
+    $lensLine = $sale->items->first(fn ($i) => $i->isLens());
+    expect($lensLine->unit_price)->toBe(100000 + 20000)
         ->and($sale->items->contains(fn ($i) => Product::find($i->product_id)?->sku === 'SRV-EXAMEN'))->toBeTrue();
 });
 
-it('lets a seller-entered price_override win over the formula price for a design-based lens', function () {
+it('lets a seller-entered price_override win over the resolved catalog price', function () {
     seedCatalog();
-    $lens = Product::where('sku', 'ML-MONOFOCAL')->first();
 
     $sale = app(RegisterSale::class)->handle([
         'customer_id' => Customer::factory()->create()->id,
         'document_type' => 'order',
         'armados' => [[
-            'lens' => [
-                'product_id' => $lens->id,
-                'description' => $lens->name,
-                'option_ids' => defaultLensOptionIds($lens),
-                'price_override' => 90000,
-            ],
+            'lens' => lensPayload(['price' => 250000], ['price_override' => 90000]),
             'own_frame' => true,
             'combo' => ['with_exam' => false, 'estuche' => 'small', 'include_liquid' => false, 'include_pano' => true],
         ]],
-    ], User::factory()->seller()->create());
+    ], $this->seller);
 
-    $lensLine = $sale->items->firstWhere('product_id', $lens->id);
+    $lensLine = $sale->items->first(fn ($i) => $i->isLens());
     expect($lensLine->unit_price)->toBe(90000);
 });
 
 it('does not tax armado lens or frame lines even when the product has a tax_rate', function () {
     seedCatalog();
-    $lens = Product::where('sku', 'ML-MONOFOCAL')->first();
     $frame = Product::where('sku', 'MNT-COMPLETA-ACETATO')->first();
-    $lens->update(['tax_rate' => 19]);
     $frame->update(['tax_rate' => 19]);
 
     $sale = app(RegisterSale::class)->handle([
         'customer_id' => Customer::factory()->create()->id,
         'document_type' => 'order',
         'armados' => [[
-            'lens' => ['product_id' => $lens->id, 'description' => $lens->name, 'option_ids' => defaultLensOptionIds($lens)],
+            'lens' => lensPayload(),
             'frame' => ['product_id' => $frame->id, 'description' => $frame->name, 'unit_price' => $frame->price],
             'combo' => ['with_exam' => false, 'estuche' => 'small', 'include_liquid' => false, 'include_pano' => true],
         ]],
-    ], User::factory()->seller()->create());
+    ], $this->seller);
 
-    $lensLine = $sale->items->firstWhere('product_id', $lens->id);
+    $lensLine = $sale->items->first(fn ($i) => $i->isLens());
     $frameLine = $sale->items->firstWhere('product_id', $frame->id);
 
     expect($lensLine->tax_amount)->toBe(0)
@@ -145,21 +190,20 @@ it('does not tax armado lens or frame lines even when the product has a tax_rate
 
 it('mixes an armado with a standalone product line', function () {
     seedCatalog();
-    $lens = Product::where('sku', 'ML-MONOFOCAL')->first();
     $accessory = Product::where('sku', 'ACC-LIQUIDO')->first();
 
     $sale = app(RegisterSale::class)->handle([
         'customer_id' => Customer::factory()->create()->id,
         'document_type' => 'order',
         'armados' => [[
-            'lens' => ['product_id' => $lens->id, 'description' => $lens->name, 'option_ids' => defaultLensOptionIds($lens)],
+            'lens' => lensPayload(),
             'own_frame' => true,
             'combo' => ['with_exam' => false, 'estuche' => 'small', 'include_liquid' => false, 'include_pano' => true],
         ]],
         'products' => [
             ['product_id' => $accessory->id, 'description' => $accessory->name, 'quantity' => 2, 'unit_price' => $accessory->price],
         ],
-    ], User::factory()->seller()->create());
+    ], $this->seller);
 
     $accessoryLine = $sale->items->where('product_id', $accessory->id)->firstWhere('group_key', null);
     expect($accessoryLine)->not->toBeNull()
@@ -168,17 +212,16 @@ it('mixes an armado with a standalone product line', function () {
 
 it('adds a single global bag for the whole sale', function () {
     seedCatalog();
-    $lens = Product::where('sku', 'ML-PROGRESIVO')->first(); // 125k
 
     $sale = app(RegisterSale::class)->handle([
         'customer_id' => Customer::factory()->create()->id,
         'document_type' => 'order',
         'armados' => [[
-            'lens' => ['product_id' => $lens->id, 'description' => $lens->name, 'option_ids' => defaultLensOptionIds($lens)],
+            'lens' => lensPayload(['price' => 125000]),
             'own_frame' => true,
             'combo' => ['with_exam' => false, 'estuche' => 'small', 'include_liquid' => false, 'include_pano' => true],
         ]],
-    ], User::factory()->seller()->create());
+    ], $this->seller);
 
     $bags = $sale->items->filter(fn ($i) => str_starts_with(Product::find($i->product_id)?->sku ?? '', 'ACC-BOLSA-'));
     expect($bags)->toHaveCount(1);
@@ -196,7 +239,7 @@ it('sells standalone products via the new payload and adds a funda for a frame',
         'products' => [
             ['product_id' => $frame->id, 'description' => $frame->name, 'unit_price' => $frame->price, 'quantity' => 1],
         ],
-    ], User::factory()->seller()->create());
+    ], $this->seller);
 
     expect($sale->items->contains(fn ($i) => Product::find($i->product_id)?->sku === 'ACC-FUNDA'))->toBeTrue()
         ->and($sale->items->firstWhere('product_id', $frame->id)->quantity)->toBe(1);

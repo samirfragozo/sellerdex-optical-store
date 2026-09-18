@@ -4,19 +4,24 @@ use App\Enums\LensOrderStatus;
 use App\Exceptions\PendingLensOrderException;
 use App\Models\LensOrder;
 use App\Models\Product;
-use App\Models\ProductCategory;
 use App\Models\Sale;
 use App\Models\SaleItem;
+use App\Models\SaleItemLensConfig;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
+/**
+ * A lens line is now identified by its resolved lens configuration snapshot
+ * (SaleItem::isLens()), not by a lens-category product.
+ *
+ * @return array{0: Sale, 1: SaleItem}
+ */
 function saleWithLens(): array
 {
-    $category = ProductCategory::factory()->create(['key' => 'lens', 'generates_lab_order' => true]);
-    $product = Product::factory()->create(['product_category_id' => $category->id, 'is_stockable' => false]);
     $sale = Sale::factory()->create(['is_delivered' => false]);
-    $item = SaleItem::factory()->create(['sale_id' => $sale->id, 'product_id' => $product->id]);
+    $item = SaleItem::factory()->create(['sale_id' => $sale->id, 'product_id' => null]);
+    SaleItemLensConfig::factory()->create(['sale_item_id' => $item->id]);
 
     return [$sale, $item];
 }

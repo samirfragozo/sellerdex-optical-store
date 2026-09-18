@@ -2,6 +2,8 @@
 
 use App\Actions\RegisterSale;
 use App\Models\Customer;
+use App\Models\LensCombination;
+use App\Models\LensPackage;
 use App\Models\Option;
 use App\Models\OptionGroup;
 use App\Models\Product;
@@ -9,8 +11,12 @@ use App\Models\ProductCategory;
 use App\Models\User;
 
 it('sells a frame variant and decrements its own stock, not the base or a sibling', function () {
-    $lensCategory = ProductCategory::factory()->create(['key' => 'lens']);
-    $lens = Product::factory()->create(['product_category_id' => $lensCategory->id, 'price' => 100000, 'cost' => 40000, 'is_stockable' => false]);
+    $seller = User::factory()->seller()->create();
+    // Lens catalog rows are company-scoped — create them as the selling user.
+    $this->actingAs($seller);
+
+    $combination = LensCombination::factory()->create();
+    $package = LensPackage::factory()->create();
 
     $frameCategory = ProductCategory::factory()->create(['key' => 'frame']);
     $base = Product::factory()->create(['product_category_id' => $frameCategory->id, 'is_stockable' => false, 'stock' => null]);
@@ -37,17 +43,18 @@ it('sells a frame variant and decrements its own stock, not the base or a siblin
     ]);
 
     $customer = Customer::factory()->create();
-    $seller = User::factory()->seller()->create();
 
     app(RegisterSale::class)->handle([
         'customer_id' => $customer->id,
         'document_type' => 'order',
         'armados' => [[
             'lens' => [
-                'product_id' => $lens->id,
-                'description' => $lens->name,
-                'unit_price' => $lens->price,
-                'unit_cost' => $lens->cost,
+                'description' => 'Lente formulado',
+                'lens_type_id' => $combination->lens_type_id,
+                'lens_technology_id' => $combination->lens_technology_id,
+                'lens_material_id' => $combination->lens_material_id,
+                'lens_package_id' => $package->id,
+                'treatment_ids' => [],
             ],
             'own_frame' => false,
             'frame' => [

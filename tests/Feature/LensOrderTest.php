@@ -2,22 +2,22 @@
 
 use App\Enums\LensOrderStatus;
 use App\Models\LensOrder;
-use App\Models\Product;
-use App\Models\ProductCategory;
 use App\Models\Sale;
 use App\Models\SaleItem;
+use App\Models\SaleItemLensConfig;
 use App\Models\Supplier;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
+/** A lens line is identified by its resolved lens configuration snapshot, not by a lens-category product. */
 function lensSaleItem(): SaleItem
 {
-    $category = ProductCategory::factory()->create(['key' => 'lens', 'generates_lab_order' => true]);
-    $product = Product::factory()->create(['product_category_id' => $category->id]);
     $sale = Sale::factory()->create();
+    $item = SaleItem::factory()->create(['sale_id' => $sale->id, 'product_id' => null]);
+    SaleItemLensConfig::factory()->create(['sale_item_id' => $item->id]);
 
-    return SaleItem::factory()->create(['sale_id' => $sale->id, 'product_id' => $product->id]);
+    return $item;
 }
 
 it('crea una orden de laboratorio ligada al ítem de lente y al laboratorio', function () {

@@ -3,10 +3,9 @@
 use App\Enums\LensOrderStatus;
 use App\Filament\Resources\Sales\Pages\ListSales;
 use App\Models\LensOrder;
-use App\Models\Product;
-use App\Models\ProductCategory;
 use App\Models\Sale;
 use App\Models\SaleItem;
+use App\Models\SaleItemLensConfig;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Filament\Actions\Testing\TestAction;
@@ -20,10 +19,9 @@ beforeEach(fn () => $this->seed(RolesAndPermissionsSeeder::class));
 
 function deliverySaleWithLens(string $labStatus): Sale
 {
-    $category = ProductCategory::factory()->create(['key' => 'lens', 'generates_lab_order' => true]);
-    $product = Product::factory()->create(['product_category_id' => $category->id, 'is_stockable' => false]);
     $sale = Sale::factory()->create(['is_delivered' => false]);
-    $item = SaleItem::factory()->create(['sale_id' => $sale->id, 'product_id' => $product->id]);
+    $item = SaleItem::factory()->create(['sale_id' => $sale->id, 'product_id' => null]);
+    SaleItemLensConfig::factory()->create(['sale_item_id' => $item->id]);
     LensOrder::factory()->create(['sale_item_id' => $item->id, 'lab_status' => $labStatus]);
 
     return $sale;
