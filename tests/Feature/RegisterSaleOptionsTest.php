@@ -19,7 +19,7 @@ beforeEach(function () {
     $this->combination = LensCombination::factory()->create([
         'cost' => 10000,
         'price' => 20000,
-        'installation_price' => 0,
+        'installation_price' => 5000,
     ]);
     $this->package = LensPackage::factory()->create(['price' => 30000, 'cost' => 10000]);
     $this->treatment = LensTreatment::factory()->create(['price' => 70000, 'cost' => 20000]);
@@ -51,9 +51,13 @@ it('prices an armado lens from its resolved configuration and snapshots it', fun
     $lensItem = $sale->items->first(fn ($i) => $i->isLens());
 
     expect($lensItem->product_id)->toBeNull()
-        ->and($lensItem->unit_price)->toBe(120000)
+        ->and($lensItem->unit_price)->toBe(125000)
         ->and($lensItem->unit_cost)->toBe(40000)
         ->and($lensItem->lensConfig->lens_combination_id)->toBe($this->combination->id)
+        ->and($lensItem->lensConfig->type_name)->toBe($this->combination->lensType->name)
+        ->and($lensItem->lensConfig->technology_name)->toBe($this->combination->lensTechnology->name)
+        ->and($lensItem->lensConfig->material_name)->toBe($this->combination->lensMaterial->name)
+        ->and($lensItem->lensConfig->installation_price)->toBe($this->combination->installation_price)
         ->and($lensItem->lensConfig->package_name)->toBe($this->package->name)
         ->and($lensItem->lensConfig->treatments->pluck('name')->all())->toBe([$this->treatment->name]);
 });
@@ -105,6 +109,6 @@ it('ignores a client-sent unit_price and prices the lens from the catalog', func
 
     $lensItem = $sale->items->first(fn ($i) => $i->isLens());
 
-    expect($lensItem->unit_price)->toBe(120000)
+    expect($lensItem->unit_price)->toBe(125000)
         ->and($lensItem->unit_cost)->toBe(40000);
 });

@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Actions\ResolveLensPricing;
 use App\Enums\DocumentType;
 use App\Enums\LensType;
 use App\Enums\SaleDocumentType;
@@ -11,6 +12,7 @@ use App\Models\Sale;
 use App\Rules\Diopter;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Validation\Validator;
 
 class StoreSaleRequest extends FormRequest
@@ -184,10 +186,38 @@ class StoreSaleRequest extends FormRequest
      * business), so only loose `products.*` lines contribute tax here, matching
      * what RegisterSale actually computes. This mirrors Sale::recalculateTotals().
      */
+    /**
+     * Price one armado's lens the same way RegisterSale does: a seller-entered
+     * override wins, otherwise the catalog price resolved from the selected
+     * configuration. Any pricing-validation failure contributes 0 — this is only
+     * an estimate for the payment-sum guard; the real validation happens in
+     * `rules()` and in RegisterSale itself.
+     *
+     * @param  array<string, mixed>  $lens
+     */
+    protected function estimatedLensPrice(array $lens): int
+    {
+        if (isset($lens['price_override'])) {
+            return (int) $lens['price_override'];
+        }
+
+        try {
+            return (new ResolveLensPricing)->handle(
+                (int) ($lens['lens_type_id'] ?? 0),
+                (int) ($lens['lens_technology_id'] ?? 0),
+                (int) ($lens['lens_material_id'] ?? 0),
+                (int) ($lens['lens_package_id'] ?? 0),
+                array_values(array_map('intval', array_filter((array) ($lens['treatment_ids'] ?? []), 'is_scalar'))),
+            )['price'];
+        } catch (ValidationException) {
+            return 0;
+        }
+    }
+
     protected function saleTotal(): int
     {
         $armados = collect($this->input('armados', []))->sum(function ($armado): int {
-            $lens = (int) ($armado['lens']['unit_price'] ?? 0) * (int) ($armado['lens']['quantity'] ?? 1);
+            $lens = $this->estimatedLensPrice((array) ($armado['lens'] ?? [])) * (int) ($armado['lens']['quantity'] ?? 1);
             $frame = empty($armado['own_frame']) && ! empty($armado['frame'])
                 ? (int) ($armado['frame']['unit_price'] ?? 0) * (int) ($armado['frame']['quantity'] ?? 1)
                 : 0;
