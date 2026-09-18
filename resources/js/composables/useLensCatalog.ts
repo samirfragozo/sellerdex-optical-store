@@ -1,10 +1,3 @@
-export interface LensSpecs {
-    design: string;
-    process: string;
-    material: string;
-    filter: string;
-}
-
 export interface OptionProp {
     id: number;
     name: string;
@@ -54,13 +47,52 @@ export interface PaginatedProducts {
     };
 }
 
-export interface LensProduct {
+export interface LensTypeProp {
+    id: number;
+    name: string;
+}
+
+export interface LensTechnologyProp {
+    id: number;
+    name: string;
+}
+
+export interface LensMaterialProp {
+    id: number;
+    name: string;
+}
+
+export interface LensTreatmentProp {
     id: number;
     name: string;
     price: number;
     cost: number;
-    specs: LensSpecs;
-    option_ids?: number[];
+}
+
+export interface LensPackageProp {
+    id: number;
+    name: string;
+    price: number;
+    cost: number;
+}
+
+export interface LensCombinationProp {
+    id: number;
+    lens_type_id: number;
+    lens_technology_id: number;
+    lens_material_id: number;
+    cost: number;
+    price: number;
+    installation_price: number;
+}
+
+export interface LensCatalogProp {
+    types: LensTypeProp[];
+    technologies: LensTechnologyProp[];
+    materials: LensMaterialProp[];
+    treatments: LensTreatmentProp[];
+    packages: LensPackageProp[];
+    combinations: LensCombinationProp[];
 }
 
 export interface VariantOption {
