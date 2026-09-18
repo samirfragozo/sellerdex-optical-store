@@ -348,6 +348,7 @@ return [
             'notes_placeholder' => 'Opcional...',
             'new_customer_title' => 'Nuevo cliente',
             'save_customer' => 'Guardar cliente',
+            'clear_customer' => 'Quitar cliente',
         ],
 
         'lens_form' => [

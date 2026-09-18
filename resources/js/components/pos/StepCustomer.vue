@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Plus } from '@lucide/vue';
 import { useDebounceFn } from '@vueuse/core';
 import { computed, ref, watch } from 'vue';
 import InputError from '@/components/InputError.vue';
@@ -100,10 +101,10 @@ function onCustomerCreated(customer: CreatedCustomer): void {
         <Label for="customer_id" class="sr-only">{{
             trans('app.pos.customer_form.select_customer')
         }}</Label>
-        <div class="flex items-center gap-2">
+        <div class="flex items-center">
             <Combobox
                 id="customer_id"
-                class="flex-1"
+                class="flex-1 rounded-r-none"
                 :items="items"
                 :model-value="customerId"
                 :model-label="
@@ -112,17 +113,18 @@ function onCustomerCreated(customer: CreatedCustomer): void {
                 :loading="isSearching"
                 :placeholder="trans('app.pos.customer_form.search_placeholder')"
                 :empty-text="trans('app.pos.customer_form.no_results')"
+                :clear-text="trans('app.pos.customer_form.clear_customer')"
                 @update:model-value="onSelect"
                 @search="debouncedSearch"
             />
             <Button
                 type="button"
-                variant="outline"
                 size="icon"
+                class="-ml-px rounded-l-none"
                 :aria-label="trans('app.pos.customer_form.new_customer_title')"
                 @click="showCreateModal = true"
             >
-                +
+                <Plus class="size-4" />
             </Button>
         </div>
         <InputError class="mt-1" :message="props.errors?.customer_id" />

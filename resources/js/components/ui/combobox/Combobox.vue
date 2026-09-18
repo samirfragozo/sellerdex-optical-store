@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Check, ChevronsUpDown, Loader2 } from '@lucide/vue';
+import { Check, ChevronsUpDown, Loader2, X } from '@lucide/vue';
 import {
     ComboboxAnchor,
     ComboboxContent,
@@ -30,6 +30,7 @@ const props = defineProps<{
     loading?: boolean;
     placeholder?: string;
     emptyText?: string;
+    clearText?: string;
     class?: string;
 }>();
 
@@ -51,7 +52,7 @@ const emit = defineEmits<{
         <ComboboxAnchor
             :class="
                 cn(
-                    'border-input focus-within:border-ring focus-within:ring-ring/50 dark:bg-input/30 flex h-9 w-full items-center gap-2 rounded-md border bg-transparent px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] focus-within:ring-[3px]',
+                    'border-input focus-within:border-ring dark:bg-input/30 relative flex h-9 w-full items-center gap-2 rounded-md border bg-transparent px-3 py-1 text-sm shadow-xs transition-[color,box-shadow]',
                     props.class,
                 )
             "
@@ -70,6 +71,15 @@ const emit = defineEmits<{
                 v-if="loading"
                 class="text-muted-foreground size-4 shrink-0 animate-spin"
             />
+            <button
+                v-else-if="modelValue !== null"
+                type="button"
+                :aria-label="clearText"
+                class="text-muted-foreground hover:text-foreground shrink-0"
+                @click="emit('update:modelValue', null)"
+            >
+                <X class="size-4" />
+            </button>
             <ComboboxTrigger v-else>
                 <ChevronsUpDown class="text-muted-foreground size-4 shrink-0" />
             </ComboboxTrigger>
@@ -77,6 +87,8 @@ const emit = defineEmits<{
 
         <ComboboxPortal>
             <ComboboxContent
+                position="popper"
+                :side-offset="4"
                 class="bg-popover text-popover-foreground relative z-50 max-h-64 w-(--reka-combobox-trigger-width) overflow-x-hidden overflow-y-auto rounded-md border shadow-md"
             >
                 <ComboboxViewport class="p-1">

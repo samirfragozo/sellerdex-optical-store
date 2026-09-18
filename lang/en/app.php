@@ -310,6 +310,7 @@ return [
             'notes_placeholder' => 'Optional...',
             'new_customer_title' => 'New customer',
             'save_customer' => 'Save customer',
+            'clear_customer' => 'Remove customer',
         ],
 
         'lens_form' => [
