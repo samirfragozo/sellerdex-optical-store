@@ -38,3 +38,39 @@ it('crea una combinación de lente con costo, precio e instalación', function (
         'lens_material_id' => $material->id,
     ])->exists())->toBeTrue();
 });
+
+it('rechaza con error de validación una terna tipo/tecnología/material duplicada', function () {
+    $admin = User::factory()->admin()->create();
+    $this->actingAs($admin);
+
+    $existing = LensCombination::factory()->create();
+
+    Livewire::test(LensCombinationResource::getPages()['create']->getPage())
+        ->fillForm([
+            'lens_type_id' => $existing->lens_type_id,
+            'lens_technology_id' => $existing->lens_technology_id,
+            'lens_material_id' => $existing->lens_material_id,
+            'cost' => 1000,
+            'price' => 2000,
+            'installation_price' => 0,
+            'is_active' => true,
+        ])
+        ->call('create')
+        ->assertHasFormErrors(['lens_material_id' => 'unique']);
+
+    expect(LensCombination::count())->toBe(1);
+});
+
+it('permite editar una combinación existente sin chocar consigo misma', function () {
+    $admin = User::factory()->admin()->create();
+    $this->actingAs($admin);
+
+    $combination = LensCombination::factory()->create();
+
+    Livewire::test(LensCombinationResource::getPages()['edit']->getPage(), ['record' => $combination->getKey()])
+        ->fillForm(['price' => 999000])
+        ->call('save')
+        ->assertHasNoFormErrors();
+
+    expect($combination->refresh()->price)->toBe(999000);
+});

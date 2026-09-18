@@ -46,7 +46,7 @@ return [
         'lens_material' => ['label' => 'Material de lente', 'plural' => 'Materiales de lente', 'nav' => 'Materiales de lente'],
         'lens_treatment' => ['label' => 'Tratamiento funcional', 'plural' => 'Tratamientos funcionales', 'nav' => 'Tratamientos funcionales'],
         'lens_package' => ['label' => 'Paquete de lente', 'plural' => 'Paquetes de lente', 'nav' => 'Paquetes de lente'],
-        'lens_combination' => ['label' => 'Combinación de lente', 'plural' => 'Combinaciones de lente', 'nav' => 'Combinaciones de lente'],
+        'lens_combination' => ['label' => 'Combinación de lente', 'plural' => 'Combinaciones de lente', 'nav' => 'Combinaciones de lente', 'duplicate' => 'Ya existe una combinación con este tipo, tecnología y material.'],
         'payment_method' => ['label' => 'Método de pago', 'plural' => 'Métodos de pago', 'nav' => 'Métodos de pago'],
         'expense' => ['label' => 'Gasto', 'plural' => 'Gastos', 'nav' => 'Gastos'],
         'expense_category' => ['label' => 'Categoría de gasto', 'plural' => 'Categorías de gasto', 'nav' => 'Categorías de gasto'],

@@ -8,7 +8,10 @@ use App\Models\LensType;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rules\Unique;
 
 class LensCombinationForm
 {
@@ -29,7 +32,15 @@ class LensCombinationForm
                 ->label(__('app.resources.lens_material.label'))
                 ->options(fn () => LensMaterial::query()->where('is_active', true)->pluck('name', 'id'))
                 ->required()
-                ->searchable(),
+                ->searchable()
+                ->unique(
+                    modifyRuleUsing: fn (Unique $rule, Get $get): Unique => $rule
+                        ->where('company_id', Auth::user()?->company_id)
+                        ->where('lens_type_id', $get('lens_type_id'))
+                        ->where('lens_technology_id', $get('lens_technology_id')),
+                    ignoreRecord: true,
+                )
+                ->validationMessages(['unique' => __('app.resources.lens_combination.duplicate')]),
             TextInput::make('cost')
                 ->label(__('app.fields.cost'))
                 ->required()
