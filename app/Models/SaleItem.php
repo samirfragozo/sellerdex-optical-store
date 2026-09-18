@@ -97,6 +97,8 @@ class SaleItem extends Model
     /** True when this line is a made-to-order lens (carries a resolved lens configuration). */
     public function isLens(): bool
     {
-        return $this->lensConfig()->exists();
+        return $this->relationLoaded('lensConfig')
+            ? $this->lensConfig !== null
+            : $this->lensConfig()->exists();
     }
 }

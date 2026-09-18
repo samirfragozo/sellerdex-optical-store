@@ -205,10 +205,10 @@ class Sale extends Model
         }
     }
 
-    /** Sale items that are made-to-order lenses (their category generates a lab order). */
+    /** Sale items that carry a lens configuration (they generate a lab order). */
     public function lensItems(): Collection
     {
-        return $this->items()->with(['product.category', 'lensOrder'])->get()
+        return $this->items()->with(['lensConfig', 'lensOrder'])->get()
             ->filter(fn (SaleItem $item): bool => $item->isLens());
     }
 
