@@ -97,7 +97,9 @@ if (props.initial) {
     props.initial.treatment_ids.forEach(toggleTreatment);
 }
 
-watch(config, (value) => emit('change', value));
+// Immediate: re-opening an armado whose combination was since deleted or
+// deactivated must emit the resulting null instead of leaving the stale value.
+watch(config, (value) => emit('change', value), { immediate: true });
 
 const formatCOP = (value: number): string =>
     '$' + new Intl.NumberFormat('es-CO').format(value);
@@ -124,6 +126,7 @@ const chip = (active: boolean) =>
                     v-for="t in catalog.types"
                     :key="t.id"
                     type="button"
+                    :aria-pressed="typeId === t.id"
                     :class="chip(typeId === t.id)"
                     @click="selectType(t.id)"
                 >
@@ -142,6 +145,7 @@ const chip = (active: boolean) =>
                     v-for="t in availableTechnologies"
                     :key="t.id"
                     type="button"
+                    :aria-pressed="technologyId === t.id"
                     :class="chip(technologyId === t.id)"
                     @click="selectTechnology(t.id)"
                 >
@@ -160,6 +164,7 @@ const chip = (active: boolean) =>
                     v-for="m in availableMaterials"
                     :key="m.id"
                     type="button"
+                    :aria-pressed="materialId === m.id"
                     :class="chip(materialId === m.id)"
                     @click="selectMaterial(m.id)"
                 >
@@ -203,6 +208,7 @@ const chip = (active: boolean) =>
                     v-for="p in catalog.packages"
                     :key="p.id"
                     type="button"
+                    :aria-pressed="packageId === p.id"
                     :class="chip(packageId === p.id)"
                     @click="selectPackage(p.id)"
                 >
