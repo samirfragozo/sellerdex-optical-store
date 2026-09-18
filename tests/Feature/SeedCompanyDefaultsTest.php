@@ -28,8 +28,8 @@ it('seeds the system product categories for the company', function () {
     (new SeedCompanyDefaults)->handle($company);
 
     $categories = ProductCategory::where('company_id', $company->id)->get();
-    expect($categories)->toHaveCount(4)
-        ->and($categories->pluck('key')->all())->toEqualCanonicalizing(['lens', 'frame', 'accessory', 'service'])
+    expect($categories)->toHaveCount(5)
+        ->and($categories->pluck('key')->all())->toEqualCanonicalizing(['lens', 'frame', 'sunglasses', 'accessory', 'service'])
         ->and($categories->every(fn (ProductCategory $c) => $c->is_system))->toBeTrue();
 });
 
