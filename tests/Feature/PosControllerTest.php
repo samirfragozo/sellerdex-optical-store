@@ -3,6 +3,10 @@
 use App\Enums\DocumentType;
 use App\Models\Company;
 use App\Models\Customer;
+use App\Models\LensCombination;
+use App\Models\LensMaterial;
+use App\Models\LensPackage;
+use App\Models\LensTechnology;
 use App\Models\LensType;
 use App\Models\Option;
 use App\Models\OptionGroup;
@@ -190,6 +194,31 @@ function lensProduct(): Product
     ]);
 }
 
+/**
+ * Build a valid `armados.*.lens` payload against a real LensCombination + LensPackage,
+ * scoped to $company (or the acting user's own company_id when omitted).
+ *
+ * @return array<string, mixed>
+ */
+function lensArmadoLens(?int $companyId = null, array $overrides = []): array
+{
+    $combination = LensCombination::factory()->create([
+        'company_id' => $companyId,
+        'lens_type_id' => LensType::factory()->create(['company_id' => $companyId])->id,
+        'lens_technology_id' => LensTechnology::factory()->create(['company_id' => $companyId])->id,
+        'lens_material_id' => LensMaterial::factory()->create(['company_id' => $companyId])->id,
+    ]);
+    $package = LensPackage::factory()->create(['company_id' => $companyId]);
+
+    return array_merge([
+        'description' => 'Lente',
+        'lens_type_id' => $combination->lens_type_id,
+        'lens_technology_id' => $combination->lens_technology_id,
+        'lens_material_id' => $combination->lens_material_id,
+        'lens_package_id' => $package->id,
+    ], $overrides);
+}
+
 it('enforces prescription validation even after the lens category is renamed', function () {
     $seller = User::factory()->seller()->create();
     $lensCategory = ProductCategory::factory()->create(['name' => 'Lente', 'key' => 'lens']);
@@ -277,13 +306,13 @@ it('creates and links an inline prescription when selling a lens', function () {
     $seller = User::factory()->seller()->create();
     openCashRegisterSession($seller);
     $customer = Customer::factory()->create();
-    $lens = lensProduct();
+    $lens = lensArmadoLens($seller->company_id);
 
     $this->actingAs($seller)->postJson('/pos', [
         'customer_id' => $customer->id,
         'document_type' => 'order',
         'armados' => [[
-            'lens' => ['product_id' => $lens->id, 'description' => 'Lente', 'unit_price' => 100_000],
+            'lens' => $lens,
             'own_frame' => true,
         ]],
         'prescription' => ['exam_date' => '2026-06-20', 'lens_type' => 'single_vision', 'od_sphere' => '-1.25', 'os_sphere' => '-1.00'],
@@ -304,13 +333,13 @@ it('links an existing prescription that belongs to the customer when selling a l
     $this->actingAs($seller);
     $customer = Customer::factory()->create();
     $prescription = Prescription::factory()->create(['customer_id' => $customer->id]);
-    $lens = lensProduct();
+    $lens = lensArmadoLens($seller->company_id);
 
     $this->postJson('/pos', [
         'customer_id' => $customer->id,
         'document_type' => 'order',
         'armados' => [[
-            'lens' => ['product_id' => $lens->id, 'description' => 'Lente', 'unit_price' => 100_000],
+            'lens' => $lens,
             'own_frame' => true,
         ]],
         'prescription_id' => $prescription->id,
@@ -443,16 +472,13 @@ it('passes combo options and applies a paper bag', function () {
     $seller = User::factory()->forCompany($company)->seller()->create();
     openCashRegisterSession($seller);
     $this->actingAs($seller);
-    $lens = Product::where('sku', 'ML-MONOFOCAL')->first();
 
     $this->postJson('/pos', [
         'customer_id' => Customer::factory()->create()->id,
         'document_type' => 'order',
         'armados' => [[
-            // Manual override ≥ bag threshold of 215,000 — this product's own optionGroups
-            // are still company_id=null (untouched by the reassignment above), so they're
-            // scoped away for this seller and RegisterSale falls back to this raw price.
-            'lens' => ['product_id' => $lens->id, 'description' => $lens->name, 'unit_price' => 1_000_000],
+            // Manual override ≥ bag threshold of 215,000 wins over the catalog price.
+            'lens' => lensArmadoLens($company->id, ['price_override' => 1_000_000]),
             'own_frame' => true,
             'combo' => ['estuche' => 'small', 'include_liquid' => false, 'include_pano' => true, 'with_exam' => true],
         ]],
@@ -483,31 +509,29 @@ it('rejects a lens armado without a customer', function () {
 it('accepts two armados where only one carries a frame', function () {
     $this->seed(ProductCategorySeeder::class);
     $this->seed(ProductCatalogSeeder::class);
-    $lensA = Product::where('sku', 'ML-MONOFOCAL')->first();
-    $lensB = Product::where('sku', 'ML-PROGRESIVO')->first();
     $frame = Product::where('sku', 'MNT-COMPLETA-ACETATO')->first();
     $customer = Customer::factory()->create();
     $seller = User::factory()->seller()->create();
     openCashRegisterSession($seller);
+    $this->actingAs($seller);
 
-    $this->actingAs($seller)
-        ->postJson('/pos', [
-            'document_type' => 'order',
-            'customer_id' => $customer->id,
-            'prescription' => ['exam_date' => now()->toDateString(), 'od_sphere' => '-1.00'],
-            'armados' => [
-                [
-                    'lens' => ['product_id' => $lensA->id, 'description' => $lensA->name, 'unit_price' => $lensA->price],
-                    'frame' => ['product_id' => $frame->id, 'description' => $frame->name, 'unit_price' => $frame->price],
-                    'own_frame' => false,
-                ],
-                [
-                    'lens' => ['product_id' => $lensB->id, 'description' => $lensB->name, 'unit_price' => $lensB->price],
-                    'frame' => null,
-                    'own_frame' => true,
-                ],
+    $this->postJson('/pos', [
+        'document_type' => 'order',
+        'customer_id' => $customer->id,
+        'prescription' => ['exam_date' => now()->toDateString(), 'od_sphere' => '-1.00'],
+        'armados' => [
+            [
+                'lens' => lensArmadoLens($seller->company_id, ['description' => 'Lente A']),
+                'frame' => ['product_id' => $frame->id, 'description' => $frame->name, 'unit_price' => $frame->price],
+                'own_frame' => false,
             ],
-        ])
+            [
+                'lens' => lensArmadoLens($seller->company_id, ['description' => 'Lente B']),
+                'frame' => null,
+                'own_frame' => true,
+            ],
+        ],
+    ])
         ->assertOk();
 });
 
@@ -529,30 +553,34 @@ it('rejects a lens armado without a prescription', function () {
 });
 
 it('creates a sale from an armado with a new prescription', function () {
-    $this->seed(ProductCategorySeeder::class);
-    $this->seed(ProductCatalogSeeder::class);
-    $lens = Product::where('sku', 'ML-PROGRESIVO')->first();
     $customer = Customer::factory()->create();
     $seller = User::factory()->seller()->create();
     openCashRegisterSession($seller);
+    $this->actingAs($seller);
 
-    $this->actingAs($seller)
-        ->postJson('/pos', [
-            'document_type' => 'order',
-            'customer_id' => $customer->id,
-            'prescription' => ['exam_date' => now()->toDateString(), 'od_add' => '2.00'],
-            'armados' => [[
-                'lens' => ['product_id' => $lens->id, 'description' => $lens->name, 'unit_price' => $lens->price],
-                'own_frame' => true,
-                'combo' => ['with_exam' => false, 'estuche' => 'small', 'include_liquid' => false, 'include_pano' => true],
-            ]],
-        ])
+    $this->postJson('/pos', [
+        'document_type' => 'order',
+        'customer_id' => $customer->id,
+        'prescription' => ['exam_date' => now()->toDateString(), 'od_add' => '2.00'],
+        'armados' => [[
+            'lens' => lensArmadoLens($seller->company_id, ['description' => 'Lente progresivo']),
+            'own_frame' => true,
+            'combo' => ['with_exam' => false, 'estuche' => 'small', 'include_liquid' => false, 'include_pano' => true],
+        ]],
+    ])
         ->assertOk();
 
     $sale = Sale::latest('id')->first();
+    // Armado lens lines no longer carry a product_id (App\Actions\RegisterSale
+    // hardcodes it to null and snapshots the lens catalog selection into a
+    // SaleItemLensConfig instead) — find the lens line via isLens() rather than
+    // by product_id, everything else about the intent (group_key = 'g1') stands.
+    $lensItem = $sale->items->first(fn ($i) => $i->isLens());
+
     expect($sale->customer_id)->toBe($customer->id)
         ->and($sale->prescription_id)->not->toBeNull()
-        ->and($sale->items->firstWhere('product_id', $lens->id)->group_key)->toBe('g1');
+        ->and($lensItem)->not->toBeNull()
+        ->and($lensItem->group_key)->toBe('g1');
 });
 
 // flujo real multi-empresa: un seller solo ve productos de su propia empresa
@@ -610,28 +638,25 @@ it('exposes a null cash session when the seller has none open', function () {
         );
 });
 
-it('rejects an option id that does not exist', function () {
+// The old product `option_ids` mechanism (Task 12) was replaced by the lens
+// catalog's `treatment_ids` — same intent, new field: reject a catalog id that
+// doesn't exist.
+it('rejects a treatment id that does not exist', function () {
     $seller = User::factory()->seller()->create();
     openCashRegisterSession($seller);
     $customer = Customer::factory()->create();
-    $lens = lensProduct();
 
     $response = $this->actingAs($seller)->postJson('/pos', [
         'customer_id' => $customer->id,
         'document_type' => 'order',
         'prescription' => ['exam_date' => now()->toDateString()],
         'armados' => [[
-            'lens' => [
-                'product_id' => $lens->id,
-                'description' => $lens->name,
-                'unit_price' => 100000,
-                'option_ids' => [999999],
-            ],
+            'lens' => lensArmadoLens($seller->company_id, ['treatment_ids' => [999999]]),
             'own_frame' => true,
         ]],
     ]);
 
-    $response->assertJsonValidationErrors(['armados.0.lens.option_ids.0']);
+    $response->assertJsonValidationErrors(['armados.0.lens.treatment_ids.0']);
 });
 
 it('includes lens product option groups on the pos payload', function () {
@@ -816,23 +841,17 @@ it('returns a discount_percent validation error usable by the pos frontend', fun
 });
 
 it('flags the sale response when a lens item generates a pending lab order', function () {
-    $company = Company::factory()->create();
-    $this->seed(ProductCategorySeeder::class);
-    $this->seed(ProductCatalogSeeder::class);
-    ProductCategory::withoutGlobalScopes()->whereNull('company_id')->update(['company_id' => $company->id]);
-    Product::withoutGlobalScopes()->whereNull('company_id')->update(['company_id' => $company->id]);
-
-    $lens = Product::where('sku', 'ML-MONOFOCAL')->first();
     $customer = Customer::factory()->create();
-    $seller = User::factory()->forCompany($company)->seller()->create();
+    $seller = User::factory()->seller()->create();
     openCashRegisterSession($seller);
+    $this->actingAs($seller);
 
-    $response = $this->actingAs($seller)->postJson('/pos', [
+    $response = $this->postJson('/pos', [
         'document_type' => 'order',
         'customer_id' => $customer->id,
         'prescription' => ['exam_date' => now()->toDateString(), 'od_sphere' => '-1.00'],
         'armados' => [[
-            'lens' => ['product_id' => $lens->id, 'description' => $lens->name, 'unit_price' => $lens->price],
+            'lens' => lensArmadoLens($seller->company_id),
             'own_frame' => true,
         ]],
     ])->assertOk();
