@@ -41,7 +41,8 @@ class ResolveLensPricing
             ->where('is_active', true)
             ->get();
 
-        if ($treatments->count() !== count(array_unique($treatmentIds))) {
+        $uniqueTreatmentIds = array_unique($treatmentIds);
+        if (count($treatmentIds) !== count($uniqueTreatmentIds) || $treatments->count() !== count($uniqueTreatmentIds)) {
             throw ValidationException::withMessages([
                 'lens' => __('app.pos.lens_form.invalid_treatment'),
             ]);

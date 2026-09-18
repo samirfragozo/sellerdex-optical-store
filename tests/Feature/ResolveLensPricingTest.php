@@ -73,3 +73,20 @@ it('rechaza un paquete o tratamiento inactivo o inexistente', function () {
         $activePackage->id, [$inactiveTreatment->id],
     ))->toThrow(ValidationException::class);
 });
+
+it('rechaza cuando hay tratamientos duplicados en la entrada', function () {
+    $user = User::factory()->admin()->create();
+    $this->actingAs($user);
+
+    $combination = LensCombination::factory()->create();
+    $package = LensPackage::factory()->create();
+    $treatment = LensTreatment::factory()->create();
+
+    expect(fn () => (new ResolveLensPricing)->handle(
+        $combination->lens_type_id,
+        $combination->lens_technology_id,
+        $combination->lens_material_id,
+        $package->id,
+        [$treatment->id, $treatment->id],
+    ))->toThrow(ValidationException::class);
+});
