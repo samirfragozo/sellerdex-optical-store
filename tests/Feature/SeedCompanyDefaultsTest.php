@@ -3,6 +3,7 @@
 use App\Actions\SeedCompanyDefaults;
 use App\Models\Company;
 use App\Models\ExpenseCategory;
+use App\Models\LensPackage;
 use App\Models\PaymentMethod;
 use App\Models\Product;
 use App\Models\ProductCategory;
@@ -70,6 +71,17 @@ it('seeds the reference product catalog for the company', function () {
     $products = Product::where('company_id', $company->id)->get();
     expect($products->count())->toBeGreaterThan(30)
         ->and($products->pluck('sku'))->toContain('ACC-LC-FORM-X1', 'MNT-BASE', 'SRV-EXAMEN');
+});
+
+it('seeds the default lens package for the company', function () {
+    $company = Company::factory()->create();
+
+    (new SeedCompanyDefaults)->handle($company);
+
+    $package = LensPackage::withoutGlobalScopes()->where('company_id', $company->id)->first();
+    expect($package)->not->toBeNull()
+        ->and($package->name)->toBe('Básico')
+        ->and($package->is_active)->toBeTrue();
 });
 
 it('does not let two companies collide on the same product sku', function () {

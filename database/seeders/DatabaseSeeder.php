@@ -31,6 +31,7 @@ class DatabaseSeeder extends Seeder
                 ExpenseCategorySeeder::class,
                 ProductCategorySeeder::class,
                 ProductCatalogSeeder::class,
+                LensPackageSeeder::class,
                 DevSeeder::class,
             ]);
         }
