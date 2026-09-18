@@ -1,6 +1,12 @@
 import { ref } from 'vue';
 import type { Ref } from 'vue';
-import type { LensSpecs } from './useLensCatalog';
+/** Shape returned by LensRecommender::recommend(). */
+export interface LensRecommendation {
+    design: string;
+    process: string;
+    material: string;
+    filter: string;
+}
 
 function csrfToken(): string {
     return (
@@ -11,7 +17,7 @@ function csrfToken(): string {
 }
 
 export function useLensRecommendation() {
-    const recommended: Ref<LensSpecs | null> = ref(null);
+    const recommended: Ref<LensRecommendation | null> = ref(null);
     const warnings: Ref<string[]> = ref([]);
     let timer: ReturnType<typeof setTimeout> | null = null;
 
@@ -35,7 +41,7 @@ export function useLensRecommendation() {
         }
 
         const data = (await res.json()) as {
-            recommended: LensSpecs;
+            recommended: LensRecommendation;
             warnings: string[];
         };
         recommended.value = data.recommended;

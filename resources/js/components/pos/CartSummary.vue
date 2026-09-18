@@ -95,7 +95,7 @@ function toggleArmado(id: number): void {
                             <span class="tabular-nums">{{
                                 props.formatCOP(
                                     armado.lens.price_override ??
-                                        armado.lens.unit_price,
+                                        armado.lens.price,
                                 )
                             }}</span>
                         </div>

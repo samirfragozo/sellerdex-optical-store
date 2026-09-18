@@ -11,9 +11,25 @@ export interface ArmadoLine {
     price_override?: number;
 }
 
+/** A lens line is configured through the lens catalog, not a product. */
+export interface ArmadoLensLine {
+    description: string;
+    quantity: number;
+    lens_type_id: number;
+    lens_technology_id: number;
+    lens_material_id: number;
+    lens_package_id: number;
+    treatment_ids: number[];
+    /** Resolved client-side for the cart preview only; the backend recomputes it. */
+    price: number;
+    cost: number;
+    /** Manual price override for the armado total, set from the cart row. */
+    price_override?: number;
+}
+
 export interface Armado {
     id: number;
-    lens: ArmadoLine | null;
+    lens: ArmadoLensLine | null;
     frame: ArmadoLine | null;
     own_frame: boolean;
     combo: {
@@ -34,7 +50,7 @@ export interface LooseProduct {
 
 export function armadoTotal(armado: Armado): number {
     const lens = armado.lens
-        ? (armado.lens.price_override ?? armado.lens.unit_price)
+        ? (armado.lens.price_override ?? armado.lens.price)
         : 0;
     const frame = !armado.own_frame ? (armado.frame?.unit_price ?? 0) : 0;
 
@@ -159,7 +175,18 @@ export function usePosCart() {
             armados: armados.value
                 .filter((a) => a.lens !== null)
                 .map((a) => ({
-                    lens: a.lens,
+                    // `price`/`cost` stay client-side: the backend resolves
+                    // the real amounts from the lens catalog itself.
+                    lens: {
+                        description: a.lens!.description,
+                        quantity: a.lens!.quantity,
+                        price_override: a.lens!.price_override,
+                        lens_type_id: a.lens!.lens_type_id,
+                        lens_technology_id: a.lens!.lens_technology_id,
+                        lens_material_id: a.lens!.lens_material_id,
+                        lens_package_id: a.lens!.lens_package_id,
+                        treatment_ids: a.lens!.treatment_ids,
+                    },
                     frame: a.own_frame ? null : a.frame,
                     own_frame: a.own_frame,
                     combo: a.combo,

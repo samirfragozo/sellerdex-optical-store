@@ -14,12 +14,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useCashRegisterSession } from '@/composables/useCashRegisterSession';
 import type {
-    LensProduct,
-    LensSpecs,
+    LensCatalogProp,
     PaginatedProducts,
     ProductProp,
 } from '@/composables/useLensCatalog';
-import { useLensRecommendation } from '@/composables/useLensRecommendation';
 import type { Armado } from '@/composables/usePosCart';
 import { armadoTotal, usePosCart } from '@/composables/usePosCart';
 import { usePosCheckout } from '@/composables/usePosCheckout';
@@ -50,6 +48,7 @@ interface PrescriptionOption {
 const props = defineProps<{
     products: PaginatedProducts;
     armadoProducts: ProductProp[];
+    lensCatalog: LensCatalogProp;
     categories: { id: number; name: string; key: string }[];
     paymentMethods: PaymentMethod[];
     prescriptions: PrescriptionOption[];
@@ -67,12 +66,8 @@ const minExamDate = (() => {
 // --- Cash register session gate ---
 const { session, onSessionOpened } = useCashRegisterSession();
 
-// --- Cart + recommendation composables ---
+// --- Cart ---
 const cart = usePosCart();
-const { recommended, warnings, fetchFor } = useLensRecommendation();
-
-const lensSelections = ref<Record<number, LensSpecs>>({});
-const resolvedLenses = ref<Record<number, LensProduct | null>>({});
 
 // --- Customer (fixed panel, no longer a collapsible step) ---
 const customerId = ref<number | null>(null);
@@ -151,40 +146,29 @@ function openArmadoModal(id: number | null): void {
     armadoModalOpen.value = true;
 }
 
-function onArmadoSave(payload: {
-    armado: Armado;
-    lensSelection: LensSpecs;
-    resolvedLens: LensProduct | null;
-}): void {
+function onArmadoSave(armado: Armado): void {
     const data = {
-        lens: payload.armado.lens,
-        frame: payload.armado.frame,
-        own_frame: payload.armado.own_frame,
-        combo: payload.armado.combo,
+        lens: armado.lens,
+        frame: armado.frame,
+        own_frame: armado.own_frame,
+        combo: armado.combo,
     };
-    const id = editingArmadoId.value ?? cart.commitArmado(data).id;
 
     if (editingArmadoId.value !== null) {
         cart.updateArmado(editingArmadoId.value, data);
+    } else {
+        cart.commitArmado(data);
     }
 
-    lensSelections.value[id] = payload.lensSelection;
-    resolvedLenses.value[id] = payload.resolvedLens;
     armadoModalOpen.value = false;
-}
-
-function removeArmado(id: number): void {
-    cart.removeArmado(id);
-    delete lensSelections.value[id];
-    delete resolvedLenses.value[id];
 }
 
 // Manual price override for an armado's total. The frame is always $0
 // inside a combo (see RegisterSale), so the lens line absorbs the edit —
 // stored separately from unit_price so it survives re-render without
 // masking the underlying computed price, and is dropped whenever the
-// armado is reconfigured through the wizard (see ArmadoModal's
-// onLensSelectionChange, which rebuilds the lens line from scratch).
+// armado is reconfigured through the wizard (StepLens rebuilds the lens
+// line from scratch, dropping the override).
 function updateArmadoTotal(armado: Armado, value: number): void {
     if (!armado.lens) {
         return;
@@ -219,13 +203,6 @@ function onAddResolvedProduct(resolved: {
 
 function removeLooseProduct(index: number): void {
     cart.removeProduct(index);
-}
-
-function onRefreshRecommendation(sel: {
-    design?: string;
-    material?: string;
-}): void {
-    void fetchFor(newPrescription.value as Record<string, unknown>, sel);
 }
 
 function formatCOP(value: number): string {
@@ -318,8 +295,6 @@ async function confirmCheckout(): Promise<void> {
     cart.discountPercent.value = 0;
     cart.tipPercent.value = 0;
     cart.surchargePercent.value = 0;
-    lensSelections.value = {};
-    resolvedLenses.value = {};
     customerId.value = null;
     prescriptionMode.value = 'new';
     prescriptionId.value = null;
@@ -451,7 +426,7 @@ async function confirmCheckout(): Promise<void> {
                                 variant="ghost"
                                 size="sm"
                                 class="text-destructive hover:bg-destructive/10 hover:text-destructive"
-                                @click="removeArmado(armado.id)"
+                                @click="cart.removeArmado(armado.id)"
                             >
                                 {{ trans('app.pos.remove_armado') }}
                             </Button>
@@ -462,20 +437,8 @@ async function confirmCheckout(): Promise<void> {
                 <ArmadoModal
                     :open="armadoModalOpen"
                     :armado="editingArmado"
-                    :lens-selection="
-                        editingArmadoId !== null
-                            ? (lensSelections[editingArmadoId] ?? null)
-                            : null
-                    "
-                    :resolved-lens="
-                        editingArmadoId !== null
-                            ? (resolvedLenses[editingArmadoId] ?? null)
-                            : null
-                    "
-                    :products="armadoProducts"
+                    :lens-catalog="lensCatalog"
                     :frame-products="frameProducts"
-                    :recommended="recommended"
-                    :warnings="warnings"
                     :customer-prescriptions="customerPrescriptions"
                     :lens-needs-customer="lensNeedsCustomer"
                     :today="today"
@@ -485,7 +448,6 @@ async function confirmCheckout(): Promise<void> {
                     v-model:prescription="newPrescription"
                     v-model:customer-id="customerId"
                     @update:open="armadoModalOpen = $event"
-                    @refresh-recommendation="onRefreshRecommendation"
                     @save="onArmadoSave"
                 />
 

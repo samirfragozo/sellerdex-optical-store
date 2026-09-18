@@ -13,8 +13,7 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import type {
-    LensProduct,
-    LensSpecs,
+    LensCatalogProp,
     ProductProp,
 } from '@/composables/useLensCatalog';
 import type { Armado } from '@/composables/usePosCart';
@@ -47,12 +46,8 @@ const { trans } = useTranslations();
 const props = defineProps<{
     open: boolean;
     armado: Armado | null;
-    lensSelection: LensSpecs | null;
-    resolvedLens: LensProduct | null;
-    products: ProductProp[];
+    lensCatalog: LensCatalogProp;
     frameProducts: ProductProp[];
-    recommended: LensSpecs | null;
-    warnings: string[];
     customerPrescriptions: PrescriptionOption[];
     lensNeedsCustomer: boolean;
     errors?: Record<string, string>;
@@ -62,14 +57,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
     'update:open': [boolean];
-    save: [
-        {
-            armado: Armado;
-            lensSelection: LensSpecs;
-            resolvedLens: LensProduct | null;
-        },
-    ];
-    'refresh-recommendation': [{ design?: string; material?: string }];
+    save: [Armado];
 }>();
 
 const prescriptionMode = defineModel<'existing' | 'new'>('prescriptionMode', {
@@ -85,19 +73,17 @@ const customerId = defineModel<number | null>('customerId', {
     required: true,
 });
 
-const emptySelection = (): LensSpecs => ({
-    design: '',
-    process: '',
-    material: '',
-    filter: '',
-});
-
 const emptyArmado = (): Armado => ({
     id: 0,
     lens: null,
     frame: null,
     own_frame: false,
-    combo: { with_exam: false, estuche: 'small', include_liquid: true, include_pano: true },
+    combo: {
+        with_exam: false,
+        estuche: 'small',
+        include_liquid: true,
+        include_pano: true,
+    },
 });
 
 type WizardStep = 'prescription' | 'lens' | 'frame' | 'combo';
@@ -107,9 +93,6 @@ const stepIndex = computed(() => steps.indexOf(step.value));
 const stepTitle = computed(() => trans(`app.pos.steps.${step.value}`));
 
 const draft = ref<Armado>(emptyArmado());
-const draftLensSelection = ref<LensSpecs>(emptySelection());
-const draftResolvedLens = ref<LensProduct | null>(null);
-
 // The modal works on a local draft so cancelling never touches the cart —
 // props seed it fresh each time the dialog opens.
 watch(
@@ -123,12 +106,6 @@ watch(
         draft.value = props.armado
             ? structuredClone(props.armado)
             : emptyArmado();
-        draftLensSelection.value = props.lensSelection
-            ? structuredClone(props.lensSelection)
-            : emptySelection();
-        draftResolvedLens.value = props.resolvedLens
-            ? structuredClone(props.resolvedLens)
-            : null;
     },
 );
 
@@ -149,7 +126,7 @@ const currentStepValid = computed(() => {
                 : prescription.value.exam_date !== '' &&
                       prescription.value.lens_type !== '';
         case 'lens':
-            return draftResolvedLens.value !== null;
+            return draft.value.lens !== null;
         case 'frame':
             return draft.value.own_frame || draft.value.frame !== null;
         default:
@@ -169,33 +146,8 @@ function goBack(): void {
     }
 }
 
-function emitRefresh(): void {
-    emit('refresh-recommendation', {
-        design: draftLensSelection.value.design || undefined,
-        material: draftLensSelection.value.material || undefined,
-    });
-}
-
-function onLensSelectionChange(): void {
-    emitRefresh();
-
-    draft.value.lens = draftResolvedLens.value
-        ? {
-              product_id: draftResolvedLens.value.id,
-              description: draftResolvedLens.value.name,
-              unit_price: draftResolvedLens.value.price,
-              unit_cost: draftResolvedLens.value.cost,
-              option_ids: draftResolvedLens.value.option_ids,
-          }
-        : null;
-}
-
 function save(): void {
-    emit('save', {
-        armado: draft.value,
-        lensSelection: draftLensSelection.value,
-        resolvedLens: draftResolvedLens.value,
-    });
+    emit('save', draft.value);
 }
 </script>
 
@@ -217,17 +169,13 @@ function save(): void {
                 :errors="errors"
                 :today="today"
                 :min-exam-date="minExamDate"
-                @change="emitRefresh"
             />
 
             <StepLens
                 v-else-if="step === 'lens'"
-                v-model:selection="draftLensSelection"
-                v-model:resolved-lens="draftResolvedLens"
-                :products="products"
-                :recommended="recommended"
-                :warnings="warnings"
-                @change="onLensSelectionChange"
+                :catalog="lensCatalog"
+                :initial="draft.lens"
+                @change="draft.lens = $event"
             />
 
             <StepFrame
