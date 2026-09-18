@@ -2,9 +2,11 @@
 
 use App\Models\CashRegisterSession;
 use App\Models\Customer;
-use App\Models\Option;
-use App\Models\OptionGroup;
-use App\Models\Product;
+use App\Models\LensCombination;
+use App\Models\LensMaterial;
+use App\Models\LensPackage;
+use App\Models\LensTechnology;
+use App\Models\LensType;
 use App\Models\ProductCategory;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
@@ -17,18 +19,20 @@ it('offers a prescription created earlier in the session as an existing option',
     $seller = User::factory()->seller()->create();
     CashRegisterSession::factory()->for($seller)->create(['company_id' => $seller->company_id]);
 
-    $lensCategory = ProductCategory::factory()->create(['key' => 'lens', 'name' => 'Lentes', 'company_id' => $seller->company_id]);
-    $lens = Product::factory()->create([
-        'name' => 'Lente Monofocal',
-        'product_category_id' => $lensCategory->id,
+    // The "Lentes" catalog chip only renders when a `lens`-keyed category exists —
+    // the lens sale itself now runs through the lens catalog wizard, not a product.
+    ProductCategory::factory()->create(['key' => 'lens', 'name' => 'Lentes', 'company_id' => $seller->company_id]);
+
+    $type = LensType::factory()->create(['name' => 'Monofocal', 'company_id' => $seller->company_id]);
+    $technology = LensTechnology::factory()->create(['name' => 'Estándar', 'company_id' => $seller->company_id]);
+    $material = LensMaterial::factory()->create(['name' => 'CR-39', 'company_id' => $seller->company_id]);
+    LensCombination::factory()->create([
+        'lens_type_id' => $type->id,
+        'lens_technology_id' => $technology->id,
+        'lens_material_id' => $material->id,
         'company_id' => $seller->company_id,
-        'is_active' => true,
-        'is_pos_selectable' => true,
-        'price' => 50_000,
     ]);
-    $group = OptionGroup::factory()->create(['company_id' => $seller->company_id, 'is_required' => true]);
-    $option = Option::factory()->create(['option_group_id' => $group->id, 'name' => 'Basico', 'price' => 0]);
-    $lens->optionGroups()->attach($group->id);
+    $package = LensPackage::factory()->create(['name' => 'Básico', 'company_id' => $seller->company_id]);
 
     $customer = Customer::factory()->create(['company_id' => $seller->company_id, 'name' => 'Ana', 'last_name' => 'Gómez', 'id_number' => '99999999']);
 
@@ -42,8 +46,10 @@ it('offers a prescription created earlier in the session as an existing option',
         ->assertButtonDisabled('Usar existente')
         ->fill('#rx_exam_date', now()->toDateString())
         ->click('Continuar al lente')
-        ->click('button:has-text("Lente Monofocal")')
-        ->click('button:has-text("'.$option->name.'")')
+        ->click('button:has-text("'.$type->name.'")')
+        ->click('button:has-text("'.$technology->name.'")')
+        ->click('button:has-text("'.$material->name.'")')
+        ->click('button:has-text("'.$package->name.'")')
         ->click('button:has-text("Continuar a la montura")')
         ->click('text=El cliente trae su montura')
         ->click('button:has-text("Continuar al combo")')
