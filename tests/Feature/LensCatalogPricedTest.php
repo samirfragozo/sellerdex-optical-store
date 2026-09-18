@@ -8,18 +8,27 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
-it('crea tratamientos y paquetes de lente con precio y costo', function (string $model) {
+it('crea tratamientos de lente con precio y costo', function () {
     $user = User::factory()->admin()->create();
     $this->actingAs($user);
 
-    $record = $model::factory()->create(['name' => 'Antirreflejo', 'price' => 50000, 'cost' => 20000]);
+    $record = LensTreatment::factory()->create(['name' => 'Antirreflejo', 'price' => 50000, 'cost' => 20000]);
 
     expect($record->company_id)->toBe($user->company_id)
         ->and($record->price)->toBe(50000)
         ->and($record->cost)->toBe(20000);
-})
-    ->with([LensTreatment::class])
-    ->with([LensPackage::class]);
+});
+
+it('crea paquetes de lente con precio y costo', function () {
+    $user = User::factory()->admin()->create();
+    $this->actingAs($user);
+
+    $record = LensPackage::factory()->create(['name' => 'Antirreflejo', 'price' => 50000, 'cost' => 20000]);
+
+    expect($record->company_id)->toBe($user->company_id)
+        ->and($record->price)->toBe(50000)
+        ->and($record->cost)->toBe(20000);
+});
 
 it('siembra un paquete Básico por empresa sin duplicar', function () {
     $user = User::factory()->admin()->create();
