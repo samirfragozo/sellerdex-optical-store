@@ -84,14 +84,19 @@ class SaleItem extends Model
         return $this->hasOne(LensOrder::class);
     }
 
+    public function lensConfig(): HasOne
+    {
+        return $this->hasOne(SaleItemLensConfig::class);
+    }
+
     public function options(): HasMany
     {
         return $this->hasMany(SaleItemOption::class);
     }
 
-    /** True when this line is a made-to-order lens (its category generates a lab order). */
+    /** True when this line is a made-to-order lens (carries a resolved lens configuration). */
     public function isLens(): bool
     {
-        return $this->product?->category?->generates_lab_order === true;
+        return $this->lensConfig()->exists();
     }
 }
