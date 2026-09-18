@@ -3,6 +3,7 @@
 use App\Enums\DocumentType;
 use App\Models\Company;
 use App\Models\Customer;
+use App\Models\LensType;
 use App\Models\Option;
 use App\Models\OptionGroup;
 use App\Models\PaymentMethod;
@@ -851,4 +852,17 @@ it('does not flag a plain-product sale as having a pending lab order', function 
     ])->assertOk();
 
     expect($response->json('has_pending_lab_order'))->toBeFalse();
+});
+
+it('expone el catálogo de lentes en la página del POS', function () {
+    $admin = User::factory()->admin()->create();
+    $this->actingAs($admin);
+
+    LensType::factory()->create(['name' => 'Monofocal']);
+
+    $response = $this->get(route('pos.index'));
+
+    $response->assertInertia(fn ($page) => $page
+        ->has('lensCatalog.types', 1)
+        ->where('lensCatalog.types.0.name', 'Monofocal'));
 });

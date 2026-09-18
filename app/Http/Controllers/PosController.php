@@ -3,6 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Enums\LensType;
+use App\Models\LensCombination;
+use App\Models\LensMaterial;
+use App\Models\LensPackage;
+use App\Models\LensTechnology;
+use App\Models\LensTreatment;
+use App\Models\LensType as LensTypeModel;
 use App\Models\PaymentMethod;
 use App\Models\Prescription;
 use App\Models\Product;
@@ -69,6 +75,15 @@ class PosController extends Controller
                 ],
             ],
             'armadoProducts' => $armadoProducts,
+            'lensCatalog' => [
+                'types' => LensTypeModel::query()->where('is_active', true)->orderBy('sort_order')->get(['id', 'name']),
+                'technologies' => LensTechnology::query()->where('is_active', true)->orderBy('sort_order')->get(['id', 'name']),
+                'materials' => LensMaterial::query()->where('is_active', true)->orderBy('sort_order')->get(['id', 'name']),
+                'treatments' => LensTreatment::query()->where('is_active', true)->orderBy('sort_order')->get(['id', 'name', 'price', 'cost']),
+                'packages' => LensPackage::query()->where('is_active', true)->orderBy('sort_order')->get(['id', 'name', 'price', 'cost']),
+                'combinations' => LensCombination::query()->where('is_active', true)
+                    ->get(['id', 'lens_type_id', 'lens_technology_id', 'lens_material_id', 'cost', 'price', 'installation_price']),
+            ],
             'categories' => ProductCategory::query()->where('is_active', true)
                 ->orderBy('name')->get(['id', 'name', 'key']),
             'paymentMethods' => PaymentMethod::query()->where('is_active', true)
