@@ -46,6 +46,7 @@ return [
         'lens_material' => ['label' => 'Lens material', 'plural' => 'Lens materials', 'nav' => 'Lens materials'],
         'lens_treatment' => ['label' => 'Functional treatment', 'plural' => 'Functional treatments', 'nav' => 'Functional treatments'],
         'lens_package' => ['label' => 'Lens package', 'plural' => 'Lens packages', 'nav' => 'Lens packages'],
+        'lens_combination' => ['label' => 'Lens combination', 'plural' => 'Lens combinations', 'nav' => 'Lens combinations'],
         'payment_method' => ['label' => 'Payment method', 'plural' => 'Payment methods', 'nav' => 'Payment methods'],
         'expense' => ['label' => 'Expense', 'plural' => 'Expenses', 'nav' => 'Expenses'],
         'expense_category' => ['label' => 'Expense category', 'plural' => 'Expense categories', 'nav' => 'Expense categories'],
