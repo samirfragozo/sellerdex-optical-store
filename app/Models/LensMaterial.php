@@ -7,6 +7,7 @@ use Database\Factories\LensMaterialFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[Fillable(['company_id', 'name', 'is_active', 'sort_order'])]
@@ -15,10 +16,26 @@ class LensMaterial extends Model
     /** @use HasFactory<LensMaterialFactory> */
     use BelongsToCompany, HasFactory, SoftDeletes;
 
+    /** A catalog entry still referenced by a combination cannot be deleted. */
+    protected static function booted(): void
+    {
+        static::deleting(fn (LensMaterial $model): bool => ! $model->hasChildren());
+    }
+
     protected function casts(): array
     {
         return [
             'is_active' => 'boolean',
         ];
+    }
+
+    public function combinations(): HasMany
+    {
+        return $this->hasMany(LensCombination::class, 'lens_material_id');
+    }
+
+    public function hasChildren(): bool
+    {
+        return $this->combinations()->exists();
     }
 }
