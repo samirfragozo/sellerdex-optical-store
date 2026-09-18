@@ -133,15 +133,32 @@ watch(
 );
 
 const canSave = computed(() => draft.value.lens !== null);
-const canLeavePrescriptionStep = computed(
-    () => !props.lensNeedsCustomer || customerId.value !== null,
-);
+
+// Each step must be fully filled before the wizard lets the user move on —
+// otherwise incomplete armados (no lens resolved, no frame chosen, ...)
+// silently reach the final "save" button with no earlier warning.
+const currentStepValid = computed(() => {
+    switch (step.value) {
+        case 'prescription':
+            if (props.lensNeedsCustomer) {
+                return customerId.value !== null;
+            }
+
+            return prescriptionMode.value === 'existing'
+                ? prescriptionId.value !== null
+                : prescription.value.exam_date !== '' &&
+                      prescription.value.lens_type !== '';
+        case 'lens':
+            return draftResolvedLens.value !== null;
+        case 'frame':
+            return draft.value.own_frame || draft.value.frame !== null;
+        default:
+            return true;
+    }
+});
 
 function goNext(): void {
-    if (
-        stepIndex.value < steps.length - 1 &&
-        (step.value !== 'prescription' || canLeavePrescriptionStep.value)
-    ) {
+    if (stepIndex.value < steps.length - 1 && currentStepValid.value) {
         step.value = steps[stepIndex.value + 1];
     }
 }
@@ -238,9 +255,7 @@ function save(): void {
                     v-if="stepIndex < steps.length - 1"
                     type="button"
                     size="sm"
-                    :disabled="
-                        step === 'prescription' && !canLeavePrescriptionStep
-                    "
+                    :disabled="!currentStepValid"
                     @click="goNext"
                 >
                     {{ trans(`app.pos.continue_to_${steps[stepIndex + 1]}`) }}
