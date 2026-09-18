@@ -350,15 +350,14 @@ return [
         ],
 
         'lens_form' => [
-            'design' => 'Diseño',
-            'range' => 'Gama',
-            'material' => 'Material',
-            'filter' => 'Filtro',
-            'by_options' => 'Elegir por opciones',
-            'pick_lens' => 'Elige el lente base',
-            'no_combo' => 'Esa combinación no existe en el catálogo. Ajusta material o filtro.',
-            'invalid_option' => 'Una o más opciones seleccionadas no pertenecen a este producto.',
-            'option_group_required' => 'Selecciona una opción del grupo ":group".',
+            'pick_type' => 'Tipo de lente',
+            'pick_technology' => 'Tecnología de fabricación',
+            'pick_material' => 'Material',
+            'pick_treatments' => 'Tratamientos funcionales',
+            'pick_package' => 'Paquete',
+            'invalid_combination' => 'Esa combinación de tipo, tecnología y material no está disponible.',
+            'invalid_package' => 'El paquete seleccionado no es válido.',
+            'invalid_treatment' => 'Uno o más tratamientos seleccionados no son válidos.',
         ],
 
         'payment_form' => [

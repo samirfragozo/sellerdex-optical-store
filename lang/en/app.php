@@ -312,15 +312,14 @@ return [
         ],
 
         'lens_form' => [
-            'design' => 'Design',
-            'range' => 'Range',
-            'material' => 'Material',
-            'filter' => 'Filter',
-            'by_options' => 'Choose by options',
-            'pick_lens' => 'Pick the base lens',
-            'no_combo' => 'That combination does not exist in the catalog. Adjust material or filter.',
-            'invalid_option' => 'One or more selected options do not belong to this product.',
-            'option_group_required' => 'Select an option from the ":group" group.',
+            'pick_type' => 'Lens type',
+            'pick_technology' => 'Manufacturing technology',
+            'pick_material' => 'Material',
+            'pick_treatments' => 'Functional treatments',
+            'pick_package' => 'Package',
+            'invalid_combination' => 'That type, technology and material combination is not available.',
+            'invalid_package' => 'The selected package is not valid.',
+            'invalid_treatment' => 'One or more selected treatments are not valid.',
         ],
 
         'payment_form' => [
