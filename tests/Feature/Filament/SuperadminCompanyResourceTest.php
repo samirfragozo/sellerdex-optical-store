@@ -24,6 +24,6 @@ it('seeds default reference data when the superadmin creates a company', functio
     $company = Company::where('name', 'Óptica Norte')->firstOrFail();
 
     expect(PaymentMethod::where('company_id', $company->id)->where('name', 'Efectivo')->exists())->toBeTrue()
-        ->and(ProductCategory::where('company_id', $company->id)->count())->toBe(4)
+        ->and(ProductCategory::where('company_id', $company->id)->count())->toBe(5)
         ->and(ExpenseCategory::where('company_id', $company->id)->count())->toBe(6);
 });

@@ -102,7 +102,7 @@ it('seeds the new company with default reference data', function () {
     $company = Company::where('name', 'Óptica Sur')->firstOrFail();
 
     expect(PaymentMethod::where('company_id', $company->id)->where('name', 'Efectivo')->exists())->toBeTrue()
-        ->and(ProductCategory::where('company_id', $company->id)->count())->toBe(4)
+        ->and(ProductCategory::where('company_id', $company->id)->count())->toBe(5)
         ->and(ExpenseCategory::where('company_id', $company->id)->count())->toBe(6);
 });
 
