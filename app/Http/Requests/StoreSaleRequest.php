@@ -228,9 +228,11 @@ class StoreSaleRequest extends FormRequest
         $productLines = collect($this->input('products', []));
         $products = $productLines->sum(fn ($p): int => (int) ($p['quantity'] ?? 0) * (int) ($p['unit_price'] ?? 0));
 
-        $taxRates = Product::query()
+        // ponytail: bridge from the dropped products.tax_rate to the product's Tax; Task 3 removes this tax query.
+        $taxRates = Product::query()->with('tax')
             ->whereIn('id', $productLines->pluck('product_id')->filter()->unique())
-            ->pluck('tax_rate', 'id');
+            ->get()
+            ->mapWithKeys(fn (Product $p): array => [$p->id => $p->tax?->rate ?? 0]);
 
         $rawTax = $productLines->sum(function ($p) use ($taxRates): int {
             $rate = (float) ($taxRates[$p['product_id'] ?? null] ?? 0);

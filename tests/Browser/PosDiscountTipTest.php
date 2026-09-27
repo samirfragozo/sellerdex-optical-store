@@ -4,6 +4,7 @@ use App\Models\CashRegisterSession;
 use App\Models\PaymentMethod;
 use App\Models\Product;
 use App\Models\ProductCategory;
+use App\Models\Tax;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -23,7 +24,7 @@ it('shows discount, tip and tax in the cart summary', function () {
         'is_active' => true,
         'is_pos_selectable' => true,
         'price' => 100_000,
-        'tax_rate' => 19,
+        'tax_id' => Tax::factory()->create(['company_id' => $seller->company_id, 'rate' => 19])->id,
     ]);
     $this->actingAs($seller);
 

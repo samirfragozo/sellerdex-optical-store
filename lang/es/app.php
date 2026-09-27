@@ -57,6 +57,7 @@ return [
         'purchase_order' => ['label' => 'Orden de compra', 'plural' => 'Órdenes de compra', 'nav' => 'Órdenes de compra'],
         'lens_order' => ['label' => 'Orden de laboratorio', 'plural' => 'Órdenes de laboratorio', 'nav' => 'Laboratorio'],
         'user' => ['label' => 'Usuario', 'plural' => 'Usuarios', 'nav' => 'Usuarios'],
+        'tax' => ['label' => 'Impuesto', 'plural' => 'Impuestos', 'nav' => 'Impuestos'],
     ],
 
     'users' => [
@@ -167,7 +168,10 @@ return [
         'type' => 'Tipo',
         'profit' => 'Utilidad',
         'tax_id' => 'NIT',
-        'tax_rate' => 'Tasa de impuesto (%)',
+        'rate' => 'Tarifa',
+        'treatment' => 'Tratamiento',
+        'dian_code' => 'Código DIAN',
+        'is_system' => 'Del sistema',
         'surcharge_percent' => 'Recargo (%)',
         'logo' => 'Logo',
         'category_key' => 'Clave (interna)',
@@ -568,5 +572,12 @@ return [
         'taxed' => 'Gravado',
         'exempt' => 'Exento',
         'excluded' => 'Excluido',
+    ],
+
+    'taxes' => [
+        'none' => 'Sin impuesto',
+        'price_includes_tax' => 'El precio que escribes ya incluye este impuesto.',
+        'default_for_category' => 'Impuesto sugerido para la categoría',
+        'use_lens_category' => 'Usar el impuesto de la categoría Lentes',
     ],
 ];

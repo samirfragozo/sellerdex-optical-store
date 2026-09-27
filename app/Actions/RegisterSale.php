@@ -394,10 +394,12 @@ class RegisterSale
     /** Per-line tax snapshot, based on the product's tax rate at sale time. */
     private function taxFor(?Product $product, int $unitPrice, int $quantity): int
     {
-        if ($product === null || (float) $product->tax_rate <= 0) {
+        // ponytail: bridge from the dropped products.tax_rate to the product's Tax; Task 3 replaces this with the line snapshot.
+        $rate = (float) ($product?->tax?->rate ?? 0);
+        if ($rate <= 0) {
             return 0;
         }
 
-        return (int) round($unitPrice * $quantity * ((float) $product->tax_rate) / 100);
+        return (int) round($unitPrice * $quantity * $rate / 100);
     }
 }

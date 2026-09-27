@@ -16,6 +16,7 @@ use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\Sale;
 use App\Models\Supplier;
+use App\Models\Tax;
 use App\Models\User;
 use Database\Seeders\ProductCatalogSeeder;
 use Database\Seeders\ProductCategorySeeder;
@@ -765,7 +766,8 @@ it('applies discount percent, tip percent and per-line tax when registering a po
     $seller = User::factory()->seller()->create();
     openCashRegisterSession($seller);
     $customer = Customer::factory()->create();
-    $product = Product::factory()->create(['company_id' => $seller->company_id, 'price' => 100_000, 'tax_rate' => 19, 'is_pos_selectable' => true]);
+    $tax = Tax::factory()->create(['company_id' => $seller->company_id, 'rate' => 19]);
+    $product = Product::factory()->create(['company_id' => $seller->company_id, 'price' => 100_000, 'tax_id' => $tax->id, 'is_pos_selectable' => true]);
 
     $this->actingAs($seller)->postJson('/pos', [
         'customer_id' => $customer->id,
@@ -791,10 +793,11 @@ it('accepts a single payment covering the full total of a taxed sale', function 
     openCashRegisterSession($seller);
     $customer = Customer::factory()->create();
     $method = PaymentMethod::factory()->create();
+    $tax = Tax::factory()->create(['company_id' => $seller->company_id, 'rate' => 19]);
     $product = Product::factory()->create([
         'company_id' => $seller->company_id,
         'price' => 100_000,
-        'tax_rate' => 19,
+        'tax_id' => $tax->id,
         'is_active' => true,
         'is_pos_selectable' => true,
     ]);

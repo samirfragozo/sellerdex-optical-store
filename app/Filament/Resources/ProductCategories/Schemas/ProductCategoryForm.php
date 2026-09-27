@@ -2,7 +2,10 @@
 
 namespace App\Filament\Resources\ProductCategories\Schemas;
 
+use App\Enums\VatRegime;
+use App\Models\Company;
 use App\Models\ProductCategory;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Section;
@@ -23,6 +26,11 @@ class ProductCategoryForm
                     ->disabled(fn (?ProductCategory $record): bool => (bool) $record?->is_system)
                     ->required()
                     ->maxLength(255),
+                Select::make('default_tax_id')
+                    ->label(__('app.taxes.default_for_category'))
+                    ->relationship('defaultTax', 'name', fn ($query) => $query->where('is_active', true))
+                    ->placeholder(__('app.taxes.none'))
+                    ->visible(fn (): bool => Company::current()->vat_regime === VatRegime::Responsible),
                 Section::make(__('app.sections.options'))
                     ->schema([
                         Toggle::make('is_active')

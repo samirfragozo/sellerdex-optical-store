@@ -1,7 +1,9 @@
 <?php
 
+use App\Models\Company;
 use App\Models\Product;
 use App\Models\ProductCategory;
+use App\Models\Tax;
 use App\Models\User;
 use App\Support\PermissionsTeam;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -33,14 +35,15 @@ it('el admin gestiona el catálogo', function () {
         ->and(PermissionsTeam::runAs($admin->company, fn () => $admin->can('Delete:Product')))->toBeTrue();
 });
 
-it('defaults tax_rate to zero and casts it as decimal', function () {
+it('has no tax unless one is assigned', function () {
     $product = Product::factory()->create();
 
-    expect($product->fresh()->tax_rate)->toBe('0.00');
+    expect($product->fresh()->tax)->toBeNull();
 });
 
-it('accepts a positive tax_rate', function () {
-    $product = Product::factory()->create(['tax_rate' => 19]);
+it('belongs to a tax', function () {
+    $tax = Tax::factory()->create(['company_id' => Company::factory()->create()->id]);
+    $product = Product::factory()->create(['company_id' => $tax->company_id, 'tax_id' => $tax->id]);
 
-    expect($product->fresh()->tax_rate)->toBe('19.00');
+    expect($product->fresh()->tax->is($tax))->toBeTrue();
 });

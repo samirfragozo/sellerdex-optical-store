@@ -54,6 +54,7 @@ return [
         'sale' => ['label' => 'Sale', 'plural' => 'Sales', 'nav' => 'Sales'],
         'cash_close' => ['label' => 'Cash close', 'plural' => 'Cash closes', 'nav' => 'Cash close'],
         'user' => ['label' => 'User', 'plural' => 'Users', 'nav' => 'Users'],
+        'tax' => ['label' => 'Tax', 'plural' => 'Taxes', 'nav' => 'Taxes'],
         'supplier' => ['label' => 'Supplier', 'plural' => 'Suppliers', 'nav' => 'Suppliers'],
         'purchase_order' => ['label' => 'Purchase order', 'plural' => 'Purchase orders', 'nav' => 'Purchase orders'],
         'lens_order' => ['label' => 'Lab order', 'plural' => 'Lab orders', 'nav' => 'Laboratory'],
@@ -185,7 +186,10 @@ return [
         'type' => 'Type',
         'profit' => 'Profit',
         'tax_id' => 'Tax ID',
-        'tax_rate' => 'Tax rate (%)',
+        'rate' => 'Rate',
+        'treatment' => 'Treatment',
+        'dian_code' => 'DIAN code',
+        'is_system' => 'System',
         'surcharge_percent' => 'Surcharge (%)',
         'logo' => 'Logo',
         'lead_time_days' => 'Lead time (days)',
@@ -568,5 +572,12 @@ return [
         'taxed' => 'Taxed',
         'exempt' => 'Exempt',
         'excluded' => 'Excluded',
+    ],
+
+    'taxes' => [
+        'none' => 'No tax',
+        'price_includes_tax' => 'The price you enter already includes this tax.',
+        'default_for_category' => 'Suggested tax for the category',
+        'use_lens_category' => 'Use the Lenses category tax',
     ],
 ];

@@ -36,7 +36,7 @@ it('computes tax, tip and discount amount from percent fields via recalculateTot
         'tip_percent' => 5,
         'surcharge_percent' => 0,
     ]);
-    $product = Product::factory()->create(['tax_rate' => 19]);
+    $product = Product::factory()->create();
     $sale->items()->create([
         'product_id' => $product->id,
         'description' => 'Montura',

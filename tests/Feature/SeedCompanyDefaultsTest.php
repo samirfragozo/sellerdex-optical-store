@@ -90,3 +90,14 @@ it('seeds the default taxes for the company', function () {
 
     expect(Tax::withoutGlobalScopes()->where('company_id', $company->id)->count())->toBe(4);
 });
+
+it('gives each system category its suggested default tax', function () {
+    $company = Company::factory()->create();
+
+    (new SeedCompanyDefaults)->handle($company);
+
+    $defaults = ProductCategory::where('company_id', $company->id)->with('defaultTax')->get()
+        ->mapWithKeys(fn (ProductCategory $c) => [$c->key => $c->defaultTax?->name])->all();
+
+    expect($defaults)->toEqual(ProductCategory::DEFAULT_TAX_BY_KEY);
+});

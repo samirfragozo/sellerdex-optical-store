@@ -2,7 +2,10 @@
 
 namespace App\Filament\Resources\Products\Schemas;
 
+use App\Enums\VatRegime;
+use App\Models\Company;
 use App\Models\Product;
+use App\Models\ProductCategory;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -28,7 +31,9 @@ class ProductForm
                 Select::make('product_category_id')
                     ->label(__('app.fields.category'))
                     ->relationship('category', 'name')
-                    ->required(),
+                    ->required()
+                    ->live()
+                    ->afterStateUpdated(fn ($state, $set, $get) => $get('tax_id') ?: $set('tax_id', ProductCategory::find($state)?->default_tax_id)),
                 Select::make('base_product_id')
                     ->label(__('app.fields.base_product'))
                     ->relationship(
@@ -57,13 +62,12 @@ class ProductForm
                     ->default(0)
                     ->prefix('$')
                     ->visible(fn () => auth()->user()?->isAdmin() === true),
-                TextInput::make('tax_rate')
-                    ->label(__('app.fields.tax_rate'))
-                    ->numeric()
-                    ->minValue(0)
-                    ->maxValue(100)
-                    ->default(0)
-                    ->suffix('%'),
+                Select::make('tax_id')
+                    ->label(__('app.fields.tax'))
+                    ->relationship('tax', 'name', fn ($query) => $query->where('is_active', true))
+                    ->placeholder(__('app.taxes.none'))
+                    ->helperText(__('app.taxes.price_includes_tax'))
+                    ->visible(fn (): bool => Company::current()->vat_regime === VatRegime::Responsible),
                 TextInput::make('stock')
                     ->label(__('app.fields.stock'))
                     ->numeric()

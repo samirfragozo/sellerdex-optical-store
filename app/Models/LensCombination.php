@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['company_id', 'lens_type_id', 'lens_technology_id', 'lens_material_id', 'cost', 'price', 'installation_price', 'is_active'])]
+#[Fillable(['company_id', 'lens_type_id', 'lens_technology_id', 'lens_material_id', 'cost', 'price', 'installation_price', 'tax_id', 'is_active'])]
 class LensCombination extends Model
 {
     /** @use HasFactory<LensCombinationFactory> */
@@ -38,6 +38,11 @@ class LensCombination extends Model
     public function lensMaterial(): BelongsTo
     {
         return $this->belongsTo(LensMaterial::class);
+    }
+
+    public function tax(): BelongsTo
+    {
+        return $this->belongsTo(Tax::class);
     }
 
     /** The active, sellable combination for a given Tipo×Tecnología×Material triple, if any. */

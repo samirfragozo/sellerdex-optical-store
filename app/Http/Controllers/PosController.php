@@ -28,7 +28,7 @@ class PosController extends Controller
             'variants' => fn ($q) => $q->where('is_active', true),
             'variants.variantOptions',
         ];
-        $catalogColumns = ['id', 'name', 'price', 'cost', 'tax_rate', 'is_stockable', 'stock', 'product_category_id', 'specs'];
+        $catalogColumns = ['id', 'name', 'price', 'cost', 'is_stockable', 'stock', 'product_category_id', 'specs'];
 
         $products = Product::query()->where('is_active', true)
             ->where('is_pos_selectable', true)
@@ -116,7 +116,6 @@ class PosController extends Controller
             'name' => $p->name,
             'price' => $p->price,
             'cost' => $p->cost,
-            'tax_rate' => (float) $p->tax_rate,
             'is_stockable' => $p->is_stockable,
             'stock' => $p->stock,
             'category_name' => $p->category?->name,

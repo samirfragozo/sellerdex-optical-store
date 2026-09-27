@@ -2,6 +2,9 @@
 
 use App\Enums\TaxTreatment;
 use App\Models\Company;
+use App\Models\LensCombination;
+use App\Models\Product;
+use App\Models\ProductCategory;
 use App\Models\Tax;
 use App\Models\User;
 
@@ -53,3 +56,19 @@ it('translates every tax treatment', function () {
         expect($treatment->label())->not->toStartWith('app.');
     }
 });
+
+it('keeps a tax that a product, category or lens combination uses', function (string $owner) {
+    $company = Company::factory()->create();
+    $tax = Tax::factory()->create(['company_id' => $company->id, 'is_system' => false]);
+    $this->actingAs(User::factory()->forCompany($company)->admin()->create());
+
+    match ($owner) {
+        'product' => Product::factory()->create(['tax_id' => $tax->id]),
+        'category' => ProductCategory::factory()->create(['default_tax_id' => $tax->id]),
+        'lens_combination' => LensCombination::factory()->create(['tax_id' => $tax->id]),
+    };
+
+    $tax->delete();
+
+    expect(Tax::withoutGlobalScopes()->whereKey($tax->id)->exists())->toBeTrue();
+})->with(['product', 'category', 'lens_combination']);

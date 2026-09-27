@@ -7,10 +7,11 @@ use Database\Factories\ProductCategoryFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
-#[Fillable(['company_id', 'name', 'key', 'is_active', 'is_system', 'requires_prescription', 'generates_lab_order', 'is_made_to_order'])]
+#[Fillable(['company_id', 'name', 'key', 'is_active', 'is_system', 'requires_prescription', 'generates_lab_order', 'is_made_to_order', 'default_tax_id'])]
 class ProductCategory extends Model
 {
     /** @use HasFactory<ProductCategoryFactory> */
@@ -30,6 +31,20 @@ class ProductCategory extends Model
         ['key' => 'sunglasses', 'name' => 'Gafas de sol', 'requires_prescription' => false, 'generates_lab_order' => false, 'is_made_to_order' => false],
         ['key' => 'accessory', 'name' => 'Accesorios', 'requires_prescription' => false, 'generates_lab_order' => false, 'is_made_to_order' => false],
         ['key' => 'service', 'name' => 'Servicios', 'requires_prescription' => false, 'generates_lab_order' => false, 'is_made_to_order' => false],
+    ];
+
+    /**
+     * Suggested default tax (by Tax name) for each system category. Lenses and
+     * frames carry VAT in Colombia; health services are excluded.
+     *
+     * @var array<string,string>
+     */
+    public const DEFAULT_TAX_BY_KEY = [
+        'lens' => 'IVA 19%',
+        'frame' => 'IVA 19%',
+        'sunglasses' => 'IVA 19%',
+        'accessory' => 'IVA 19%',
+        'service' => 'Excluido',
     ];
 
     /** A system category, or one that still has products, cannot be deleted. */
@@ -58,6 +73,11 @@ class ProductCategory extends Model
     public function products(): HasMany
     {
         return $this->hasMany(Product::class);
+    }
+
+    public function defaultTax(): BelongsTo
+    {
+        return $this->belongsTo(Tax::class, 'default_tax_id');
     }
 
     public function saleItems(): HasManyThrough

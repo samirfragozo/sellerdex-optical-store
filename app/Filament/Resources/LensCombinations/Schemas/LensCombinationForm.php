@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\LensCombinations\Schemas;
 
+use App\Enums\VatRegime;
+use App\Models\Company;
 use App\Models\LensMaterial;
 use App\Models\LensTechnology;
 use App\Models\LensType;
@@ -56,6 +58,12 @@ class LensCombinationForm
                 ->required()
                 ->numeric()
                 ->prefix('$'),
+            Select::make('tax_id')
+                ->label(__('app.fields.tax'))
+                ->relationship('tax', 'name', fn ($query) => $query->where('is_active', true))
+                ->placeholder(__('app.taxes.use_lens_category'))
+                ->helperText(__('app.taxes.price_includes_tax'))
+                ->visible(fn (): bool => Company::current()->vat_regime === VatRegime::Responsible),
             Toggle::make('is_active')
                 ->label(__('app.fields.active_f'))
                 ->required()

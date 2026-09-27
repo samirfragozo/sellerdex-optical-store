@@ -54,7 +54,8 @@ class Tax extends Model
     /** True while a product, category or lens combination references this tax. */
     public function isInUse(): bool
     {
-        // ponytail: no table references taxes yet; Task 2 adds tax_id columns and replaces this body.
-        return false;
+        return Product::withoutGlobalScopes()->where('tax_id', $this->id)->exists()
+            || ProductCategory::withoutGlobalScopes()->where('default_tax_id', $this->id)->exists()
+            || LensCombination::withoutGlobalScopes()->where('tax_id', $this->id)->exists();
     }
 }

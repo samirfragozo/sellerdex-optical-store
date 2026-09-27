@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-#[Fillable(['company_id', 'name', 'sku', 'product_category_id', 'base_product_id', 'brand', 'price', 'cost', 'tax_rate', 'is_stockable', 'stock', 'is_active', 'is_pos_selectable', 'specs'])]
+#[Fillable(['company_id', 'name', 'sku', 'product_category_id', 'base_product_id', 'brand', 'price', 'cost', 'tax_id', 'is_stockable', 'stock', 'is_active', 'is_pos_selectable', 'specs'])]
 class Product extends Model
 {
     /** @use HasFactory<ProductFactory> */
@@ -23,7 +23,6 @@ class Product extends Model
         return [
             'price' => 'integer',
             'cost' => 'integer',
-            'tax_rate' => 'decimal:2',
             'is_stockable' => 'boolean',
             'is_active' => 'boolean',
             'is_pos_selectable' => 'boolean',
@@ -34,6 +33,11 @@ class Product extends Model
     public function category(): BelongsTo
     {
         return $this->belongsTo(ProductCategory::class, 'product_category_id');
+    }
+
+    public function tax(): BelongsTo
+    {
+        return $this->belongsTo(Tax::class);
     }
 
     public function suppliers(): BelongsToMany
