@@ -53,6 +53,6 @@ class CompleteLensOnboarding
             );
         }
 
-        $company->update(['lens_onboarding_completed_at' => now()]);
+        $company->update(['onboarded_at' => now()]);
     }
 }

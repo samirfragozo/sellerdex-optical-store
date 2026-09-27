@@ -16,7 +16,7 @@ class Dashboard extends BaseDashboard
     {
         $user = Auth::user();
 
-        if ($user?->company_id !== null && $user->isAdmin() && Company::current()->needsLensOnboarding()) {
+        if ($user?->company_id !== null && $user->isAdmin() && Company::current()->needsOnboarding()) {
             $this->redirect(LensOnboarding::getUrl());
         }
     }

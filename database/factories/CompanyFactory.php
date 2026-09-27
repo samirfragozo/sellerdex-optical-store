@@ -18,11 +18,17 @@ class CompanyFactory extends Factory
             'phones' => fake()->phoneNumber(),
             'is_active' => true,
             'plan' => 'free',
+            'onboarded_at' => now(),
         ];
     }
 
     public function inactive(): static
     {
         return $this->state(['is_active' => false]);
+    }
+
+    public function notOnboarded(): static
+    {
+        return $this->state(['onboarded_at' => null]);
     }
 }

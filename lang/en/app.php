@@ -452,6 +452,11 @@ return [
         'to' => 'To',
     ],
 
+    'vat_regime' => [
+        'responsible' => 'VAT responsible',
+        'not_responsible' => 'Not VAT responsible',
+    ],
+
     'lens_onboarding' => [
         'title' => 'Set up your lenses',
         'description' => 'Choose which lens combinations your store sells and set their costs and prices.',

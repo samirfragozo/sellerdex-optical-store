@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Company;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -7,7 +8,6 @@ uses(RefreshDatabase::class);
 
 it('renders the dashboard with operational widgets for an admin', function () {
     $admin = User::factory()->admin()->create();
-    $admin->company->update(['lens_onboarding_completed_at' => now()]);
 
     $this->actingAs($admin)
         ->get('/admin')
@@ -15,7 +15,7 @@ it('renders the dashboard with operational widgets for an admin', function () {
 });
 
 it('redirects an admin who has not finished lens onboarding to the wizard', function () {
-    $admin = User::factory()->admin()->create();
+    $admin = User::factory()->forCompany(Company::factory()->notOnboarded()->create())->admin()->create();
 
     $this->actingAs($admin)
         ->get('/admin')
@@ -24,7 +24,6 @@ it('redirects an admin who has not finished lens onboarding to the wizard', func
 
 it('renders the reports page with analytics for an admin', function () {
     $admin = User::factory()->admin()->create();
-    $admin->company->update(['lens_onboarding_completed_at' => now()]);
 
     $this->actingAs($admin)
         ->get('/admin/reports')

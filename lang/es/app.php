@@ -494,6 +494,11 @@ return [
         'pending_count' => 'Pendientes',
     ],
 
+    'vat_regime' => [
+        'responsible' => 'Responsable de IVA',
+        'not_responsible' => 'No responsable de IVA',
+    ],
+
     'lens_onboarding' => [
         'title' => 'Configura tus lentes',
         'description' => 'Elige qué combinaciones de lentes vende tu óptica y define sus costos y precios.',

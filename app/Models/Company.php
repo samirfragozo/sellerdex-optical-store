@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\VatRegime;
 use Database\Factories\CompanyFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -10,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 
-#[Fillable(['name', 'slug', 'tax_id', 'address', 'phones', 'logo', 'is_active', 'plan', 'lens_onboarding_completed_at'])]
+#[Fillable(['name', 'slug', 'tax_id', 'vat_regime', 'sale_number_prefix', 'next_sale_number', 'address', 'phones', 'logo', 'is_active', 'plan', 'onboarding_step', 'onboarded_at'])]
 class Company extends Model
 {
     /** @use HasFactory<CompanyFactory> */
@@ -20,13 +21,15 @@ class Company extends Model
     {
         return [
             'is_active' => 'boolean',
-            'lens_onboarding_completed_at' => 'datetime',
+            'vat_regime' => VatRegime::class,
+            'next_sale_number' => 'integer',
+            'onboarded_at' => 'datetime',
         ];
     }
 
-    public function needsLensOnboarding(): bool
+    public function needsOnboarding(): bool
     {
-        return $this->lens_onboarding_completed_at === null;
+        return $this->onboarded_at === null;
     }
 
     protected static function booted(): void

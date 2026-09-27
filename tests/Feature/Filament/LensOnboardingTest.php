@@ -1,6 +1,7 @@
 <?php
 
 use App\Filament\Pages\LensOnboarding;
+use App\Models\Company;
 use App\Models\LensCombination;
 use App\Models\LensType;
 use App\Models\User;
@@ -11,14 +12,14 @@ use Livewire\Livewire;
 uses(RefreshDatabase::class);
 
 it('creates every default combination and marks the company onboarded', function () {
-    $admin = User::factory()->admin()->create();
+    $admin = User::factory()->forCompany(Company::factory()->notOnboarded()->create())->admin()->create();
 
     $this->actingAs($admin);
 
     Livewire::test(LensOnboarding::class)->call('submit');
 
     expect(LensCombination::count())->toBe(count(ReferenceLensCatalog::combinations()))
-        ->and($admin->company->fresh()->lens_onboarding_completed_at)->not->toBeNull();
+        ->and($admin->company->fresh()->onboarded_at)->not->toBeNull();
 });
 
 it('only creates the combinations the user kept selected', function () {
@@ -68,12 +69,12 @@ it('requires at least one selected combination to submit', function () {
 });
 
 it('skipping marks the company onboarded without creating any combination', function () {
-    $admin = User::factory()->admin()->create();
+    $admin = User::factory()->forCompany(Company::factory()->notOnboarded()->create())->admin()->create();
 
     $this->actingAs($admin);
 
     Livewire::test(LensOnboarding::class)->call('skip');
 
     expect(LensCombination::count())->toBe(0)
-        ->and($admin->company->fresh()->lens_onboarding_completed_at)->not->toBeNull();
+        ->and($admin->company->fresh()->onboarded_at)->not->toBeNull();
 });

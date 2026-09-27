@@ -11,7 +11,7 @@ class CompanySeeder extends Seeder
     {
         Company::firstOrCreate(
             ['slug' => 'mi-optica'],
-            ['name' => 'Mi Óptica', 'is_active' => true, 'plan' => 'free'],
+            ['name' => 'Mi Óptica', 'is_active' => true, 'plan' => 'free', 'onboarded_at' => now()],
         );
     }
 }
