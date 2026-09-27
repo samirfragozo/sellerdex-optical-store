@@ -13,6 +13,7 @@
         </tr>
     </table>
     <p class="muted">{{ $sale->document_type->legend() }}</p>
+    <p class="muted"><strong>{{ __('app.documents.not_an_invoice') }}</strong></p>
     @if ($sale->customer)
         <p>
             <strong>{{ __('app.fields.customer') }}:</strong> {{ $sale->customer->full_name }}<br>

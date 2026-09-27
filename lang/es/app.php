@@ -445,13 +445,14 @@ return [
     ],
 
     'documents' => [
-        'print_invoice' => 'Imprimir factura',
+        'print_invoice' => 'Imprimir comprobante',
         'download_invoice' => 'Descargar PDF',
         'print_formula' => 'Imprimir fórmula',
         'download_formula' => 'Descargar PDF',
 
         'default_title' => 'Documento',
-        'invoice_title' => 'Factura',
+        'invoice_title' => 'Comprobante de venta',
+        'not_an_invoice' => 'Documento no válido como factura',
         'formula_title' => 'Fórmula',
         'formula_heading' => 'PRESCRIPCIÓN DE LENTES OFTÁLMICOS',
         'number_label' => 'No.',

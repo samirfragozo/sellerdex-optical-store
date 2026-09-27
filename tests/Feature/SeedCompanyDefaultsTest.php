@@ -63,14 +63,12 @@ it('does not leak defaults into another company', function () {
         ->and(ExpenseCategory::where('company_id', $companyB->id)->count())->toBe(0);
 });
 
-it('seeds the reference product catalog for the company', function () {
+it('does not seed any product: the shop creates its own in the onboarding', function () {
     $company = Company::factory()->create();
 
     (new SeedCompanyDefaults)->handle($company);
 
-    $products = Product::where('company_id', $company->id)->get();
-    expect($products->count())->toBeGreaterThan(30)
-        ->and($products->pluck('sku'))->toContain('ACC-LC-FORM-X1', 'MNT-BASE', 'SRV-EXAMEN');
+    expect(Product::where('company_id', $company->id)->count())->toBe(0);
 });
 
 it('seeds the default lens package for the company', function () {
@@ -82,19 +80,4 @@ it('seeds the default lens package for the company', function () {
     expect($package)->not->toBeNull()
         ->and($package->name)->toBe('Básico')
         ->and($package->is_active)->toBeTrue();
-});
-
-it('does not let two companies collide on the same product sku', function () {
-    $companyA = Company::factory()->create();
-    $companyB = Company::factory()->create();
-
-    (new SeedCompanyDefaults)->handle($companyA);
-    (new SeedCompanyDefaults)->handle($companyB);
-
-    $productsA = Product::where('company_id', $companyA->id)->where('sku', 'MNT-BASE')->get();
-    $productsB = Product::where('company_id', $companyB->id)->where('sku', 'MNT-BASE')->get();
-
-    expect($productsA)->toHaveCount(1)
-        ->and($productsB)->toHaveCount(1)
-        ->and($productsA->first()->id)->not->toBe($productsB->first()->id);
 });

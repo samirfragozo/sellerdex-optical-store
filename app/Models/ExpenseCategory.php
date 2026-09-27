@@ -20,7 +20,7 @@ class ExpenseCategory extends Model
      *
      * @var list<string>
      */
-    public const DEFAULT_NAMES = ['Arriendo', 'Salario', 'Lentes Terminados', 'Exámenes', 'Digitales', 'Otros'];
+    public const DEFAULT_NAMES = ['Arriendo', 'Nómina', 'Servicios públicos', 'Laboratorio', 'Otros'];
 
     /** A category that still has expenses cannot be deleted (enforced even for super admin). */
     protected static function booted(): void

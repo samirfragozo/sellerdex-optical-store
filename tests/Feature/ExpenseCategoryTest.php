@@ -21,6 +21,6 @@ it('siembra las categorías de gasto base sin duplicar', function () {
     $this->seed(ExpenseCategorySeeder::class);
 
     expect(ExpenseCategory::pluck('name')->all())
-        ->toContain('Arriendo', 'Salario', 'Lentes Terminados', 'Exámenes', 'Digitales', 'Otros')
+        ->toContain('Arriendo', 'Nómina', 'Servicios públicos', 'Laboratorio', 'Otros')
         ->and(ExpenseCategory::where('name', 'Arriendo')->count())->toBe(1);
 });

@@ -408,13 +408,14 @@ return [
     ],
 
     'documents' => [
-        'print_invoice' => 'Print invoice',
+        'print_invoice' => 'Print receipt',
         'download_invoice' => 'Download PDF',
         'print_formula' => 'Print formula',
         'download_formula' => 'Download PDF',
 
         'default_title' => 'Document',
-        'invoice_title' => 'Invoice',
+        'invoice_title' => 'Sales receipt',
+        'not_an_invoice' => 'Not valid as an invoice',
         'formula_title' => 'Formula',
         'formula_heading' => 'OPHTHALMIC LENS PRESCRIPTION',
         'number_label' => 'No.',
