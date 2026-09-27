@@ -164,7 +164,8 @@ class Sale extends Model
 
         $this->tip = (int) round($base * ((float) $this->tip_percent) / 100);
 
-        $preSurcharge = $base + $this->tax_amount + $this->tip;
+        // Prices are tax-inclusive: tax_amount is informational, never added on top.
+        $preSurcharge = $base + $this->tip;
         $this->total = (int) round($preSurcharge * (1 + ((float) $this->surcharge_percent) / 100));
 
         $this->saveQuietly();

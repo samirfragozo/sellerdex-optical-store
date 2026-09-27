@@ -43,8 +43,8 @@ it('computes tax, tip and discount amount from percent fields via recalculateTot
         'quantity' => 1,
         'unit_price' => 100_000,
         'unit_cost' => 0,
-        'tax_amount' => 19_000,
-        'line_total' => 100_000,
+        'tax_name' => 'IVA 19%',
+        'tax_rate' => 19,
     ]);
 
     $sale->recalculateTotals();
@@ -52,9 +52,9 @@ it('computes tax, tip and discount amount from percent fields via recalculateTot
 
     expect($sale->subtotal)->toBe(100_000)
         ->and($sale->discount)->toBe(10_000)   // 10% of 100_000
-        ->and($sale->tax_amount)->toBe(17_100) // 19_000 prorated by base/subtotal = 90_000/100_000
+        ->and($sale->tax_amount)->toBe(14_369) // inclusive 15_966 prorated by base/subtotal = 90_000/100_000
         ->and($sale->tip)->toBe(4_500)         // 5% of base (90_000)
-        ->and($sale->total)->toBe(111_600);    // 90_000 + 17_100 + 4_500
+        ->and($sale->total)->toBe(94_500);     // 90_000 + 4_500, tax is already inside the price
 });
 
 it('defaults to draft status', function () {

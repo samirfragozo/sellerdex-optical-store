@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
-#[Fillable(['company_id', 'sale_id', 'group_key', 'product_id', 'description', 'quantity', 'unit_price', 'unit_cost', 'tax_amount', 'line_total'])]
+#[Fillable(['company_id', 'sale_id', 'group_key', 'product_id', 'description', 'quantity', 'unit_price', 'unit_cost', 'tax_name', 'tax_rate', 'tax_treatment', 'tax_amount', 'line_total'])]
 class SaleItem extends Model
 {
     /** @use HasFactory<SaleItemFactory> */
@@ -23,6 +23,7 @@ class SaleItem extends Model
             'quantity' => 'integer',
             'unit_price' => 'integer',
             'unit_cost' => 'integer',
+            'tax_rate' => 'decimal:2',
             'tax_amount' => 'integer',
             'line_total' => 'integer',
         ];
@@ -32,6 +33,12 @@ class SaleItem extends Model
     {
         static::saving(function (SaleItem $item): void {
             $item->line_total = $item->quantity * $item->unit_price;
+
+            $rate = (float) $item->tax_rate;
+            // Prices are tax-inclusive: the VAT is the part of the line total above its base.
+            $item->tax_amount = $rate > 0
+                ? (int) round($item->line_total - $item->line_total / (1 + $rate / 100))
+                : 0;
         });
 
         static::saved(fn (SaleItem $item) => $item->sale?->recalculateTotals());
@@ -60,6 +67,20 @@ class SaleItem extends Model
                 $item->product->increment('stock', $item->quantity);
             }
         });
+    }
+
+    /**
+     * Snapshot of the tax that applies to a new line (null = untaxed).
+     *
+     * @return array{tax_name: string|null, tax_rate: float|int, tax_treatment: string|null}
+     */
+    public static function taxSnapshot(?Tax $tax): array
+    {
+        return [
+            'tax_name' => $tax?->name,
+            'tax_rate' => $tax !== null ? (float) $tax->rate : 0,
+            'tax_treatment' => $tax?->treatment->value,
+        ];
     }
 
     /** True when selling this line should move product stock. */

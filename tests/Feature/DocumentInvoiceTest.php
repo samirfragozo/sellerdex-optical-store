@@ -47,7 +47,8 @@ it('shows tax and tip lines on the invoice when the sale has them', function () 
         'description' => 'Promo Monofocal',
         'quantity' => 1,
         'unit_price' => 100_000,
-        'tax_amount' => 19_000,
+        'tax_name' => 'IVA 19%',
+        'tax_rate' => 19,
     ]);
     $sale->refresh();
 

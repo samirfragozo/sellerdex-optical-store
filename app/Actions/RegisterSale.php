@@ -3,9 +3,13 @@
 namespace App\Actions;
 
 use App\Enums\LensOrderStatus;
+use App\Enums\VatRegime;
 use App\Models\PaymentMethod;
 use App\Models\Product;
+use App\Models\ProductCategory;
 use App\Models\Sale;
+use App\Models\SaleItem;
+use App\Models\Tax;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
@@ -23,6 +27,8 @@ class RegisterSale
 
     private const SKU_FUNDA = 'ACC-FUNDA';
 
+    private User $seller;
+
     /**
      * Create a sale with its line items, compose the combo (consumables, free exam, bag,
      * bundles, funda) and record an optional initial payment.
@@ -31,6 +37,8 @@ class RegisterSale
      */
     public function handle(array $data, User $seller): Sale
     {
+        $this->seller = $seller;
+
         return DB::transaction(function () use ($data, $seller): Sale {
             $sale = Sale::create([
                 'customer_id' => $data['customer_id'] ?? null,
@@ -54,7 +62,7 @@ class RegisterSale
                         'quantity' => $item['quantity'],
                         'unit_price' => $item['unit_price'],
                         'unit_cost' => $item['unit_cost'] ?? 0,
-                        'tax_amount' => $this->taxFor($product, (int) $item['unit_price'], (int) $item['quantity']),
+                        ...SaleItem::taxSnapshot($this->applicableTax($product?->tax)),
                     ]);
                 }
                 $this->composeCombo($sale, $data['combo'] ?? null);
@@ -69,7 +77,7 @@ class RegisterSale
                         'quantity' => $productLine['quantity'] ?? 1,
                         'unit_price' => $productLine['unit_price'],
                         'unit_cost' => $productLine['unit_cost'] ?? 0,
-                        'tax_amount' => $this->taxFor($product, (int) $productLine['unit_price'], (int) ($productLine['quantity'] ?? 1)),
+                        ...SaleItem::taxSnapshot($this->applicableTax($product?->tax)),
                     ]);
                 }
                 $this->applyAdditions($sale);
@@ -213,9 +221,7 @@ class RegisterSale
             'quantity' => $quantity,
             'unit_price' => $unitPrice,
             'unit_cost' => $addition->cost,
-            // Additions ride along with an armado (lens/frame), which is tax-exempt
-            // in this business — see the lens/frame lines below for the same reasoning.
-            'tax_amount' => 0,
+            ...SaleItem::taxSnapshot($this->applicableTax($addition->tax)),
         ]);
     }
 
@@ -256,6 +262,9 @@ class RegisterSale
                 $unitPrice = (int) $lens['price_override'];
             }
 
+            $combination = $resolved['combination'];
+            $package = $resolved['package'];
+
             $lensItem = $sale->items()->create([
                 'group_key' => $groupKey,
                 'product_id' => null,
@@ -263,13 +272,8 @@ class RegisterSale
                 'quantity' => $lens['quantity'] ?? 1,
                 'unit_price' => $unitPrice,
                 'unit_cost' => $resolved['cost'],
-                // Lenses are tax-exempt in this business — matches the client-side
-                // cart preview, which never taxes armado lines either.
-                'tax_amount' => 0,
+                ...SaleItem::taxSnapshot($this->applicableTax($combination->tax ?? ProductCategory::keyed('lens')?->defaultTax)),
             ]);
-
-            $combination = $resolved['combination'];
-            $package = $resolved['package'];
 
             $lensConfig = $lensItem->lensConfig()->create([
                 'lens_combination_id' => $combination->id,
@@ -309,8 +313,7 @@ class RegisterSale
                     'quantity' => $frame['quantity'] ?? 1,
                     'unit_price' => $frame['unit_price'],
                     'unit_cost' => $frame['unit_cost'] ?? 0,
-                    // Frames are tax-exempt in this business, same as lenses above.
-                    'tax_amount' => 0,
+                    ...SaleItem::taxSnapshot($this->applicableTax(Product::find($frame['product_id'] ?? null)?->tax)),
                 ]);
             }
 
@@ -386,20 +389,14 @@ class RegisterSale
             'quantity' => 1,
             'unit_price' => 0,
             'unit_cost' => $product->cost,
-            'tax_amount' => 0,
+            ...SaleItem::taxSnapshot($this->applicableTax($product->tax)),
         ]);
         $sale->load('items.product.category');
     }
 
-    /** Per-line tax snapshot, based on the product's tax rate at sale time. */
-    private function taxFor(?Product $product, int $unitPrice, int $quantity): int
+    /** The tax to snapshot on a line, or null when the company does not charge VAT. */
+    private function applicableTax(?Tax $tax): ?Tax
     {
-        // ponytail: bridge from the dropped products.tax_rate to the product's Tax; Task 3 replaces this with the line snapshot.
-        $rate = (float) ($product?->tax?->rate ?? 0);
-        if ($rate <= 0) {
-            return 0;
-        }
-
-        return (int) round($unitPrice * $quantity * $rate / 100);
+        return $this->seller->company->vat_regime === VatRegime::Responsible ? $tax : null;
     }
 }

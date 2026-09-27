@@ -785,7 +785,9 @@ it('applies discount percent, tip percent and per-line tax when registering a po
     $sale = Sale::first();
     expect($sale->discount_percent)->toBe('10.00')
         ->and($sale->tip_percent)->toBe('5.00')
-        ->and($sale->items()->where('product_id', $product->id)->first()->tax_amount)->toBe(19_000);
+        ->and($sale->items()->where('product_id', $product->id)->first()->tax_amount)->toBe(15_966)
+        ->and($sale->tax_amount)->toBe(14_369)
+        ->and($sale->total)->toBe(94_500);
 });
 
 it('accepts a single payment covering the full total of a taxed sale', function () {
@@ -802,7 +804,7 @@ it('accepts a single payment covering the full total of a taxed sale', function 
         'is_pos_selectable' => true,
     ]);
 
-    // subtotal 100_000, no discount/tip/surcharge, tax = 19% -> total = 119_000.
+    // subtotal 100_000 tax-inclusive, no discount/tip/surcharge -> total = 100_000 with 15_966 VAT inside.
     $this->actingAs($seller)->postJson('/pos', [
         'customer_id' => $customer->id,
         'document_type' => 'order',
@@ -812,11 +814,12 @@ it('accepts a single payment covering the full total of a taxed sale', function 
             'quantity' => 1,
             'unit_price' => 100_000,
         ]],
-        'payments' => [['payment_method_id' => $method->id, 'amount' => 119_000]],
+        'payments' => [['payment_method_id' => $method->id, 'amount' => 100_000]],
     ])->assertOk();
 
     $sale = Sale::first();
-    expect($sale->total)->toBe(119_000)
+    expect($sale->total)->toBe(100_000)
+        ->and($sale->tax_amount)->toBe(15_966)
         ->and($sale->balance)->toBe(0);
 });
 

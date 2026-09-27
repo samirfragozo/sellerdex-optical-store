@@ -167,7 +167,7 @@ it('lets a seller-entered price_override win over the resolved catalog price', f
     expect($lensLine->unit_price)->toBe(90000);
 });
 
-it('does not tax armado lens or frame lines even when the product has a tax', function () {
+it('taxes armado frame lines with the frame\'s tax', function () {
     seedCatalog();
     $frame = Product::where('sku', 'MNT-COMPLETA-ACETATO')->first();
     $frame->update(['tax_id' => Tax::factory()->create(['name' => 'IVA 19%', 'rate' => 19])->id]);
@@ -182,11 +182,10 @@ it('does not tax armado lens or frame lines even when the product has a tax', fu
         ]],
     ], $this->seller);
 
-    $lensLine = $sale->items->first(fn ($i) => $i->isLens());
     $frameLine = $sale->items->firstWhere('product_id', $frame->id);
 
-    expect($lensLine->tax_amount)->toBe(0)
-        ->and($frameLine->tax_amount)->toBe(0);
+    expect($frameLine->tax_name)->toBe('IVA 19%')
+        ->and($frameLine->tax_amount)->toBe((int) round($frameLine->line_total - $frameLine->line_total / 1.19));
 });
 
 it('mixes an armado with a standalone product line', function () {

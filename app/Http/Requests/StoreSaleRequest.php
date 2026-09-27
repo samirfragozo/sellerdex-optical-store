@@ -7,7 +7,6 @@ use App\Enums\DocumentType;
 use App\Enums\LensType;
 use App\Enums\SaleDocumentType;
 use App\Models\Prescription;
-use App\Models\Product;
 use App\Models\Sale;
 use App\Rules\Diopter;
 use Illuminate\Foundation\Http\FormRequest;
@@ -178,15 +177,6 @@ class StoreSaleRequest extends FormRequest
     }
 
     /**
-     * Compute an estimated sale total from the submitted armados/products, discount,
-     * tip, tax and surcharge — used only to bound the sum of split payments.
-     *
-     * Armado lens/frame lines and addition lines are never taxed (RegisterSale
-     * stamps tax_amount = 0 on them — lenses/frames are tax-exempt in this
-     * business), so only loose `products.*` lines contribute tax here, matching
-     * what RegisterSale actually computes. This mirrors Sale::recalculateTotals().
-     */
-    /**
      * Price one armado's lens the same way RegisterSale does: a seller-entered
      * override wins, otherwise the catalog price resolved from the selected
      * configuration. Any pricing-validation failure contributes 0 — this is only
@@ -214,6 +204,11 @@ class StoreSaleRequest extends FormRequest
         }
     }
 
+    /**
+     * Compute an estimated sale total from the submitted armados/products, discount,
+     * tip and surcharge — used only to bound the sum of split payments. Prices are
+     * tax-inclusive, so tax never adds to it. This mirrors Sale::recalculateTotals().
+     */
     protected function saleTotal(): int
     {
         $armados = collect($this->input('armados', []))->sum(function ($armado): int {
@@ -225,31 +220,14 @@ class StoreSaleRequest extends FormRequest
             return $lens + $frame;
         });
 
-        $productLines = collect($this->input('products', []));
-        $products = $productLines->sum(fn ($p): int => (int) ($p['quantity'] ?? 0) * (int) ($p['unit_price'] ?? 0));
-
-        // ponytail: bridge from the dropped products.tax_rate to the product's Tax; Task 3 removes this tax query.
-        $taxRates = Product::query()->with('tax')
-            ->whereIn('id', $productLines->pluck('product_id')->filter()->unique())
-            ->get()
-            ->mapWithKeys(fn (Product $p): array => [$p->id => $p->tax?->rate ?? 0]);
-
-        $rawTax = $productLines->sum(function ($p) use ($taxRates): int {
-            $rate = (float) ($taxRates[$p['product_id'] ?? null] ?? 0);
-            if ($rate <= 0) {
-                return 0;
-            }
-
-            return (int) round((int) ($p['quantity'] ?? 0) * (int) ($p['unit_price'] ?? 0) * $rate / 100);
-        });
+        $products = collect($this->input('products', []))->sum(fn ($p): int => (int) ($p['quantity'] ?? 0) * (int) ($p['unit_price'] ?? 0));
 
         $subtotal = $armados + $products;
         $discount = (int) round($subtotal * ((float) $this->input('discount_percent', 0)) / 100);
         $base = max(0, $subtotal - $discount);
-        $tax = $subtotal > 0 ? (int) round($rawTax * ($base / $subtotal)) : 0;
         $tip = (int) round($base * ((float) $this->input('tip_percent', 0)) / 100);
 
-        return (int) round(($base + $tax + $tip) * (1 + ((float) $this->input('surcharge_percent', 0)) / 100));
+        return (int) round(($base + $tip) * (1 + ((float) $this->input('surcharge_percent', 0)) / 100));
     }
 
     /**
