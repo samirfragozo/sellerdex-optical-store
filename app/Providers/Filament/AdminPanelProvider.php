@@ -48,7 +48,7 @@ class AdminPanelProvider extends PanelProvider
             )
             ->renderHook(
                 PanelsRenderHook::CONTENT_START,
-                fn (): string => auth()->user()?->company_id === null ? '' : view('filament.readiness.banner')->render(),
+                fn (): string => auth()->user()?->company_id === null || Company::current()->needsOnboarding() ? '' : view('filament.readiness.banner')->render(),
             )
             ->renderHook(
                 PanelsRenderHook::CONTENT_END,

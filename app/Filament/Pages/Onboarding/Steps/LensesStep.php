@@ -31,7 +31,7 @@ class LensesStep extends OnboardingStep
 
     public function components(): array
     {
-        $hasCombinations = LensCombination::query()->exists();
+        $hasCombinations = $this->isComplete(Company::current());
 
         return [
             CheckboxList::make('selected_combo_keys')
@@ -71,7 +71,7 @@ class LensesStep extends OnboardingStep
         $catalog = ReferenceLensCatalog::combinations();
 
         return [
-            'selected_combo_keys' => LensCombination::query()->exists() ? [] : array_keys($catalog),
+            'selected_combo_keys' => $this->isComplete($company) ? [] : array_keys($catalog),
             'pricing' => array_map(fn (array $c) => [
                 'cost' => $c['cost'], 'price' => $c['price'], 'installation_price' => $c['installation_price'],
             ], $catalog),

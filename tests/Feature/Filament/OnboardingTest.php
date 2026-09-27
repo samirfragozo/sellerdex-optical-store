@@ -6,6 +6,7 @@ use App\Filament\Pages\Onboarding\Steps\CompanyStep;
 use App\Filament\Pages\Onboarding\Steps\LaboratoriesStep;
 use App\Filament\Pages\Onboarding\Steps\LensesStep;
 use App\Filament\Pages\Onboarding\Steps\PaymentMethodsStep;
+use App\Filament\Pages\Onboarding\Steps\SummaryStep;
 use App\Models\Company;
 use App\Models\LensCombination;
 use App\Models\LensType;
@@ -206,4 +207,69 @@ it('lets the user continue past lenses when combinations already exist', functio
         ->call('next')
         ->assertHasNoErrors()
         ->assertSet('step', 'summary');
+});
+
+it('does not finish from a step before the summary', function () {
+    $admin = onboardingAt(CompanyStep::key());
+
+    Livewire::test(Onboarding::class)->call('finish')->assertNoRedirect();
+
+    expect($admin->company->fresh()->onboarded_at)->toBeNull();
+});
+
+it('keeps the first onboarding timestamp when finishing twice', function () {
+    $admin = onboardingAt(SummaryStep::key());
+
+    Livewire::test(Onboarding::class)->call('finish')->assertRedirect(route('pos.index'));
+    $firstFinishedAt = $admin->company->fresh()->onboarded_at;
+
+    $this->travel(1)->hour();
+    Livewire::test(Onboarding::class)->call('finish');
+
+    expect($admin->company->fresh()->onboarded_at->equalTo($firstFinishedAt))->toBeTrue();
+});
+
+it('still requires a lens combination when the existing ones cannot be sold', function (array $unsellable) {
+    $admin = onboardingAt(LensesStep::key());
+    LensCombination::factory()->create(['company_id' => $admin->company_id, 'price' => 100000, 'is_active' => true, ...$unsellable]);
+
+    Livewire::test(Onboarding::class)
+        ->assertSet('data.selected_combo_keys', array_keys(ReferenceLensCatalog::combinations()))
+        ->set('data.selected_combo_keys', [])
+        ->call('next')
+        ->assertHasErrors(['data.selected_combo_keys' => 'required']);
+})->with([
+    'inactive' => [['is_active' => false]],
+    'zero price' => [['price' => 0]],
+]);
+
+it('lists lens-only blockers on the summary under their own heading', function () {
+    onboardingAt(SummaryStep::key());
+
+    Livewire::test(Onboarding::class)
+        ->assertSee(__('app.readiness.blocking_lens_title'))
+        ->assertSee(__('app.readiness.laboratory'))
+        ->assertSee(__('app.readiness.lens_price'))
+        ->assertDontSee(__('app.readiness.payment_method'));
+});
+
+it('exposes the progress and each step status to screen readers', function () {
+    onboardingAt(PaymentMethodsStep::key());
+
+    Livewire::test(Onboarding::class)
+        ->assertSeeHtml('role="progressbar"')
+        ->assertSeeHtml('aria-valuenow="2"')
+        ->assertSeeHtml('aria-valuemax="'.count(Onboarding::steps()).'"')
+        ->assertSee(__('app.onboarding.step_status.completed'))
+        ->assertSee(__('app.onboarding.step_status.current'))
+        ->assertSee(__('app.onboarding.step_status.pending'));
+});
+
+it('does not show the readiness banner while the company is onboarding', function () {
+    $admin = onboardingAt(CompanyStep::key());
+    Supplier::factory()->create(['company_id' => $admin->company_id, 'is_laboratory' => true, 'is_active' => true, 'lead_time_days' => null]);
+
+    $this->get(Onboarding::getUrl())
+        ->assertSuccessful()
+        ->assertDontSee(__('app.readiness.laboratory_lead_time'));
 });

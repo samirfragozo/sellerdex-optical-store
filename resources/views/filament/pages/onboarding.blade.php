@@ -8,10 +8,10 @@
 
     <div class="grid gap-6 md:grid-cols-[16rem_1fr]">
         <nav aria-label="{{ __('app.onboarding.steps_nav') }}" class="flex flex-col gap-1">
-            <p class="text-sm text-gray-500 dark:text-gray-400">
-                {{ __('app.onboarding.progress', ['current' => $currentIndex + 1, 'total' => count($steps)]) }}
-            </p>
-            <div class="h-1.5 w-full rounded-full bg-gray-200 dark:bg-gray-700">
+            @php($progressText = __('app.onboarding.progress', ['current' => $currentIndex + 1, 'total' => count($steps)]))
+            <p class="text-sm text-gray-500 dark:text-gray-400" aria-hidden="true">{{ $progressText }}</p>
+            <div class="h-1.5 w-full rounded-full bg-gray-200 dark:bg-gray-700"
+                role="progressbar" aria-valuenow="{{ $currentIndex + 1 }}" aria-valuemin="1" aria-valuemax="{{ count($steps) }}" aria-label="{{ $progressText }}">
                 <div class="h-1.5 rounded-full bg-primary-600" style="width: {{ round(($currentIndex + 1) / count($steps) * 100) }}%"></div>
             </div>
             <ol class="mt-3 flex flex-col gap-1">
@@ -23,8 +23,10 @@
                             @disabled($i > $reached)
                             @if ($isCurrent) aria-current="step" @endif
                             class="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm focus-visible:ring-2 focus-visible:ring-primary-500 disabled:cursor-not-allowed disabled:opacity-50 {{ $isCurrent ? 'bg-primary-50 font-semibold text-primary-700 dark:bg-primary-950 dark:text-primary-300' : 'hover:bg-gray-50 dark:hover:bg-white/5' }}">
-                            <span aria-hidden="true">{{ $s->isComplete($company) && ! $isCurrent ? '✓' : ($isCurrent ? '●' : '○') }}</span>
+                            @php($status = $isCurrent ? 'current' : ($s->isComplete($company) ? 'completed' : 'pending'))
+                            <span aria-hidden="true">{{ ['completed' => '✓', 'current' => '●', 'pending' => '○'][$status] }}</span>
                             <span>{{ $i + 1 }}. {{ $s->label() }}</span>
+                            <span class="sr-only">({{ __("app.onboarding.step_status.{$status}") }})</span>
                         </button>
                     </li>
                 @endforeach
@@ -48,9 +50,19 @@
                     @endforeach
                 </ul>
 
-                @foreach (collect($company->saleReadiness())->where('severity', \App\Enums\ReadinessSeverity::Blocking) as $issue)
+                @php($blockers = collect($company->saleReadiness())->where('severity', \App\Enums\ReadinessSeverity::Blocking))
+                @foreach ($blockers->whereNull('scope') as $issue)
                     <p class="text-sm text-danger-600 dark:text-danger-400" role="alert">{{ $issue->message }}</p>
                 @endforeach
+
+                @if ($blockers->whereNotNull('scope')->isNotEmpty())
+                    <div class="flex flex-col gap-1 text-sm" role="status">
+                        <p class="font-semibold text-warning-700 dark:text-warning-300">{{ __('app.readiness.blocking_lens_title') }}</p>
+                        @foreach ($blockers->whereNotNull('scope') as $issue)
+                            <p class="text-warning-700 dark:text-warning-300">{{ $issue->message }}</p>
+                        @endforeach
+                    </div>
+                @endif
 
                 <div class="flex justify-between gap-3">
                     <x-filament::button color="gray" wire:click="previous">{{ __('app.onboarding.back') }}</x-filament::button>

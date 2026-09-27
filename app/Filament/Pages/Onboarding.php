@@ -98,8 +98,14 @@ class Onboarding extends Page
         }
     }
 
+    /** Only the summary step, once reached, can finish; a crafted call from an earlier step is ignored. */
     public function finish(): void
     {
+        $summaryKey = SummaryStep::key();
+        if ($this->step !== $summaryKey || $this->reachedIndex() < $this->index($summaryKey)) {
+            return;
+        }
+
         $company = Company::current();
 
         if (! $company->isReadyToSell()) {
@@ -108,7 +114,8 @@ class Onboarding extends Page
             return;
         }
 
-        $company->update(['onboarded_at' => now()]);
+        $company->onboarded_at ??= now();
+        $company->save();
         $this->redirect(route('pos.index'));
     }
 
