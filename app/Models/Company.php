@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 
-#[Fillable(['name', 'slug', 'tax_id', 'address', 'phones', 'logo', 'is_active', 'plan'])]
+#[Fillable(['name', 'slug', 'tax_id', 'address', 'phones', 'logo', 'is_active', 'plan', 'lens_onboarding_completed_at'])]
 class Company extends Model
 {
     /** @use HasFactory<CompanyFactory> */
@@ -18,7 +18,15 @@ class Company extends Model
 
     protected function casts(): array
     {
-        return ['is_active' => 'boolean'];
+        return [
+            'is_active' => 'boolean',
+            'lens_onboarding_completed_at' => 'datetime',
+        ];
+    }
+
+    public function needsLensOnboarding(): bool
+    {
+        return $this->lens_onboarding_completed_at === null;
     }
 
     protected static function booted(): void

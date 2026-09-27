@@ -7,7 +7,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 uses(RefreshDatabase::class);
 
 it('active company user can access admin', function () {
-    $company = Company::factory()->create(['is_active' => true]);
+    $company = Company::factory()->create(['is_active' => true, 'lens_onboarding_completed_at' => now()]);
     $user = User::factory()->forCompany($company)->admin()->create();
 
     $this->actingAs($user)

@@ -493,4 +493,18 @@ return [
         'pending_lenses' => 'Lentes pendientes por laboratorio',
         'pending_count' => 'Pendientes',
     ],
+
+    'lens_onboarding' => [
+        'title' => 'Configura tus lentes',
+        'description' => 'Elige qué combinaciones de lentes vende tu óptica y define sus costos y precios.',
+        'step_select' => 'Combinaciones',
+        'step_select_description' => 'Elige las combinaciones de tipo, tecnología y material que vendes.',
+        'selected_combo_keys' => 'Combinaciones que vendes',
+        'step_pricing' => 'Costos y precios',
+        'step_pricing_description' => 'Ajusta el costo y el precio de cada combinación seleccionada.',
+        'submit' => 'Guardar y continuar',
+        'skip' => 'Configurar después',
+        'completed_notification' => 'Combinaciones de lentes guardadas.',
+        'skipped_notification' => 'Puedes configurar tus lentes cuando quieras desde el panel.',
+    ],
 ];

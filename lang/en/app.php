@@ -451,4 +451,18 @@ return [
         'from' => 'From',
         'to' => 'To',
     ],
+
+    'lens_onboarding' => [
+        'title' => 'Set up your lenses',
+        'description' => 'Choose which lens combinations your store sells and set their costs and prices.',
+        'step_select' => 'Combinations',
+        'step_select_description' => 'Choose the type, technology and material combinations you sell.',
+        'selected_combo_keys' => 'Combinations you sell',
+        'step_pricing' => 'Costs and prices',
+        'step_pricing_description' => 'Adjust the cost and price of each selected combination.',
+        'submit' => 'Save and continue',
+        'skip' => 'Set up later',
+        'completed_notification' => 'Lens combinations saved.',
+        'skipped_notification' => 'You can set up your lenses anytime from the panel.',
+    ],
 ];
