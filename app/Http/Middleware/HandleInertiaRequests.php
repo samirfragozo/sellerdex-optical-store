@@ -55,7 +55,7 @@ class HandleInertiaRequests extends Middleware
             ]),
             'readiness' => fn (): array => $request->user()?->company_id === null
                 ? []
-                : array_map(fn (ReadinessIssue $issue): array => $issue->toArray(), Company::current()->saleReadiness()),
+                : array_map(fn (ReadinessIssue $issue): array => $issue->forViewer($request->user())->toArray(), Company::current()->saleReadiness()),
             'translations' => [
                 'auth' => trans('auth'),
                 'settings' => trans('settings'),

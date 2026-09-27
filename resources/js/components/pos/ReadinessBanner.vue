@@ -44,9 +44,18 @@ function hide(): void {
             >
                 <span>{{ issue.message }}</span>
                 <span class="flex gap-2">
-                    <Button as="a" :href="issue.url" variant="link" size="sm">
+                    <Button
+                        v-if="issue.url"
+                        as="a"
+                        :href="issue.url"
+                        variant="link"
+                        size="sm"
+                    >
                         {{ trans('app.readiness.fix') }}
                     </Button>
+                    <span v-else class="self-center">
+                        {{ trans('app.readiness.ask_admin') }}
+                    </span>
                     <Button variant="ghost" size="sm" @click="hide">
                         {{ trans('app.readiness.dismiss') }}
                     </Button>

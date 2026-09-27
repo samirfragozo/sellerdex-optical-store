@@ -37,7 +37,7 @@ export interface ReadinessIssue {
     key: string;
     severity: 'blocking' | 'warning';
     message: string;
-    url: string;
+    url: string | null;
     scope: 'lens' | null;
 }
 

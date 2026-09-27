@@ -469,6 +469,11 @@ return [
         'edit' => 'Edit',
         'go_sell' => 'Go sell',
         'pending_for_staff' => 'Your administrator has not finished setting up the shop yet. Please try again later.',
+        'step_status' => [
+            'completed' => 'Completed',
+            'current' => 'Current step',
+            'pending' => 'Pending',
+        ],
         'company' => [
             'label' => 'Company',
             'description' => 'The details printed on your receipts.',
@@ -513,6 +518,7 @@ return [
         'blocking_title' => 'Something is missing before you can sell',
         'blocking_lens_title' => 'Something is missing to sell prescription glasses',
         'fix' => 'Fix it',
+        'ask_admin' => 'Ask your administrator to fix it.',
         'dismiss' => 'Hide',
         'lens_sale_blocked' => 'You cannot sell prescription glasses yet: :reasons',
     ],

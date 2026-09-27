@@ -510,6 +510,11 @@ return [
         'edit' => 'Editar',
         'go_sell' => 'Ir a vender',
         'pending_for_staff' => 'Tu administrador aún no termina de configurar la óptica. Vuelve a intentarlo más tarde.',
+        'step_status' => [
+            'completed' => 'Completado',
+            'current' => 'Paso actual',
+            'pending' => 'Pendiente',
+        ],
         'company' => [
             'label' => 'Empresa',
             'description' => 'Los datos que aparecen en tus comprobantes.',
@@ -554,6 +559,7 @@ return [
         'blocking_title' => 'Falta algo para poder vender',
         'blocking_lens_title' => 'Falta algo para vender gafas formuladas',
         'fix' => 'Solucionar',
+        'ask_admin' => 'Pídele a tu administrador que lo solucione.',
         'dismiss' => 'Ocultar',
         'lens_sale_blocked' => 'No puedes vender gafas formuladas todavía: :reasons',
     ],

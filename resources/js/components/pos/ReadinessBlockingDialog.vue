@@ -32,6 +32,7 @@ const { trans } = useTranslations();
                 >
                     <span>{{ issue.message }}</span>
                     <Button
+                        v-if="issue.url"
                         as="a"
                         :href="issue.url"
                         variant="outline"
@@ -40,6 +41,9 @@ const { trans } = useTranslations();
                     >
                         {{ trans('app.readiness.fix') }}
                     </Button>
+                    <span v-else class="text-muted-foreground">
+                        {{ trans('app.readiness.ask_admin') }}
+                    </span>
                 </li>
             </ul>
         </DialogContent>

@@ -42,3 +42,15 @@ it('shows global blockers in a modal on the dashboard', function () {
         ->assertSee(__('app.readiness.blocking_title'))
         ->assertSee(__('app.readiness.payment_method'));
 });
+
+it('asks a seller to contact the admin instead of linking to pages they cannot open', function () {
+    $admin = readyAdmin();
+    Supplier::withoutGlobalScopes()->where('company_id', $admin->company_id)->update(['lead_time_days' => null]);
+    $seller = User::factory()->forCompany($admin->company)->seller()->create();
+
+    $this->actingAs($seller)->get('/admin')
+        ->assertSuccessful()
+        ->assertSee(__('app.readiness.laboratory_lead_time'))
+        ->assertSee(__('app.readiness.ask_admin'))
+        ->assertDontSee(__('app.readiness.fix'));
+});

@@ -23,7 +23,18 @@ it('shares readiness issues with the POS', function () {
 
     $this->get(route('pos.index'))->assertInertia(fn (AssertableInertia $page) => $page
         ->where('readiness.0.key', 'laboratory_lead_time')
-        ->where('readiness.0.severity', 'warning'));
+        ->where('readiness.0.severity', 'warning')
+        ->where('readiness.0.url', null));
+});
+
+it('shares the fix link only with admins', function () {
+    $this->lab->update(['lead_time_days' => null]);
+    $admin = User::factory()->forCompany($this->seller->company)->admin()->create();
+    openCashRegisterSession($admin);
+
+    $this->actingAs($admin)->get(route('pos.index'))->assertInertia(fn (AssertableInertia $page) => $page
+        ->where('readiness.0.key', 'laboratory_lead_time')
+        ->where('readiness.0.url', fn (?string $url) => filled($url)));
 });
 
 it('refuses a lens sale when the only laboratory was deactivated but still sells accessories', function () {
