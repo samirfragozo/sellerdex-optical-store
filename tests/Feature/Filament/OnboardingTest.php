@@ -4,11 +4,15 @@ use App\Enums\VatRegime;
 use App\Filament\Pages\Onboarding;
 use App\Filament\Pages\Onboarding\Steps\CompanyStep;
 use App\Filament\Pages\Onboarding\Steps\LaboratoriesStep;
+use App\Filament\Pages\Onboarding\Steps\LensesStep;
 use App\Filament\Pages\Onboarding\Steps\PaymentMethodsStep;
 use App\Models\Company;
+use App\Models\LensCombination;
+use App\Models\LensType;
 use App\Models\PaymentMethod;
 use App\Models\Supplier;
 use App\Models\User;
+use App\Support\ReferenceLensCatalog;
 use Livewire\Features\SupportLockedProperties\CannotUpdateLockedPropertyException;
 use Livewire\Livewire;
 
@@ -156,4 +160,50 @@ it('requires at least one laboratory and stores its lead time', function () {
         ->and($lab->is_laboratory)->toBeTrue()
         ->and($lab->is_active)->toBeTrue()
         ->and($lab->lead_time_days)->toBe(5);
+});
+
+it('creates the lens combinations the user keeps, with the prices they typed', function () {
+    onboardingAt(LensesStep::key());
+
+    Livewire::test(Onboarding::class)
+        ->assertSet('step', LensesStep::key())
+        ->set('data.selected_combo_keys', ['monofocal-standard-cr39'])
+        ->set('data.pricing.monofocal-standard-cr39.cost', 40000)
+        ->set('data.pricing.monofocal-standard-cr39.price', 120000)
+        ->set('data.pricing.monofocal-standard-cr39.installation_price', 20000)
+        ->call('next')
+        ->assertHasNoErrors();
+
+    $combination = LensCombination::sole();
+    expect($combination->price)->toBe(120000)
+        ->and($combination->cost)->toBe(40000)
+        ->and($combination->installation_price)->toBe(20000)
+        ->and(LensType::where('name', 'Progresivo')->exists())->toBeFalse();
+});
+
+it('preselects every reference combination', function () {
+    onboardingAt(LensesStep::key());
+
+    Livewire::test(Onboarding::class)
+        ->assertSet('data.selected_combo_keys', array_keys(ReferenceLensCatalog::combinations()));
+});
+
+it('requires at least one lens combination when none exists yet', function () {
+    onboardingAt(LensesStep::key());
+
+    Livewire::test(Onboarding::class)
+        ->set('data.selected_combo_keys', [])
+        ->call('next')
+        ->assertHasErrors(['data.selected_combo_keys' => 'required']);
+});
+
+it('lets the user continue past lenses when combinations already exist', function () {
+    $admin = onboardingAt(LensesStep::key());
+    LensCombination::factory()->create(['company_id' => $admin->company_id, 'price' => 100000]);
+
+    Livewire::test(Onboarding::class)
+        ->set('data.selected_combo_keys', [])
+        ->call('next')
+        ->assertHasNoErrors()
+        ->assertSet('step', 'summary');
 });

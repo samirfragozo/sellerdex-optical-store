@@ -10,12 +10,10 @@ use App\Models\LensType;
 use App\Support\ReferenceLensCatalog;
 
 /**
- * Turns the reference combinations the user kept during the lens onboarding
- * wizard into real LensType/LensTechnology/LensMaterial/LensCombination rows
- * for their company, and marks the company as onboarded. Called once, right
- * after the wizard is submitted (or skipped, with an empty $selectedKeys).
+ * Turns the reference combinations the user kept in the onboarding lenses
+ * step into LensType/LensTechnology/LensMaterial/LensCombination rows.
  */
-class CompleteLensOnboarding
+class CreateReferenceLensCombinations
 {
     /**
      * @param  array<int, string>  $selectedKeys
@@ -52,7 +50,5 @@ class CompleteLensOnboarding
                 ],
             );
         }
-
-        $company->update(['onboarded_at' => now()]);
     }
 }

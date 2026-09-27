@@ -491,23 +491,17 @@ return [
             'add' => 'Add laboratory',
             'summary_item' => ':name (:days days)',
         ],
+        'lenses' => [
+            'label' => 'Lenses',
+            'description' => 'Pick which type, technology and material combinations you sell and adjust their cost and price. You can fine-tune prices by prescription range later.',
+            'selected_combo_keys' => 'Combinations you sell',
+            'already_have' => 'You already have combinations. Tick only the ones you want to add.',
+            'summary' => ':count priced combinations',
+        ],
         'summary' => [
             'label' => 'Ready to sell',
             'description' => 'Review the summary. Everything can be changed later in Settings.',
         ],
-    ],
-    'lens_onboarding' => [
-        'title' => 'Set up your lenses',
-        'description' => 'Choose which lens combinations your store sells and set their costs and prices.',
-        'step_select' => 'Combinations',
-        'step_select_description' => 'Choose the type, technology and material combinations you sell.',
-        'selected_combo_keys' => 'Combinations you sell',
-        'step_pricing' => 'Costs and prices',
-        'step_pricing_description' => 'Adjust the cost and price of each selected combination.',
-        'submit' => 'Save and continue',
-        'skip' => 'Set up later',
-        'completed_notification' => 'Lens combinations saved.',
-        'skipped_notification' => 'You can set up your lenses anytime from the panel.',
     ],
 
     'readiness' => [

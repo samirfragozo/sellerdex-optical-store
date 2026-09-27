@@ -532,23 +532,17 @@ return [
             'add' => 'Agregar laboratorio',
             'summary_item' => ':name (:days días)',
         ],
+        'lenses' => [
+            'label' => 'Lentes',
+            'description' => 'Elige qué combinaciones de tipo, tecnología y material vendes y ajusta su costo y precio. Luego podrás afinar precios por rango de fórmula.',
+            'selected_combo_keys' => 'Combinaciones que vendes',
+            'already_have' => 'Ya tienes combinaciones creadas. Marca solo las que quieras agregar.',
+            'summary' => ':count combinaciones con precio',
+        ],
         'summary' => [
             'label' => 'Listo para vender',
             'description' => 'Revisa el resumen. Todo se puede cambiar después en Configuración.',
         ],
-    ],
-    'lens_onboarding' => [
-        'title' => 'Configura tus lentes',
-        'description' => 'Elige qué combinaciones de lentes vende tu óptica y define sus costos y precios.',
-        'step_select' => 'Combinaciones',
-        'step_select_description' => 'Elige las combinaciones de tipo, tecnología y material que vendes.',
-        'selected_combo_keys' => 'Combinaciones que vendes',
-        'step_pricing' => 'Costos y precios',
-        'step_pricing_description' => 'Ajusta el costo y el precio de cada combinación seleccionada.',
-        'submit' => 'Guardar y continuar',
-        'skip' => 'Configurar después',
-        'completed_notification' => 'Combinaciones de lentes guardadas.',
-        'skipped_notification' => 'Puedes configurar tus lentes cuando quieras desde el panel.',
     ],
 
     'readiness' => [
