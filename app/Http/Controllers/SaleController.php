@@ -3,10 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Actions\RegisterSale;
+use App\Enums\ReadinessSeverity;
 use App\Http\Requests\StoreSaleRequest;
 use App\Models\CashRegisterSession;
 use App\Models\Customer;
 use App\Models\Prescription;
+use App\Support\Readiness\ReadinessIssue;
 use Illuminate\Http\JsonResponse;
 
 class SaleController extends Controller
@@ -17,6 +19,15 @@ class SaleController extends Controller
             return response()->json([
                 'message' => __('app.pos.cash_session.required_notice'),
             ], 403);
+        }
+
+        $lensBlockers = collect($request->user()->company->saleReadiness())
+            ->filter(fn (ReadinessIssue $issue): bool => $issue->severity === ReadinessSeverity::Blocking && $issue->scope === 'lens');
+
+        if (! empty($request->input('armados')) && $lensBlockers->isNotEmpty()) {
+            return response()->json([
+                'message' => __('app.readiness.lens_sale_blocked', ['reasons' => $lensBlockers->pluck('message')->join(' ')]),
+            ], 422);
         }
 
         $data = $request->validated();

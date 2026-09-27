@@ -7,7 +7,9 @@ use App\Models\LensMaterial;
 use App\Models\LensPackage;
 use App\Models\LensTechnology;
 use App\Models\LensType;
+use App\Models\PaymentMethod;
 use App\Models\ProductCategory;
+use App\Models\Supplier;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -18,6 +20,8 @@ it('offers a prescription created earlier in the session as an existing option',
     test()->seed(RolesAndPermissionsSeeder::class);
     $seller = User::factory()->seller()->create();
     CashRegisterSession::factory()->for($seller)->create(['company_id' => $seller->company_id]);
+    PaymentMethod::factory()->create(['company_id' => $seller->company_id, 'is_active' => true]);
+    Supplier::factory()->laboratory()->create(['company_id' => $seller->company_id]);
 
     // The "Lentes" catalog chip only renders when a `lens`-keyed category exists —
     // the lens sale itself now runs through the lens catalog wizard, not a product.

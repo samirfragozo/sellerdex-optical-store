@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Models\CashRegisterSession;
 use App\Models\Company;
+use App\Support\Readiness\ReadinessIssue;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -52,6 +53,9 @@ class HandleInertiaRequests extends Middleware
             'cashRegisterSession' => fn () => CashRegisterSession::openFor($request->user())?->only([
                 'id', 'opened_at', 'opening_cash', 'closed_at', 'closed_cash', 'expected_cash', 'difference',
             ]),
+            'readiness' => fn (): array => $request->user()?->company_id === null
+                ? []
+                : array_map(fn (ReadinessIssue $issue): array => $issue->toArray(), Company::current()->saleReadiness()),
             'translations' => [
                 'auth' => trans('auth'),
                 'settings' => trans('settings'),

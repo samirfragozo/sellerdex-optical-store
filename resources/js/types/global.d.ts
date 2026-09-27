@@ -33,6 +33,14 @@ export interface CashRegisterSession {
     difference: number | null;
 }
 
+export interface ReadinessIssue {
+    key: string;
+    severity: 'blocking' | 'warning';
+    message: string;
+    url: string;
+    scope: 'lens' | null;
+}
+
 declare module '@inertiajs/core' {
     export interface InertiaConfig {
         sharedPageProps: {
@@ -42,6 +50,7 @@ declare module '@inertiajs/core' {
             auth: Auth;
             sidebarOpen: boolean;
             cashRegisterSession: CashRegisterSession | null;
+            readiness: ReadinessIssue[];
             flash: {
                 success: string | null;
             };

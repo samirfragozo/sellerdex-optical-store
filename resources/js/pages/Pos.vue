@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, setLayoutProps } from '@inertiajs/vue3';
+import { Head, setLayoutProps, usePage } from '@inertiajs/vue3';
 import { ShoppingCart } from '@lucide/vue';
 import { computed, ref, watch } from 'vue';
 import ArmadoModal from '@/components/pos/ArmadoModal.vue';
@@ -8,6 +8,8 @@ import CartSummary from '@/components/pos/CartSummary.vue';
 import CashSessionGateModal from '@/components/pos/CashSessionGateModal.vue';
 import CheckoutModal from '@/components/pos/CheckoutModal.vue';
 import ProductCatalog from '@/components/pos/ProductCatalog.vue';
+import ReadinessBanner from '@/components/pos/ReadinessBanner.vue';
+import ReadinessBlockingDialog from '@/components/pos/ReadinessBlockingDialog.vue';
 import SaleCreatedPanel from '@/components/pos/SaleCreatedPanel.vue';
 import StepCustomer from '@/components/pos/StepCustomer.vue';
 import { Button } from '@/components/ui/button';
@@ -23,7 +25,7 @@ import { armadoTotal, usePosCart } from '@/composables/usePosCart';
 import { usePosCheckout } from '@/composables/usePosCheckout';
 import { useTranslations } from '@/composables/useTranslations';
 import { index } from '@/routes/pos';
-import type { CreatedSale } from '@/types/global';
+import type { CreatedSale, ReadinessIssue } from '@/types/global';
 
 const { trans } = useTranslations();
 
@@ -65,6 +67,22 @@ const minExamDate = (() => {
 
 // --- Cash register session gate ---
 const { session, onSessionOpened } = useCashRegisterSession();
+
+// --- Sale readiness (banner for warnings, modals for blockers) ---
+const page = usePage();
+const readiness = computed<ReadinessIssue[]>(() => page.props.readiness ?? []);
+const globalBlockers = computed(() =>
+    readiness.value.filter(
+        (i) => i.severity === 'blocking' && i.scope === null,
+    ),
+);
+const lensBlockers = computed(() =>
+    readiness.value.filter(
+        (i) => i.severity === 'blocking' && i.scope === 'lens',
+    ),
+);
+const globalBlockingOpen = ref(globalBlockers.value.length > 0);
+const lensBlockingOpen = ref(false);
 
 // --- Cart ---
 const cart = usePosCart();
@@ -142,6 +160,12 @@ const editingArmado = computed<Armado | null>(
 );
 
 function openArmadoModal(id: number | null): void {
+    if (id === null && lensBlockers.value.length > 0) {
+        lensBlockingOpen.value = true;
+
+        return;
+    }
+
     editingArmadoId.value = id;
     armadoModalOpen.value = true;
 }
@@ -318,6 +342,18 @@ async function confirmCheckout(): Promise<void> {
     <Head :title="trans('app.pos.title')" />
 
     <CashSessionGateModal :open="session === null" @opened="onSessionOpened" />
+
+    <ReadinessBanner :issues="readiness" />
+    <ReadinessBlockingDialog
+        v-model:open="globalBlockingOpen"
+        :issues="globalBlockers"
+        :title="trans('app.readiness.blocking_title')"
+    />
+    <ReadinessBlockingDialog
+        v-model:open="lensBlockingOpen"
+        :issues="lensBlockers"
+        :title="trans('app.readiness.blocking_lens_title')"
+    />
 
     <div class="flex h-full flex-1 overflow-hidden">
         <!-- Catalog -->

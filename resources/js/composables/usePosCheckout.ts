@@ -1,8 +1,8 @@
 import { computed, ref } from 'vue';
 import type { ComputedRef, Ref } from 'vue';
+import { useTranslations } from '@/composables/useTranslations';
 import { csrfFetch } from '@/lib/csrfFetch';
 import { store } from '@/routes/pos';
-import { useTranslations } from '@/composables/useTranslations';
 import type { CreatedSale } from '@/types/global';
 
 export interface PaymentEntry {
@@ -75,13 +75,14 @@ export function usePosCheckout(total: Ref<number>) {
 
             if (response.status === 422) {
                 const body = (await response.json()) as {
-                    errors: Record<string, string[]>;
+                    message: string;
+                    errors?: Record<string, string[]>;
                 };
+                // The lens readiness guard answers 422 with only a message.
                 errors.value = Object.fromEntries(
-                    Object.entries(body.errors).map(([key, messages]) => [
-                        key,
-                        messages[0],
-                    ]),
+                    Object.entries(
+                        body.errors ?? { general: [body.message] },
+                    ).map(([key, messages]) => [key, messages[0]]),
                 );
 
                 return null;

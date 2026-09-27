@@ -5,6 +5,7 @@ use App\Models\LensCombination;
 use App\Models\LensPackage;
 use App\Models\LensTreatment;
 use App\Models\PaymentMethod;
+use App\Models\Supplier;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -58,6 +59,7 @@ function lensSalePayload(int $paymentAmount, array $lensExtra = []): array
 
 it('accepts a payment equal to the catalog-resolved lens total', function () {
     openCashRegisterSession($this->seller);
+    Supplier::factory()->laboratory()->create(['company_id' => $this->seller->company_id]);
 
     $this->postJson('/pos', lensSalePayload(125_000))->assertOk();
 });

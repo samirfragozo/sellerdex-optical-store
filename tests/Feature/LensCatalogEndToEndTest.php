@@ -7,6 +7,7 @@ use App\Models\LensTechnology;
 use App\Models\LensTreatment;
 use App\Models\LensType;
 use App\Models\Sale;
+use App\Models\Supplier;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -15,6 +16,7 @@ uses(RefreshDatabase::class);
 it('registra una venta de lente completa desde el POS y genera su orden de laboratorio', function () {
     $seller = User::factory()->seller()->create();
     openCashRegisterSession($seller);
+    Supplier::factory()->laboratory()->create(['company_id' => $seller->company_id]);
     $this->actingAs($seller);
 
     $combination = LensCombination::factory()->create([

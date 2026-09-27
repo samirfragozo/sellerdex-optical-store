@@ -15,6 +15,7 @@ use App\Models\Prescription;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\Sale;
+use App\Models\Supplier;
 use App\Models\User;
 use Database\Seeders\ProductCatalogSeeder;
 use Database\Seeders\ProductCategorySeeder;
@@ -305,6 +306,7 @@ it('blocks selling a lens without a customer or prescription', function () {
 it('creates and links an inline prescription when selling a lens', function () {
     $seller = User::factory()->seller()->create();
     openCashRegisterSession($seller);
+    Supplier::factory()->laboratory()->create(['company_id' => $seller->company_id]);
     $customer = Customer::factory()->create();
     $lens = lensArmadoLens($seller->company_id);
 
@@ -330,6 +332,7 @@ it('creates and links an inline prescription when selling a lens', function () {
 it('links an existing prescription that belongs to the customer when selling a lens', function () {
     $seller = User::factory()->seller()->create();
     openCashRegisterSession($seller);
+    Supplier::factory()->laboratory()->create(['company_id' => $seller->company_id]);
     $this->actingAs($seller);
     $customer = Customer::factory()->create();
     $prescription = Prescription::factory()->create(['customer_id' => $customer->id]);
@@ -471,6 +474,7 @@ it('passes combo options and applies a paper bag', function () {
 
     $seller = User::factory()->forCompany($company)->seller()->create();
     openCashRegisterSession($seller);
+    Supplier::factory()->laboratory()->create(['company_id' => $seller->company_id]);
     $this->actingAs($seller);
 
     $this->postJson('/pos', [
@@ -513,6 +517,7 @@ it('accepts two armados where only one carries a frame', function () {
     $customer = Customer::factory()->create();
     $seller = User::factory()->seller()->create();
     openCashRegisterSession($seller);
+    Supplier::factory()->laboratory()->create(['company_id' => $seller->company_id]);
     $this->actingAs($seller);
 
     $this->postJson('/pos', [
@@ -556,6 +561,7 @@ it('creates a sale from an armado with a new prescription', function () {
     $customer = Customer::factory()->create();
     $seller = User::factory()->seller()->create();
     openCashRegisterSession($seller);
+    Supplier::factory()->laboratory()->create(['company_id' => $seller->company_id]);
     $this->actingAs($seller);
 
     $this->postJson('/pos', [
@@ -844,6 +850,7 @@ it('flags the sale response when a lens item generates a pending lab order', fun
     $customer = Customer::factory()->create();
     $seller = User::factory()->seller()->create();
     openCashRegisterSession($seller);
+    Supplier::factory()->laboratory()->create(['company_id' => $seller->company_id]);
     $this->actingAs($seller);
 
     $response = $this->postJson('/pos', [
