@@ -224,6 +224,13 @@ Vue components must have a single root element.
 - For strings with dynamic parts, use a `:placeholder` in the lang value and `.replace(':placeholder', value)` (Vue) or Laravel's built-in `:placeholder` substitution (PHP `__()`/`trans()`).
 - When creating or modifying any page, component, resource, or form: add the new string to **both** `lang/es/*.php` and `lang/en/*.php` in the same change — never add a key to only one locale.
 
+## Test performance
+
+- `phpunit.xml` enforces a 60-second limit per test (`enforceTimeLimit` + `defaultTimeLimit="60"`, via `phpunit/php-invoker`); a test that exceeds it is killed and reported as risky, and `failOnRisky` fails the run.
+- Any test that takes more than one minute must be investigated and then fixed, skipped with a reason (`->skip('why')`), or deleted (deleting requires the user's approval). Never raise the limit to make a slow test pass.
+- The full suite must finish in at most 10–15 minutes. If it takes longer, run `vendor/bin/pest --profile` to find the slowest tests and fix, skip, or remove the ones causing the delay.
+- The Browser suite (`tests/Browser`) is not registered in `phpunit.xml` and does not run by default; run it explicitly with `vendor/bin/pest tests/Browser`. The same one-minute rule applies to it.
+
 ## Git commits
 
 - Never add a `Co-Authored-By` trailer (or any AI attribution line) to commit messages in this repository. Commit messages must contain only the summary/body — no attribution footer.
