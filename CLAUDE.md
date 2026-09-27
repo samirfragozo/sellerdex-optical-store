@@ -229,7 +229,7 @@ Vue components must have a single root element.
 - `phpunit.xml` enforces a 60-second limit per test (`enforceTimeLimit` + `defaultTimeLimit="60"`, via `phpunit/php-invoker`); a test that exceeds it is killed and reported as risky, and `failOnRisky` fails the run.
 - Any test that takes more than one minute must be investigated and then fixed, skipped with a reason (`->skip('why')`), or deleted (deleting requires the user's approval). Never raise the limit to make a slow test pass.
 - The full suite must finish in at most 10–15 minutes. If it takes longer, run `vendor/bin/pest --profile` to find the slowest tests and fix, skip, or remove the ones causing the delay.
-- The Browser suite (`tests/Browser`) is not registered in `phpunit.xml` and does not run by default; run it explicitly with `vendor/bin/pest tests/Browser`. The same one-minute rule applies to it.
+- The Browser suite (`tests/Browser`, Pest + Playwright) is registered in `phpunit.xml` and runs with the default suite, so Playwright must be installed where tests run. The same one-minute rule applies to it: a browser test that hangs is almost always waiting on an element that never becomes clickable (disabled button, covering dialog) — fix the test or the UI, never raise the limit.
 
 ## Git commits
 
