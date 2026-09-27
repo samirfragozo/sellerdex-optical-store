@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\CashRegisterSession;
+use App\Models\PaymentMethod;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\User;
@@ -13,6 +14,7 @@ it('shows discount, tip and tax in the cart summary', function () {
     test()->seed(RolesAndPermissionsSeeder::class);
     $seller = User::factory()->seller()->create();
     CashRegisterSession::factory()->for($seller)->create(['company_id' => $seller->company_id]);
+    PaymentMethod::factory()->create(['company_id' => $seller->company_id, 'is_active' => true]);
     $category = ProductCategory::factory()->create(['key' => 'frame', 'company_id' => $seller->company_id]);
     Product::factory()->create([
         'name' => 'Gafas de sol',
