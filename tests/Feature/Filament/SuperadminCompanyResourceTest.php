@@ -25,5 +25,5 @@ it('seeds default reference data when the superadmin creates a company', functio
 
     expect(PaymentMethod::where('company_id', $company->id)->where('name', 'Efectivo')->exists())->toBeTrue()
         ->and(ProductCategory::where('company_id', $company->id)->count())->toBe(5)
-        ->and(ExpenseCategory::where('company_id', $company->id)->count())->toBe(6);
+        ->and(ExpenseCategory::where('company_id', $company->id)->count())->toBe(count(ExpenseCategory::DEFAULT_NAMES));
 });

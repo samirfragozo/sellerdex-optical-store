@@ -17,7 +17,7 @@ it('siembra los datos base del negocio', function () {
     $admin = User::where('email', 'admin@optica.test')->first();
 
     expect(PaymentMethod::where('is_default', true)->where('name', 'Efectivo')->exists())->toBeTrue()
-        ->and(ExpenseCategory::count())->toBe(6)
+        ->and(ExpenseCategory::count())->toBe(count(ExpenseCategory::DEFAULT_NAMES))
         ->and(Company::count())->toBe(1)
         ->and($admin)->not->toBeNull()
         ->and($admin->company_id)->toBe($company->id)

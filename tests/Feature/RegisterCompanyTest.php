@@ -103,7 +103,7 @@ it('seeds the new company with default reference data', function () {
 
     expect(PaymentMethod::where('company_id', $company->id)->where('name', 'Efectivo')->exists())->toBeTrue()
         ->and(ProductCategory::where('company_id', $company->id)->count())->toBe(5)
-        ->and(ExpenseCategory::where('company_id', $company->id)->count())->toBe(6);
+        ->and(ExpenseCategory::where('company_id', $company->id)->count())->toBe(count(ExpenseCategory::DEFAULT_NAMES));
 });
 
 it('requires a company name', function () {
