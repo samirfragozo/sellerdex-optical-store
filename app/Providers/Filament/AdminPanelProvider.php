@@ -5,6 +5,7 @@ namespace App\Providers\Filament;
 use App\Filament\Pages\Auth\RedirectToLogin;
 use App\Filament\Pages\Dashboard;
 use App\Http\Middleware\EnsureCompanyIsActive;
+use App\Http\Middleware\EnsureCompanyIsOnboarded;
 use App\Models\Company;
 use Filament\Actions\Action;
 use Filament\Http\Middleware\Authenticate;
@@ -72,6 +73,7 @@ class AdminPanelProvider extends PanelProvider
             ->authMiddleware([
                 Authenticate::class,
                 EnsureCompanyIsActive::class,
+                EnsureCompanyIsOnboarded::class,
             ]);
     }
 }
