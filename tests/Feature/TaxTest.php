@@ -3,6 +3,7 @@
 use App\Enums\TaxTreatment;
 use App\Models\Company;
 use App\Models\Tax;
+use App\Models\User;
 
 it('seeds the common Colombian taxes for a company', function () {
     $company = Company::factory()->create();
@@ -34,6 +35,17 @@ it('deletes an unused custom tax', function () {
     $tax->delete();
 
     expect(Tax::withoutGlobalScopes()->whereKey($tax->id)->exists())->toBeFalse();
+});
+
+it('creates factory taxes in the authenticated user\'s company', function () {
+    $company = Company::factory()->create();
+    $user = User::factory()->forCompany($company)->admin()->create();
+
+    $this->actingAs($user);
+    $tax = Tax::factory()->create();
+
+    expect($tax->company_id)->toBe($company->id)
+        ->and(Tax::find($tax->id))->not->toBeNull();
 });
 
 it('translates every tax treatment', function () {
