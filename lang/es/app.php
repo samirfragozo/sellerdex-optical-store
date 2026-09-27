@@ -512,4 +512,16 @@ return [
         'completed_notification' => 'Combinaciones de lentes guardadas.',
         'skipped_notification' => 'Puedes configurar tus lentes cuando quieras desde el panel.',
     ],
+
+    'readiness' => [
+        'payment_method' => 'No hay ningún método de pago activo. Activa al menos uno para poder cobrar.',
+        'laboratory' => 'No hay ningún laboratorio activo: las gafas formuladas no pueden generar su orden.',
+        'lens_price' => 'No hay ninguna combinación de lentes activa con precio: no puedes vender gafas formuladas.',
+        'laboratory_lead_time' => 'Hay laboratorios sin tiempo de entrega; no podremos estimar cuándo llegan los lentes.',
+        'blocking_title' => 'Falta algo para poder vender',
+        'blocking_lens_title' => 'Falta algo para vender gafas formuladas',
+        'fix' => 'Solucionar',
+        'dismiss' => 'Ocultar',
+        'lens_sale_blocked' => 'No puedes vender gafas formuladas todavía: :reasons',
+    ],
 ];

@@ -2,7 +2,10 @@
 
 namespace App\Models;
 
+use App\Enums\ReadinessSeverity;
 use App\Enums\VatRegime;
+use App\Support\Readiness\ReadinessIssue;
+use App\Support\Readiness\SaleReadiness;
 use Database\Factories\CompanyFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -77,5 +80,18 @@ class Company extends Model
 
             return ($company->sale_number_prefix ?? '').str_pad((string) $number, 6, '0', STR_PAD_LEFT);
         });
+    }
+
+    /** @return list<ReadinessIssue> */
+    public function saleReadiness(): array
+    {
+        return SaleReadiness::for($this);
+    }
+
+    /** True when nothing blocks a sale as a whole (lens-only blockers do not count). */
+    public function isReadyToSell(): bool
+    {
+        return collect($this->saleReadiness())
+            ->doesntContain(fn (ReadinessIssue $i) => $i->severity === ReadinessSeverity::Blocking && $i->scope === null);
     }
 }

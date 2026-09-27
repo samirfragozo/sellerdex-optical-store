@@ -470,4 +470,16 @@ return [
         'completed_notification' => 'Lens combinations saved.',
         'skipped_notification' => 'You can set up your lenses anytime from the panel.',
     ],
+
+    'readiness' => [
+        'payment_method' => 'There is no active payment method. Activate at least one to take payments.',
+        'laboratory' => 'There is no active laboratory: prescription glasses cannot generate their lab order.',
+        'lens_price' => 'There is no active, priced lens combination: you cannot sell prescription glasses.',
+        'laboratory_lead_time' => 'Some laboratories have no lead time, so we cannot estimate when lenses arrive.',
+        'blocking_title' => 'Something is missing before you can sell',
+        'blocking_lens_title' => 'Something is missing to sell prescription glasses',
+        'fix' => 'Fix it',
+        'dismiss' => 'Hide',
+        'lens_sale_blocked' => 'You cannot sell prescription glasses yet: :reasons',
+    ],
 ];
