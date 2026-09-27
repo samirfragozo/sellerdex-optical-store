@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 #[Fillable(['name', 'slug', 'tax_id', 'vat_regime', 'sale_number_prefix', 'next_sale_number', 'address', 'phones', 'logo', 'is_active', 'plan', 'onboarding_step', 'onboarded_at'])]
@@ -61,5 +62,20 @@ class Company extends Model
     public function users(): HasMany
     {
         return $this->hasMany(User::class);
+    }
+
+    /**
+     * Take the company's next sale number (prefix + 6-digit counter) and advance
+     * the counter. The row lock keeps concurrent sales from sharing a number.
+     */
+    public static function takeNextSaleNumber(int $companyId): string
+    {
+        return DB::transaction(function () use ($companyId): string {
+            $company = static::query()->lockForUpdate()->findOrFail($companyId);
+            $number = $company->next_sale_number;
+            $company->increment('next_sale_number');
+
+            return ($company->sale_number_prefix ?? '').str_pad((string) $number, 6, '0', STR_PAD_LEFT);
+        });
     }
 }

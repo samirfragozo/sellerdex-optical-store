@@ -6,7 +6,6 @@ use App\Enums\LensOrderStatus;
 use App\Enums\SaleDocumentType;
 use App\Enums\SaleStatus;
 use App\Exceptions\PendingLensOrderException;
-use App\Scopes\CompanyScope;
 use App\Traits\BelongsToCompany;
 use Database\Factories\SaleFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -18,7 +17,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Auth;
 
 #[Fillable(['company_id', 'number', 'customer_id', 'seller_id', 'prescription_id', 'document_type', 'status', 'subtotal', 'discount', 'discount_percent', 'surcharge_percent', 'tip_percent', 'tip', 'tax_amount', 'total', 'is_delivered', 'delivered_at', 'sold_at', 'notes', 'created_by'])]
 class Sale extends Model
@@ -48,7 +46,10 @@ class Sale extends Model
     protected static function booted(): void
     {
         static::creating(function (Sale $sale): void {
-            $sale->number ??= self::nextNumber();
+            $sale->number ??= $sale->company_id !== null
+                ? Company::takeNextSaleNumber($sale->company_id)
+                // ponytail: company-less sales only happen in unauthenticated test fixtures
+                : str_pad((string) (static::withoutGlobalScopes()->withTrashed()->whereNull('company_id')->count() + 1), 6, '0', STR_PAD_LEFT);
             $sale->sold_at ??= now()->toDateString();
         });
 
@@ -135,19 +136,6 @@ class Sale extends Model
     public function scopeOutstanding(Builder $query): void
     {
         $query->whereRaw('sales.total > (select coalesce(sum(payments.amount), 0) from payments where payments.sale_id = sales.id and payments.deleted_at is null)');
-    }
-
-    /** Next sequential sale number, zero-padded (e.g. 000001), scoped to the current company. */
-    public static function nextNumber(): string
-    {
-        $companyId = Auth::user()?->company_id;
-        // ponytail: bypass auto-scope and filter explicitly — makes intent clear for superadmin passthrough
-        $max = (int) static::withoutGlobalScope(CompanyScope::class)
-            ->withTrashed()
-            ->when($companyId !== null, fn ($q) => $q->where('company_id', $companyId))
-            ->max('id');
-
-        return str_pad((string) ($max + 1), 6, '0', STR_PAD_LEFT);
     }
 
     public function totalPaid(): int
