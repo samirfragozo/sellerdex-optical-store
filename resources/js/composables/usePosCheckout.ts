@@ -18,7 +18,6 @@ export interface CheckoutBasePayload {
     armados: unknown[];
     products: unknown[];
     discount_percent: number;
-    tip_percent: number;
     surcharge_percent: number;
 }
 

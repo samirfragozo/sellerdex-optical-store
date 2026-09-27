@@ -762,7 +762,7 @@ it('includes frame variant products on the pos payload', function () {
         ->and($products->firstWhere('id', $variant->id))->toBeNull();
 });
 
-it('applies discount percent, tip percent and per-line tax when registering a pos sale', function () {
+it('applies discount percent and per-line included tax when registering a pos sale', function () {
     $seller = User::factory()->seller()->create();
     openCashRegisterSession($seller);
     $customer = Customer::factory()->create();
@@ -773,7 +773,6 @@ it('applies discount percent, tip percent and per-line tax when registering a po
         'customer_id' => $customer->id,
         'document_type' => 'order',
         'discount_percent' => 10,
-        'tip_percent' => 5,
         'products' => [[
             'product_id' => $product->id,
             'description' => $product->name,
@@ -784,10 +783,9 @@ it('applies discount percent, tip percent and per-line tax when registering a po
 
     $sale = Sale::first();
     expect($sale->discount_percent)->toBe('10.00')
-        ->and($sale->tip_percent)->toBe('5.00')
         ->and($sale->items()->where('product_id', $product->id)->first()->tax_amount)->toBe(15_966)
         ->and($sale->tax_amount)->toBe(14_369)
-        ->and($sale->total)->toBe(94_500);
+        ->and($sale->total)->toBe(90_000);
 });
 
 it('accepts a single payment covering the full total of a taxed sale', function () {

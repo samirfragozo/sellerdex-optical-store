@@ -138,7 +138,6 @@ return [
         'subtotal' => 'Subtotal',
         'discount' => 'Descuento',
         'discount_percent' => 'Porcentaje de descuento',
-        'tip' => 'Propina',
         'tax' => 'Impuesto',
         'total' => 'Total',
         'balance' => 'Saldo',
@@ -456,6 +455,7 @@ return [
 
         'default_title' => 'Documento',
         'invoice_title' => 'Comprobante de venta',
+        'tax_included' => 'IVA incluido',
         'not_an_invoice' => 'Documento no válido como factura',
         'formula_title' => 'Fórmula',
         'formula_heading' => 'PRESCRIPCIÓN DE LENTES OFTÁLMICOS',

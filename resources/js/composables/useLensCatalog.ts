@@ -26,7 +26,6 @@ export interface ProductProp {
     name: string;
     price: number;
     cost: number;
-    tax_rate: number;
     category_key: string | null;
     category_name: string | null;
     is_stockable: boolean;

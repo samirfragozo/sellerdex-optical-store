@@ -11,7 +11,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
-it('shows discount, tip and tax in the cart summary', function () {
+it('applies the discount to the tax-inclusive price in the cart summary', function () {
     test()->seed(RolesAndPermissionsSeeder::class);
     $seller = User::factory()->seller()->create();
     CashRegisterSession::factory()->for($seller)->create(['company_id' => $seller->company_id]);
@@ -31,8 +31,6 @@ it('shows discount, tip and tax in the cart summary', function () {
     $page = visit('/pos');
     $page->click('text=Gafas de sol')
         ->fill('[data-testid="discount-percent-input"]', '10')
-        ->fill('[data-testid="tip-percent-input"]', '5')
-        ->assertSee('$17.100') // tax on 90_000 base at 19%
-        ->assertSee('$4.500')  // tip
+        ->assertSee('$90.000')
         ->assertNoJavaScriptErrors();
 });

@@ -210,7 +210,6 @@ function onAddProduct(product: ProductProp): void {
         id: product.id,
         name: product.name,
         price: product.price,
-        tax_rate: product.tax_rate,
     });
 }
 
@@ -220,7 +219,6 @@ function onAddResolvedProduct(resolved: {
     id: number;
     name: string;
     price: number;
-    tax_rate?: number;
 }): void {
     cart.addOrIncrementProduct(resolved);
 }
@@ -286,7 +284,6 @@ async function confirmCheckout(): Promise<void> {
         armados: cartPayload.armados,
         products: cartPayload.products,
         discount_percent: cart.discountPercent.value,
-        tip_percent: cart.tipPercent.value,
         surcharge_percent: cart.surchargePercent.value,
     });
 
@@ -317,7 +314,6 @@ async function confirmCheckout(): Promise<void> {
     cart.armados.value = [];
     cart.products.value = [];
     cart.discountPercent.value = 0;
-    cart.tipPercent.value = 0;
     cart.surchargePercent.value = 0;
     customerId.value = null;
     prescriptionMode.value = 'new';
@@ -509,14 +505,11 @@ async function confirmCheckout(): Promise<void> {
             >
                 <CartSummary
                     v-model:discount-percent="cart.discountPercent.value"
-                    v-model:tip-percent="cart.tipPercent.value"
                     :armados="cart.armados.value"
                     :products="cart.products.value"
                     :subtotal="cart.subtotal.value"
                     :total="cart.total.value"
                     :discount-amount="cart.discountAmount.value"
-                    :tax-amount="cart.taxAmount.value"
-                    :tip-amount="cart.tipAmount.value"
                     :surcharge-percent="cart.surchargePercent.value"
                     :balance="cart.total.value"
                     :discount-error="checkout.errors.value.discount_percent"

@@ -63,7 +63,6 @@ class StoreSaleRequest extends FormRequest
             'prescription.os_va' => ['nullable', 'string', 'max:10'],
             'prescription.os_pd' => ['nullable', new Diopter(20, 40, 0.5)],
             'discount_percent' => ['nullable', 'numeric', 'between:0,100'],
-            'tip_percent' => ['nullable', 'numeric', 'between:0,100'],
             'notes' => ['nullable', 'string', 'max:1000'],
             'armados' => ['nullable', 'array'],
             'armados.*.lens.description' => ['required', 'string', 'max:255'],
@@ -205,8 +204,8 @@ class StoreSaleRequest extends FormRequest
     }
 
     /**
-     * Compute an estimated sale total from the submitted armados/products, discount,
-     * tip and surcharge — used only to bound the sum of split payments. Prices are
+     * Compute an estimated sale total from the submitted armados/products, discount
+     * and surcharge — used only to bound the sum of split payments. Prices are
      * tax-inclusive, so tax never adds to it. This mirrors Sale::recalculateTotals().
      */
     protected function saleTotal(): int
@@ -225,9 +224,8 @@ class StoreSaleRequest extends FormRequest
         $subtotal = $armados + $products;
         $discount = (int) round($subtotal * ((float) $this->input('discount_percent', 0)) / 100);
         $base = max(0, $subtotal - $discount);
-        $tip = (int) round($base * ((float) $this->input('tip_percent', 0)) / 100);
 
-        return (int) round(($base + $tip) * (1 + ((float) $this->input('surcharge_percent', 0)) / 100));
+        return (int) round($base * (1 + ((float) $this->input('surcharge_percent', 0)) / 100));
     }
 
     /**
@@ -282,7 +280,6 @@ class StoreSaleRequest extends FormRequest
             'prescription.os_va' => 'AV OS',
             'prescription.os_pd' => 'DP OS',
             'discount_percent' => 'descuento',
-            'tip_percent' => 'propina',
             'notes' => 'observaciones',
             'armados.*.lens.product_id' => 'lente',
             'armados.*.lens.description' => 'descripción del lente',

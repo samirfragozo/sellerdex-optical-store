@@ -156,7 +156,6 @@ return [
         'subtotal' => 'Subtotal',
         'discount' => 'Discount',
         'discount_percent' => 'Discount percentage',
-        'tip' => 'Tip',
         'tax' => 'Tax',
         'total' => 'Total',
         'balance' => 'Balance',
@@ -456,6 +455,7 @@ return [
 
         'default_title' => 'Document',
         'invoice_title' => 'Sales receipt',
+        'tax_included' => 'VAT included',
         'not_an_invoice' => 'Not valid as an invoice',
         'formula_title' => 'Formula',
         'formula_heading' => 'OPHTHALMIC LENS PRESCRIPTION',

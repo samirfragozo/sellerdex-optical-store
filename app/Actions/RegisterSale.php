@@ -47,7 +47,6 @@ class RegisterSale
                 'prescription_id' => $data['prescription_id'] ?? null,
                 'document_type' => $data['document_type'] ?? 'order',
                 'discount_percent' => $data['discount_percent'] ?? 0,
-                'tip_percent' => $data['tip_percent'] ?? 0,
                 'surcharge_percent' => $this->resolveSurcharge($data),
                 'sold_at' => $data['sold_at'] ?? now()->toDateString(),
                 'notes' => $data['notes'] ?? null,

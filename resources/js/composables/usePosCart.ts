@@ -45,7 +45,6 @@ export interface LooseProduct {
     description: string;
     quantity: number;
     unit_price: number;
-    tax_rate?: number;
 }
 
 export function armadoTotal(armado: Armado): number {
@@ -61,7 +60,6 @@ export function usePosCart() {
     const armados: Ref<Armado[]> = ref([]);
     const products: Ref<LooseProduct[]> = ref([]);
     const discountPercent = ref(0);
-    const tipPercent = ref(0);
     const surchargePercent = ref(0);
     let nextId = 1;
 
@@ -95,7 +93,6 @@ export function usePosCart() {
         id: number;
         name: string;
         price: number;
-        tax_rate?: number;
     }): void {
         const existing = products.value.find(
             (p) => p.product_id === product.id,
@@ -112,7 +109,6 @@ export function usePosCart() {
             description: product.name,
             quantity: 1,
             unit_price: product.price,
-            tax_rate: product.tax_rate ?? 0,
         });
     }
 
@@ -133,17 +129,6 @@ export function usePosCart() {
         return armadoSum + productSum;
     });
 
-    const rawTax: ComputedRef<number> = computed(() =>
-        products.value.reduce(
-            (sum, p) =>
-                sum +
-                Math.round(
-                    (p.quantity * p.unit_price * (p.tax_rate ?? 0)) / 100,
-                ),
-            0,
-        ),
-    );
-
     const discountAmount: ComputedRef<number> = computed(() =>
         Math.round((subtotal.value * (discountPercent.value || 0)) / 100),
     );
@@ -152,23 +137,10 @@ export function usePosCart() {
         Math.max(0, subtotal.value - discountAmount.value),
     );
 
-    const taxAmount: ComputedRef<number> = computed(() =>
-        subtotal.value > 0
-            ? Math.round(rawTax.value * (base.value / subtotal.value))
-            : 0,
+    // Prices are tax-inclusive, so tax never adds to the total.
+    const total: ComputedRef<number> = computed(() =>
+        Math.round(base.value * (1 + (surchargePercent.value || 0) / 100)),
     );
-
-    const tipAmount: ComputedRef<number> = computed(() =>
-        Math.round((base.value * (tipPercent.value || 0)) / 100),
-    );
-
-    const total: ComputedRef<number> = computed(() => {
-        const preSurcharge = base.value + taxAmount.value + tipAmount.value;
-
-        return Math.round(
-            preSurcharge * (1 + (surchargePercent.value || 0) / 100),
-        );
-    });
 
     function buildPayload(): { armados: unknown[]; products: unknown[] } {
         return {
@@ -199,12 +171,9 @@ export function usePosCart() {
         armados,
         products,
         discountPercent,
-        tipPercent,
         surchargePercent,
         subtotal,
         discountAmount,
-        taxAmount,
-        tipAmount,
         total,
         commitArmado,
         updateArmado,

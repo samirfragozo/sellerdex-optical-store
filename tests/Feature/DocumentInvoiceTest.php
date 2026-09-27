@@ -34,13 +34,12 @@ it('renders the invoice HTML for an authenticated user', function () {
         ->assertSee('375.000');
 });
 
-it('shows tax and tip lines on the invoice when the sale has them', function () {
+it('shows the VAT included in the total when the sale has it', function () {
     $seller = User::factory()->seller()->create();
     $this->actingAs($seller);
 
     $sale = Sale::factory()->create([
         'customer_id' => Customer::factory()->create(['name' => 'Lina', 'last_name' => 'Quintero'])->id,
-        'tip_percent' => 10,
     ]);
     SaleItem::factory()->create([
         'sale_id' => $sale->id,
@@ -54,21 +53,18 @@ it('shows tax and tip lines on the invoice when the sale has them', function () 
 
     $this->get(route('documents.invoice', $sale))
         ->assertSuccessful()
-        ->assertSee(__('app.fields.tax'))
-        ->assertSee(number_format($sale->tax_amount, 0, ',', '.'))
-        ->assertSee(__('app.fields.tip'))
-        ->assertSee(number_format($sale->tip, 0, ',', '.'));
+        ->assertSee(__('app.documents.tax_included'))
+        ->assertSee(number_format($sale->tax_amount, 0, ',', '.'));
 });
 
-it('hides tax and tip lines on the invoice when the sale has none', function () {
+it('hides the VAT line when the sale has none', function () {
     $seller = User::factory()->seller()->create();
     $this->actingAs($seller);
     $sale = invoiceSale();
 
     $response = $this->get(route('documents.invoice', $sale))->assertSuccessful();
 
-    $response->assertDontSee(__('app.fields.tax'))
-        ->assertDontSee(__('app.fields.tip'));
+    $response->assertDontSee(__('app.documents.tax_included'));
 });
 
 it('downloads the invoice as a PDF', function () {

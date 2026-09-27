@@ -30,10 +30,9 @@ it('recalculates sale totals from its items', function () {
         ->and($sale->total)->toBe(250_000);
 });
 
-it('computes tax, tip and discount amount from percent fields via recalculateTotals', function () {
+it('computes the discount and the included VAT via recalculateTotals', function () {
     $sale = Sale::factory()->create([
         'discount_percent' => 10,
-        'tip_percent' => 5,
         'surcharge_percent' => 0,
     ]);
     $product = Product::factory()->create();
@@ -53,8 +52,7 @@ it('computes tax, tip and discount amount from percent fields via recalculateTot
     expect($sale->subtotal)->toBe(100_000)
         ->and($sale->discount)->toBe(10_000)   // 10% of 100_000
         ->and($sale->tax_amount)->toBe(14_369) // inclusive 15_966 prorated by base/subtotal = 90_000/100_000
-        ->and($sale->tip)->toBe(4_500)         // 5% of base (90_000)
-        ->and($sale->total)->toBe(94_500);     // 90_000 + 4_500, tax is already inside the price
+        ->and($sale->total)->toBe(90_000);     // tax is already inside the price
 });
 
 it('defaults to draft status', function () {

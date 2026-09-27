@@ -24,7 +24,7 @@ const emit = defineEmits<{
     'select-lens-category': [];
     'add-product': [ProductProp];
     'add-resolved-product': [
-        { id: number; name: string; price: number; tax_rate?: number },
+        { id: number; name: string; price: number },
     ];
 }>();
 
@@ -78,7 +78,6 @@ function onVariantSelected(option: VariantOption): void {
         id: option.value,
         name: option.label,
         price: option.unit_price,
-        tax_rate: variantPickerProduct.value?.tax_rate,
     });
 }
 
