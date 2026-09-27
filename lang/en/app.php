@@ -54,6 +54,9 @@ return [
         'sale' => ['label' => 'Sale', 'plural' => 'Sales', 'nav' => 'Sales'],
         'cash_close' => ['label' => 'Cash close', 'plural' => 'Cash closes', 'nav' => 'Cash close'],
         'user' => ['label' => 'User', 'plural' => 'Users', 'nav' => 'Users'],
+        'supplier' => ['label' => 'Supplier', 'plural' => 'Suppliers', 'nav' => 'Suppliers'],
+        'purchase_order' => ['label' => 'Purchase order', 'plural' => 'Purchase orders', 'nav' => 'Purchase orders'],
+        'lens_order' => ['label' => 'Lab order', 'plural' => 'Lab orders', 'nav' => 'Laboratory'],
     ],
 
     'users' => [
@@ -75,6 +78,24 @@ return [
     ],
 
     'fields' => [
+        'category_key' => 'Key (internal)',
+        'requires_prescription' => 'Requires prescription',
+        'generates_lab_order' => 'Generates lab order',
+        'is_made_to_order' => 'Made to order',
+        'nit' => 'Tax ID / Identification',
+        'contact_name' => 'Contact',
+        'is_laboratory' => 'Is a laboratory',
+        'supplier_cost' => 'Supplier cost',
+        'supplier_sku' => 'Supplier reference',
+        'preferred' => 'Preferred',
+        'supplier' => 'Supplier',
+        'ordered_at' => 'Order date',
+        'received_at' => 'Received date',
+        'lab_status' => 'Status',
+        'expected_date' => 'Expected date',
+        'received_date' => 'Received date',
+        'laboratory' => 'Laboratory',
+        'sale_item' => 'Lens (sale)',
         'name' => 'Name',
         'first_name' => 'First name',
         'last_name' => 'Last name',
@@ -176,6 +197,12 @@ return [
         'options' => 'Options',
     ],
 
+    'tabs' => [
+        'all' => 'All',
+        'laboratories' => 'Laboratories',
+        'pending' => 'Pending',
+    ],
+
     'lens_type' => [
         'single_vision' => 'Single vision',
         'extended_range' => 'Extended range single vision',
@@ -197,6 +224,15 @@ return [
         'in_process' => 'In process',
         'received' => 'Received',
     ],
+
+    'purchase_order_status' => [
+        'draft' => 'Draft',
+        'sent' => 'Sent',
+        'received' => 'Received',
+        'cancelled' => 'Cancelled',
+    ],
+
+    'purchase_order_actions' => ['receive' => 'Receive', 'cancel' => 'Cancel'],
 
     'sale_status' => [
         'draft' => 'Unpaid',
@@ -223,6 +259,7 @@ return [
         'converted' => 'Quote converted to sale.',
         'mark_delivered' => 'Mark as delivered',
         'delivered' => 'Sale delivered.',
+        'cannot_deliver_pending_lens' => 'Cannot deliver: some lenses are still pending from the laboratory.',
     ],
 
     'product_actions' => [
@@ -435,6 +472,10 @@ return [
 
     'reports' => [
         'title' => 'Reports',
+        'sales_by_category' => 'Sales by category',
+        'units' => 'Units',
+        'pending_lenses' => 'Pending lenses by laboratory',
+        'pending_count' => 'Pending',
         'sales' => 'Sales',
         'collected' => 'Collected',
         'expenses' => 'Expenses',
