@@ -128,3 +128,16 @@ it('accepts paying exactly the tax-inclusive total', function () {
         'payments' => [['payment_method_id' => $method->id, 'amount' => 119_000]],
     ])->assertOk();
 });
+
+it('rejects payments above the tax-inclusive total', function () {
+    openCashRegisterSession($this->seller);
+    $method = PaymentMethod::factory()->create(['is_active' => true]);
+    Supplier::factory()->laboratory()->create();
+    $frame = Product::factory()->create(['price' => 119_000, 'tax_id' => $this->iva19->id, 'is_pos_selectable' => true]);
+
+    $this->postJson(route('pos.store'), [
+        'document_type' => 'order',
+        'products' => [['product_id' => $frame->id, 'description' => $frame->name, 'quantity' => 1, 'unit_price' => 119_000]],
+        'payments' => [['payment_method_id' => $method->id, 'amount' => 119_001]],
+    ])->assertUnprocessable()->assertJsonValidationErrors('payments');
+});

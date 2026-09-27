@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
-#[Fillable(['company_id', 'sale_id', 'group_key', 'product_id', 'description', 'quantity', 'unit_price', 'unit_cost', 'tax_name', 'tax_rate', 'tax_treatment', 'tax_amount', 'line_total'])]
+#[Fillable(['company_id', 'sale_id', 'group_key', 'product_id', 'description', 'quantity', 'unit_price', 'unit_cost', 'tax_name', 'tax_rate', 'tax_treatment', 'line_total'])]
 class SaleItem extends Model
 {
     /** @use HasFactory<SaleItemFactory> */
