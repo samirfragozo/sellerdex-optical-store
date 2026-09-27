@@ -50,8 +50,6 @@ function reload(page = 1): void {
             category: selectedCategoryKey.value || undefined,
             page,
         },
-        preserveState: true,
-        preserveScroll: true,
     });
 }
 
