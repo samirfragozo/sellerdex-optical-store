@@ -563,4 +563,10 @@ return [
         'dismiss' => 'Hide',
         'lens_sale_blocked' => 'You cannot sell prescription glasses yet: :reasons',
     ],
+
+    'tax_treatment' => [
+        'taxed' => 'Taxed',
+        'exempt' => 'Exempt',
+        'excluded' => 'Excluded',
+    ],
 ];

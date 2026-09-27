@@ -563,4 +563,10 @@ return [
         'dismiss' => 'Ocultar',
         'lens_sale_blocked' => 'No puedes vender gafas formuladas todavía: :reasons',
     ],
+
+    'tax_treatment' => [
+        'taxed' => 'Gravado',
+        'exempt' => 'Exento',
+        'excluded' => 'Excluido',
+    ],
 ];

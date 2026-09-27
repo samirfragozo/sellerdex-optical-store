@@ -7,6 +7,7 @@ use App\Models\LensPackage;
 use App\Models\PaymentMethod;
 use App\Models\Product;
 use App\Models\ProductCategory;
+use App\Models\Tax;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Role;
 
@@ -80,4 +81,12 @@ it('seeds the default lens package for the company', function () {
     expect($package)->not->toBeNull()
         ->and($package->name)->toBe('Básico')
         ->and($package->is_active)->toBeTrue();
+});
+
+it('seeds the default taxes for the company', function () {
+    $company = Company::factory()->create();
+
+    (new SeedCompanyDefaults)->handle($company);
+
+    expect(Tax::withoutGlobalScopes()->where('company_id', $company->id)->count())->toBe(4);
 });
