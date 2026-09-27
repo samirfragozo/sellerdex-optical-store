@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Enums\TaxTreatment;
+use App\Enums\VatRegime;
 use App\Traits\BelongsToCompany;
 use Database\Factories\SaleItemFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -24,6 +26,7 @@ class SaleItem extends Model
             'unit_price' => 'integer',
             'unit_cost' => 'integer',
             'tax_rate' => 'decimal:2',
+            'tax_treatment' => TaxTreatment::class,
             'tax_amount' => 'integer',
             'line_total' => 'integer',
         ];
@@ -70,12 +73,28 @@ class SaleItem extends Model
     }
 
     /**
-     * Snapshot of the tax that applies to a new line (null = untaxed).
+     * Snapshot of a product's tax for a new line: a variant without its own tax
+     * follows its base product.
      *
      * @return array{tax_name: string|null, tax_rate: float|int, tax_treatment: string|null}
      */
-    public static function taxSnapshot(?Tax $tax): array
+    public static function taxSnapshotFor(?Product $product, Company $company): array
     {
+        return self::taxSnapshot($product?->tax ?? $product?->baseProduct?->tax, $company);
+    }
+
+    /**
+     * Snapshot of the tax that applies to a new line (null = untaxed). A company
+     * that is not VAT responsible never taxes a line.
+     *
+     * @return array{tax_name: string|null, tax_rate: float|int, tax_treatment: string|null}
+     */
+    public static function taxSnapshot(?Tax $tax, Company $company): array
+    {
+        if ($company->vat_regime !== VatRegime::Responsible) {
+            $tax = null;
+        }
+
         return [
             'tax_name' => $tax?->name,
             'tax_rate' => $tax !== null ? (float) $tax->rate : 0,

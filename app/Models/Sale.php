@@ -155,13 +155,14 @@ class Sale extends Model
         $this->discount = (int) round($subtotal * ((float) $this->discount_percent) / 100);
         $base = max(0, $subtotal - $this->discount);
 
-        $rawTax = (int) $this->items()->sum('tax_amount');
-        $this->tax_amount = $subtotal > 0
-            ? (int) round($rawTax * ($base / $subtotal))
-            : 0;
-
         // Prices are tax-inclusive: tax_amount is informational, never added on top.
         $this->total = (int) round($base * (1 + ((float) $this->surcharge_percent) / 100));
+
+        // The surcharge is part of the price paid, so the VAT is prorated to the final total.
+        $rawTax = (int) $this->items()->sum('tax_amount');
+        $this->tax_amount = $subtotal > 0
+            ? (int) round($rawTax * $this->total / $subtotal)
+            : 0;
 
         $this->saveQuietly();
         $this->recalculateStatus();

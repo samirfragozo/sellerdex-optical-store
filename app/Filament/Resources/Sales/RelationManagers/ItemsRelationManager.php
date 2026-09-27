@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\Sales\RelationManagers;
 
+use App\Models\Product;
+use App\Models\SaleItem;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
@@ -81,10 +83,14 @@ class ItemsRelationManager extends RelationManager
                     ->alignEnd(),
             ])
             ->headerActions([
-                CreateAction::make(),
+                CreateAction::make()
+                    ->mutateDataUsing(fn (array $data): array => [...$data, ...$this->taxSnapshotFor($data)]),
             ])
             ->recordActions([
-                EditAction::make(),
+                EditAction::make()
+                    ->mutateDataUsing(fn (array $data, SaleItem $record): array => (int) ($data['product_id'] ?? 0) === (int) $record->product_id
+                        ? $data
+                        : [...$data, ...$this->taxSnapshotFor($data)]),
                 DeleteAction::make(),
             ])
             ->toolbarActions([
@@ -92,5 +98,16 @@ class ItemsRelationManager extends RelationManager
                     DeleteBulkAction::make(),
                 ]),
             ]);
+    }
+
+    /**
+     * Tax snapshot for the line's product under the sale's company VAT regime.
+     *
+     * @param  array<string, mixed>  $data
+     * @return array{tax_name: string|null, tax_rate: float|int, tax_treatment: string|null}
+     */
+    private function taxSnapshotFor(array $data): array
+    {
+        return SaleItem::taxSnapshotFor(Product::find($data['product_id'] ?? null), $this->getOwnerRecord()->company);
     }
 }

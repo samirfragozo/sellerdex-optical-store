@@ -1,10 +1,14 @@
 <?php
 
+use App\Actions\GenerateProductVariants;
 use App\Actions\RegisterSale;
+use App\Enums\TaxTreatment;
 use App\Enums\VatRegime;
 use App\Models\Customer;
 use App\Models\LensCombination;
 use App\Models\LensPackage;
+use App\Models\Option;
+use App\Models\OptionGroup;
 use App\Models\PaymentMethod;
 use App\Models\Product;
 use App\Models\ProductCategory;
@@ -40,7 +44,7 @@ it('charges exactly the tax-inclusive price and derives the VAT inside it', func
         ->and($line->tax_amount)->toBe(19_000)
         ->and($line->tax_name)->toBe('IVA 19%')
         ->and((float) $line->tax_rate)->toBe(19.0)
-        ->and($line->tax_treatment)->toBe('taxed');
+        ->and($line->tax_treatment)->toBe(TaxTreatment::Taxed);
 });
 
 it('applies a discount to the tax-inclusive price and prorates the VAT', function () {
@@ -140,4 +144,40 @@ it('rejects payments above the tax-inclusive total', function () {
         'products' => [['product_id' => $frame->id, 'description' => $frame->name, 'quantity' => 1, 'unit_price' => 119_000]],
         'payments' => [['payment_method_id' => $method->id, 'amount' => 119_001]],
     ])->assertUnprocessable()->assertJsonValidationErrors('payments');
+});
+
+it('taxes a generated variant with its base product tax', function () {
+    $base = Product::factory()->create(['sku' => 'MNT-IVA', 'name' => 'Montura', 'tax_id' => $this->iva19->id]);
+    $color = OptionGroup::factory()->create(['name' => 'Color']);
+    Option::factory()->for($color, 'group')->create(['name' => 'Negro']);
+    $base->optionGroups()->attach($color->id);
+
+    app(GenerateProductVariants::class)->handle($base);
+    $variant = $base->variants()->sole();
+    $variant->update(['price' => 119_000]);
+
+    $line = sellProduct($variant)->items->firstWhere('product_id', $variant->id);
+
+    expect($variant->tax_id)->toBe($this->iva19->id)
+        ->and($line->tax_name)->toBe('IVA 19%')
+        ->and($line->tax_amount)->toBe(19_000);
+});
+
+it('taxes an older variant without its own tax with its base product tax', function () {
+    $base = Product::factory()->create(['tax_id' => $this->iva19->id]);
+    $variant = Product::factory()->create(['base_product_id' => $base->id, 'tax_id' => null, 'price' => 119_000]);
+
+    $line = sellProduct($variant)->items->firstWhere('product_id', $variant->id);
+
+    expect($line->tax_name)->toBe('IVA 19%')
+        ->and($line->tax_amount)->toBe(19_000);
+});
+
+it('includes the payment-method surcharge in the taxable amount', function () {
+    $frame = Product::factory()->create(['price' => 119_000, 'tax_id' => $this->iva19->id]);
+
+    $sale = sellProduct($frame, ['surcharge_percent' => 7]);
+
+    expect($sale->total)->toBe(127_330)
+        ->and($sale->tax_amount)->toBe((int) round(19_000 * 127_330 / 119_000));
 });

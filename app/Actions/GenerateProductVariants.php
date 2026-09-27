@@ -65,6 +65,7 @@ class GenerateProductVariants
                 'sku' => strtoupper("{$base->sku}-{$slug}"),
                 'product_category_id' => $base->product_category_id,
                 'base_product_id' => $base->id,
+                'tax_id' => $base->tax_id,
                 'price' => 0,
                 'cost' => 0,
                 'is_stockable' => true,

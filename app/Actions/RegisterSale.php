@@ -3,13 +3,11 @@
 namespace App\Actions;
 
 use App\Enums\LensOrderStatus;
-use App\Enums\VatRegime;
 use App\Models\PaymentMethod;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\Sale;
 use App\Models\SaleItem;
-use App\Models\Tax;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
@@ -61,7 +59,7 @@ class RegisterSale
                         'quantity' => $item['quantity'],
                         'unit_price' => $item['unit_price'],
                         'unit_cost' => $item['unit_cost'] ?? 0,
-                        ...SaleItem::taxSnapshot($this->applicableTax($product?->tax)),
+                        ...SaleItem::taxSnapshotFor($product, $this->seller->company),
                     ]);
                 }
                 $this->composeCombo($sale, $data['combo'] ?? null);
@@ -76,7 +74,7 @@ class RegisterSale
                         'quantity' => $productLine['quantity'] ?? 1,
                         'unit_price' => $productLine['unit_price'],
                         'unit_cost' => $productLine['unit_cost'] ?? 0,
-                        ...SaleItem::taxSnapshot($this->applicableTax($product?->tax)),
+                        ...SaleItem::taxSnapshotFor($product, $this->seller->company),
                     ]);
                 }
                 $this->applyAdditions($sale);
@@ -220,7 +218,7 @@ class RegisterSale
             'quantity' => $quantity,
             'unit_price' => $unitPrice,
             'unit_cost' => $addition->cost,
-            ...SaleItem::taxSnapshot($this->applicableTax($addition->tax)),
+            ...SaleItem::taxSnapshotFor($addition, $this->seller->company),
         ]);
     }
 
@@ -271,7 +269,7 @@ class RegisterSale
                 'quantity' => $lens['quantity'] ?? 1,
                 'unit_price' => $unitPrice,
                 'unit_cost' => $resolved['cost'],
-                ...SaleItem::taxSnapshot($this->applicableTax($combination->tax ?? ProductCategory::keyed('lens')?->defaultTax)),
+                ...SaleItem::taxSnapshot($combination->tax ?? ProductCategory::keyed('lens')?->defaultTax, $this->seller->company),
             ]);
 
             $lensConfig = $lensItem->lensConfig()->create([
@@ -312,7 +310,7 @@ class RegisterSale
                     'quantity' => $frame['quantity'] ?? 1,
                     'unit_price' => $frame['unit_price'],
                     'unit_cost' => $frame['unit_cost'] ?? 0,
-                    ...SaleItem::taxSnapshot($this->applicableTax(Product::find($frame['product_id'] ?? null)?->tax)),
+                    ...SaleItem::taxSnapshotFor(Product::find($frame['product_id'] ?? null), $this->seller->company),
                 ]);
             }
 
@@ -388,14 +386,8 @@ class RegisterSale
             'quantity' => 1,
             'unit_price' => 0,
             'unit_cost' => $product->cost,
-            ...SaleItem::taxSnapshot($this->applicableTax($product->tax)),
+            ...SaleItem::taxSnapshotFor($product, $this->seller->company),
         ]);
         $sale->load('items.product.category');
-    }
-
-    /** The tax to snapshot on a line, or null when the company does not charge VAT. */
-    private function applicableTax(?Tax $tax): ?Tax
-    {
-        return $this->seller->company->vat_regime === VatRegime::Responsible ? $tax : null;
     }
 }
