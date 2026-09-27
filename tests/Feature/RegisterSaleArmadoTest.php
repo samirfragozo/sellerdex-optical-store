@@ -7,6 +7,7 @@ use App\Models\LensPackage;
 use App\Models\LensTreatment;
 use App\Models\Product;
 use App\Models\Sale;
+use App\Models\Tax;
 use App\Models\User;
 use Database\Seeders\ProductCatalogSeeder;
 use Database\Seeders\ProductCategorySeeder;
@@ -166,10 +167,10 @@ it('lets a seller-entered price_override win over the resolved catalog price', f
     expect($lensLine->unit_price)->toBe(90000);
 });
 
-it('does not tax armado lens or frame lines even when the product has a tax_rate', function () {
+it('does not tax armado lens or frame lines even when the product has a tax', function () {
     seedCatalog();
     $frame = Product::where('sku', 'MNT-COMPLETA-ACETATO')->first();
-    $frame->update(['tax_rate' => 19]);
+    $frame->update(['tax_id' => Tax::factory()->create(['name' => 'IVA 19%', 'rate' => 19])->id]);
 
     $sale = app(RegisterSale::class)->handle([
         'customer_id' => Customer::factory()->create()->id,

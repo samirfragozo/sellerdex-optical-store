@@ -60,7 +60,7 @@ class LensCombinationForm
                 ->prefix('$'),
             Select::make('tax_id')
                 ->label(__('app.fields.tax'))
-                ->relationship('tax', 'name', fn ($query) => $query->where('is_active', true))
+                ->relationship('tax', 'name', fn ($query, $record) => $query->where(fn ($q) => $q->where('is_active', true)->when($record?->tax_id, fn ($q, $id) => $q->orWhere('taxes.id', $id))))
                 ->placeholder(__('app.taxes.use_lens_category'))
                 ->helperText(__('app.taxes.price_includes_tax'))
                 ->visible(fn (): bool => Company::current()->vat_regime === VatRegime::Responsible),

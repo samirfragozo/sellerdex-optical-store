@@ -28,7 +28,7 @@ class ProductCategoryForm
                     ->maxLength(255),
                 Select::make('default_tax_id')
                     ->label(__('app.taxes.default_for_category'))
-                    ->relationship('defaultTax', 'name', fn ($query) => $query->where('is_active', true))
+                    ->relationship('defaultTax', 'name', fn ($query, $record) => $query->where(fn ($q) => $q->where('is_active', true)->when($record?->default_tax_id, fn ($q, $id) => $q->orWhere('taxes.id', $id))))
                     ->placeholder(__('app.taxes.none'))
                     ->visible(fn (): bool => Company::current()->vat_regime === VatRegime::Responsible),
                 Section::make(__('app.sections.options'))

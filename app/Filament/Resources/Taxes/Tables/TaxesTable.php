@@ -37,7 +37,7 @@ class TaxesTable
             ->recordActions([
                 EditAction::make(),
                 DeleteAction::make()
-                    ->hidden(fn (Tax $record): bool => $record->is_system),
+                    ->hidden(fn (Tax $record): bool => $record->is_system || $record->isInUse()),
             ]);
     }
 }

@@ -33,7 +33,12 @@ class ProductForm
                     ->relationship('category', 'name')
                     ->required()
                     ->live()
-                    ->afterStateUpdated(fn ($state, $set, $get) => $get('tax_id') ?: $set('tax_id', ProductCategory::find($state)?->default_tax_id)),
+                    ->afterStateUpdated(function ($state, $set, $get): void {
+                        $tax = ProductCategory::find($state)?->defaultTax;
+                        if (! $get('tax_id') && $tax?->is_active) {
+                            $set('tax_id', $tax->id);
+                        }
+                    }),
                 Select::make('base_product_id')
                     ->label(__('app.fields.base_product'))
                     ->relationship(
@@ -64,7 +69,7 @@ class ProductForm
                     ->visible(fn () => auth()->user()?->isAdmin() === true),
                 Select::make('tax_id')
                     ->label(__('app.fields.tax'))
-                    ->relationship('tax', 'name', fn ($query) => $query->where('is_active', true))
+                    ->relationship('tax', 'name', fn ($query, $record) => $query->where(fn ($q) => $q->where('is_active', true)->when($record?->tax_id, fn ($q, $id) => $q->orWhere('taxes.id', $id))))
                     ->placeholder(__('app.taxes.none'))
                     ->helperText(__('app.taxes.price_includes_tax'))
                     ->visible(fn (): bool => Company::current()->vat_regime === VatRegime::Responsible),
