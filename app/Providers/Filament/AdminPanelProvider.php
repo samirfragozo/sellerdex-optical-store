@@ -46,6 +46,15 @@ class AdminPanelProvider extends PanelProvider
                     'name' => rescue(fn () => Company::current()->name, null, report: false),
                 ])->render(),
             )
+            ->renderHook(
+                PanelsRenderHook::CONTENT_START,
+                fn (): string => auth()->user()?->company_id === null ? '' : view('filament.readiness.banner')->render(),
+            )
+            ->renderHook(
+                PanelsRenderHook::CONTENT_END,
+                fn (): string => auth()->user()?->company_id === null ? '' : view('filament.readiness.blocking-modal')->render(),
+                scopes: Dashboard::class,
+            )
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverClusters(in: app_path('Filament/Clusters'), for: 'App\Filament\Clusters')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
