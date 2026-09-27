@@ -78,5 +78,6 @@ it('downloads the invoice as a PDF', function () {
     $response = $this->get(route('documents.invoice.pdf', $sale));
 
     $response->assertSuccessful();
-    expect($response->headers->get('content-type'))->toContain('application/pdf');
+    expect($response->headers->get('content-type'))->toContain('application/pdf')
+        ->and($response->headers->get('content-disposition'))->toContain('comprobante-'.$sale->number.'.pdf');
 });

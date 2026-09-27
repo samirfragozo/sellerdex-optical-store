@@ -97,7 +97,7 @@ class DocumentRenderer
     {
         return Pdf::loadView('documents.invoice', $this->invoiceData($sale))
             ->setPaper('a5')
-            ->download('factura-'.$sale->number.'.pdf');
+            ->download('comprobante-'.$sale->number.'.pdf');
     }
 
     /** @return array<string, mixed> */
