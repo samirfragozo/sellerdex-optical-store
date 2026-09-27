@@ -4,28 +4,31 @@ use App\Enums\VatRegime;
 use App\Filament\Pages\Onboarding;
 use App\Models\LensCombination;
 use App\Models\LensPackage;
+use App\Models\Product;
+use App\Models\ProductCategory;
 use App\Models\Sale;
 use App\Models\User;
 use Livewire\Livewire;
 
-it('lets a brand-new shop register, finish the onboarding and sell prescription glasses', function () {
-    $this->post('/register', [
+function registerAndOnboard(string $email, VatRegime $regime): User
+{
+    test()->post('/register', [
         'company_name' => 'Óptica Nueva',
         'name' => 'Laura',
-        'email' => 'laura@optica.test',
+        'email' => $email,
         'password' => 'Password123!',
         'password_confirmation' => 'Password123!',
     ])->assertRedirect();
 
-    $admin = User::where('email', 'laura@optica.test')->sole();
+    $admin = User::where('email', $email)->sole();
     $admin->markEmailAsVerified();
-    $this->actingAs($admin);
+    test()->actingAs($admin);
 
-    $this->get('/admin')->assertRedirect(Onboarding::getUrl());
+    test()->get('/admin')->assertRedirect(Onboarding::getUrl());
 
     Livewire::test(Onboarding::class)
         ->set('data.tax_id', '900123456-7')
-        ->set('data.vat_regime', VatRegime::NotResponsible->value)
+        ->set('data.vat_regime', $regime->value)
         ->call('next')->assertHasNoErrors()            // company
         ->call('next')->assertHasNoErrors()            // payment methods (cash only)
         ->set('data.laboratories', [['name' => 'Lab Central', 'phone' => '3000000000', 'lead_time_days' => 5]])
@@ -43,6 +46,12 @@ it('lets a brand-new shop register, finish the onboarding and sell prescription 
     // the same acting-as user see the onboarded company, as a real request
     // would with its own freshly loaded user.
     $admin->refresh();
+
+    return $admin;
+}
+
+it('lets a brand-new shop register, finish the onboarding and sell prescription glasses', function () {
+    $admin = registerAndOnboard('laura@optica.test', VatRegime::NotResponsible);
 
     openCashRegisterSession($admin);
     $combination = LensCombination::sole();
@@ -68,4 +77,27 @@ it('lets a brand-new shop register, finish the onboarding and sell prescription 
     $sale = Sale::sole();
     expect($sale->number)->toBe('000001')
         ->and($sale->items->first(fn ($i) => $i->isLens())?->lensOrder)->not->toBeNull();
+});
+
+it('lets a VAT-responsible shop sell a frame with VAT included after onboarding', function () {
+    $admin = registerAndOnboard('sofia@optica.test', VatRegime::Responsible);
+
+    $frameCategory = ProductCategory::keyed('frame');
+    $frame = Product::factory()->create([
+        'product_category_id' => $frameCategory->id,
+        'tax_id' => $frameCategory->default_tax_id,
+        'price' => 119_000,
+        'is_active' => true,
+        'is_pos_selectable' => true,
+    ]);
+    openCashRegisterSession($admin);
+
+    $this->postJson(route('pos.store'), [
+        'document_type' => 'order',
+        'products' => [['product_id' => $frame->id, 'description' => $frame->name, 'quantity' => 1, 'unit_price' => 119_000]],
+        'payments' => [],
+    ])->assertOk();
+
+    $sale = Sale::sole();
+    expect($sale->total)->toBe(119_000)->and($sale->tax_amount)->toBe(19_000);
 });

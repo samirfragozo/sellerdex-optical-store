@@ -523,7 +523,7 @@ return [
             'label' => 'Company',
             'description' => 'The details printed on your receipts.',
             'vat_regime' => 'VAT regime',
-            'vat_regime_help' => 'If unsure, confirm with your accountant. It decides whether your sales carry VAT.',
+            'vat_regime_help' => 'If unsure, confirm with your accountant. The prices you enter always include VAT.',
             'sale_number_prefix' => 'Work-order number prefix',
             'sale_number_prefix_help' => 'Optional. Example: OC- produces OC-000001.',
         ],
