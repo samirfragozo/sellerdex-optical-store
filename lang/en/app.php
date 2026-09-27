@@ -83,6 +83,7 @@ return [
         'id_number' => 'Document number',
         'birth_date' => 'Date of birth',
         'phone' => 'Phone',
+        'phones' => 'Phones',
         'address' => 'Address',
         'city' => 'City',
         'age' => 'Age',
@@ -457,6 +458,28 @@ return [
         'not_responsible' => 'Not VAT responsible',
     ],
 
+    'onboarding' => [
+        'title' => 'Set up your optical shop',
+        'steps_nav' => 'Setup steps',
+        'progress' => 'Step :current of :total',
+        'continue' => 'Save and continue',
+        'back' => 'Back',
+        'edit' => 'Edit',
+        'go_sell' => 'Go sell',
+        'pending_for_staff' => 'Your administrator has not finished setting up the shop yet. Please try again later.',
+        'company' => [
+            'label' => 'Company',
+            'description' => 'The details printed on your receipts.',
+            'vat_regime' => 'VAT regime',
+            'vat_regime_help' => 'If unsure, confirm with your accountant. It decides whether your sales carry VAT.',
+            'sale_number_prefix' => 'Work-order number prefix',
+            'sale_number_prefix_help' => 'Optional. Example: OC- produces OC-000001.',
+        ],
+        'summary' => [
+            'label' => 'Ready to sell',
+            'description' => 'Review the summary. Everything can be changed later in Settings.',
+        ],
+    ],
     'lens_onboarding' => [
         'title' => 'Set up your lenses',
         'description' => 'Choose which lens combinations your store sells and set their costs and prices.',

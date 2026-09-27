@@ -86,6 +86,7 @@ return [
         'id_number' => 'Número de documento',
         'birth_date' => 'Fecha de nacimiento',
         'phone' => 'Celular',
+        'phones' => 'Teléfonos',
         'address' => 'Dirección',
         'city' => 'Ciudad',
         'age' => 'Edad',
@@ -499,6 +500,28 @@ return [
         'not_responsible' => 'No responsable de IVA',
     ],
 
+    'onboarding' => [
+        'title' => 'Configura tu óptica',
+        'steps_nav' => 'Pasos de la configuración',
+        'progress' => 'Paso :current de :total',
+        'continue' => 'Guardar y continuar',
+        'back' => 'Atrás',
+        'edit' => 'Editar',
+        'go_sell' => 'Ir a vender',
+        'pending_for_staff' => 'Tu administrador aún no termina de configurar la óptica. Vuelve a intentarlo más tarde.',
+        'company' => [
+            'label' => 'Empresa',
+            'description' => 'Los datos que aparecen en tus comprobantes.',
+            'vat_regime' => 'Régimen de IVA',
+            'vat_regime_help' => 'Si no estás seguro, confírmalo con tu contador. Define si tus ventas llevan IVA.',
+            'sale_number_prefix' => 'Prefijo de las órdenes de trabajo',
+            'sale_number_prefix_help' => 'Opcional. Ejemplo: OC- produce OC-000001.',
+        ],
+        'summary' => [
+            'label' => 'Listo para vender',
+            'description' => 'Revisa el resumen. Todo se puede cambiar después en Configuración.',
+        ],
+    ],
     'lens_onboarding' => [
         'title' => 'Configura tus lentes',
         'description' => 'Elige qué combinaciones de lentes vende tu óptica y define sus costos y precios.',

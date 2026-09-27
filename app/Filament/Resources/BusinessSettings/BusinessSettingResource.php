@@ -2,11 +2,10 @@
 
 namespace App\Filament\Resources\BusinessSettings;
 
+use App\Filament\Pages\Onboarding\Steps\CompanyStep;
 use App\Filament\Resources\BusinessSettings\Pages\ManageBusinessSetting;
 use App\Models\Company;
 use BackedEnum;
-use Filament\Forms\Components\FileUpload;
-use Filament\Forms\Components\TextInput;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -49,26 +48,7 @@ class BusinessSettingResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema
-            ->components([
-                TextInput::make('name')
-                    ->label(__('app.fields.name'))
-                    ->required()
-                    ->maxLength(255),
-                TextInput::make('tax_id')
-                    ->label(__('app.fields.tax_id'))
-                    ->maxLength(255),
-                TextInput::make('address')
-                    ->label(__('app.fields.address'))
-                    ->maxLength(255),
-                TextInput::make('phones')
-                    ->label(__('app.fields.phone'))
-                    ->maxLength(255),
-                FileUpload::make('logo')
-                    ->label(__('app.fields.logo'))
-                    ->image()
-                    ->disk('public')
-                    ->directory('business'),
-            ]);
+            ->components(CompanyStep::fields());
     }
 
     public static function getPages(): array
