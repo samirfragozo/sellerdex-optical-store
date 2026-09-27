@@ -523,7 +523,7 @@ return [
             'label' => 'Empresa',
             'description' => 'Los datos que aparecen en tus comprobantes.',
             'vat_regime' => 'Régimen de IVA',
-            'vat_regime_help' => 'Si no estás seguro, confírmalo con tu contador. Los precios que escribas siempre incluyen el IVA.',
+            'vat_regime_help' => 'Define si tus ventas llevan IVA. Los precios que escribas ya lo incluyen; si no estás seguro, confírmalo con tu contador.',
             'sale_number_prefix' => 'Prefijo de las órdenes de trabajo',
             'sale_number_prefix_help' => 'Opcional. Ejemplo: OC- produce OC-000001.',
         ],

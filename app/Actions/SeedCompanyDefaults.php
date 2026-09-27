@@ -44,10 +44,7 @@ class SeedCompanyDefaults
                 'requires_prescription' => $category['requires_prescription'],
                 'generates_lab_order' => $category['generates_lab_order'],
                 'is_made_to_order' => $category['is_made_to_order'],
-                'default_tax_id' => Tax::withoutGlobalScopes()
-                    ->where('company_id', $company->id)
-                    ->where('name', ProductCategory::DEFAULT_TAX_BY_KEY[$category['key']] ?? null)
-                    ->value('id'),
+                'default_tax_id' => ProductCategory::defaultTaxIdFor($category['key'], $company->id),
             ]);
         }
 

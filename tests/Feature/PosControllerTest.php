@@ -802,7 +802,7 @@ it('accepts a single payment covering the full total of a taxed sale', function 
         'is_pos_selectable' => true,
     ]);
 
-    // subtotal 100_000 tax-inclusive, no discount/tip/surcharge -> total = 100_000 with 15_966 VAT inside.
+    // subtotal 100_000 tax-inclusive, no discount/surcharge -> total = 100_000 with 15_966 VAT inside.
     $this->actingAs($seller)->postJson('/pos', [
         'customer_id' => $customer->id,
         'document_type' => 'order',

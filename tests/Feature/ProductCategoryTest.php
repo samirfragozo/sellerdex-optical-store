@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\ProductCategory;
+use App\Models\Tax;
 use App\Models\User;
 use App\Support\PermissionsTeam;
 use Database\Seeders\ProductCategorySeeder;
@@ -69,4 +70,15 @@ it('siembra las categorías núcleo con key, flags y marca de sistema', function
         ->and(ProductCategory::keyed('frame')->is_system)->toBeTrue()
         ->and(ProductCategory::keyed('frame')->requires_prescription)->toBeFalse()
         ->and(ProductCategory::where('key', 'lens')->count())->toBe(1);
+});
+
+it('seeds the system categories with their default tax', function () {
+    $admin = User::factory()->admin()->create();
+    $this->actingAs($admin);
+    Tax::seedDefaultsFor($admin->company);
+
+    $this->seed(ProductCategorySeeder::class);
+
+    expect(ProductCategory::keyed('lens')->defaultTax->name)->toBe('IVA 19%')
+        ->and(ProductCategory::keyed('service')->defaultTax->name)->toBe('Excluido');
 });

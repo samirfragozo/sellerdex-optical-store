@@ -47,6 +47,15 @@ class ProductCategory extends Model
         'service' => 'Excluido',
     ];
 
+    /** The id of the company's tax that a system category defaults to, per DEFAULT_TAX_BY_KEY. */
+    public static function defaultTaxIdFor(string $key, ?int $companyId): ?int
+    {
+        return Tax::withoutGlobalScopes()
+            ->where('company_id', $companyId)
+            ->where('name', self::DEFAULT_TAX_BY_KEY[$key] ?? null)
+            ->value('id');
+    }
+
     /** A system category, or one that still has products, cannot be deleted. */
     protected static function booted(): void
     {

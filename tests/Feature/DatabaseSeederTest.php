@@ -3,6 +3,7 @@
 use App\Models\Company;
 use App\Models\ExpenseCategory;
 use App\Models\PaymentMethod;
+use App\Models\Tax;
 use App\Models\User;
 use App\Support\PermissionsTeam;
 use Database\Seeders\DatabaseSeeder;
@@ -21,5 +22,7 @@ it('siembra los datos base del negocio', function () {
         ->and(Company::count())->toBe(1)
         ->and($admin)->not->toBeNull()
         ->and($admin->company_id)->toBe($company->id)
-        ->and(PermissionsTeam::runAs($company, fn () => $admin->hasRole('admin')))->toBeTrue();
+        ->and(PermissionsTeam::runAs($company, fn () => $admin->hasRole('admin')))->toBeTrue()
+        ->and(Tax::withoutGlobalScopes()->where('company_id', $company->id)->pluck('name')->all())
+        ->toEqualCanonicalizing(array_column(Tax::DEFAULTS, 'name'));
 });
