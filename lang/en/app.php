@@ -167,6 +167,7 @@ return [
         'tax_rate' => 'Tax rate (%)',
         'surcharge_percent' => 'Surcharge (%)',
         'logo' => 'Logo',
+        'lead_time_days' => 'Lead time (days)',
     ],
 
     'sections' => [
@@ -474,6 +475,21 @@ return [
             'vat_regime_help' => 'If unsure, confirm with your accountant. It decides whether your sales carry VAT.',
             'sale_number_prefix' => 'Work-order number prefix',
             'sale_number_prefix_help' => 'Optional. Example: OC- produces OC-000001.',
+        ],
+        'payment_methods' => [
+            'label' => 'Payment methods',
+            'description' => 'How your customers pay you. The surcharge is added to the total when that method is used.',
+            'cash_notice' => 'Cash is already included and always active.',
+            'others' => 'Other payment methods',
+            'add' => 'Add payment method',
+        ],
+        'laboratories' => [
+            'label' => 'Laboratories',
+            'description' => 'Where you send lenses to be made. You need at least one.',
+            'lead_time_help' => 'Days it usually takes. Used to tell the customer when lenses arrive.',
+            'days' => 'days',
+            'add' => 'Add laboratory',
+            'summary_item' => ':name (:days days)',
         ],
         'summary' => [
             'label' => 'Ready to sell',

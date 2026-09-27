@@ -34,7 +34,12 @@ class SupplierForm
                     ->label(__('app.fields.address'))
                     ->maxLength(255),
                 Toggle::make('is_laboratory')
-                    ->label(__('app.fields.is_laboratory')),
+                    ->label(__('app.fields.is_laboratory'))
+                    ->live(),
+                TextInput::make('lead_time_days')
+                    ->label(__('app.fields.lead_time_days'))
+                    ->integer()->minValue(0)->maxValue(90)
+                    ->visible(fn ($get) => (bool) $get('is_laboratory')),
                 Toggle::make('is_active')
                     ->label(__('app.fields.active'))
                     ->default(true),

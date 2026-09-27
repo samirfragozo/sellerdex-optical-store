@@ -4,11 +4,14 @@ namespace App\Filament\Pages;
 
 use App\Filament\Pages\Onboarding\OnboardingStep;
 use App\Filament\Pages\Onboarding\Steps\CompanyStep;
+use App\Filament\Pages\Onboarding\Steps\LaboratoriesStep;
+use App\Filament\Pages\Onboarding\Steps\PaymentMethodsStep;
 use App\Filament\Pages\Onboarding\Steps\SummaryStep;
 use App\Models\Company;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Schemas\Schema;
+use Livewire\Attributes\Locked;
 
 class Onboarding extends Page
 {
@@ -18,6 +21,7 @@ class Onboarding extends Page
 
     protected static ?string $slug = 'onboarding';
 
+    #[Locked]
     public string $step = '';
 
     /** @var array<string, mixed> */
@@ -32,6 +36,8 @@ class Onboarding extends Page
     {
         return [
             CompanyStep::class,
+            PaymentMethodsStep::class,
+            LaboratoriesStep::class,
             SummaryStep::class,
         ];
     }

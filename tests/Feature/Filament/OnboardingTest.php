@@ -3,9 +3,13 @@
 use App\Enums\VatRegime;
 use App\Filament\Pages\Onboarding;
 use App\Filament\Pages\Onboarding\Steps\CompanyStep;
+use App\Filament\Pages\Onboarding\Steps\LaboratoriesStep;
+use App\Filament\Pages\Onboarding\Steps\PaymentMethodsStep;
 use App\Models\Company;
 use App\Models\PaymentMethod;
+use App\Models\Supplier;
 use App\Models\User;
+use Livewire\Features\SupportLockedProperties\CannotUpdateLockedPropertyException;
 use Livewire\Livewire;
 
 function onboardingAdmin(): User
@@ -85,4 +89,71 @@ it('is not reachable by a seller', function () {
     $seller = User::factory()->forCompany(Company::factory()->notOnboarded()->create())->seller()->create();
 
     $this->actingAs($seller)->get(Onboarding::getUrl())->assertForbidden();
+});
+
+it('cannot have its step set directly from the browser', function () {
+    onboardingAdmin();
+
+    Livewire::test(Onboarding::class)->set('step', 'summary');
+})->throws(CannotUpdateLockedPropertyException::class);
+
+function onboardingAt(string $stepKey): User
+{
+    $admin = onboardingAdmin();
+    $admin->company->update(['onboarding_step' => $stepKey, 'tax_id' => '900']);
+    PaymentMethod::factory()->create(['company_id' => $admin->company_id, 'name' => 'Efectivo', 'is_default' => true, 'is_active' => true]);
+
+    return $admin;
+}
+
+it('adds extra payment methods and keeps cash as the fixed default', function () {
+    $admin = onboardingAt(PaymentMethodsStep::key());
+
+    Livewire::test(Onboarding::class)
+        ->assertSet('step', PaymentMethodsStep::key())
+        ->set('data.paymentMethods', [
+            ['name' => 'Nequi', 'surcharge_percent' => 0, 'is_active' => true],
+            ['name' => 'Addi', 'surcharge_percent' => 7, 'is_active' => true],
+        ])
+        ->call('next')
+        ->assertHasNoErrors()
+        ->assertSet('step', LaboratoriesStep::key());
+
+    expect(PaymentMethod::where('company_id', $admin->company_id)->orderBy('id')->pluck('name')->all())
+        ->toBe(['Efectivo', 'Nequi', 'Addi']);
+});
+
+it('updates a payment method when going back instead of duplicating it', function () {
+    $admin = onboardingAt(PaymentMethodsStep::key());
+
+    $page = Livewire::test(Onboarding::class)
+        ->set('data.paymentMethods', [['name' => 'Nequi', 'surcharge_percent' => 0, 'is_active' => true]])
+        ->call('next')
+        ->call('previous')
+        ->assertSet('step', PaymentMethodsStep::key());
+
+    $key = array_key_first($page->get('data.paymentMethods'));
+    $page->set("data.paymentMethods.{$key}.name", 'Nequi Empresa')->call('next')->assertHasNoErrors();
+
+    expect(PaymentMethod::where('company_id', $admin->company_id)->where('is_default', false)->pluck('name')->all())
+        ->toBe(['Nequi Empresa']);
+});
+
+it('requires at least one laboratory and stores its lead time', function () {
+    $admin = onboardingAt(LaboratoriesStep::key());
+
+    Livewire::test(Onboarding::class)
+        ->set('data.laboratories', [])
+        ->call('next')
+        ->assertHasErrors(['data.laboratories'])
+        ->assertSet('step', LaboratoriesStep::key())
+        ->set('data.laboratories', [['name' => 'Lab Central', 'phone' => '3000000000', 'lead_time_days' => 5]])
+        ->call('next')
+        ->assertHasNoErrors();
+
+    $lab = Supplier::where('company_id', $admin->company_id)->sole();
+    expect($lab->name)->toBe('Lab Central')
+        ->and($lab->is_laboratory)->toBeTrue()
+        ->and($lab->is_active)->toBeTrue()
+        ->and($lab->lead_time_days)->toBe(5);
 });

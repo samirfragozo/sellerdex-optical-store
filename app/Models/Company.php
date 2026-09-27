@@ -67,6 +67,16 @@ class Company extends Model
         return $this->hasMany(User::class);
     }
 
+    public function paymentMethods(): HasMany
+    {
+        return $this->hasMany(PaymentMethod::class);
+    }
+
+    public function laboratories(): HasMany
+    {
+        return $this->hasMany(Supplier::class)->where('is_laboratory', true);
+    }
+
     /**
      * Take the company's next sale number (prefix + 6-digit counter) and advance
      * the counter. The row lock keeps concurrent sales from sharing a number.

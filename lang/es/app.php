@@ -517,6 +517,21 @@ return [
             'sale_number_prefix' => 'Prefijo de las órdenes de trabajo',
             'sale_number_prefix_help' => 'Opcional. Ejemplo: OC- produce OC-000001.',
         ],
+        'payment_methods' => [
+            'label' => 'Métodos de pago',
+            'description' => 'Cómo te pagan tus clientes. El recargo se suma al total cuando se usa ese método.',
+            'cash_notice' => 'Efectivo ya está incluido y siempre activo.',
+            'others' => 'Otros métodos de pago',
+            'add' => 'Agregar método de pago',
+        ],
+        'laboratories' => [
+            'label' => 'Laboratorios',
+            'description' => 'A dónde envías a fabricar los lentes. Necesitas al menos uno.',
+            'lead_time_help' => 'Días que suele tardar. Sirve para avisarle al cliente cuándo llegan.',
+            'days' => 'días',
+            'add' => 'Agregar laboratorio',
+            'summary_item' => ':name (:days días)',
+        ],
         'summary' => [
             'label' => 'Listo para vender',
             'description' => 'Revisa el resumen. Todo se puede cambiar después en Configuración.',
