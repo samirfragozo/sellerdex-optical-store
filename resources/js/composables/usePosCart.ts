@@ -26,17 +26,37 @@ export interface ArmadoLensLine {
     price_override?: number;
 }
 
+/** One product slot of the armado combo, as shared by PosController::kit(). */
+export interface KitSlotProp {
+    id: number;
+    category_name: string;
+    quantity: number;
+    price_mode: 'free' | 'normal' | 'discount_percent' | 'added_to_lens';
+    price_value: number;
+    is_optional: boolean;
+    is_preselected: boolean;
+    default_product_id: number;
+    products: { id: number; name: string; price: number }[];
+}
+
+export interface KitProp {
+    frame_price_mode: 'included' | 'normal' | 'discount_percent';
+    frame_discount_percent: number;
+    armado_slots: KitSlotProp[];
+}
+
+export interface ArmadoSlot {
+    kit_slot_id: number;
+    product_id: number;
+    selected: boolean;
+}
+
 export interface Armado {
     id: number;
     lens: ArmadoLensLine | null;
     frame: ArmadoLine | null;
     own_frame: boolean;
-    combo: {
-        with_exam: boolean;
-        estuche: 'small' | 'large';
-        include_liquid: boolean;
-        include_pano: boolean;
-    };
+    slots: ArmadoSlot[];
 }
 
 export interface LooseProduct {
@@ -46,16 +66,78 @@ export interface LooseProduct {
     unit_price: number;
 }
 
-export function armadoTotal(armado: Armado): number {
-    const lens = armado.lens
-        ? (armado.lens.price_override ?? armado.lens.price)
-        : 0;
-    const frame = !armado.own_frame ? (armado.frame?.unit_price ?? 0) : 0;
-
-    return lens + frame;
+function discounted(price: number, percent: number): number {
+    return Math.round((price * (100 - percent)) / 100);
 }
 
-export function usePosCart() {
+/** Mirrors KitSlot::unitPriceFor(): what one unit of the slot product costs. */
+export function slotUnitPrice(slot: KitSlotProp, price: number): number {
+    switch (slot.price_mode) {
+        case 'normal':
+            return price;
+        case 'discount_percent':
+            return discounted(price, slot.price_value);
+        default:
+            return 0;
+    }
+}
+
+/** The selected slots of an armado, resolved against the kit (unknown slots/products are dropped). */
+export function selectedSlotLines(
+    armado: Armado,
+    kit: KitProp,
+): { slot: KitSlotProp; product: KitSlotProp['products'][number] }[] {
+    return armado.slots.flatMap((selection) => {
+        const slot = kit.armado_slots.find(
+            (s) => s.id === selection.kit_slot_id,
+        );
+        const product = slot?.products.find(
+            (p) => p.id === selection.product_id,
+        );
+
+        return selection.selected && slot && product ? [{ slot, product }] : [];
+    });
+}
+
+/** The lens line price as RegisterSale charges it: override or catalog price, plus `added_to_lens` surcharges. */
+export function armadoLensPrice(armado: Armado, kit: KitProp): number {
+    if (!armado.lens) {
+        return 0;
+    }
+
+    const surcharges = selectedSlotLines(armado, kit)
+        .filter(({ slot }) => slot.price_mode === 'added_to_lens')
+        .reduce((sum, { slot }) => sum + Math.trunc(slot.price_value), 0);
+
+    return (armado.lens.price_override ?? armado.lens.price) + surcharges;
+}
+
+/** Mirrors Company::armadoFrameUnitPrice(). */
+export function armadoFramePrice(armado: Armado, kit: KitProp): number {
+    const price = !armado.own_frame ? (armado.frame?.unit_price ?? 0) : 0;
+
+    switch (kit.frame_price_mode) {
+        case 'included':
+            return 0;
+        case 'discount_percent':
+            return discounted(price, kit.frame_discount_percent);
+        default:
+            return price;
+    }
+}
+
+/** The armado's share of the sale total; must equal what RegisterSale charges. */
+export function armadoTotal(armado: Armado, kit: KitProp): number {
+    const slots = selectedSlotLines(armado, kit).reduce(
+        (sum, { slot, product }) =>
+            sum + slotUnitPrice(slot, product.price) * slot.quantity,
+        0,
+    );
+
+    return armadoLensPrice(armado, kit) + armadoFramePrice(armado, kit) + slots;
+}
+
+export function usePosCart(kit: KitProp) {
     const armados: Ref<Armado[]> = ref([]);
     const products: Ref<LooseProduct[]> = ref([]);
     const discountPercent = ref(0);
@@ -117,7 +199,7 @@ export function usePosCart() {
 
     const subtotal: ComputedRef<number> = computed(() => {
         const armadoSum = armados.value.reduce(
-            (sum, a) => sum + armadoTotal(a),
+            (sum, a) => sum + armadoTotal(a, kit),
             0,
         );
         const productSum = products.value.reduce(
@@ -159,7 +241,7 @@ export function usePosCart() {
                     },
                     frame: a.own_frame ? null : a.frame,
                     own_frame: a.own_frame,
-                    combo: a.combo,
+                    slots: a.slots,
                 })),
             products: products.value.filter((p) => p.description !== ''),
         };

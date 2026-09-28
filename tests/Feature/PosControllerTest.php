@@ -904,3 +904,18 @@ it('expone el catálogo de lentes en la página del POS', function () {
         ->has('lensCatalog.types', 1)
         ->where('lensCatalog.types.0.name', 'Monofocal'));
 });
+
+it('shares the armado combo slots and frame pricing with the POS', function () {
+    $seller = User::factory()->seller()->create();
+    require_once __DIR__.'/../Support/GoldenCatalog.php';
+    goldenCatalog($seller);
+    ReferenceKit::installFor($seller->company);
+    openCashRegisterSession($seller);
+
+    $this->get(route('pos.index'))->assertInertia(fn ($page) => $page
+        ->where('kit.frame_price_mode', 'included')
+        ->has('kit.armado_slots', 4)
+        ->where('kit.armado_slots.1.category_name', 'Case')
+        ->where('kit.armado_slots.1.is_optional', false)
+        ->has('kit.armado_slots.1.products', 2));
+});

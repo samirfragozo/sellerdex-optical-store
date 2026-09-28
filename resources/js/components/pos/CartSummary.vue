@@ -4,13 +4,20 @@ import { ref } from 'vue';
 import InputError from '@/components/InputError.vue';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import type { Armado, LooseProduct } from '@/composables/usePosCart';
+import type { Armado, KitProp, LooseProduct } from '@/composables/usePosCart';
+import {
+    armadoFramePrice,
+    armadoLensPrice,
+    selectedSlotLines,
+    slotUnitPrice,
+} from '@/composables/usePosCart';
 import { useTranslations } from '@/composables/useTranslations';
 
 const { trans } = useTranslations();
 
 const props = defineProps<{
     armados: Armado[];
+    kit: KitProp;
     products: LooseProduct[];
     subtotal: number;
     total: number;
@@ -90,10 +97,7 @@ function toggleArmado(id: number): void {
                                 trans('app.pos.summary.lens')
                             }}</span>
                             <span class="tabular-nums">{{
-                                props.formatCOP(
-                                    armado.lens.price_override ??
-                                        armado.lens.price,
-                                )
+                                props.formatCOP(armadoLensPrice(armado, kit))
                             }}</span>
                         </div>
                         <div
@@ -104,7 +108,11 @@ function toggleArmado(id: number): void {
                                 trans('app.pos.summary.frame')
                             }}</span>
                             <span class="tabular-nums">{{
-                                props.formatCOP(armado.frame.unit_price)
+                                kit.frame_price_mode === 'included'
+                                    ? trans('app.pos.kit.included')
+                                    : props.formatCOP(
+                                          armadoFramePrice(armado, kit),
+                                      )
                             }}</span>
                         </div>
                         <div
@@ -114,30 +122,29 @@ function toggleArmado(id: number): void {
                             {{ trans('app.pos.summary.own_frame') }}
                         </div>
                         <div
-                            v-if="armado.combo.with_exam"
-                            class="text-xs text-muted-foreground"
+                            v-for="{ slot, product } in selectedSlotLines(
+                                armado,
+                                kit,
+                            )"
+                            :key="slot.id"
+                            class="flex justify-between text-xs text-muted-foreground"
                         >
-                            {{ trans('app.pos.summary.exam_included') }}
-                        </div>
-                        <div
-                            v-if="armado.combo.include_pano"
-                            class="text-xs text-muted-foreground"
-                        >
-                            {{ trans('app.pos.summary.pano_included') }}
-                        </div>
-                        <div
-                            v-if="armado.combo.include_liquid"
-                            class="text-xs text-muted-foreground"
-                        >
-                            {{ trans('app.pos.summary.liquid_included') }}
-                        </div>
-                        <div class="text-xs text-muted-foreground">
-                            {{ trans('app.pos.summary.lining') }}:
-                            {{
-                                armado.combo.estuche === 'small'
-                                    ? trans('app.pos.summary.small')
-                                    : trans('app.pos.summary.large')
-                            }}
+                            <span>
+                                + {{ product.name }}
+                                <span v-if="slot.quantity > 1"
+                                    >x{{ slot.quantity }}</span
+                                >
+                            </span>
+                            <span
+                                v-if="slotUnitPrice(slot, product.price) > 0"
+                                class="tabular-nums"
+                                >{{
+                                    props.formatCOP(
+                                        slotUnitPrice(slot, product.price) *
+                                            slot.quantity,
+                                    )
+                                }}</span
+                            >
                         </div>
                     </div>
                 </div>

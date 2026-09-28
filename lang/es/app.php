@@ -275,6 +275,10 @@ return [
     'pos' => [
         'kit' => [
             'invalid_product' => 'El producto elegido no pertenece a la categoría del combo.',
+            'gift' => 'Obsequio',
+            'added_to_lens' => '+:amount al lente',
+            'included' => 'Incluido',
+            'required' => 'Siempre incluido',
         ],
         'title' => 'Nueva venta',
         'created' => 'Venta :number creada exitosamente',
@@ -323,22 +327,10 @@ return [
             'lens' => 'Lente',
             'frame' => 'Montura',
             'own_frame' => 'Montura propia',
-            'exam_included' => '+ Examen incluido',
-            'liquid_included' => '+ Líquido incluido',
-            'pano_included' => '+ Paño incluido',
-            'lining' => 'Estuche',
-            'small' => 'Pequeño',
-            'large' => 'Grande',
             'no_description' => '(sin descripción)',
             'surcharge_note' => 'Total incluye recargo de plataforma (:percent%)',
             'balance' => 'Saldo pendiente',
             'discount_amount' => 'Monto de descuento',
-        ],
-
-        'combo_form' => [
-            'include_exam' => 'Incluir examen (gratis)',
-            'include_liquid' => 'Incluir líquido',
-            'include_pano' => 'Incluir paño',
         ],
 
         'frame_form' => [

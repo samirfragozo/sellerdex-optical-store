@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\KitTrigger;
 use App\Enums\LensType;
+use App\Models\Company;
+use App\Models\KitSlot;
 use App\Models\LensCombination;
 use App\Models\LensMaterial;
 use App\Models\LensTechnology;
@@ -86,6 +89,7 @@ class PosController extends Controller
                 ->orderBy('name')->get(['id', 'name', 'key']),
             'paymentMethods' => PaymentMethod::query()->where('is_active', true)
                 ->orderBy('sort_order')->get(['id', 'name', 'surcharge_percent']),
+            'kit' => $this->kit(),
             'lensTypes' => LensType::options(),
             'prescriptions' => Prescription::query()
                 ->orderByDesc('exam_date')
@@ -99,6 +103,48 @@ class PosController extends Controller
                     'summary' => sprintf('OD %s / OS %s', $p->od_sphere ?? '—', $p->os_sphere ?? '—'),
                 ]),
         ]);
+    }
+
+    /**
+     * The armado combo slots (with the products the seller can pick per slot) and
+     * the company's frame pricing, so the POS total matches what RegisterSale charges.
+     *
+     * @return array{frame_price_mode: string, frame_discount_percent: float, armado_slots: list<array<string, mixed>>}
+     */
+    private function kit(): array
+    {
+        $company = Company::current();
+        $slots = KitSlot::query()->with('slotCategory:id,name')
+            ->where('trigger', KitTrigger::Armado)
+            ->where('is_active', true)
+            ->orderBy('sort_order')->orderBy('id')
+            ->get();
+
+        $productsByCategory = Product::query()
+            ->whereIn('product_category_id', $slots->pluck('slot_category_id')->unique())
+            ->where('is_active', true)
+            ->whereNull('base_product_id')
+            ->orderBy('name')
+            ->get(['id', 'name', 'price', 'product_category_id'])
+            ->groupBy('product_category_id');
+
+        return [
+            'frame_price_mode' => $company->armado_frame_price_mode->value,
+            'frame_discount_percent' => (float) $company->armado_frame_discount_percent,
+            'armado_slots' => $slots->map(fn (KitSlot $slot) => [
+                'id' => $slot->id,
+                'category_name' => $slot->slotCategory?->name,
+                'quantity' => $slot->quantity,
+                'price_mode' => $slot->price_mode->value,
+                'price_value' => (float) $slot->price_value,
+                'is_optional' => $slot->is_optional,
+                'is_preselected' => $slot->is_preselected,
+                'default_product_id' => $slot->default_product_id,
+                'products' => ($productsByCategory[$slot->slot_category_id] ?? collect())
+                    ->map(fn (Product $product) => ['id' => $product->id, 'name' => $product->name, 'price' => $product->price])
+                    ->values(),
+            ])->values()->all(),
+        ];
     }
 
     /**

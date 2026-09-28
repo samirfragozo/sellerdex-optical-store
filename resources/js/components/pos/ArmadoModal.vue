@@ -16,7 +16,7 @@ import type {
     LensCatalogProp,
     ProductProp,
 } from '@/composables/useLensCatalog';
-import type { Armado } from '@/composables/usePosCart';
+import type { Armado, KitProp } from '@/composables/usePosCart';
 import { useTranslations } from '@/composables/useTranslations';
 
 interface PrescriptionOption {
@@ -47,6 +47,7 @@ const props = defineProps<{
     open: boolean;
     armado: Armado | null;
     lensCatalog: LensCatalogProp;
+    kit: KitProp;
     frameProducts: ProductProp[];
     customerPrescriptions: PrescriptionOption[];
     lensNeedsCustomer: boolean;
@@ -78,12 +79,22 @@ const emptyArmado = (): Armado => ({
     lens: null,
     frame: null,
     own_frame: false,
-    combo: {
-        with_exam: false,
-        estuche: 'small',
-        include_liquid: true,
-        include_pano: true,
-    },
+    // Slots without an active product are left out; the server skips them too.
+    slots: props.kit.armado_slots.flatMap((slot) => {
+        const product =
+            slot.products.find((p) => p.id === slot.default_product_id) ??
+            slot.products[0];
+
+        return product
+            ? [
+                  {
+                      kit_slot_id: slot.id,
+                      product_id: product.id,
+                      selected: slot.is_optional ? slot.is_preselected : true,
+                  },
+              ]
+            : [];
+    }),
 });
 
 type WizardStep = 'prescription' | 'lens' | 'frame' | 'combo';
@@ -185,7 +196,11 @@ function save(): void {
                 :frame-products="frameProducts"
             />
 
-            <StepCombo v-else v-model:combo="draft.combo" />
+            <StepCombo
+                v-else
+                v-model:slots="draft.slots"
+                :kit-slots="kit.armado_slots"
+            />
 
             <DialogFooter class="sm:justify-between">
                 <Button

@@ -20,7 +20,7 @@ import type {
     PaginatedProducts,
     ProductProp,
 } from '@/composables/useLensCatalog';
-import type { Armado } from '@/composables/usePosCart';
+import type { Armado, KitProp } from '@/composables/usePosCart';
 import { armadoTotal, usePosCart } from '@/composables/usePosCart';
 import { usePosCheckout } from '@/composables/usePosCheckout';
 import { useTranslations } from '@/composables/useTranslations';
@@ -51,6 +51,7 @@ const props = defineProps<{
     products: PaginatedProducts;
     armadoProducts: ProductProp[];
     lensCatalog: LensCatalogProp;
+    kit: KitProp;
     categories: { id: number; name: string; key: string }[];
     paymentMethods: PaymentMethod[];
     prescriptions: PrescriptionOption[];
@@ -85,7 +86,7 @@ const globalBlockingOpen = ref(globalBlockers.value.length > 0);
 const lensBlockingOpen = ref(false);
 
 // --- Cart ---
-const cart = usePosCart();
+const cart = usePosCart(props.kit);
 
 // --- Customer (fixed panel, no longer a collapsible step) ---
 const customerId = ref<number | null>(null);
@@ -175,7 +176,7 @@ function onArmadoSave(armado: Armado): void {
         lens: armado.lens,
         frame: armado.frame,
         own_frame: armado.own_frame,
-        combo: armado.combo,
+        slots: armado.slots,
     };
 
     if (editingArmadoId.value !== null) {
@@ -187,21 +188,20 @@ function onArmadoSave(armado: Armado): void {
     armadoModalOpen.value = false;
 }
 
-// Manual price override for an armado's total. The frame is always $0
-// inside a combo (see RegisterSale), so the lens line absorbs the edit —
-// stored separately from unit_price so it survives re-render without
-// masking the underlying computed price, and is dropped whenever the
-// armado is reconfigured through the wizard (StepLens rebuilds the lens
-// line from scratch, dropping the override).
+// Manual price override for an armado's total. The lens line absorbs the
+// edit (frame, slot lines and `added_to_lens` surcharges keep their price,
+// as RegisterSale adds them on top of the override) — stored separately
+// from the lens price so it is dropped whenever the armado is reconfigured
+// through the wizard (StepLens rebuilds the lens line from scratch).
 function updateArmadoTotal(armado: Armado, value: number): void {
     if (!armado.lens) {
         return;
     }
 
-    const frameContribution = !armado.own_frame
-        ? (armado.frame?.unit_price ?? 0)
-        : 0;
-    armado.lens.price_override = Math.max(0, value - frameContribution);
+    const others =
+        armadoTotal(armado, props.kit) -
+        (armado.lens.price_override ?? armado.lens.price);
+    armado.lens.price_override = Math.max(0, value - others);
 }
 
 // --- Catalog -> cart wiring ---
@@ -434,7 +434,7 @@ async function confirmCheckout(): Promise<void> {
                             </p>
                         </div>
                         <Input
-                            :model-value="armadoTotal(armado)"
+                            :model-value="armadoTotal(armado, kit)"
                             type="number"
                             min="0"
                             class="w-28 shrink-0 text-right"
@@ -470,6 +470,7 @@ async function confirmCheckout(): Promise<void> {
                     :open="armadoModalOpen"
                     :armado="editingArmado"
                     :lens-catalog="lensCatalog"
+                    :kit="kit"
                     :frame-products="frameProducts"
                     :customer-prescriptions="customerPrescriptions"
                     :lens-needs-customer="lensNeedsCustomer"
@@ -506,6 +507,7 @@ async function confirmCheckout(): Promise<void> {
                 <CartSummary
                     v-model:discount-percent="cart.discountPercent.value"
                     :armados="cart.armados.value"
+                    :kit="kit"
                     :products="cart.products.value"
                     :subtotal="cart.subtotal.value"
                     :total="cart.total.value"

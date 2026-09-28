@@ -275,6 +275,10 @@ return [
     'pos' => [
         'kit' => [
             'invalid_product' => 'The chosen product does not belong to the combo category.',
+            'gift' => 'Gift',
+            'added_to_lens' => '+:amount on the lens',
+            'included' => 'Included',
+            'required' => 'Always included',
         ],
         'title' => 'New sale',
         'created' => 'Sale :number created successfully',
@@ -323,22 +327,10 @@ return [
             'lens' => 'Lens',
             'frame' => 'Frame',
             'own_frame' => 'Own frame',
-            'exam_included' => '+ Exam included',
-            'liquid_included' => '+ Cleaning liquid included',
-            'pano_included' => '+ Cleaning cloth included',
-            'lining' => 'Case',
-            'small' => 'Small',
-            'large' => 'Large',
             'no_description' => '(no description)',
             'surcharge_note' => 'Total includes platform surcharge (:percent%)',
             'balance' => 'Balance due',
             'discount_amount' => 'Discount amount',
-        ],
-
-        'combo_form' => [
-            'include_exam' => 'Include exam (free)',
-            'include_liquid' => 'Include cleaning liquid',
-            'include_pano' => 'Include cleaning cloth',
         ],
 
         'frame_form' => [
