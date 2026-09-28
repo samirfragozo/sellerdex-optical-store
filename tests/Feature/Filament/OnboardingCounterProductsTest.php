@@ -144,6 +144,43 @@ it('only offers to remove categories that would really be removed', function () 
     $page = Livewire::test(Onboarding::class);
     $keyOf = fn (string $categoryKey) => collect($page->get('data.categories'))->search(fn ($c) => $c['key'] === $categoryKey);
 
-    $page->assertActionHidden(TestAction::make('delete')->schemaComponent('categories')->arguments(['item' => $keyOf('frame')]))
+    $page->assertActionHidden(TestAction::make('delete')->schemaComponent('categories')->arguments(['item' => $keyOf('accessory')]))
         ->assertActionVisible(TestAction::make('delete')->schemaComponent('categories')->arguments(['item' => $keyOf('case')]));
+});
+
+it('locks the products a combo uses and never deletes them', function () {
+    $admin = counterAdmin();
+    $page = Livewire::test(Onboarding::class)->call('next');
+    ReferenceKit::installFor($admin->company);
+    $page->call('previous');
+
+    $state = $page->get('data.categories');
+    $caseKey = collect($state)->search(fn ($c) => $c['key'] === 'case');
+    $products = collect($state[$caseKey]['products']);
+    $smallKey = $products->search(fn ($p) => $p['name'] === 'Estuche pequeño');
+    $largeKey = $products->search(fn ($p) => $p['name'] === 'Estuche grande');
+
+    expect($products[$smallKey]['is_locked'])->toBeTrue()
+        ->and($products[$largeKey]['is_locked'])->toBeFalse();
+    $page->assertActionHidden(TestAction::make('delete')->schemaComponent("categories.{$caseKey}.products")->arguments(['item' => $smallKey]))
+        ->assertActionVisible(TestAction::make('delete')->schemaComponent("categories.{$caseKey}.products")->arguments(['item' => $largeKey]));
+
+    unset($state[$caseKey]['products'][$smallKey], $state[$caseKey]['products'][$largeKey]);
+    $page->set('data.categories', $state)->call('next')->assertHasNoErrors();
+
+    expect(Product::where('name', 'Estuche pequeño')->exists())->toBeTrue()
+        ->and(Product::where('name', 'Estuche grande')->exists())->toBeFalse();
+});
+
+it('leaves frames and sunglasses to their own resource', function () {
+    counterAdmin();
+    $frame = Product::factory()->create(['product_category_id' => ProductCategory::keyed('frame')->id, 'is_active' => true]);
+    $page = Livewire::test(Onboarding::class);
+
+    expect(collect($page->get('data.categories'))->pluck('key'))->not->toContain('frame')->not->toContain('sunglasses');
+
+    $page->call('next')->assertHasNoErrors()->call('previous');
+
+    expect(collect($page->get('data.categories'))->pluck('key'))->not->toContain('frame')->not->toContain('sunglasses')
+        ->and(Product::whereKey($frame->id)->exists())->toBeTrue();
 });

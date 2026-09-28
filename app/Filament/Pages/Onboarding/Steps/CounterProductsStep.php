@@ -20,6 +20,8 @@ use Illuminate\Validation\Rule;
 /** Everything the shop sells besides lenses: categories with their base products. */
 class CounterProductsStep extends OnboardingStep
 {
+    private const OWN_RESOURCE_KEYS = ['frame', 'sunglasses'];
+
     public static function key(): string
     {
         return 'counter_products';
@@ -52,19 +54,18 @@ class CounterProductsStep extends OnboardingStep
                         ->hiddenLabel()
                         ->schema([
                             Hidden::make('product_id'),
+                            Hidden::make('is_locked'),
                             TextInput::make('name')->label(__('app.fields.name'))->required()->distinct()->maxLength(255),
                             TextInput::make('price')->label(__('app.fields.price'))->required()->integer()->minValue(0)->prefix('$'),
                             TextInput::make('cost')->label(__('app.fields.cost'))->required()->integer()->minValue(0)->prefix('$'),
                         ])
                         ->columns(3)
                         ->defaultItems(0)
+                        ->deleteAction(fn (Action $action) => $this->hideForLockedRows($action))
                         ->addActionLabel(__('app.onboarding.counter_products.add_product')),
                 ])
                 ->defaultItems(0)
-                // Rows the model's deletion guard would keep cannot be removed here, so they never silently come back.
-                ->deleteAction(fn (Action $action) => $action->visible(
-                    fn (array $arguments, Repeater $component): bool => ! ($component->getRawItemState($arguments['item'])['is_locked'] ?? false),
-                ))
+                ->deleteAction(fn (Action $action) => $this->hideForLockedRows($action))
                 ->addActionLabel(__('app.onboarding.counter_products.add_category')),
         ];
     }
@@ -80,7 +81,7 @@ class CounterProductsStep extends OnboardingStep
                 'name' => $category->name,
                 'is_locked' => ! $category->isDeletable(),
                 'products' => $category->products->map(fn (Product $product) => [
-                    'product_id' => $product->id, 'name' => $product->name, 'price' => $product->price, 'cost' => $product->cost,
+                    'product_id' => $product->id, 'is_locked' => ! $product->isDeletable(), 'name' => $product->name, 'price' => $product->price, 'cost' => $product->cost,
                 ])->all(),
             ])->all()];
         }
@@ -140,9 +141,12 @@ class CounterProductsStep extends OnboardingStep
                 }
             }
 
-            $this->products()->whereNotIn('id', $keptProductIds)->delete();
-            // The model guard keeps system categories and those used by products or kit slots.
-            $this->categories()->whereNotIn('id', $keptCategoryIds)->get()->each->delete();
+            // The model guards keep products used by kit slots, system categories and those used by products or kit slots.
+            // A guarded delete() returns false, which would stop `each->delete()`; keep going past it.
+            $removed = [...$this->products()->whereNotIn('id', $keptProductIds)->get(), ...$this->categories()->whereNotIn('id', $keptCategoryIds)->get()];
+            foreach ($removed as $model) {
+                $model->delete();
+            }
         });
     }
 
@@ -161,16 +165,24 @@ class CounterProductsStep extends OnboardingStep
         ]);
     }
 
-    /** @return Builder<ProductCategory> the company's non-lens categories */
-    private function categories(): Builder
+    /** Rows the model's deletion guard would keep cannot be removed here, so they never silently come back. */
+    private function hideForLockedRows(Action $action): Action
     {
-        return ProductCategory::query()->counter();
+        return $action->visible(
+            fn (array $arguments, Repeater $component): bool => ! ($component->getRawItemState($arguments['item'])['is_locked'] ?? false),
+        );
     }
 
-    /** @return Builder<Product> the active base products of the non-lens categories */
+    /** @return Builder<ProductCategory> the company's counter categories, minus frames and sunglasses (their own resource, often hundreds of products) */
+    private function categories(): Builder
+    {
+        return ProductCategory::query()->counter()->whereNotIn('key', self::OWN_RESOURCE_KEYS);
+    }
+
+    /** @return Builder<Product> the active base products of those categories */
     private function products(): Builder
     {
-        return Product::query()->counter();
+        return Product::query()->counter()->whereHas('category', fn (Builder $category) => $category->whereNotIn('key', self::OWN_RESOURCE_KEYS));
     }
 
     private function uniqueKey(string $base): string

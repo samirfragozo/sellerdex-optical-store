@@ -19,6 +19,21 @@ class Product extends Model
     /** @use HasFactory<ProductFactory> */
     use BelongsToCompany, HasFactory, SoftDeletes;
 
+    /** A product a combo slot gives, upgrades to or is triggered by cannot be deleted (`forceDelete()` fires `deleting` too). */
+    protected static function booted(): void
+    {
+        static::deleting(fn (Product $product): bool => $product->isDeletable());
+    }
+
+    public function isDeletable(): bool
+    {
+        return ! KitSlot::withoutGlobalScopes()
+            ->where(fn ($query) => $query->where('default_product_id', $this->id)
+                ->orWhere('upgrade_product_id', $this->id)
+                ->orWhere('trigger_product_id', $this->id))
+            ->exists();
+    }
+
     protected function casts(): array
     {
         return [

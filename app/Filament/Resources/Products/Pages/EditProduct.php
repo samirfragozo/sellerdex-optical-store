@@ -40,8 +40,9 @@ class EditProduct extends EditRecord
                         ]))
                         ->send();
                 }),
-            DeleteAction::make(),
-            ForceDeleteAction::make(),
+            // A product a combo uses is kept by the model guard; don't offer to delete it (the built-in trashed rules still apply).
+            DeleteAction::make()->visible(fn (Product $record): bool => $record->isDeletable()),
+            ForceDeleteAction::make()->hidden(fn (Product $record): bool => ! $record->isDeletable()),
             RestoreAction::make(),
         ];
     }

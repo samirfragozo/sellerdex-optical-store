@@ -1,12 +1,16 @@
 <?php
 
 use App\Enums\ReadinessSeverity;
+use App\Filament\Pages\ComboSettings;
 use App\Models\Company;
+use App\Models\KitSlot;
 use App\Models\LensCombination;
 use App\Models\LensMaterial;
 use App\Models\LensTechnology;
 use App\Models\LensType;
 use App\Models\PaymentMethod;
+use App\Models\Product;
+use App\Models\ProductCategory;
 use App\Models\Supplier;
 use App\Support\Readiness\ReadinessIssue;
 
@@ -89,4 +93,30 @@ it('serializes an issue for the frontend', function () {
     expect($issue->toArray())->toBe([
         'key' => 'payment_method', 'severity' => 'blocking', 'message' => 'msg', 'url' => 'https://x.test', 'scope' => null,
     ]);
+});
+
+it('warns when an active combo default product is inactive or removed', function (string $how) {
+    $company = readyCompany();
+    $category = ProductCategory::factory()->create(['company_id' => $company->id]);
+    $product = Product::factory()->create(['company_id' => $company->id, 'product_category_id' => $category->id, 'is_active' => true]);
+    KitSlot::factory()->create(['company_id' => $company->id, 'slot_category_id' => $category->id, 'default_product_id' => $product->id]);
+    expect($company->saleReadiness())->toBe([]);
+
+    // A query delete stands in for older data; the model guard would keep the product.
+    $how === 'inactive' ? $product->update(['is_active' => false]) : Product::withoutGlobalScopes()->whereKey($product->id)->delete();
+
+    $issue = collect($company->saleReadiness())->sole();
+    expect($issue->key)->toBe('combo_product_inactive')
+        ->and($issue->severity)->toBe(ReadinessSeverity::Warning)
+        ->and($issue->url)->toBe(ComboSettings::getUrl(panel: 'admin'))
+        ->and($issue->message)->toBe(__('app.readiness.combo_product_inactive'));
+})->with(['inactive', 'removed']);
+
+it('ignores an inactive combo default on a paused slot', function () {
+    $company = readyCompany();
+    $category = ProductCategory::factory()->create(['company_id' => $company->id]);
+    $product = Product::factory()->create(['company_id' => $company->id, 'product_category_id' => $category->id, 'is_active' => false]);
+    KitSlot::factory()->create(['company_id' => $company->id, 'slot_category_id' => $category->id, 'default_product_id' => $product->id, 'is_active' => false]);
+
+    expect($company->saleReadiness())->toBe([]);
 });

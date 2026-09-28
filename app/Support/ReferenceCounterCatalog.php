@@ -36,8 +36,6 @@ class ReferenceCounterCatalog
             ['key' => 'service', 'name' => 'Servicios', 'products' => [
                 ['name' => 'Examen visual', 'price' => 35_000, 'cost' => 0],
             ]],
-            ['key' => 'frame', 'name' => 'Monturas', 'products' => []],
-            ['key' => 'sunglasses', 'name' => 'Gafas de sol', 'products' => []],
             ['key' => 'accessory', 'name' => 'Accesorios', 'products' => []],
         ];
     }

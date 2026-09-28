@@ -3,11 +3,15 @@
 use App\Enums\VatRegime;
 use App\Filament\Resources\Products\Pages\CreateProduct;
 use App\Filament\Resources\Products\Pages\EditProduct;
+use App\Filament\Resources\Products\Pages\ListProducts;
 use App\Filament\Resources\Products\ProductResource;
+use App\Models\KitSlot;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\Tax;
 use App\Models\User;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\ForceDeleteAction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 
@@ -77,3 +81,29 @@ it('keeps a deactivated tax on a product that uses it when saving other changes'
 
     expect($product->fresh())->price->toBe(123_000)->tax_id->toBe($tax->id);
 });
+
+it('hides delete and force delete for a product a combo uses', function () {
+    $this->actingAs(User::factory()->admin()->create());
+    $slot = KitSlot::factory()->create();
+    $free = Product::factory()->create();
+
+    Livewire::test(EditProduct::class, ['record' => $slot->default_product_id])
+        ->assertActionHidden(DeleteAction::class)
+        ->assertActionHidden(ForceDeleteAction::class);
+    Livewire::test(EditProduct::class, ['record' => $free->id])
+        ->assertActionVisible(DeleteAction::class);
+});
+
+it('keeps a combo product when bulk deleting and says so', function (string $action) {
+    $this->actingAs(User::factory()->admin()->create());
+    $slot = KitSlot::factory()->create();
+    $free = Product::factory()->create();
+
+    Livewire::test(ListProducts::class)
+        ->filterTable('trashed', true)
+        ->callTableBulkAction($action, [$slot->default_product_id, $free->id])
+        ->assertNotified();
+
+    expect(Product::withTrashed()->whereKey($slot->default_product_id)->whereNull('deleted_at')->exists())->toBeTrue()
+        ->and(Product::whereKey($free->id)->exists())->toBeFalse();
+})->with(['delete' => 'delete', 'force delete' => 'forceDelete']);

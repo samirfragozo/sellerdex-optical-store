@@ -275,7 +275,7 @@ return [
 
     'pos' => [
         'kit' => [
-            'invalid_product' => 'El producto elegido no pertenece a la categoría del combo.',
+            'invalid_product' => 'El producto elegido no está disponible para este combo.',
             'gift' => 'Obsequio',
             'added_to_lens' => '+:amount al lente',
             'included' => 'Incluido',
@@ -587,6 +587,7 @@ return [
         'laboratory' => 'No hay ningún laboratorio activo: las gafas formuladas no pueden generar su orden.',
         'lens_price' => 'No hay ninguna combinación de lentes activa con precio: no puedes vender gafas formuladas.',
         'laboratory_lead_time' => 'Hay laboratorios sin tiempo de entrega; no podremos estimar cuándo llegan los lentes.',
+        'combo_product_inactive' => 'Hay un combo cuyo producto por defecto está inactivo o fue eliminado; ese artículo no se está entregando.',
         'blocking_title' => 'Falta algo para poder vender',
         'blocking_lens_title' => 'Falta algo para vender gafas formuladas',
         'fix' => 'Solucionar',

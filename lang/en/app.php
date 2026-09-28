@@ -275,7 +275,7 @@ return [
 
     'pos' => [
         'kit' => [
-            'invalid_product' => 'The chosen product does not belong to the combo category.',
+            'invalid_product' => 'The chosen product is not available for this combo.',
             'gift' => 'Gift',
             'added_to_lens' => '+:amount on the lens',
             'included' => 'Included',
@@ -587,6 +587,7 @@ return [
         'laboratory' => 'There is no active laboratory: prescription glasses cannot generate their lab order.',
         'lens_price' => 'There is no active, priced lens combination: you cannot sell prescription glasses.',
         'laboratory_lead_time' => 'Some laboratories have no lead time, so we cannot estimate when lenses arrive.',
+        'combo_product_inactive' => 'A combo\'s default product is inactive or removed, so that item is not being given.',
         'blocking_title' => 'Something is missing before you can sell',
         'blocking_lens_title' => 'Something is missing to sell prescription glasses',
         'fix' => 'Fix it',

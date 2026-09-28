@@ -104,6 +104,29 @@ it('keeps a category that a kit slot uses', function () {
     expect(ProductCategory::whereKey($case->id)->exists())->toBeTrue();
 });
 
+it('keeps a product that a combo slot uses, soft or force deleted', function (string $sku) {
+    ReferenceKit::installFor($this->seller->company);
+    $contactLens = Product::factory()->create();
+    KitSlot::factory()->create([
+        'trigger' => KitTrigger::Product, 'trigger_product_id' => $contactLens->id,
+        'slot_category_id' => ProductCategory::keyed('cloth')->id, 'default_product_id' => Product::where('sku', 'ACC-PANO')->value('id'),
+    ]);
+    $product = $sku === 'trigger' ? $contactLens : Product::where('sku', $sku)->sole();
+
+    expect($product->isDeletable())->toBeFalse()
+        ->and($product->delete())->toBeFalse()
+        ->and($product->forceDelete())->toBeFalse()
+        ->and(Product::whereKey($product->id)->exists())->toBeTrue();
+})->with(['default' => 'ACC-FUNDA', 'upgrade' => 'ACC-BOLSA-PAPEL', 'trigger' => 'trigger']);
+
+it('still deletes a product no combo uses', function () {
+    ReferenceKit::installFor($this->seller->company);
+    $product = Product::factory()->create();
+
+    expect($product->isDeletable())->toBeTrue()
+        ->and($product->delete())->toBeTrue();
+});
+
 it('translates every kit enum', function () {
     foreach ([...KitTrigger::cases(), ...KitPriceMode::cases(), ...ArmadoFramePriceMode::cases()] as $case) {
         expect($case->label())->not->toStartWith('app.');

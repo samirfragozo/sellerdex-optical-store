@@ -3,12 +3,15 @@
 namespace App\Support\Readiness;
 
 use App\Enums\ReadinessSeverity;
+use App\Filament\Pages\ComboSettings;
 use App\Filament\Resources\LensCombinations\LensCombinationResource;
 use App\Filament\Resources\PaymentMethods\PaymentMethodResource;
 use App\Filament\Resources\Suppliers\SupplierResource;
 use App\Models\Company;
+use App\Models\KitSlot;
 use App\Models\LensCombination;
 use App\Models\PaymentMethod;
+use App\Models\Product;
 use App\Models\Supplier;
 
 /**
@@ -52,6 +55,19 @@ class SaleReadiness
             $issues[] = new ReadinessIssue(
                 'lens_price', ReadinessSeverity::Blocking,
                 __('app.readiness.lens_price'), LensCombinationResource::getUrl('index', panel: 'admin'), 'lens',
+            );
+        }
+
+        // A slot whose default product is inactive or deleted silently gives nothing.
+        $hasBrokenCombo = KitSlot::withoutGlobalScopes()
+            ->where('company_id', $company->id)->where('is_active', true)
+            ->whereNotIn('default_product_id', Product::withoutGlobalScopes()->select('id')
+                ->where('company_id', $company->id)->where('is_active', true)->whereNull('deleted_at'))
+            ->exists();
+        if ($hasBrokenCombo) {
+            $issues[] = new ReadinessIssue(
+                'combo_product_inactive', ReadinessSeverity::Warning,
+                __('app.readiness.combo_product_inactive'), ComboSettings::getUrl(panel: 'admin'),
             );
         }
 
