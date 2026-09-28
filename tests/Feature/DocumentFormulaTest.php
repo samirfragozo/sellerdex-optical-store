@@ -11,13 +11,14 @@ it('renders the formula HTML with the Rx values', function () {
     $this->actingAs($seller);
     $rx = Prescription::factory()->create([
         'od_sphere' => '-0.25', 'od_cylinder' => '-2.00',
-        'os_sphere' => '0', 'os_cylinder' => '-2.75',
+        'os_sphere' => '0', 'os_cylinder' => '-2.75', 'od_add' => '1.5',
     ]);
 
     $this->get(route('documents.formula', $rx))
         ->assertSuccessful()
         ->assertSee('-2.75')
-        ->assertSee('-0.25');
+        ->assertSee('-0.25')
+        ->assertSee('+1.50');
 });
 
 it('downloads the formula as a PDF', function () {

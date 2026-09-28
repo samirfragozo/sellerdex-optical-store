@@ -12,10 +12,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Support\Facades\Auth;
 
 #[Fillable([
-    'company_id', 'customer_id', 'created_by', 'exam_date', 'expires_at',
+    'company_id', 'customer_id', 'created_by', 'exam_date',
     'od_sphere', 'od_cylinder', 'od_axis', 'od_add', 'od_prism', 'od_prism_base', 'od_va', 'od_pd',
     'os_sphere', 'os_cylinder', 'os_axis', 'os_add', 'os_prism', 'os_prism_base', 'os_va', 'os_pd',
     'prescriber_name', 'prescriber_license', 'attachment', 'filters', 'diagnosis', 'notes',
@@ -24,6 +23,12 @@ class Prescription extends Model
 {
     /** @use HasFactory<PrescriptionFactory> */
     use BelongsToCompany, HasFactory, SoftDeletes;
+
+    /** Columns stored as decimals; see setAttribute(). */
+    private const DECIMAL_COLUMNS = [
+        'od_sphere', 'od_cylinder', 'od_add', 'od_prism', 'od_pd',
+        'os_sphere', 'os_cylinder', 'os_add', 'os_prism', 'os_pd',
+    ];
 
     protected function casts(): array
     {
@@ -50,16 +55,39 @@ class Prescription extends Model
 
     protected static function booted(): void
     {
-        static::saving(function (Prescription $rx): void {
-            if ($rx->exam_date === null) {
-                return;
-            }
+        // Registered after BelongsToCompany's `creating` listener, so company_id is set.
+        static::creating(fn (Prescription $rx) => $rx->deriveExpiry());
+        static::updating(fn (Prescription $rx) => $rx->deriveExpiry());
+    }
 
-            // `saving` fires before BelongsToCompany fills company_id on `creating`.
-            $companyId = $rx->company_id ?? Auth::user()?->company_id;
-            $months = Company::query()->whereKey($companyId)->value('prescription_validity_months') ?? 12;
-            $rx->expires_at = $rx->exam_date->copy()->addMonthsNoOverflow((int) $months);
-        });
+    /**
+     * Normalize decimal input ("1,25", " +1.25 ", "") so the decimal casts can read it back.
+     *
+     * @param  string  $key
+     * @param  mixed  $value
+     */
+    public function setAttribute($key, $value): mixed
+    {
+        if (is_string($value) && in_array($key, self::DECIMAL_COLUMNS, true)) {
+            $value = str_replace([' ', ','], ['', '.'], $value);
+            $value = $value === '' ? null : $value;
+        }
+
+        return parent::setAttribute($key, $value);
+    }
+
+    /**
+     * Expiry follows the exam date only: a later change to the company validity
+     * does not move existing expiries.
+     */
+    private function deriveExpiry(): void
+    {
+        if ($this->exam_date === null || ($this->expires_at !== null && ! $this->isDirty('exam_date'))) {
+            return;
+        }
+
+        $months = Company::query()->whereKey($this->company_id)->value('prescription_validity_months') ?? 12;
+        $this->expires_at = $this->exam_date->copy()->addMonthsNoOverflow((int) $months);
     }
 
     public function isExpired(?CarbonInterface $at = null): bool

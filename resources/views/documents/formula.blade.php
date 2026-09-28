@@ -1,4 +1,5 @@
 @extends('documents.layout')
+@use('App\Models\Prescription')
 @section('title', __('app.documents.formula_title'))
 @section('content')
     <h3 style="text-align:center;margin:4px 0">{{ __('app.documents.formula_heading') }}</h3>
@@ -19,8 +20,8 @@
             <tr><th>{{ __('app.documents.eye') }}</th><th>{{ __('app.fields.sphere') }}</th><th>{{ __('app.fields.cylinder') }}</th><th>{{ __('app.fields.axis') }}</th><th>{{ __('app.fields.add') }}</th><th>{{ __('app.fields.va') }}</th><th>{{ __('app.fields.pd') }}</th></tr>
         </thead>
         <tbody>
-            <tr><td>OD</td><td>{{ $rx->od_sphere }}</td><td>{{ $rx->od_cylinder }}</td><td>{{ $rx->od_axis }}</td><td>{{ $rx->od_add }}</td><td>{{ $rx->od_va }}</td><td>{{ $rx->od_pd }}</td></tr>
-            <tr><td>OS</td><td>{{ $rx->os_sphere }}</td><td>{{ $rx->os_cylinder }}</td><td>{{ $rx->os_axis }}</td><td>{{ $rx->os_add }}</td><td>{{ $rx->os_va }}</td><td>{{ $rx->os_pd }}</td></tr>
+            <tr><td>OD</td><td>{{ Prescription::formatDiopter($rx->od_sphere) }}</td><td>{{ Prescription::formatDiopter($rx->od_cylinder) }}</td><td>{{ $rx->od_axis }}</td><td>{{ Prescription::formatDiopter($rx->od_add) }}</td><td>{{ $rx->od_va }}</td><td>{{ $rx->od_pd }}</td></tr>
+            <tr><td>OS</td><td>{{ Prescription::formatDiopter($rx->os_sphere) }}</td><td>{{ Prescription::formatDiopter($rx->os_cylinder) }}</td><td>{{ $rx->os_axis }}</td><td>{{ Prescription::formatDiopter($rx->os_add) }}</td><td>{{ $rx->os_va }}</td><td>{{ $rx->os_pd }}</td></tr>
         </tbody>
     </table>
     <p style="margin-top:8px">

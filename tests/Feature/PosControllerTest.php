@@ -651,6 +651,25 @@ it('exposes each prescription expiry on the pos page', function () {
         );
 });
 
+it('keeps the pos page working after a sale with comma decimals in the prescription', function () {
+    $seller = User::factory()->seller()->create();
+    openCashRegisterSession($seller);
+    Supplier::factory()->laboratory()->create(['company_id' => $seller->company_id]);
+    $customer = Customer::factory()->create();
+    $lens = lensArmadoLens($seller->company_id);
+
+    $this->actingAs($seller)->postJson('/pos', [
+        'customer_id' => $customer->id,
+        'document_type' => 'order',
+        'armados' => [['lens' => $lens, 'own_frame' => true]],
+        'prescription' => ['exam_date' => now()->toDateString(), 'od_sphere' => '1,25', 'os_pd' => '31,5'],
+    ])->assertOk();
+
+    $this->get('/pos')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page->where('prescriptions.0.summary', 'OD +1.25 / OS —'));
+});
+
 it('exposes a null cash session when the seller has none open', function () {
     $this->actingAs(User::factory()->seller()->create())
         ->get('/pos')
