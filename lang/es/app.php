@@ -279,6 +279,7 @@ return [
             'added_to_lens' => '+:amount al lente',
             'included' => 'Incluido',
             'required' => 'Siempre incluido',
+            'empty' => 'No hay productos de combo configurados para los armados.',
         ],
         'title' => 'Nueva venta',
         'created' => 'Venta :number creada exitosamente',

@@ -128,7 +128,7 @@ it('builds two armados, each with its own grouped combo lines', function () {
     $frameLine = $sale->items->firstWhere('product_id', $frame->id);
     expect($frameLine->unit_price)->toBe(0);
 
-    // Armado 1 gets the default small estuche; armado 2 swapped it for the large one.
+    // Armado 1 sends no slots, so it gets the case slot's default (small); armado 2 picked the large one.
     expect($sale->items->where('product_id', $smallEstuche->id)->pluck('group_key')->all())->toBe(['g1'])
         ->and($sale->items->where('product_id', $largeEstuche->id)->pluck('group_key')->all())->toBe(['g2']);
 });

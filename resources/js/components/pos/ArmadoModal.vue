@@ -79,11 +79,12 @@ const emptyArmado = (): Armado => ({
     lens: null,
     frame: null,
     own_frame: false,
-    // Slots without an active product are left out; the server skips them too.
+    // A slot whose default product is inactive or gone is left out, as the
+    // server skips it too.
     slots: props.kit.armado_slots.flatMap((slot) => {
-        const product =
-            slot.products.find((p) => p.id === slot.default_product_id) ??
-            slot.products[0];
+        const product = slot.products.find(
+            (p) => p.id === slot.default_product_id,
+        );
 
         return product
             ? [
@@ -103,6 +104,12 @@ const step = ref<WizardStep>('prescription');
 const stepIndex = computed(() => steps.indexOf(step.value));
 const stepTitle = computed(() => trans(`app.pos.steps.${step.value}`));
 
+// A deep, proxy-free copy so the draft and the cart never share nested
+// objects. structuredClone() throws on the reactive proxies nested in an
+// armado (e.g. the lens treatment_ids), and the armado is plain JSON data.
+const plainCopy = (armado: Armado): Armado =>
+    JSON.parse(JSON.stringify(armado));
+
 const draft = ref<Armado>(emptyArmado());
 // The modal works on a local draft so cancelling never touches the cart —
 // props seed it fresh each time the dialog opens.
@@ -114,9 +121,7 @@ watch(
         }
 
         step.value = 'prescription';
-        draft.value = props.armado
-            ? structuredClone(props.armado)
-            : emptyArmado();
+        draft.value = props.armado ? plainCopy(props.armado) : emptyArmado();
     },
 );
 
@@ -158,7 +163,7 @@ function goBack(): void {
 }
 
 function save(): void {
-    emit('save', draft.value);
+    emit('save', plainCopy(draft.value));
 }
 </script>
 

@@ -29,7 +29,7 @@ export interface ArmadoLensLine {
 /** One product slot of the armado combo, as shared by PosController::kit(). */
 export interface KitSlotProp {
     id: number;
-    category_name: string;
+    category_name: string | null;
     quantity: number;
     price_mode: 'free' | 'normal' | 'discount_percent' | 'added_to_lens';
     price_value: number;

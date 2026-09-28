@@ -279,6 +279,7 @@ return [
             'added_to_lens' => '+:amount on the lens',
             'included' => 'Included',
             'required' => 'Always included',
+            'empty' => 'No combo products are set up for armados.',
         ],
         'title' => 'New sale',
         'created' => 'Sale :number created successfully',

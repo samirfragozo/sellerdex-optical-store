@@ -46,6 +46,12 @@ function priceText(slot: KitSlotProp, selection: ArmadoSlot): string {
 
 <template>
     <div class="flex flex-col divide-y divide-border">
+        <p
+            v-if="rows.length === 0"
+            class="rounded-md border border-dashed border-border p-4 text-center text-sm text-muted-foreground"
+        >
+            {{ trans('app.pos.kit.empty') }}
+        </p>
         <div
             v-for="{ selection, slot } in rows"
             :key="selection.kit_slot_id"
@@ -56,6 +62,11 @@ function priceText(slot: KitSlotProp, selection: ArmadoSlot): string {
                     :id="`kit_slot_${selection.kit_slot_id}_selected`"
                     v-model="selection.selected"
                     :disabled="!slot.is_optional"
+                    :aria-describedby="
+                        slot.is_optional
+                            ? undefined
+                            : `kit_slot_${selection.kit_slot_id}_required`
+                    "
                 />
                 <Label :for="`kit_slot_${selection.kit_slot_id}_selected`">
                     {{ slot.category_name }}
@@ -65,6 +76,7 @@ function priceText(slot: KitSlotProp, selection: ArmadoSlot): string {
                 </Label>
                 <span
                     v-if="!slot.is_optional"
+                    :id="`kit_slot_${selection.kit_slot_id}_required`"
                     class="text-xs text-muted-foreground"
                 >
                     {{ trans('app.pos.kit.required') }}
@@ -75,7 +87,7 @@ function priceText(slot: KitSlotProp, selection: ArmadoSlot): string {
                 v-if="slot.products.length > 1"
                 :id="`kit_slot_${selection.kit_slot_id}`"
                 v-model.number="selection.product_id"
-                :aria-label="slot.category_name"
+                :aria-label="slot.category_name ?? undefined"
                 :disabled="!selection.selected"
                 class="h-9 min-w-40 flex-1 rounded-md border border-input bg-transparent px-2 py-1 text-sm shadow-xs outline-none focus-visible:ring-2 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-input/30"
             >
