@@ -2,7 +2,11 @@
 
 namespace Database\Seeders;
 
+use App\Models\Company;
+use App\Models\User;
+use App\Support\ReferenceKit;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Auth;
 
 class DatabaseSeeder extends Seeder
 {
@@ -25,14 +29,18 @@ class DatabaseSeeder extends Seeder
         ]);
 
         if (! app()->isProduction()) {
+            $this->call([CompanySeeder::class, DevSeeder::class]);
+
+            // Tenant fixtures belong to the demo company: BelongsToCompany fills company_id from the logged-in user.
+            Auth::setUser(User::where('email', 'admin@optica.test')->firstOrFail());
             $this->call([
-                CompanySeeder::class,
                 PaymentMethodSeeder::class,
                 ExpenseCategorySeeder::class,
                 ProductCategorySeeder::class,
                 ProductCatalogSeeder::class,
-                DevSeeder::class,
             ]);
+            ReferenceKit::installFor(Company::firstOrFail());
+            Auth::forgetUser();
         }
     }
 }

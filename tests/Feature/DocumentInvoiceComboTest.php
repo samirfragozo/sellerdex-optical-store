@@ -32,9 +32,6 @@ it('renders a combo invoice with free exam, included lines and the surcharged to
     $admin = User::factory()->forCompany($company)->admin()->create();
     $this->actingAs($seller);
     ReferenceKit::installFor($company);
-    // The dev catalog keeps consumables under "accessory", so the reference kit has no bag slot: add one for the $0 "Incluido" line.
-    $bag = Product::where('sku', 'ACC-BOLSA-PAPEL')->sole();
-    KitSlot::factory()->create(['trigger' => KitTrigger::Sale, 'slot_category_id' => $bag->product_category_id, 'default_product_id' => $bag->id]);
     $examSlot = KitSlot::where('trigger', KitTrigger::Armado)->get()->firstWhere(fn ($s) => $s->slotCategory->key === 'service');
 
     $combination = LensCombination::factory()->create(['price' => 295000, 'cost' => 6000, 'installation_price' => 0]);

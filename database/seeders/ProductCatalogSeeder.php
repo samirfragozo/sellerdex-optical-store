@@ -6,7 +6,9 @@ use App\Models\Option;
 use App\Models\OptionGroup;
 use App\Models\Product;
 use App\Models\ProductCategory;
+use App\Support\ReferenceCounterCatalog;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 
 class ProductCatalogSeeder extends Seeder
@@ -61,6 +63,16 @@ class ProductCatalogSeeder extends Seeder
         $key = self::CATEGORY_KEY[$name] ?? $name;
 
         return $this->categoryIds[$key] ??= ProductCategory::where($this->scopedKey(['key' => $key]))->value('id');
+    }
+
+    /** A reference counter category (case, cloth, bag…) the combos draw from, created like the onboarding does. */
+    private function counterCategoryId(string $key): int
+    {
+        return $this->categoryIds[$key] ??= ProductCategory::firstOrCreate($this->scopedKey(['key' => $key]), [
+            'name' => collect(ReferenceCounterCatalog::categories())->firstWhere('key', $key)['name'],
+            'is_active' => true,
+            'default_tax_id' => ProductCategory::defaultTaxIdFor('accessory', $this->companyId ?? Auth::user()?->company_id),
+        ])->id;
     }
 
     private function upsert(string $sku, array $attributes): Product
@@ -153,25 +165,24 @@ class ProductCatalogSeeder extends Seeder
 
     private function seedConsumables(): void
     {
-        $accId = $this->categoryId('Accesorio');
-        // [sku, name, cost, price]
+        // [sku, name, cost, price, reference counter category key]
         $rows = [
-            ['ACC-ESTUCHE-SMALL', 'Estuche pequeño', 2900, 10000],
-            ['ACC-ESTUCHE-LARGE', 'Estuche grande', 4000, 15000],
-            ['ACC-PANO', 'Paño', 600, 2000],
-            ['ACC-LIQUIDO', 'Líquido de limpieza', 2000, 8000],
-            ['ACC-BOLSA-PAPEL', 'Bolsa de papel', 1000, 0],
-            ['ACC-BOLSA-PLASTICO', 'Bolsa de plástico', 240, 0],
-            ['ACC-FUNDA', 'Funda', 1000, 3000],
+            ['ACC-ESTUCHE-SMALL', 'Estuche pequeño', 2900, 10000, 'case'],
+            ['ACC-ESTUCHE-LARGE', 'Estuche grande', 4000, 15000, 'case'],
+            ['ACC-PANO', 'Paño', 600, 2000, 'cloth'],
+            ['ACC-LIQUIDO', 'Líquido de limpieza', 2000, 8000, 'cleaning'],
+            // Plastic first: the reference combo gives the first cheapest bag and upgrades to the last one.
+            ['ACC-BOLSA-PLASTICO', 'Bolsa de plástico', 240, 0, 'bag'],
+            ['ACC-BOLSA-PAPEL', 'Bolsa de papel', 1000, 0, 'bag'],
+            ['ACC-FUNDA', 'Funda', 1000, 3000, 'pouch'],
         ];
-        // Auto-included by combos and never sold on their own → hidden from the POS picker.
-        // Funda is also given away free inside combos (see RegisterSale::applyBag), but stays
-        // sellable on its own, so it's excluded from this list.
+        // Given by combos and never sold on their own → hidden from the POS picker.
+        // Funda is also given with a loose frame, but stays sellable on its own.
         $nonSellable = ['ACC-BOLSA-PAPEL', 'ACC-BOLSA-PLASTICO', 'ACC-PANO'];
 
-        foreach ($rows as [$sku, $name, $cost, $price]) {
+        foreach ($rows as [$sku, $name, $cost, $price, $categoryKey]) {
             $this->upsert($sku, [
-                'product_category_id' => $accId, 'name' => $name, 'cost' => $cost, 'price' => $price,
+                'product_category_id' => $this->counterCategoryId($categoryKey), 'name' => $name, 'cost' => $cost, 'price' => $price,
                 'is_stockable' => true, 'stock' => 0, 'is_active' => true,
                 'is_pos_selectable' => ! in_array($sku, $nonSellable, true), 'specs' => null,
             ]);

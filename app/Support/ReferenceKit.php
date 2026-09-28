@@ -87,7 +87,7 @@ class ReferenceKit
             ->where('is_active', true)
             ->whereNull('base_product_id')
             ->whereNull('deleted_at')
-            ->orderBy('price')
+            ->orderBy('price')->orderBy('id')
             ->get();
     }
 }
