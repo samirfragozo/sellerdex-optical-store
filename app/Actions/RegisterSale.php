@@ -14,15 +14,11 @@ use Illuminate\Validation\ValidationException;
 
 class RegisterSale
 {
-    private const BAG_THRESHOLD = 215000;
-
-    private const SKU_FUNDA = 'ACC-FUNDA';
-
     private User $seller;
 
     /**
-     * Create a sale with its line items, compose the combo (consumables, free exam, bag,
-     * bundles, funda) and record an optional initial payment.
+     * Create a sale with its line items, apply the company's combo slots and record
+     * an optional initial payment.
      *
      * @param  array<string,mixed>  $data
      */
@@ -55,12 +51,9 @@ class RegisterSale
                     ...SaleItem::taxSnapshotFor($product, $this->seller->company),
                 ]);
             }
-            $this->applyAdditions($sale);
-            if (empty($data['armados'])) {
-                $sale->load('items.product.category');
-                $this->applyFunda($sale);
-            }
-            $this->applyBag($sale);
+            $kitRules = app(ApplyKitRules::class);
+            $kitRules->forStandaloneLines($sale, $seller);
+            $kitRules->forSale($sale, $seller);
 
             $sale->recalculateTotals();
 
@@ -114,55 +107,6 @@ class RegisterSale
         );
 
         return $weighted / $totalAmount;
-    }
-
-    /** Add each active `product_additions` bundle line for every sold product (e.g. contact-lens solution). */
-    private function applyAdditions(Sale $sale): void
-    {
-        $sale->load('items.product.additions');
-        foreach ($sale->items as $item) {
-            $product = $item->product;
-            if ($product === null) {
-                continue;
-            }
-            foreach ($product->additions->where('pivot.is_active', true) as $addition) {
-                $this->addAdditionLine(
-                    $sale,
-                    $addition,
-                    $addition->price + $addition->pivot->price,
-                    $addition->pivot->quantity,
-                );
-            }
-        }
-    }
-
-    /** Add a resolved addition as its own sale line, skipping if already present. */
-    private function addAdditionLine(Sale $sale, Product $addition, int $unitPrice, int $quantity): void
-    {
-        $exists = $sale->items()
-            ->where('product_id', $addition->id)
-            ->whereNull('group_key')
-            ->exists();
-        if ($exists) {
-            return;
-        }
-        $sale->items()->create([
-            'product_id' => $addition->id,
-            'description' => $addition->name,
-            'quantity' => $quantity,
-            'unit_price' => $unitPrice,
-            'unit_cost' => $addition->cost,
-            ...SaleItem::taxSnapshotFor($addition, $this->seller->company),
-        ]);
-    }
-
-    /** A standalone frame/sunglasses sale (no lens) gets a funda. */
-    private function applyFunda(Sale $sale): void
-    {
-        $hasFrame = $sale->items->contains(fn ($i) => $i->product?->category?->key === 'frame');
-        if ($hasFrame) {
-            $this->addZeroLine($sale, self::SKU_FUNDA);
-        }
     }
 
     /**
@@ -244,40 +188,5 @@ class RegisterSale
 
             app(ApplyKitRules::class)->forArmado($sale, $groupKey, $armado['slots'] ?? [], $this->seller);
         }
-    }
-
-    /** Add the bag once for the whole sale, chosen by merchandise total. */
-    private function applyBag(Sale $sale): void
-    {
-        $sale->recalculateTotals();
-        $merch = max(0, (int) $sale->subtotal - (int) $sale->discount);
-        $bagSku = $merch >= self::BAG_THRESHOLD ? 'ACC-BOLSA-PAPEL' : 'ACC-BOLSA-PLASTICO';
-        $this->addZeroLine($sale, $bagSku);
-    }
-
-    /** Idempotently add a $0 line for a consumable SKU within an optional armado group. */
-    private function addZeroLine(Sale $sale, string $sku, ?string $groupKey = null): void
-    {
-        $product = Product::where('sku', $sku)->first();
-        if ($product === null) {
-            return;
-        }
-        $exists = $sale->items()
-            ->where('product_id', $product->id)
-            ->where('group_key', $groupKey)
-            ->exists();
-        if ($exists) {
-            return;
-        }
-        $sale->items()->create([
-            'group_key' => $groupKey,
-            'product_id' => $product->id,
-            'description' => $product->name,
-            'quantity' => 1,
-            'unit_price' => 0,
-            'unit_cost' => $product->cost,
-            ...SaleItem::taxSnapshotFor($product, $this->seller->company),
-        ]);
-        $sale->load('items.product.category');
     }
 }

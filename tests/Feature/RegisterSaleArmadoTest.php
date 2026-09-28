@@ -212,6 +212,8 @@ it('mixes an armado with a standalone product line', function () {
 
 it('adds a single global bag for the whole sale', function () {
     seedCatalog();
+    $bag = Product::where('sku', 'ACC-BOLSA-PLASTICO')->sole();
+    KitSlot::factory()->create(['trigger' => KitTrigger::Sale, 'slot_category_id' => $bag->product_category_id, 'default_product_id' => $bag->id]);
 
     $sale = app(RegisterSale::class)->handle([
         'customer_id' => Customer::factory()->create()->id,
@@ -230,6 +232,11 @@ it('sells standalone products via the new payload and adds a funda for a frame',
     seedCatalog();
     $frame = Product::where('sku', 'MNT-COMPLETA-ACETATO')->first();
     $frame->update(['stock' => 5]);
+    $funda = Product::where('sku', 'ACC-FUNDA')->sole();
+    KitSlot::factory()->create([
+        'trigger' => KitTrigger::Category, 'trigger_category_id' => $frame->product_category_id,
+        'slot_category_id' => $funda->product_category_id, 'default_product_id' => $funda->id,
+    ]);
 
     $sale = app(RegisterSale::class)->handle([
         'customer_id' => Customer::factory()->create()->id,

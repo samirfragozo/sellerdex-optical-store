@@ -1,7 +1,9 @@
 <?php
 
 use App\Actions\RegisterSale;
+use App\Enums\KitTrigger;
 use App\Models\Customer;
+use App\Models\KitSlot;
 use App\Models\LensCombination;
 use App\Models\Option;
 use App\Models\OptionGroup;
@@ -92,6 +94,10 @@ it('sells a frame variant as a standalone loose product and adds a free funda', 
 
     $customer = Customer::factory()->create();
     $seller = User::factory()->seller()->create();
+    KitSlot::factory()->create([
+        'company_id' => $seller->company_id, 'trigger' => KitTrigger::Category, 'trigger_category_id' => $frameCategory->id,
+        'slot_category_id' => $accessoryCategory->id, 'default_product_id' => $funda->id,
+    ]);
 
     $sale = app(RegisterSale::class)->handle([
         'customer_id' => $customer->id,

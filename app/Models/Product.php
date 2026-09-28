@@ -70,22 +70,6 @@ class Product extends Model
             ->withTimestamps();
     }
 
-    public function additions(): BelongsToMany
-    {
-        return $this->belongsToMany(self::class, 'product_additions', 'product_id', 'addition_product_id')
-            ->using(ProductAddition::class)
-            ->withPivot(['price', 'quantity', 'is_active'])
-            ->withTimestamps();
-    }
-
-    public function additionOf(): BelongsToMany
-    {
-        return $this->belongsToMany(self::class, 'product_additions', 'addition_product_id', 'product_id')
-            ->using(ProductAddition::class)
-            ->withPivot(['price', 'quantity', 'is_active'])
-            ->withTimestamps();
-    }
-
     /** Margin in pesos (price − cost). */
     public function margin(): int
     {

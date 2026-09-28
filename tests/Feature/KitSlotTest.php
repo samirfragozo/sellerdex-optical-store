@@ -75,6 +75,16 @@ it('installs the reference kit that reproduces the old hardcoded combo', functio
         ->and($this->seller->company->fresh()->armado_frame_price_mode)->toBe(ArmadoFramePriceMode::Included);
 });
 
+it('picks the exam as the service default regardless of name casing', function () {
+    Product::where('sku', 'SRV-EXAMEN')->sole()->update(['name' => 'Examen Visual']);
+    Product::factory()->create(['product_category_id' => ProductCategory::keyed('service')->id, 'price' => 1_000, 'is_active' => true]);
+
+    ReferenceKit::installFor($this->seller->company);
+
+    $service = KitSlot::where('trigger', KitTrigger::Armado)->get()->firstWhere(fn ($s) => $s->slotCategory->key === 'service');
+    expect($service->defaultProduct->sku)->toBe('SRV-EXAMEN');
+});
+
 it('prices the armado frame by the company setting', function () {
     $company = $this->seller->company;
 

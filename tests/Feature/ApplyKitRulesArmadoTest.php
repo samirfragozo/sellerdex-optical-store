@@ -46,8 +46,7 @@ function kitSellArmado(array $armado): Sale
 it('adds nothing extra for a company without combo slots', function () {
     $sale = kitSellArmado(['lens' => kitLens($this->catalog), 'own_frame' => true]);
 
-    // The sale-wide bag is still hardcoded until the bag becomes a sale slot; only the armado group is checked.
-    expect($sale->items->where('group_key', 'g1'))->toHaveCount(1)->and($sale->total)->toBe(180_000);
+    expect($sale->items)->toHaveCount(1)->and($sale->total)->toBe(180_000);
 });
 
 it('rejects swapping a slot product for one outside its category', function () {
@@ -103,4 +102,43 @@ it('raises the lens price with an added_to_lens slot and accepts paying that tot
 
     expect($sale->items->first(fn ($i) => $i->isLens())->unit_price)->toBe(200_000)
         ->and($sale->balance)->toBe(0);
+});
+
+it('rejects an inactive product of the slot category in a selection', function () {
+    ReferenceKit::installFor($this->seller->company);
+    $caseSlot = KitSlot::where('trigger', KitTrigger::Armado)->get()->firstWhere(fn ($s) => $s->slotCategory->key === 'case');
+    $inactive = Product::where('sku', 'ACC-ESTUCHE-LARGE')->sole();
+    $inactive->update(['is_active' => false]);
+
+    expect(fn () => kitSellArmado([
+        'lens' => kitLens($this->catalog), 'own_frame' => true,
+        'slots' => [['kit_slot_id' => $caseSlot->id, 'product_id' => $inactive->id, 'selected' => true]],
+    ]))->toThrow(ValidationException::class);
+});
+
+it('skips a slot whose default product is inactive', function () {
+    ReferenceKit::installFor($this->seller->company);
+    Product::where('sku', 'ACC-ESTUCHE-SMALL')->sole()->update(['is_active' => false]);
+
+    $sale = kitSellArmado(['lens' => kitLens($this->catalog), 'own_frame' => true]);
+
+    expect($sale->items->where('group_key', 'g1')->pluck('product.sku')->all())->toBe([null, 'ACC-PANO']);
+});
+
+it('raises only the lens of the armado that selected an added_to_lens slot', function () {
+    ReferenceKit::installFor($this->seller->company);
+    $exam = KitSlot::where('trigger', KitTrigger::Armado)->get()->firstWhere(fn ($s) => $s->slotCategory->key === 'service');
+
+    $sale = app(RegisterSale::class)->handle([
+        'customer_id' => $this->customer->id,
+        'document_type' => 'order',
+        'armados' => [
+            ['lens' => kitLens($this->catalog), 'own_frame' => true],
+            ['lens' => kitLens($this->catalog), 'own_frame' => true, 'slots' => [['kit_slot_id' => $exam->id, 'selected' => true]]],
+        ],
+    ], $this->seller);
+
+    $lenses = $sale->items->filter(fn ($i) => $i->isLens())->pluck('unit_price', 'group_key')->all();
+
+    expect($lenses)->toBe(['g1' => 180_000, 'g2' => 200_000]);
 });

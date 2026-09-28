@@ -199,30 +199,21 @@ class ProductCatalogSeeder extends Seeder
     private function seedContactLenses(): void
     {
         $accId = $this->categoryId('Accesorio');
-        // [sku, name, cost, price, bundlesSolution(bool), correction]
+        // [sku, name, cost, price, correction]
         $rows = [
-            ['ACC-LC-COSMETICOS', 'Lentes de contacto cosméticos X1 par', 55000, 75000, false, null],
-            ['ACC-LC-FORM-X1', 'Lentes de contacto formulados esféricos X1 par', 28000, 115000, true, 'spheric'],
-            ['ACC-LC-CONFORTVUE-X3', 'Caja LC formulados esféricos X3 — Confortvue', 78000, 225000, true, 'spheric'],
-            ['ACC-LC-JJ-X3', 'Caja LC formulados esféricos X3 — Johnson & Johnson', 140000, 300000, true, 'spheric'],
-            ['ACC-LC-AIROPTIX-X3', 'Caja LC formulados esféricos X3 — Air Optix', 200000, 430000, true, 'spheric'],
-            ['ACC-LC-AIROPTIX-CYL-X3', 'Caja LC formulados esféricos + cilindro X3 — Air Optix', 219000, 450000, true, 'spheric_cylinder'],
+            ['ACC-LC-COSMETICOS', 'Lentes de contacto cosméticos X1 par', 55000, 75000, null],
+            ['ACC-LC-FORM-X1', 'Lentes de contacto formulados esféricos X1 par', 28000, 115000, 'spheric'],
+            ['ACC-LC-CONFORTVUE-X3', 'Caja LC formulados esféricos X3 — Confortvue', 78000, 225000, 'spheric'],
+            ['ACC-LC-JJ-X3', 'Caja LC formulados esféricos X3 — Johnson & Johnson', 140000, 300000, 'spheric'],
+            ['ACC-LC-AIROPTIX-X3', 'Caja LC formulados esféricos X3 — Air Optix', 200000, 430000, 'spheric'],
+            ['ACC-LC-AIROPTIX-CYL-X3', 'Caja LC formulados esféricos + cilindro X3 — Air Optix', 219000, 450000, 'spheric_cylinder'],
         ];
 
-        $solution = Product::where($this->scopedKey(['sku' => 'ACC-SOLUCION-LC']))->first();
-
-        foreach ($rows as [$sku, $name, $cost, $price, $bundlesSolution, $correction]) {
-            $specs = ['kind' => 'contact_lens', 'correction' => $correction];
-            $product = $this->upsert($sku, [
+        foreach ($rows as [$sku, $name, $cost, $price, $correction]) {
+            $this->upsert($sku, [
                 'product_category_id' => $accId, 'name' => $name, 'cost' => $cost, 'price' => $price,
-                'is_stockable' => true, 'stock' => 0, 'is_active' => true, 'specs' => $specs,
+                'is_stockable' => true, 'stock' => 0, 'is_active' => true, 'specs' => ['kind' => 'contact_lens', 'correction' => $correction],
             ]);
-
-            if ($bundlesSolution && $solution !== null) {
-                $product->additions()->syncWithoutDetaching([
-                    $solution->id => ['price' => -$solution->price, 'quantity' => 1, 'is_active' => true],
-                ]);
-            }
         }
     }
 

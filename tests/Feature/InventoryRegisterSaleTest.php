@@ -25,8 +25,7 @@ it('decrements a real frame stock when sold via RegisterSale', function () {
         ],
     ], User::factory()->seller()->create());
 
-    // A standalone frame sale auto-includes a funda and a bag, so three lines; the frame stock still drops by 1.
-    expect($sale->items)->toHaveCount(3)
-        ->and($frame->fresh()->stock)->toBe(4)
-        ->and($sale->items->contains(fn ($i) => Product::find($i->product_id)?->sku === 'ACC-FUNDA'))->toBeTrue();
+    // No combo slots are installed, so the frame is the only line.
+    expect($sale->items)->toHaveCount(1)
+        ->and($frame->fresh()->stock)->toBe(4);
 });

@@ -71,7 +71,6 @@ return [
     'relations' => [
         'payments' => 'Payments',
         'products' => 'Products',
-        'additions' => 'Additions',
         'add_payment' => 'Add payment',
         'expenses' => 'Expenses',
         'sales' => 'Documents',
@@ -270,7 +269,6 @@ return [
     ],
 
     'validation' => [
-        'addition_price_floor' => 'The resolved price of this addition cannot be negative. Lower the discount so the addition price stays at 0 or more.',
         'payments_exceed_total' => 'The payments cannot exceed the sale total.',
     ],
 

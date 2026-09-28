@@ -480,6 +480,12 @@ it('passes combo slot selections and applies a paper bag', function () {
     $this->actingAs($seller);
     ReferenceKit::installFor($company);
     $examSlot = KitSlot::where('trigger', KitTrigger::Armado)->get()->firstWhere(fn ($s) => $s->slotCategory->key === 'service');
+    // The dev catalog keeps bags under "accessory", so the reference kit has no bag slot: add one.
+    $plasticBag = Product::where('sku', 'ACC-BOLSA-PLASTICO')->sole();
+    KitSlot::factory()->create([
+        'trigger' => KitTrigger::Sale, 'slot_category_id' => $plasticBag->product_category_id, 'default_product_id' => $plasticBag->id,
+        'upgrade_product_id' => Product::where('sku', 'ACC-BOLSA-PAPEL')->value('id'), 'upgrade_min_total' => 215_000,
+    ]);
 
     $this->postJson('/pos', [
         'customer_id' => Customer::factory()->create()->id,

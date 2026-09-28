@@ -49,7 +49,7 @@ class ReferenceKit
         }
 
         $default = $slot['key'] === 'service'
-            ? ($products->firstWhere('name', 'Examen visual') ?? $products->first())
+            ? ($products->first(fn (Product $product) => mb_strtolower($product->name) === 'examen visual') ?? $products->first())
             : $products->first();
         $upgrade = isset($slot['upgrade_min_total']) && $products->last()->isNot($default) ? $products->last() : null;
 
