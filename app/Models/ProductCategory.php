@@ -56,10 +56,14 @@ class ProductCategory extends Model
             ->value('id');
     }
 
-    /** A system category, or one that still has products, cannot be deleted. */
+    /** A system category, one that still has products, or one a kit slot uses cannot be deleted. */
     protected static function booted(): void
     {
-        static::deleting(fn (ProductCategory $category): bool => ! $category->is_system && ! $category->hasChildren());
+        static::deleting(fn (ProductCategory $category): bool => ! $category->is_system
+            && ! $category->hasChildren()
+            && ! KitSlot::withoutGlobalScopes()
+                ->where(fn ($query) => $query->where('slot_category_id', $category->id)->orWhere('trigger_category_id', $category->id))
+                ->exists());
     }
 
     protected function casts(): array

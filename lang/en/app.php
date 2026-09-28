@@ -566,6 +566,26 @@ return [
         'lens_sale_blocked' => 'You cannot sell prescription glasses yet: :reasons',
     ],
 
+    'kit_trigger' => [
+        'armado' => 'Prescription glasses',
+        'category' => 'Standalone product of a category',
+        'product' => 'Specific product',
+        'sale' => 'Every sale',
+    ],
+
+    'kit_price_mode' => [
+        'free' => 'Gift',
+        'normal' => 'Normal price',
+        'discount_percent' => 'Discount (%)',
+        'added_to_lens' => 'Added to the lens',
+    ],
+
+    'armado_frame_price_mode' => [
+        'included' => 'Included ($0)',
+        'normal' => 'Normal price',
+        'discount_percent' => 'Discount (%)',
+    ],
+
     'tax_treatment' => [
         'taxed' => 'Taxed',
         'exempt' => 'Exempt',

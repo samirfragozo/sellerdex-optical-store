@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\ArmadoFramePriceMode;
 use App\Enums\ReadinessSeverity;
 use App\Enums\VatRegime;
 use App\Support\Readiness\ReadinessIssue;
@@ -15,7 +16,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
-#[Fillable(['name', 'slug', 'tax_id', 'vat_regime', 'sale_number_prefix', 'next_sale_number', 'address', 'phones', 'logo', 'is_active', 'plan', 'onboarding_step', 'onboarded_at'])]
+#[Fillable(['name', 'slug', 'tax_id', 'vat_regime', 'sale_number_prefix', 'next_sale_number', 'address', 'phones', 'logo', 'is_active', 'plan', 'onboarding_step', 'onboarded_at', 'armado_frame_price_mode', 'armado_frame_discount_percent'])]
 class Company extends Model
 {
     /** @use HasFactory<CompanyFactory> */
@@ -28,6 +29,8 @@ class Company extends Model
             'vat_regime' => VatRegime::class,
             'next_sale_number' => 'integer',
             'onboarded_at' => 'datetime',
+            'armado_frame_price_mode' => ArmadoFramePriceMode::class,
+            'armado_frame_discount_percent' => 'decimal:2',
         ];
     }
 
@@ -70,6 +73,21 @@ class Company extends Model
     public function paymentMethods(): HasMany
     {
         return $this->hasMany(PaymentMethod::class);
+    }
+
+    public function kitSlots(): HasMany
+    {
+        return $this->hasMany(KitSlot::class);
+    }
+
+    /** What the frame of an armado is charged, per the company's frame-pricing setting. */
+    public function armadoFrameUnitPrice(int $price): int
+    {
+        return match ($this->armado_frame_price_mode) {
+            ArmadoFramePriceMode::Included => 0,
+            ArmadoFramePriceMode::Normal => $price,
+            ArmadoFramePriceMode::DiscountPercent => (int) round($price * (100 - (float) $this->armado_frame_discount_percent) / 100),
+        };
     }
 
     public function laboratories(): HasMany

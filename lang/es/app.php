@@ -566,6 +566,26 @@ return [
         'lens_sale_blocked' => 'No puedes vender gafas formuladas todavía: :reasons',
     ],
 
+    'kit_trigger' => [
+        'armado' => 'Gafas formuladas',
+        'category' => 'Producto suelto de una categoría',
+        'product' => 'Producto específico',
+        'sale' => 'Toda venta',
+    ],
+
+    'kit_price_mode' => [
+        'free' => 'Obsequio',
+        'normal' => 'Precio normal',
+        'discount_percent' => 'Con descuento (%)',
+        'added_to_lens' => 'Sumado al lente',
+    ],
+
+    'armado_frame_price_mode' => [
+        'included' => 'Incluida ($0)',
+        'normal' => 'Precio normal',
+        'discount_percent' => 'Con descuento (%)',
+    ],
+
     'tax_treatment' => [
         'taxed' => 'Gravado',
         'exempt' => 'Exento',
