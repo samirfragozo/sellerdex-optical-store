@@ -63,12 +63,15 @@ class KitSlot extends Model
         return $this->price_mode === KitPriceMode::AddedToLens ? (int) $this->price_value : 0;
     }
 
-    /** The upgrade product once the merchandise total reaches `upgrade_min_total`, else the default product. */
-    public function productForMerchTotal(int $merchTotal): Product
+    /**
+     * The active upgrade product once the merchandise total reaches `upgrade_min_total`,
+     * else the default product (null when it was deleted).
+     */
+    public function productForMerchTotal(int $merchTotal): ?Product
     {
-        return $this->upgrade_product_id !== null && $this->upgrade_min_total !== null && $merchTotal >= $this->upgrade_min_total
-            ? $this->upgradeProduct
-            : $this->defaultProduct;
+        $upgrade = $this->upgrade_min_total !== null && $merchTotal >= $this->upgrade_min_total ? $this->upgradeProduct : null;
+
+        return $upgrade?->is_active ? $upgrade : $this->defaultProduct;
     }
 
     public function triggerCategory(): BelongsTo

@@ -80,3 +80,54 @@ it('does not add a standalone-category slot for a frame inside an armado', funct
 
     expect($sale->items->pluck('product.sku'))->not->toContain('ACC-FUNDA');
 });
+
+it('registers the sale without a bag when the bag slot product was deleted', function () {
+    ReferenceKit::installFor($this->seller->company);
+    Product::where('sku', 'ACC-BOLSA-PLASTICO')->sole()->delete();
+
+    $sale = kitSellProducts([kitLine($this->catalog['sunglasses'], 100_000)]);
+
+    expect($sale->items->pluck('product.sku')->all())->toBe(['SUNGLASSES']);
+});
+
+it('falls back to the default bag when the upgrade product is inactive', function () {
+    ReferenceKit::installFor($this->seller->company);
+    Product::where('sku', 'ACC-BOLSA-PAPEL')->sole()->update(['is_active' => false]);
+
+    $sale = kitSellProducts([kitLine($this->catalog['sunglasses'], 250_000)]);
+
+    expect($sale->items->pluck('product.sku')->all())->toBe(['SUNGLASSES', 'ACC-BOLSA-PLASTICO']);
+});
+
+it('skips a category slot whose default product is inactive', function () {
+    ReferenceKit::installFor($this->seller->company);
+    Product::where('sku', 'ACC-FUNDA')->sole()->update(['is_active' => false]);
+
+    $sale = kitSellProducts([kitLine($this->catalog['frame'], 150_000)]);
+
+    expect($sale->items->pluck('product.sku')->all())->toBe(['FRAME', 'ACC-BOLSA-PLASTICO']);
+});
+
+it('gives the pouch only to the loose frame in a sale that also has an armado frame', function () {
+    ReferenceKit::installFor($this->seller->company);
+    $frame = $this->catalog['frame'];
+
+    $sale = app(RegisterSale::class)->handle([
+        'customer_id' => Customer::factory()->create()->id,
+        'document_type' => 'order',
+        'armados' => [[
+            'lens' => [
+                'description' => 'Lente', 'treatment_ids' => [],
+                'lens_type_id' => $this->catalog['lens']->lens_type_id,
+                'lens_technology_id' => $this->catalog['lens']->lens_technology_id,
+                'lens_material_id' => $this->catalog['lens']->lens_material_id,
+            ],
+            'frame' => ['product_id' => $frame->id, 'description' => $frame->name, 'unit_price' => 150_000],
+        ]],
+        'products' => [kitLine($frame, 150_000)],
+    ], $this->seller);
+
+    $pouches = $sale->items->filter(fn ($i) => $i->product?->sku === 'ACC-FUNDA');
+
+    expect($pouches)->toHaveCount(1)->and($pouches->first()->group_key)->toBeNull();
+});
