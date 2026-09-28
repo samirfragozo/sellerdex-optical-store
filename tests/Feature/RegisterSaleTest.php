@@ -9,14 +9,14 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
-it('creates a sale with items and sets totals', function () {
+it('creates a sale with products and sets totals', function () {
     $customer = Customer::factory()->create();
     $seller = User::factory()->seller()->create();
 
     $sale = app(RegisterSale::class)->handle([
         'customer_id' => $customer->id,
         'document_type' => 'order',
-        'items' => [
+        'products' => [
             ['description' => 'Lente', 'quantity' => 2, 'unit_price' => 100_000],
             ['description' => 'Montura', 'quantity' => 1, 'unit_price' => 50_000],
         ],
@@ -37,7 +37,7 @@ it('records an optional initial payment and moves status to partial', function (
     $sale = app(RegisterSale::class)->handle([
         'customer_id' => $customer->id,
         'document_type' => 'layaway',
-        'items' => [['description' => 'Promo', 'quantity' => 1, 'unit_price' => 375_000]],
+        'products' => [['description' => 'Promo', 'quantity' => 1, 'unit_price' => 375_000]],
         'payments' => [['payment_method_id' => $method->id, 'amount' => 50_000]],
     ], $seller);
 

@@ -65,20 +65,30 @@ it('accepts a payment equal to the catalog-resolved lens total', function () {
 });
 
 it('still rejects a payment above the catalog-resolved lens total', function () {
+    openCashRegisterSession($this->seller);
+    Supplier::factory()->laboratory()->create(['company_id' => $this->seller->company_id]);
+
     $this->postJson('/pos', lensSalePayload(125_001))
         ->assertJsonValidationErrors(['payments' => 'La suma de los abonos no puede superar el total de la venta.']);
 });
 
 it('bounds the payment by a seller-entered price_override instead of the catalog price', function () {
+    openCashRegisterSession($this->seller);
+    Supplier::factory()->laboratory()->create(['company_id' => $this->seller->company_id]);
+
     $this->postJson('/pos', lensSalePayload(80_001, ['price_override' => 80_000]))
         ->assertJsonValidationErrors(['payments' => 'La suma de los abonos no puede superar el total de la venta.']);
 });
 
 it('does not blow up when the selected lens configuration is not resolvable', function () {
-    // An inactive package still passes `exists:` but fails ResolveLensPricing —
-    // the estimate must degrade to 0, never escape as a 500.
+    openCashRegisterSession($this->seller);
+    Supplier::factory()->laboratory()->create(['company_id' => $this->seller->company_id]);
+
+    // An inactive package still passes `exists:` but fails ResolveLensPricing in
+    // StoreSaleRequest's rules(), which rejects the sale before RegisterSale ever
+    // computes a real total — the payments guard never even runs.
     $this->package->update(['is_active' => false]);
 
     $this->postJson('/pos', lensSalePayload(1))
-        ->assertJsonValidationErrors(['payments' => 'La suma de los abonos no puede superar el total de la venta.']);
+        ->assertJsonValidationErrors('lens');
 });

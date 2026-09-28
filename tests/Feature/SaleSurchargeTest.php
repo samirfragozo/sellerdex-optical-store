@@ -23,7 +23,7 @@ it('derives the sale surcharge from the payment method', function () {
     $sale = app(RegisterSale::class)->handle([
         'customer_id' => Customer::factory()->create()->id,
         'document_type' => 'order',
-        'items' => [['description' => 'Lente', 'quantity' => 1, 'unit_price' => 100000]],
+        'products' => [['description' => 'Lente', 'quantity' => 1, 'unit_price' => 100000]],
         'payments' => [['payment_method_id' => $addi->id, 'amount' => 50000]],
     ], User::factory()->seller()->create());
 

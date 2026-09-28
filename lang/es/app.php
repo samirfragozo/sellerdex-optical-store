@@ -272,6 +272,7 @@ return [
 
     'validation' => [
         'addition_price_floor' => 'El precio resultante de esta adición no puede ser negativo. Reduce el descuento para que el precio quede en 0 o más.',
+        'payments_exceed_total' => 'La suma de los abonos no puede superar el total de la venta.',
     ],
 
     'pos' => [

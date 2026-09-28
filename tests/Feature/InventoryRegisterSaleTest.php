@@ -20,13 +20,13 @@ it('decrements a real frame stock when sold via RegisterSale', function () {
     $sale = app(RegisterSale::class)->handle([
         'customer_id' => Customer::factory()->create()->id,
         'document_type' => 'order',
-        'items' => [
-            ['product_id' => $frame->id, 'description' => $frame->name, 'quantity' => 1, 'unit_price' => 0, 'unit_cost' => $frame->cost],
+        'products' => [
+            ['product_id' => $frame->id, 'description' => $frame->name, 'quantity' => 1, 'unit_price' => 0],
         ],
     ], User::factory()->seller()->create());
 
-    // A standalone frame sale auto-includes a funda, so two lines; the frame stock still drops by 1.
-    expect($sale->items)->toHaveCount(2)
+    // A standalone frame sale auto-includes a funda and a bag, so three lines; the frame stock still drops by 1.
+    expect($sale->items)->toHaveCount(3)
         ->and($frame->fresh()->stock)->toBe(4)
         ->and($sale->items->contains(fn ($i) => Product::find($i->product_id)?->sku === 'ACC-FUNDA'))->toBeTrue();
 });

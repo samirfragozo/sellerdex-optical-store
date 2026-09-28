@@ -16,7 +16,7 @@ it('adds a bundled addition line when its host product is sold', function () {
     $sale = app(RegisterSale::class)->handle([
         'customer_id' => $customer->id,
         'document_type' => 'order',
-        'items' => [
+        'products' => [
             ['product_id' => $host->id, 'description' => $host->name, 'quantity' => 1, 'unit_price' => $host->price],
         ],
     ], $seller);
@@ -41,7 +41,7 @@ it('adds an addition with a non-zero resolved price and a quantity greater than 
     $sale = app(RegisterSale::class)->handle([
         'customer_id' => $customer->id,
         'document_type' => 'order',
-        'items' => [
+        'products' => [
             ['product_id' => $host->id, 'description' => $host->name, 'quantity' => 1, 'unit_price' => $host->price],
         ],
     ], $seller);
@@ -64,7 +64,7 @@ it('does not add an inactive addition', function () {
     $sale = app(RegisterSale::class)->handle([
         'customer_id' => $customer->id,
         'document_type' => 'order',
-        'items' => [
+        'products' => [
             ['product_id' => $host->id, 'description' => $host->name, 'quantity' => 1, 'unit_price' => $host->price],
         ],
     ], $seller);
@@ -81,7 +81,7 @@ it('does not add anything for a product with no additions', function () {
     $sale = app(RegisterSale::class)->handle([
         'customer_id' => $customer->id,
         'document_type' => 'order',
-        'items' => [
+        'products' => [
             ['product_id' => $host->id, 'description' => $host->name, 'quantity' => 1, 'unit_price' => $host->price],
         ],
     ], $seller);

@@ -3,6 +3,8 @@
 use App\Actions\RegisterSale;
 use App\Models\Company;
 use App\Models\Customer;
+use App\Models\LensCombination;
+use App\Models\LensPackage;
 use App\Models\PaymentMethod;
 use App\Models\Product;
 use App\Models\ProductCategory;
@@ -28,20 +30,25 @@ it('renders a combo invoice with free exam, included lines and the surcharged to
     $admin = User::factory()->forCompany($company)->admin()->create();
     $this->actingAs($seller);
 
-    $lens = Product::factory()->create([
-        'product_category_id' => ProductCategory::keyed('lens')->id,
-        'name' => 'Lente Monofocal',
-        'cost' => 6000,
-    ]);
+    $combination = LensCombination::factory()->create(['price' => 295000, 'cost' => 6000, 'installation_price' => 0]);
+    $package = LensPackage::factory()->create(['price' => 0, 'cost' => 0]);
     $addi = PaymentMethod::where('name', 'Addi')->first(); // 7%
 
     $sale = app(RegisterSale::class)->handle([
         'customer_id' => Customer::factory()->create()->id,
         'document_type' => 'order',
-        'items' => [
-            ['product_id' => $lens->id, 'description' => $lens->name, 'quantity' => 1, 'unit_price' => 295000, 'unit_cost' => $lens->cost],
-        ],
-        'combo' => ['with_exam' => true, 'estuche' => 'small', 'include_liquid' => false, 'include_pano' => true],
+        'armados' => [[
+            'lens' => [
+                'description' => 'Lente Monofocal',
+                'lens_type_id' => $combination->lens_type_id,
+                'lens_technology_id' => $combination->lens_technology_id,
+                'lens_material_id' => $combination->lens_material_id,
+                'lens_package_id' => $package->id,
+                'treatment_ids' => [],
+            ],
+            'own_frame' => true,
+            'combo' => ['with_exam' => true, 'estuche' => 'small', 'include_liquid' => false, 'include_pano' => true],
+        ]],
         'surcharge_percent' => $addi->surcharge_percent,
     ], $seller);
 

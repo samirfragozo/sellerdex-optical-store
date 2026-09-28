@@ -248,6 +248,7 @@ it('rejects payments that sum to more than the sale total', function () {
     $seller = User::factory()->seller()->create();
     $customer = Customer::factory()->create();
     $method = PaymentMethod::factory()->create();
+    openCashRegisterSession($seller);
 
     $this->actingAs($seller)->postJson('/pos', [
         'customer_id' => $customer->id,

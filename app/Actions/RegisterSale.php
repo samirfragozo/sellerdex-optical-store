@@ -10,6 +10,7 @@ use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class RegisterSale
 {
@@ -50,42 +51,31 @@ class RegisterSale
                 'notes' => $data['notes'] ?? null,
             ]);
 
-            if (array_key_exists('items', $data)) {
-                foreach ($data['items'] as $item) {
-                    $product = Product::find($item['product_id'] ?? null);
-                    $sale->items()->create([
-                        'product_id' => $item['product_id'] ?? null,
-                        'description' => $item['description'],
-                        'quantity' => $item['quantity'],
-                        'unit_price' => $item['unit_price'],
-                        'unit_cost' => $item['unit_cost'] ?? 0,
-                        ...SaleItem::taxSnapshotFor($product, $this->seller->company),
-                    ]);
-                }
-                $this->composeCombo($sale, $data['combo'] ?? null);
-                $this->applyAdditions($sale);
-            } else {
-                $this->buildArmados($sale, $data['armados'] ?? []);
-                foreach ($data['products'] ?? [] as $productLine) {
-                    $product = Product::find($productLine['product_id'] ?? null);
-                    $sale->items()->create([
-                        'product_id' => $productLine['product_id'] ?? null,
-                        'description' => $productLine['description'],
-                        'quantity' => $productLine['quantity'] ?? 1,
-                        'unit_price' => $productLine['unit_price'],
-                        'unit_cost' => $productLine['unit_cost'] ?? 0,
-                        ...SaleItem::taxSnapshotFor($product, $this->seller->company),
-                    ]);
-                }
-                $this->applyAdditions($sale);
-                if (empty($data['armados'])) {
-                    $sale->load('items.product.category');
-                    $this->applyFunda($sale);
-                }
-                $this->applyBag($sale);
+            $this->buildArmados($sale, $data['armados'] ?? []);
+            foreach ($data['products'] ?? [] as $productLine) {
+                $product = Product::find($productLine['product_id'] ?? null);
+                $sale->items()->create([
+                    'product_id' => $productLine['product_id'] ?? null,
+                    'description' => $productLine['description'],
+                    'quantity' => $productLine['quantity'] ?? 1,
+                    'unit_price' => $productLine['unit_price'],
+                    'unit_cost' => $productLine['unit_cost'] ?? 0,
+                    ...SaleItem::taxSnapshotFor($product, $this->seller->company),
+                ]);
             }
+            $this->applyAdditions($sale);
+            if (empty($data['armados'])) {
+                $sale->load('items.product.category');
+                $this->applyFunda($sale);
+            }
+            $this->applyBag($sale);
 
             $sale->recalculateTotals();
+
+            $paid = (int) collect($data['payments'] ?? [])->sum(fn (array $p): int => max(0, (int) ($p['amount'] ?? 0)));
+            if ($paid > $sale->total) {
+                throw ValidationException::withMessages(['payments' => __('app.validation.payments_exceed_total')]);
+            }
 
             foreach ($data['payments'] ?? [] as $payment) {
                 if (($payment['amount'] ?? 0) <= 0) {
@@ -132,54 +122,6 @@ class RegisterSale
         );
 
         return $weighted / $totalAmount;
-    }
-
-    /**
-     * Compose a lens combo (or add a funda for a standalone frame).
-     *
-     * @param  array<string,mixed>|null  $combo
-     */
-    private function composeCombo(Sale $sale, ?array $combo): void
-    {
-        // Still eager-loaded for the frame check below.
-        $sale->load('items.product.category');
-        // The legacy `items` payload sells a lens as a plain lens-category Product (no
-        // lensConfig snapshot); the armado payload sells it as a configured lens line.
-        $lensLine = $sale->items->first(fn ($i) => $i->isLens() || $i->product?->category?->key === 'lens');
-
-        if ($lensLine === null) {
-            $this->applyFunda($sale);
-
-            return;
-        }
-
-        $combo ??= ['estuche' => 'small', 'include_liquid' => false, 'include_pano' => true, 'with_exam' => false];
-
-        // Free exam: +20k once on the lens, $0 exam line.
-        if (! empty($combo['with_exam'])) {
-            $lensLine->update(['unit_price' => $lensLine->unit_price + self::EXAM_SURCHARGE]);
-            $this->addZeroLine($sale, self::SKU_EXAM);
-        }
-
-        // Montura included at $0 inside a combo.
-        foreach ($sale->items as $item) {
-            if ($item->product?->category?->key === 'frame' && $item->unit_price !== 0) {
-                $item->update(['unit_price' => 0]);
-            }
-        }
-
-        // Consumables.
-        $estucheSku = ($combo['estuche'] ?? 'small') === 'large' ? 'ACC-ESTUCHE-LARGE' : 'ACC-ESTUCHE-SMALL';
-        $this->addZeroLine($sale, $estucheSku);
-        if (! empty($combo['include_pano'])) {
-            $this->addZeroLine($sale, self::SKU_PANO);
-        }
-        if (! empty($combo['include_liquid'])) {
-            $this->addZeroLine($sale, self::SKU_LIQUIDO);
-        }
-
-        // Bag by merchandise total (subtotal - discount), before surcharge.
-        $this->applyBag($sale);
     }
 
     /** Add each active `product_additions` bundle line for every sold product (e.g. contact-lens solution). */

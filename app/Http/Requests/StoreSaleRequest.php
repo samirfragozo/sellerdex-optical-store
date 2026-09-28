@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests;
 
-use App\Actions\ResolveLensPricing;
 use App\Enums\DocumentType;
 use App\Enums\LensType;
 use App\Enums\SaleDocumentType;
@@ -11,7 +10,6 @@ use App\Models\Sale;
 use App\Rules\Diopter;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\ValidationException;
 use Illuminate\Validation\Validator;
 
 class StoreSaleRequest extends FormRequest
@@ -121,12 +119,6 @@ class StoreSaleRequest extends FormRequest
                 }
             }
 
-            // The sum of every split payment cannot exceed the sale total.
-            $paymentsTotal = collect($this->input('payments', []))->sum(fn ($p) => (int) ($p['amount'] ?? 0));
-            if ($paymentsTotal > $this->saleTotal()) {
-                $validator->errors()->add('payments', 'La suma de los abonos no puede superar el total de la venta.');
-            }
-
             // An eye's axis and cylinder must be provided together.
             foreach (['od', 'os'] as $eye) {
                 $cylinder = $this->input("prescription.{$eye}_cylinder");
@@ -173,59 +165,6 @@ class StoreSaleRequest extends FormRequest
     protected function cartHasLens(): bool
     {
         return ! empty($this->input('armados'));
-    }
-
-    /**
-     * Price one armado's lens the same way RegisterSale does: a seller-entered
-     * override wins, otherwise the catalog price resolved from the selected
-     * configuration. Any pricing-validation failure contributes 0 — this is only
-     * an estimate for the payment-sum guard; the real validation happens in
-     * `rules()` and in RegisterSale itself.
-     *
-     * @param  array<string, mixed>  $lens
-     */
-    protected function estimatedLensPrice(array $lens): int
-    {
-        if (isset($lens['price_override'])) {
-            return (int) $lens['price_override'];
-        }
-
-        try {
-            return (new ResolveLensPricing)->handle(
-                (int) ($lens['lens_type_id'] ?? 0),
-                (int) ($lens['lens_technology_id'] ?? 0),
-                (int) ($lens['lens_material_id'] ?? 0),
-                (int) ($lens['lens_package_id'] ?? 0),
-                array_values(array_map('intval', array_filter((array) ($lens['treatment_ids'] ?? []), 'is_scalar'))),
-            )['price'];
-        } catch (ValidationException) {
-            return 0;
-        }
-    }
-
-    /**
-     * Compute an estimated sale total from the submitted armados/products, discount
-     * and surcharge — used only to bound the sum of split payments. Prices are
-     * tax-inclusive, so tax never adds to it. This mirrors Sale::recalculateTotals().
-     */
-    protected function saleTotal(): int
-    {
-        $armados = collect($this->input('armados', []))->sum(function ($armado): int {
-            $lens = $this->estimatedLensPrice((array) ($armado['lens'] ?? [])) * (int) ($armado['lens']['quantity'] ?? 1);
-            $frame = empty($armado['own_frame']) && ! empty($armado['frame'])
-                ? (int) ($armado['frame']['unit_price'] ?? 0) * (int) ($armado['frame']['quantity'] ?? 1)
-                : 0;
-
-            return $lens + $frame;
-        });
-
-        $products = collect($this->input('products', []))->sum(fn ($p): int => (int) ($p['quantity'] ?? 0) * (int) ($p['unit_price'] ?? 0));
-
-        $subtotal = $armados + $products;
-        $discount = (int) round($subtotal * ((float) $this->input('discount_percent', 0)) / 100);
-        $base = max(0, $subtotal - $discount);
-
-        return (int) round($base * (1 + ((float) $this->input('surcharge_percent', 0)) / 100));
     }
 
     /**
