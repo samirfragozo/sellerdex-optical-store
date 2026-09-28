@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Enums\LensType;
 use App\Models\LensCombination;
 use App\Models\LensMaterial;
-use App\Models\LensPackage;
 use App\Models\LensTechnology;
 use App\Models\LensTreatment;
 use App\Models\LensType as LensTypeModel;
@@ -80,7 +79,6 @@ class PosController extends Controller
                 'technologies' => LensTechnology::query()->where('is_active', true)->orderBy('sort_order')->get(['id', 'name']),
                 'materials' => LensMaterial::query()->where('is_active', true)->orderBy('sort_order')->get(['id', 'name']),
                 'treatments' => LensTreatment::query()->where('is_active', true)->orderBy('sort_order')->get(['id', 'name', 'price', 'cost']),
-                'packages' => LensPackage::query()->where('is_active', true)->orderBy('sort_order')->get(['id', 'name', 'price', 'cost']),
                 'combinations' => LensCombination::query()->where('is_active', true)
                     ->get(['id', 'lens_type_id', 'lens_technology_id', 'lens_material_id', 'cost', 'price', 'installation_price']),
             ],

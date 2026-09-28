@@ -2,7 +2,6 @@
 
 use App\Models\Customer;
 use App\Models\LensCombination;
-use App\Models\LensPackage;
 use App\Models\LensTreatment;
 use App\Models\PaymentMethod;
 use App\Models\Supplier;
@@ -27,7 +26,6 @@ beforeEach(function () {
         'price' => 20_000,
         'installation_price' => 5_000,
     ]);
-    $this->package = LensPackage::factory()->create(['price' => 30_000, 'cost' => 10_000]);
     $this->treatment = LensTreatment::factory()->create(['price' => 70_000, 'cost' => 20_000]);
 });
 
@@ -49,7 +47,6 @@ function lensSalePayload(int $paymentAmount, array $lensExtra = []): array
                 'lens_type_id' => test()->combination->lens_type_id,
                 'lens_technology_id' => test()->combination->lens_technology_id,
                 'lens_material_id' => test()->combination->lens_material_id,
-                'lens_package_id' => test()->package->id,
                 'treatment_ids' => [test()->treatment->id],
             ], $lensExtra),
         ]],
@@ -61,14 +58,14 @@ it('accepts a payment equal to the catalog-resolved lens total', function () {
     openCashRegisterSession($this->seller);
     Supplier::factory()->laboratory()->create(['company_id' => $this->seller->company_id]);
 
-    $this->postJson('/pos', lensSalePayload(125_000))->assertOk();
+    $this->postJson('/pos', lensSalePayload(95_000))->assertOk();
 });
 
 it('still rejects a payment above the catalog-resolved lens total', function () {
     openCashRegisterSession($this->seller);
     Supplier::factory()->laboratory()->create(['company_id' => $this->seller->company_id]);
 
-    $this->postJson('/pos', lensSalePayload(125_001))
+    $this->postJson('/pos', lensSalePayload(95_001))
         ->assertJsonValidationErrors(['payments' => 'La suma de los abonos no puede superar el total de la venta.']);
 });
 
@@ -84,10 +81,10 @@ it('does not blow up when the selected lens configuration is not resolvable', fu
     openCashRegisterSession($this->seller);
     Supplier::factory()->laboratory()->create(['company_id' => $this->seller->company_id]);
 
-    // An inactive package still passes `exists:` but fails ResolveLensPricing in
-    // StoreSaleRequest's rules(), which rejects the sale before RegisterSale ever
-    // computes a real total — the payments guard never even runs.
-    $this->package->update(['is_active' => false]);
+    // An inactive treatment still passes `exists:` but fails ResolveLensPricing,
+    // which rejects the sale before RegisterSale ever computes a real total — the
+    // payments guard never even runs.
+    $this->treatment->update(['is_active' => false]);
 
     $this->postJson('/pos', lensSalePayload(1))
         ->assertJsonValidationErrors('lens');

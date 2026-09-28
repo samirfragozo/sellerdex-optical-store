@@ -6,7 +6,6 @@ use App\Enums\TaxTreatment;
 use App\Enums\VatRegime;
 use App\Models\Customer;
 use App\Models\LensCombination;
-use App\Models\LensPackage;
 use App\Models\Option;
 use App\Models\OptionGroup;
 use App\Models\PaymentMethod;
@@ -72,7 +71,6 @@ it('never taxes lines for a company that is not VAT responsible', function () {
 
 it('taxes an armado lens with its combination tax, falling back to the lens category tax', function () {
     $combination = LensCombination::factory()->create(['price' => 119_000, 'cost' => 1, 'installation_price' => 0, 'tax_id' => $this->iva19->id]);
-    $package = LensPackage::factory()->create(['price' => 0, 'cost' => 0]);
     $customer = Customer::factory()->create();
 
     $sale = app(RegisterSale::class)->handle([
@@ -81,7 +79,6 @@ it('taxes an armado lens with its combination tax, falling back to the lens cate
         'armados' => [['lens' => [
             'description' => 'Lente', 'lens_type_id' => $combination->lens_type_id,
             'lens_technology_id' => $combination->lens_technology_id, 'lens_material_id' => $combination->lens_material_id,
-            'lens_package_id' => $package->id, 'treatment_ids' => [],
         ], 'own_frame' => true]],
     ], $this->seller);
 
@@ -94,7 +91,6 @@ it('taxes an armado lens with its combination tax, falling back to the lens cate
 it('falls back to the lens category default tax when the combination has none', function () {
     ProductCategory::factory()->create(['key' => 'lens', 'default_tax_id' => $this->iva19->id]);
     $combination = LensCombination::factory()->create(['price' => 119_000, 'cost' => 1, 'installation_price' => 0, 'tax_id' => null]);
-    $package = LensPackage::factory()->create(['price' => 0, 'cost' => 0]);
 
     $sale = app(RegisterSale::class)->handle([
         'customer_id' => Customer::factory()->create()->id,
@@ -102,7 +98,6 @@ it('falls back to the lens category default tax when the combination has none', 
         'armados' => [['lens' => [
             'description' => 'Lente', 'lens_type_id' => $combination->lens_type_id,
             'lens_technology_id' => $combination->lens_technology_id, 'lens_material_id' => $combination->lens_material_id,
-            'lens_package_id' => $package->id, 'treatment_ids' => [],
         ], 'own_frame' => true]],
     ], $this->seller);
 

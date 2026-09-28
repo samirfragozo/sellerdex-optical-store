@@ -4,7 +4,6 @@ use App\Models\CashRegisterSession;
 use App\Models\Customer;
 use App\Models\LensCombination;
 use App\Models\LensMaterial;
-use App\Models\LensPackage;
 use App\Models\LensTechnology;
 use App\Models\LensType;
 use App\Models\PaymentMethod;
@@ -36,7 +35,6 @@ it('offers a prescription created earlier in the session as an existing option',
         'lens_material_id' => $material->id,
         'company_id' => $seller->company_id,
     ]);
-    $package = LensPackage::factory()->create(['name' => 'Básico', 'company_id' => $seller->company_id]);
 
     $customer = Customer::factory()->create(['company_id' => $seller->company_id, 'name' => 'Ana', 'last_name' => 'Gómez', 'id_number' => '99999999']);
 
@@ -54,7 +52,6 @@ it('offers a prescription created earlier in the session as an existing option',
         ->click('button:has-text("'.$type->name.'")')
         ->click('button:has-text("'.$technology->name.'")')
         ->click('button:has-text("'.$material->name.'")')
-        ->click('button:has-text("'.$package->name.'")')
         ->click('button:has-text("Continuar a la montura")')
         ->click('text=El cliente trae su montura')
         ->click('button:has-text("Continuar al combo")')

@@ -2,13 +2,12 @@
 
 use App\Enums\VatRegime;
 use App\Models\LensCombination;
-use App\Models\LensPackage;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\Sale;
 use App\Models\User;
 
-/** @return array{lens: LensCombination, package: LensPackage, frame: Product, sunglasses: Product, exam: Product} */
+/** @return array{lens: LensCombination, frame: Product, sunglasses: Product, exam: Product} */
 function goldenCatalog(User $seller): array
 {
     // Golden values are pre-tax-agnostic: a non-responsible shop never taxes lines.
@@ -35,7 +34,6 @@ function goldenCatalog(User $seller): array
 
     return [
         'lens' => LensCombination::factory()->create(['price' => 180_000, 'cost' => 60_000, 'installation_price' => 0]),
-        'package' => LensPackage::factory()->create(['price' => 0, 'cost' => 0]),
         'frame' => $product('frame', 'FRAME', 'Montura Golden', 150_000, 60_000),
         'sunglasses' => $product('sunglasses', 'SUNGLASSES', 'Gafas de sol Golden', 250_000, 100_000),
         'exam' => $exam,

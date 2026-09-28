@@ -18,7 +18,6 @@ export interface ArmadoLensLine {
     lens_type_id: number;
     lens_technology_id: number;
     lens_material_id: number;
-    lens_package_id: number;
     treatment_ids: number[];
     /** Resolved client-side for the cart preview only; the backend recomputes it. */
     price: number;
@@ -156,7 +155,6 @@ export function usePosCart() {
                         lens_type_id: a.lens!.lens_type_id,
                         lens_technology_id: a.lens!.lens_technology_id,
                         lens_material_id: a.lens!.lens_material_id,
-                        lens_package_id: a.lens!.lens_package_id,
                         treatment_ids: a.lens!.treatment_ids,
                     },
                     frame: a.own_frame ? null : a.frame,

@@ -22,7 +22,6 @@ function goldenLens(array $catalog): array
         'lens_type_id' => $catalog['lens']->lens_type_id,
         'lens_technology_id' => $catalog['lens']->lens_technology_id,
         'lens_material_id' => $catalog['lens']->lens_material_id,
-        'lens_package_id' => $catalog['package']->id,
         'treatment_ids' => [],
     ];
 }

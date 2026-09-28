@@ -3,7 +3,6 @@
 use App\Enums\VatRegime;
 use App\Filament\Pages\Onboarding;
 use App\Models\LensCombination;
-use App\Models\LensPackage;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\Sale;
@@ -66,7 +65,6 @@ it('lets a brand-new shop register, finish the onboarding and sell prescription 
                 'lens_type_id' => $combination->lens_type_id,
                 'lens_technology_id' => $combination->lens_technology_id,
                 'lens_material_id' => $combination->lens_material_id,
-                'lens_package_id' => LensPackage::sole()->id,
                 'treatment_ids' => [],
             ],
             'own_frame' => true,

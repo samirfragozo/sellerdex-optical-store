@@ -188,7 +188,6 @@ class RegisterSale
                 (int) $lens['lens_type_id'],
                 (int) $lens['lens_technology_id'],
                 (int) $lens['lens_material_id'],
-                (int) $lens['lens_package_id'],
                 $lens['treatment_ids'] ?? [],
             );
 
@@ -202,7 +201,6 @@ class RegisterSale
             }
 
             $combination = $resolved['combination'];
-            $package = $resolved['package'];
 
             $lensItem = $sale->items()->create([
                 'group_key' => $groupKey,
@@ -222,10 +220,6 @@ class RegisterSale
                 'combination_cost' => $combination->cost,
                 'combination_price' => $combination->price,
                 'installation_price' => $combination->installation_price,
-                'lens_package_id' => $package->id,
-                'package_name' => $package->name,
-                'package_price' => $package->price,
-                'package_cost' => $package->cost,
             ]);
 
             foreach ($resolved['treatments'] as $treatment) {

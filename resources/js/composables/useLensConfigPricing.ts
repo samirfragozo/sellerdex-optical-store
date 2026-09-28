@@ -1,12 +1,12 @@
 // resources/js/composables/useLensConfigPricing.ts
-import { computed, ref, type Ref } from 'vue';
+import { computed, ref  } from 'vue';
+import type {Ref} from 'vue';
 import type { LensCatalogProp, LensCombinationProp } from '@/composables/useLensCatalog';
 
 export function useLensConfigPricing(catalog: Ref<LensCatalogProp>) {
     const typeId = ref<number | null>(null);
     const technologyId = ref<number | null>(null);
     const materialId = ref<number | null>(null);
-    const packageId = ref<number | null>(null);
     const treatmentIds = ref<number[]>([]);
 
     const combination = computed<LensCombinationProp | null>(() => {
@@ -24,17 +24,11 @@ export function useLensConfigPricing(catalog: Ref<LensCatalogProp>) {
         );
     });
 
-    const selectedPackage = computed(() =>
-        catalog.value.packages.find((p) => p.id === packageId.value) ?? null,
-    );
-
     const selectedTreatments = computed(() =>
         catalog.value.treatments.filter((t) => treatmentIds.value.includes(t.id)),
     );
 
-    const isComplete = computed(
-        () => combination.value !== null && selectedPackage.value !== null,
-    );
+    const isComplete = computed(() => combination.value !== null);
 
     const resolvedPrice = computed<number>(() => {
         if (!isComplete.value) {
@@ -44,7 +38,6 @@ export function useLensConfigPricing(catalog: Ref<LensCatalogProp>) {
         return (
             (combination.value as LensCombinationProp).price +
             (combination.value as LensCombinationProp).installation_price +
-            (selectedPackage.value?.price ?? 0) +
             selectedTreatments.value.reduce((sum, t) => sum + t.price, 0)
         );
     });
@@ -56,7 +49,6 @@ export function useLensConfigPricing(catalog: Ref<LensCatalogProp>) {
 
         return (
             (combination.value as LensCombinationProp).cost +
-            (selectedPackage.value?.cost ?? 0) +
             selectedTreatments.value.reduce((sum, t) => sum + t.cost, 0)
         );
     });
@@ -76,10 +68,6 @@ export function useLensConfigPricing(catalog: Ref<LensCatalogProp>) {
         materialId.value = id;
     }
 
-    function selectPackage(id: number): void {
-        packageId.value = id;
-    }
-
     function toggleTreatment(id: number): void {
         treatmentIds.value = treatmentIds.value.includes(id)
             ? treatmentIds.value.filter((t) => t !== id)
@@ -90,7 +78,6 @@ export function useLensConfigPricing(catalog: Ref<LensCatalogProp>) {
         typeId.value = null;
         technologyId.value = null;
         materialId.value = null;
-        packageId.value = null;
         treatmentIds.value = [];
     }
 
@@ -98,10 +85,8 @@ export function useLensConfigPricing(catalog: Ref<LensCatalogProp>) {
         typeId,
         technologyId,
         materialId,
-        packageId,
         treatmentIds,
         combination,
-        selectedPackage,
         selectedTreatments,
         isComplete,
         resolvedPrice,
@@ -109,7 +94,6 @@ export function useLensConfigPricing(catalog: Ref<LensCatalogProp>) {
         selectType,
         selectTechnology,
         selectMaterial,
-        selectPackage,
         toggleTreatment,
         reset,
     };

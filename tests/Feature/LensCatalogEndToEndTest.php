@@ -2,7 +2,6 @@
 
 use App\Models\LensCombination;
 use App\Models\LensMaterial;
-use App\Models\LensPackage;
 use App\Models\LensTechnology;
 use App\Models\LensTreatment;
 use App\Models\LensType;
@@ -28,7 +27,6 @@ it('registra una venta de lente completa desde el POS y genera su orden de labor
         'price' => 180000,
         'installation_price' => 3000,
     ]);
-    $package = LensPackage::factory()->create(['company_id' => $seller->company_id, 'price' => 40000, 'cost' => 15000]);
     $treatment = LensTreatment::factory()->create(['company_id' => $seller->company_id, 'price' => 50000, 'cost' => 20000]);
 
     $response = $this->postJson(route('pos.store'), [
@@ -45,7 +43,6 @@ it('registra una venta de lente completa desde el POS y genera su orden de labor
                 'lens_type_id' => $combination->lens_type_id,
                 'lens_technology_id' => $combination->lens_technology_id,
                 'lens_material_id' => $combination->lens_material_id,
-                'lens_package_id' => $package->id,
                 'treatment_ids' => [$treatment->id],
             ],
             'own_frame' => true,
@@ -60,7 +57,7 @@ it('registra una venta de lente completa desde el POS y genera su orden de labor
     $lensItem = $sale->items->first(fn ($i) => $i->isLens());
 
     expect($lensItem)->not->toBeNull()
-        ->and($lensItem->unit_price)->toBe(180000 + 3000 + 40000 + 50000)
+        ->and($lensItem->unit_price)->toBe(180000 + 3000 + 50000)
         ->and($lensItem->lensOrder)->not->toBeNull()
         ->and($lensItem->lensConfig->treatments()->count())->toBe(1);
 });

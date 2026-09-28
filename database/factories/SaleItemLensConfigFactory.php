@@ -27,10 +27,6 @@ class SaleItemLensConfigFactory extends Factory
             'combination_cost' => 60000,
             'combination_price' => 180000,
             'installation_price' => 3000,
-            'lens_package_id' => null,
-            'package_name' => 'Básico',
-            'package_price' => 40000,
-            'package_cost' => 15000,
         ];
     }
 }

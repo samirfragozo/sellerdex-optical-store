@@ -3,7 +3,6 @@
 use App\Actions\RegisterSale;
 use App\Models\Customer;
 use App\Models\LensCombination;
-use App\Models\LensPackage;
 use App\Models\Option;
 use App\Models\OptionGroup;
 use App\Models\Product;
@@ -16,7 +15,6 @@ it('sells a frame variant and decrements its own stock, not the base or a siblin
     $this->actingAs($seller);
 
     $combination = LensCombination::factory()->create();
-    $package = LensPackage::factory()->create();
 
     $frameCategory = ProductCategory::factory()->create(['key' => 'frame']);
     $base = Product::factory()->create(['product_category_id' => $frameCategory->id, 'is_stockable' => false, 'stock' => null]);
@@ -53,7 +51,6 @@ it('sells a frame variant and decrements its own stock, not the base or a siblin
                 'lens_type_id' => $combination->lens_type_id,
                 'lens_technology_id' => $combination->lens_technology_id,
                 'lens_material_id' => $combination->lens_material_id,
-                'lens_package_id' => $package->id,
                 'treatment_ids' => [],
             ],
             'own_frame' => false,

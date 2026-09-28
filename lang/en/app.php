@@ -45,7 +45,6 @@ return [
         'lens_technology' => ['label' => 'Manufacturing technology', 'plural' => 'Manufacturing technologies', 'nav' => 'Manufacturing technologies'],
         'lens_material' => ['label' => 'Lens material', 'plural' => 'Lens materials', 'nav' => 'Lens materials'],
         'lens_treatment' => ['label' => 'Functional treatment', 'plural' => 'Functional treatments', 'nav' => 'Functional treatments'],
-        'lens_package' => ['label' => 'Lens package', 'plural' => 'Lens packages', 'nav' => 'Lens packages'],
         'lens_combination' => ['label' => 'Lens combination', 'plural' => 'Lens combinations', 'nav' => 'Lens combinations', 'duplicate' => 'A combination with this type, technology and material already exists.'],
         'payment_method' => ['label' => 'Payment method', 'plural' => 'Payment methods', 'nav' => 'Payment methods'],
         'expense' => ['label' => 'Expense', 'plural' => 'Expenses', 'nav' => 'Expenses'],
@@ -366,9 +365,7 @@ return [
             'pick_technology' => 'Manufacturing technology',
             'pick_material' => 'Material',
             'pick_treatments' => 'Functional treatments',
-            'pick_package' => 'Package',
             'invalid_combination' => 'That type, technology and material combination is not available.',
-            'invalid_package' => 'The selected package is not valid.',
             'invalid_treatment' => 'One or more selected treatments are not valid.',
         ],
 

@@ -69,7 +69,6 @@ class StoreSaleRequest extends FormRequest
             'armados.*.lens.lens_type_id' => ['required', 'exists:lens_types,id'],
             'armados.*.lens.lens_technology_id' => ['required', 'exists:lens_technologies,id'],
             'armados.*.lens.lens_material_id' => ['required', 'exists:lens_materials,id'],
-            'armados.*.lens.lens_package_id' => ['required', 'exists:lens_packages,id'],
             'armados.*.lens.treatment_ids' => ['nullable', 'array'],
             'armados.*.lens.treatment_ids.*' => ['integer', 'exists:lens_treatments,id'],
             'armados.*.frame' => ['nullable', 'array'],

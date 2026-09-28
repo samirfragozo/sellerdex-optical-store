@@ -1,7 +1,6 @@
 <?php
 
 use App\Models\LensCombination;
-use App\Models\LensPackage;
 use App\Models\PaymentMethod;
 use App\Models\Product;
 use App\Models\Supplier;
@@ -15,7 +14,6 @@ beforeEach(function () {
     PaymentMethod::factory()->create(['company_id' => $this->seller->company_id, 'is_active' => true]);
     $this->lab = Supplier::factory()->create(['company_id' => $this->seller->company_id, 'is_laboratory' => true, 'is_active' => true, 'lead_time_days' => 3]);
     $this->combination = LensCombination::factory()->create(['company_id' => $this->seller->company_id, 'price' => 100000, 'is_active' => true]);
-    $this->package = LensPackage::factory()->create(['company_id' => $this->seller->company_id]);
 });
 
 it('shares readiness issues with the POS', function () {
@@ -50,7 +48,6 @@ it('refuses a lens sale when the only laboratory was deactivated but still sells
                 'lens_type_id' => $this->combination->lens_type_id,
                 'lens_technology_id' => $this->combination->lens_technology_id,
                 'lens_material_id' => $this->combination->lens_material_id,
-                'lens_package_id' => $this->package->id,
                 'treatment_ids' => [],
             ],
             'own_frame' => true,

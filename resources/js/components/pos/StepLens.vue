@@ -19,7 +19,6 @@ const {
     typeId,
     technologyId,
     materialId,
-    packageId,
     treatmentIds,
     combination,
     selectedTreatments,
@@ -29,7 +28,6 @@ const {
     selectType,
     selectTechnology,
     selectMaterial,
-    selectPackage,
     toggleTreatment,
 } = useLensConfigPricing(computed(() => props.catalog));
 
@@ -72,14 +70,13 @@ const description = computed(() =>
 );
 
 const config = computed<ArmadoLensLine | null>(() =>
-    isComplete.value && packageId.value !== null
+    isComplete.value
         ? {
               description: description.value,
               quantity: 1,
               lens_type_id: typeId.value as number,
               lens_technology_id: technologyId.value as number,
               lens_material_id: materialId.value as number,
-              lens_package_id: packageId.value,
               treatment_ids: treatmentIds.value,
               price: resolvedPrice.value,
               cost: resolvedCost.value,
@@ -93,7 +90,6 @@ if (props.initial) {
     selectType(props.initial.lens_type_id);
     selectTechnology(props.initial.lens_technology_id);
     selectMaterial(props.initial.lens_material_id);
-    selectPackage(props.initial.lens_package_id);
     props.initial.treatment_ids.forEach(toggleTreatment);
 }
 
@@ -194,25 +190,6 @@ const chip = (active: boolean) =>
                     @click="toggleTreatment(t.id)"
                 >
                     {{ t.name }}
-                </button>
-            </div>
-        </div>
-
-        <!-- 5. Paquete -->
-        <div v-if="combination !== null">
-            <span class="mb-1 block text-sm font-medium">{{
-                trans('app.pos.lens_form.pick_package')
-            }}</span>
-            <div class="flex flex-wrap gap-2">
-                <button
-                    v-for="p in catalog.packages"
-                    :key="p.id"
-                    type="button"
-                    :aria-pressed="packageId === p.id"
-                    :class="chip(packageId === p.id)"
-                    @click="selectPackage(p.id)"
-                >
-                    {{ p.name }}
                 </button>
             </div>
         </div>

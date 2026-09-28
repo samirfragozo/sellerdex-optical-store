@@ -7,13 +7,11 @@ use App\Models\ExpenseCategory;
 use App\Models\PaymentMethod;
 use App\Models\ProductCategory;
 use App\Models\Tax;
-use Database\Seeders\LensPackageSeeder;
 
 /**
  * Provisions the minimal generic data a brand-new company needs to be usable:
  * a default cash payment method, the structural product categories, generic
- * expense categories, the default lens package and the common Colombian
- * taxes. Products are created by the shop in the onboarding. Called once,
+ * expense categories and the common Colombian taxes. Products are created by the shop in the onboarding. Called once,
  * right after a Company is created (self-registration and the superadmin
  * panel).
  */
@@ -55,7 +53,5 @@ class SeedCompanyDefaults
                 'is_active' => true,
             ]);
         }
-
-        (new LensPackageSeeder)->handle($company->id);
     }
 }

@@ -68,13 +68,6 @@ export interface LensTreatmentProp {
     cost: number;
 }
 
-export interface LensPackageProp {
-    id: number;
-    name: string;
-    price: number;
-    cost: number;
-}
-
 export interface LensCombinationProp {
     id: number;
     lens_type_id: number;
@@ -90,7 +83,6 @@ export interface LensCatalogProp {
     technologies: LensTechnologyProp[];
     materials: LensMaterialProp[];
     treatments: LensTreatmentProp[];
-    packages: LensPackageProp[];
     combinations: LensCombinationProp[];
 }
 

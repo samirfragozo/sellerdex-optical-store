@@ -4,7 +4,6 @@ use App\Actions\RegisterSale;
 use App\Enums\LensOrderStatus;
 use App\Models\Customer;
 use App\Models\LensCombination;
-use App\Models\LensPackage;
 use App\Models\LensTreatment;
 use App\Models\User;
 use Illuminate\Validation\ValidationException;
@@ -21,7 +20,6 @@ beforeEach(function () {
         'price' => 20000,
         'installation_price' => 5000,
     ]);
-    $this->package = LensPackage::factory()->create(['price' => 30000, 'cost' => 10000]);
     $this->treatment = LensTreatment::factory()->create(['price' => 70000, 'cost' => 20000]);
 });
 
@@ -36,7 +34,6 @@ function armadoLens(array $extra = []): array
         'lens_type_id' => test()->combination->lens_type_id,
         'lens_technology_id' => test()->combination->lens_technology_id,
         'lens_material_id' => test()->combination->lens_material_id,
-        'lens_package_id' => test()->package->id,
         'treatment_ids' => [test()->treatment->id],
     ], $extra);
 }
@@ -51,14 +48,13 @@ it('prices an armado lens from its resolved configuration and snapshots it', fun
     $lensItem = $sale->items->first(fn ($i) => $i->isLens());
 
     expect($lensItem->product_id)->toBeNull()
-        ->and($lensItem->unit_price)->toBe(125000)
-        ->and($lensItem->unit_cost)->toBe(40000)
+        ->and($lensItem->unit_price)->toBe(95000)
+        ->and($lensItem->unit_cost)->toBe(30000)
         ->and($lensItem->lensConfig->lens_combination_id)->toBe($this->combination->id)
         ->and($lensItem->lensConfig->type_name)->toBe($this->combination->lensType->name)
         ->and($lensItem->lensConfig->technology_name)->toBe($this->combination->lensTechnology->name)
         ->and($lensItem->lensConfig->material_name)->toBe($this->combination->lensMaterial->name)
         ->and($lensItem->lensConfig->installation_price)->toBe($this->combination->installation_price)
-        ->and($lensItem->lensConfig->package_name)->toBe($this->package->name)
         ->and($lensItem->lensConfig->treatments->pluck('name')->all())->toBe([$this->treatment->name]);
 });
 
@@ -73,7 +69,7 @@ it('lets a seller-entered price_override win over the computed catalog price', f
 
     expect($lensItem->unit_price)->toBe(80000)
         // cost tracking still reflects the real resolved catalog cost, override or not.
-        ->and($lensItem->unit_cost)->toBe(40000);
+        ->and($lensItem->unit_cost)->toBe(30000);
 });
 
 it('auto-creates a pending-assignment lens order for every lens line', function () {
@@ -109,6 +105,6 @@ it('ignores a client-sent unit_price and prices the lens from the catalog', func
 
     $lensItem = $sale->items->first(fn ($i) => $i->isLens());
 
-    expect($lensItem->unit_price)->toBe(125000)
-        ->and($lensItem->unit_cost)->toBe(40000);
+    expect($lensItem->unit_price)->toBe(95000)
+        ->and($lensItem->unit_cost)->toBe(30000);
 });

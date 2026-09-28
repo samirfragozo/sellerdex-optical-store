@@ -5,7 +5,6 @@ use App\Models\Company;
 use App\Models\Customer;
 use App\Models\LensCombination;
 use App\Models\LensMaterial;
-use App\Models\LensPackage;
 use App\Models\LensTechnology;
 use App\Models\LensType;
 use App\Models\Option;
@@ -197,7 +196,7 @@ function lensProduct(): Product
 }
 
 /**
- * Build a valid `armados.*.lens` payload against a real LensCombination + LensPackage,
+ * Build a valid `armados.*.lens` payload against a real LensCombination,
  * scoped to $company (or the acting user's own company_id when omitted).
  *
  * @return array<string, mixed>
@@ -210,14 +209,12 @@ function lensArmadoLens(?int $companyId = null, array $overrides = []): array
         'lens_technology_id' => LensTechnology::factory()->create(['company_id' => $companyId])->id,
         'lens_material_id' => LensMaterial::factory()->create(['company_id' => $companyId])->id,
     ]);
-    $package = LensPackage::factory()->create(['company_id' => $companyId]);
 
     return array_merge([
         'description' => 'Lente',
         'lens_type_id' => $combination->lens_type_id,
         'lens_technology_id' => $combination->lens_technology_id,
         'lens_material_id' => $combination->lens_material_id,
-        'lens_package_id' => $package->id,
     ], $overrides);
 }
 

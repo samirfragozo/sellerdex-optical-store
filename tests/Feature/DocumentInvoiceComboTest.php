@@ -4,7 +4,6 @@ use App\Actions\RegisterSale;
 use App\Models\Company;
 use App\Models\Customer;
 use App\Models\LensCombination;
-use App\Models\LensPackage;
 use App\Models\PaymentMethod;
 use App\Models\Product;
 use App\Models\ProductCategory;
@@ -31,7 +30,6 @@ it('renders a combo invoice with free exam, included lines and the surcharged to
     $this->actingAs($seller);
 
     $combination = LensCombination::factory()->create(['price' => 295000, 'cost' => 6000, 'installation_price' => 0]);
-    $package = LensPackage::factory()->create(['price' => 0, 'cost' => 0]);
     $addi = PaymentMethod::where('name', 'Addi')->first(); // 7%
 
     $sale = app(RegisterSale::class)->handle([
@@ -43,7 +41,6 @@ it('renders a combo invoice with free exam, included lines and the surcharged to
                 'lens_type_id' => $combination->lens_type_id,
                 'lens_technology_id' => $combination->lens_technology_id,
                 'lens_material_id' => $combination->lens_material_id,
-                'lens_package_id' => $package->id,
                 'treatment_ids' => [],
             ],
             'own_frame' => true,

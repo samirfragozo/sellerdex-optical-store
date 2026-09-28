@@ -3,7 +3,6 @@
 use App\Actions\SeedCompanyDefaults;
 use App\Models\Company;
 use App\Models\ExpenseCategory;
-use App\Models\LensPackage;
 use App\Models\PaymentMethod;
 use App\Models\Product;
 use App\Models\ProductCategory;
@@ -70,17 +69,6 @@ it('does not seed any product: the shop creates its own in the onboarding', func
     (new SeedCompanyDefaults)->handle($company);
 
     expect(Product::where('company_id', $company->id)->count())->toBe(0);
-});
-
-it('seeds the default lens package for the company', function () {
-    $company = Company::factory()->create();
-
-    (new SeedCompanyDefaults)->handle($company);
-
-    $package = LensPackage::withoutGlobalScopes()->where('company_id', $company->id)->first();
-    expect($package)->not->toBeNull()
-        ->and($package->name)->toBe('Básico')
-        ->and($package->is_active)->toBeTrue();
 });
 
 it('seeds the default taxes for the company', function () {

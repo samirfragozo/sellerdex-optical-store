@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['sale_item_id', 'lens_combination_id', 'type_name', 'technology_name', 'material_name', 'combination_cost', 'combination_price', 'installation_price', 'lens_package_id', 'package_name', 'package_price', 'package_cost'])]
+#[Fillable(['sale_item_id', 'lens_combination_id', 'type_name', 'technology_name', 'material_name', 'combination_cost', 'combination_price', 'installation_price'])]
 class SaleItemLensConfig extends Model
 {
     /** @use HasFactory<SaleItemLensConfigFactory> */
@@ -21,8 +21,6 @@ class SaleItemLensConfig extends Model
             'combination_cost' => 'integer',
             'combination_price' => 'integer',
             'installation_price' => 'integer',
-            'package_price' => 'integer',
-            'package_cost' => 'integer',
         ];
     }
 
@@ -34,11 +32,6 @@ class SaleItemLensConfig extends Model
     public function lensCombination(): BelongsTo
     {
         return $this->belongsTo(LensCombination::class);
-    }
-
-    public function lensPackage(): BelongsTo
-    {
-        return $this->belongsTo(LensPackage::class);
     }
 
     public function treatments(): HasMany

@@ -3,7 +3,6 @@
 use App\Actions\RegisterSale;
 use App\Models\Customer;
 use App\Models\LensCombination;
-use App\Models\LensPackage;
 use App\Models\LensTreatment;
 use App\Models\Product;
 use App\Models\Sale;
@@ -31,7 +30,7 @@ function seedCatalog(): void
 
 /**
  * A valid `armados.*.lens` payload backed by a freshly created catalog combination,
- * package and treatment. `$prices` overrides the combination's own price/cost.
+ * and treatment. `$prices` overrides the combination's own price/cost.
  *
  * @param  array<string,int>  $prices
  * @return array<string,mixed>
@@ -39,7 +38,6 @@ function seedCatalog(): void
 function lensPayload(array $prices = [], array $extra = []): array
 {
     $combination = LensCombination::factory()->create($prices);
-    $package = LensPackage::factory()->create(['price' => 0, 'cost' => 0]);
 
     return array_merge([
         'description' => 'Lente formulado',
@@ -47,7 +45,6 @@ function lensPayload(array $prices = [], array $extra = []): array
         'lens_type_id' => $combination->lens_type_id,
         'lens_technology_id' => $combination->lens_technology_id,
         'lens_material_id' => $combination->lens_material_id,
-        'lens_package_id' => $package->id,
         'treatment_ids' => [],
     ], $extra);
 }
@@ -70,7 +67,6 @@ it('persists group_key on a sale item', function () {
 
 it('registra un lente con su configuración y tratamientos resueltos', function () {
     $combination = LensCombination::factory()->create(['cost' => 60000, 'price' => 180000, 'installation_price' => 3000]);
-    $package = LensPackage::factory()->create(['price' => 40000, 'cost' => 15000]);
     $treatment = LensTreatment::factory()->create(['price' => 50000, 'cost' => 20000]);
 
     $sale = (new RegisterSale)->handle([
@@ -82,7 +78,6 @@ it('registra un lente con su configuración y tratamientos resueltos', function 
                 'lens_type_id' => $combination->lens_type_id,
                 'lens_technology_id' => $combination->lens_technology_id,
                 'lens_material_id' => $combination->lens_material_id,
-                'lens_package_id' => $package->id,
                 'treatment_ids' => [$treatment->id],
             ],
             'own_frame' => true,
@@ -91,8 +86,8 @@ it('registra un lente con su configuración y tratamientos resueltos', function 
 
     $lensItem = $sale->items->first(fn ($i) => $i->isLens());
 
-    expect($lensItem->unit_price)->toBe(180000 + 3000 + 40000 + 50000)
-        ->and($lensItem->unit_cost)->toBe(60000 + 15000 + 20000)
+    expect($lensItem->unit_price)->toBe(180000 + 3000 + 50000)
+        ->and($lensItem->unit_cost)->toBe(60000 + 20000)
         ->and($lensItem->lensConfig->treatments()->count())->toBe(1)
         ->and($lensItem->lensOrder)->not->toBeNull();
 });
