@@ -117,7 +117,7 @@ it('lets a new shop onboard with its own counter products and combo and sell an 
     $this->postJson(route('pos.store'), [
         'document_type' => 'order',
         'customer' => ['name' => 'Ana', 'last_name' => 'Pérez', 'document_type' => 'cc', 'id_number' => '999', 'phone' => '3000000000'],
-        'prescription' => ['exam_date' => now()->toDateString(), 'lens_type' => 'single_vision'],
+        'prescription' => ['exam_date' => now()->toDateString()],
         'armados' => [[
             'lens' => [
                 'description' => 'Lente', 'quantity' => 1, 'treatment_ids' => [],

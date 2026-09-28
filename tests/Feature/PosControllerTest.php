@@ -319,7 +319,7 @@ it('creates and links an inline prescription when selling a lens', function () {
             'lens' => $lens,
             'own_frame' => true,
         ]],
-        'prescription' => ['exam_date' => '2026-06-20', 'lens_type' => 'single_vision', 'od_sphere' => '-1.25', 'os_sphere' => '-1.00'],
+        'prescription' => ['exam_date' => '2026-06-20', 'od_sphere' => '-1.25', 'os_sphere' => '-1.00'],
     ])->assertOk();
 
     $sale = Sale::first();
@@ -327,7 +327,6 @@ it('creates and links an inline prescription when selling a lens', function () {
 
     expect($prescription->customer_id)->toBe($customer->id)
         ->and($prescription->created_by)->toBe($seller->id)
-        ->and($prescription->sale_id)->toBe($sale->id)
         ->and($sale->prescription_id)->toBe($prescription->id);
 });
 
@@ -635,6 +634,20 @@ it('exposes the acting seller open cash session on the pos page', function () {
             ->component('Pos')
             ->where('cashRegisterSession.id', $session->id)
             ->where('cashRegisterSession.opening_cash', 75_000)
+        );
+});
+
+it('exposes each prescription expiry on the pos page', function () {
+    $seller = User::factory()->seller()->create();
+    $this->actingAs($seller);
+    $expired = Prescription::factory()->create(['exam_date' => now()->subMonths(13)->toDateString(), 'od_sphere' => '1.5', 'os_sphere' => null]);
+
+    $this->get('/pos')
+        ->assertInertia(fn ($page) => $page
+            ->where('prescriptions.0.id', $expired->id)
+            ->where('prescriptions.0.expires_at', $expired->expires_at->toDateString())
+            ->where('prescriptions.0.is_expired', true)
+            ->where('prescriptions.0.summary', 'OD +1.50 / OS —')
         );
 });
 

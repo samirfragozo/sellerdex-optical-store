@@ -1,6 +1,5 @@
 <?php
 
-use App\Enums\LensType;
 use App\Models\Prescription;
 use App\Models\Sale;
 use App\Models\User;
@@ -9,18 +8,17 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
-it('guarda filtros como array y el tipo de lente como enum', function () {
+it('guarda filtros como array', function () {
     $rx = Prescription::factory()->create();
 
     expect($rx->filters)->toBeArray()
-        ->and($rx->filters)->toContain('Antirreflejo Blue')
-        ->and($rx->lens_type)->toBe(LensType::ExtendedRange);
+        ->and($rx->filters)->toContain('Antirreflejo Blue');
 });
 
-it('can be linked to a sale', function () {
-    $sale = Sale::factory()->create();
-    $rx = Prescription::factory()->create(['sale_id' => $sale->id]);
-    expect($rx->sale->is($sale))->toBeTrue();
+it('lists the sales issued with it', function () {
+    $rx = Prescription::factory()->create();
+    $sale = Sale::factory()->create(['prescription_id' => $rx->id]);
+    expect($rx->sales->first()->is($sale))->toBeTrue();
 });
 
 it('el vendedor crea/edita prescripciones pero no las elimina', function () {

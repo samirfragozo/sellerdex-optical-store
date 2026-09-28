@@ -11,7 +11,7 @@ it('renders the formula HTML with the Rx values', function () {
     $this->actingAs($seller);
     $rx = Prescription::factory()->create([
         'od_sphere' => '-0.25', 'od_cylinder' => '-2.00',
-        'os_sphere' => 'N', 'os_cylinder' => '-2.75',
+        'os_sphere' => '0', 'os_cylinder' => '-2.75',
     ]);
 
     $this->get(route('documents.formula', $rx))

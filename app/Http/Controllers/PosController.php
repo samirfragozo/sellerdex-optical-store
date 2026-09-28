@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Enums\KitTrigger;
-use App\Enums\LensType;
 use App\Models\Company;
 use App\Models\KitSlot;
 use App\Models\LensCombination;
@@ -90,17 +89,17 @@ class PosController extends Controller
             'paymentMethods' => PaymentMethod::query()->where('is_active', true)
                 ->orderBy('sort_order')->get(['id', 'name', 'surcharge_percent']),
             'kit' => $this->kit(),
-            'lensTypes' => LensType::options(),
             'prescriptions' => Prescription::query()
                 ->orderByDesc('exam_date')
                 ->limit(200)
-                ->get(['id', 'customer_id', 'exam_date', 'od_sphere', 'os_sphere', 'lens_type'])
+                ->get(['id', 'customer_id', 'exam_date', 'expires_at', 'od_sphere', 'os_sphere'])
                 ->map(fn (Prescription $p) => [
                     'id' => $p->id,
                     'customer_id' => $p->customer_id,
                     'exam_date' => $p->exam_date?->toDateString(),
-                    'lens_type' => $p->lens_type?->value,
-                    'summary' => sprintf('OD %s / OS %s', $p->od_sphere ?? '—', $p->os_sphere ?? '—'),
+                    'expires_at' => $p->expires_at?->toDateString(),
+                    'is_expired' => $p->isExpired(),
+                    'summary' => sprintf('OD %s / OS %s', Prescription::formatDiopter($p->od_sphere) ?: '—', Prescription::formatDiopter($p->os_sphere) ?: '—'),
                 ]),
         ]);
     }

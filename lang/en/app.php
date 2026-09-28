@@ -212,6 +212,13 @@ return [
         'progressive' => 'Progressive',
     ],
 
+    'prism_base' => [
+        'up' => 'Up',
+        'down' => 'Down',
+        'in' => 'In',
+        'out' => 'Out',
+    ],
+
     'document_type' => [
         'cc' => 'Citizenship ID',
         'ti' => 'Identity card',

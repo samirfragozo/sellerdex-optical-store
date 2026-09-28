@@ -47,7 +47,6 @@ it('offers a prescription created earlier in the session as an existing option',
         ->click('Lentes')
         ->assertButtonDisabled('Usar existente')
         ->fill('#rx_exam_date', now()->toDateString())
-        ->select('#rx_lens_type', 'single_vision')
         ->click('Continuar al lente')
         ->click('button:has-text("'.$type->name.'")')
         ->click('button:has-text("'.$technology->name.'")')

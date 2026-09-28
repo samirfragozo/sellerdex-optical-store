@@ -212,6 +212,13 @@ return [
         'progressive' => 'Progresivo',
     ],
 
+    'prism_base' => [
+        'up' => 'Arriba',
+        'down' => 'Abajo',
+        'in' => 'Adentro',
+        'out' => 'Afuera',
+    ],
+
     'document_type' => [
         'cc' => 'Cédula de ciudadanía',
         'ti' => 'Tarjeta de identidad',

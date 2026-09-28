@@ -28,9 +28,6 @@ class PrescriptionsTable
                     ->date()
                     ->sortable()
                     ->searchable(),
-                TextColumn::make('lens_type')
-                    ->label(__('app.fields.lens_type'))
-                    ->badge(),
                 TextColumn::make('deleted_at')
                     ->dateTime()
                     ->sortable()

@@ -23,13 +23,13 @@ interface PrescriptionOption {
     id: number;
     customer_id: number;
     exam_date: string | null;
-    lens_type: string | null;
+    expires_at: string | null;
+    is_expired: boolean;
     summary: string;
 }
 
 interface NewPrescription {
     exam_date: string;
-    lens_type: string;
     od_sphere: string;
     od_cylinder: string;
     od_axis: string;
@@ -139,8 +139,7 @@ const currentStepValid = computed(() => {
 
             return prescriptionMode.value === 'existing'
                 ? prescriptionId.value !== null
-                : prescription.value.exam_date !== '' &&
-                      prescription.value.lens_type !== '';
+                : prescription.value.exam_date !== '';
         case 'lens':
             return draft.value.lens !== null;
         case 'frame':

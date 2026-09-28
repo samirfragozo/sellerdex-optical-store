@@ -12,13 +12,13 @@ interface PrescriptionOption {
     id: number;
     customer_id: number;
     exam_date: string | null;
-    lens_type: string | null;
+    expires_at: string | null;
+    is_expired: boolean;
     summary: string;
 }
 
 interface NewPrescription {
     exam_date: string;
-    lens_type: string;
     od_sphere: string;
     od_cylinder: string;
     od_axis: string;
@@ -34,7 +34,6 @@ interface PrescriptionErrors {
     prescription_id?: string;
     prescription?: string;
     'prescription.exam_date'?: string;
-    'prescription.lens_type'?: string;
 }
 
 const props = defineProps<{
@@ -162,36 +161,6 @@ function onRefractionChange(): void {
                         <InputError
                             class="mt-1"
                             :message="props.errors?.['prescription.exam_date']"
-                        />
-                    </div>
-                    <div>
-                        <Label for="rx_lens_type" class="text-xs">{{
-                            trans('app.fields.lens_type')
-                        }}</Label>
-                        <select
-                            id="rx_lens_type"
-                            v-model="prescription.lens_type"
-                            class="mt-1 h-8 w-full rounded-md border border-input bg-transparent px-2 py-1 text-sm shadow-xs outline-none focus-visible:ring-2 focus-visible:ring-ring/50 dark:bg-input/30"
-                        >
-                            <option value="">
-                                {{ trans('app.pos.select_option') }}
-                            </option>
-                            <option value="single_vision">
-                                {{ trans('app.lens_type.single_vision') }}
-                            </option>
-                            <option value="extended_range">
-                                {{ trans('app.lens_type.extended_range') }}
-                            </option>
-                            <option value="bifocal">
-                                {{ trans('app.lens_type.bifocal') }}
-                            </option>
-                            <option value="progressive">
-                                {{ trans('app.lens_type.progressive') }}
-                            </option>
-                        </select>
-                        <InputError
-                            class="mt-1"
-                            :message="props.errors?.['prescription.lens_type']"
                         />
                     </div>
                 </div>

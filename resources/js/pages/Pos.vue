@@ -43,7 +43,8 @@ interface PrescriptionOption {
     id: number;
     customer_id: number;
     exam_date: string | null;
-    lens_type: string | null;
+    expires_at: string | null;
+    is_expired: boolean;
     summary: string;
 }
 
@@ -55,7 +56,6 @@ const props = defineProps<{
     categories: { id: number; name: string; key: string }[];
     paymentMethods: PaymentMethod[];
     prescriptions: PrescriptionOption[];
-    lensTypes: Record<string, string>;
 }>();
 
 const today = new Date().toISOString().slice(0, 10);
@@ -100,7 +100,6 @@ const prescriptionMode = ref<'existing' | 'new'>('new');
 const prescriptionId = ref<number | null>(null);
 const newPrescription = ref({
     exam_date: today,
-    lens_type: '',
     od_sphere: '',
     od_cylinder: '',
     od_axis: '',
@@ -301,7 +300,8 @@ async function confirmCheckout(): Promise<void> {
                 id: result.prescription_id,
                 customer_id: customerId.value,
                 exam_date: newPrescription.value.exam_date,
-                lens_type: newPrescription.value.lens_type,
+                expires_at: null,
+                is_expired: false,
                 summary: `OD ${newPrescription.value.od_sphere || '—'} / OS ${newPrescription.value.os_sphere || '—'}`,
             },
             ...prescriptions.value,
@@ -320,7 +320,6 @@ async function confirmCheckout(): Promise<void> {
     prescriptionId.value = null;
     newPrescription.value = {
         exam_date: today,
-        lens_type: '',
         od_sphere: '',
         od_cylinder: '',
         od_axis: '',

@@ -2,7 +2,6 @@
 
 namespace Database\Factories;
 
-use App\Enums\LensType;
 use App\Models\Customer;
 use App\Models\Prescription;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -25,11 +24,11 @@ class PrescriptionFactory extends Factory
             'exam_date' => fake()->dateTimeThisYear()->format('Y-m-d'),
             'od_sphere' => '-0.25',
             'od_cylinder' => '-2.00',
-            'od_axis' => '0',
-            'os_sphere' => 'N',
+            'od_axis' => 90,
+            'os_sphere' => '0',
             'os_cylinder' => '-2.75',
-            'os_axis' => '0',
-            'lens_type' => LensType::ExtendedRange->value,
+            'os_axis' => 180,
+            'prescriber_name' => fake()->name(),
             'filters' => ['Fotocromático', 'Antirreflejo Blue'],
             'diagnosis' => 'Paciente refiere mala visión en VL y VP',
         ];

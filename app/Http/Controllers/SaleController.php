@@ -38,22 +38,15 @@ class SaleController extends Controller
         }
 
         // Create the prescription inline when new exam data was provided.
-        $createdPrescriptionId = null;
         if (empty($data['prescription_id']) && ! empty($data['prescription']['exam_date'])) {
-            $createdPrescriptionId = Prescription::create([
+            $data['prescription_id'] = Prescription::create([
                 ...$data['prescription'],
                 'customer_id' => $data['customer_id'],
                 'created_by' => $request->user()->id,
             ])->id;
-            $data['prescription_id'] = $createdPrescriptionId;
         }
 
         $sale = $registerSale->handle($data, $request->user());
-
-        // Link a freshly created prescription back to its sale.
-        if ($createdPrescriptionId !== null) {
-            Prescription::whereKey($createdPrescriptionId)->update(['sale_id' => $sale->id]);
-        }
 
         return response()->json([
             'id' => $sale->id,

@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\Prescriptions\Schemas;
 
-use App\Enums\LensType;
 use App\Rules\Diopter;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
@@ -30,9 +29,6 @@ class PrescriptionForm
                     ->required()
                     ->maxDate(now())
                     ->minDate(now()->subYears(2)),
-                Select::make('lens_type')
-                    ->label(__('app.fields.lens_type'))
-                    ->options(LensType::options()),
                 Select::make('filters')
                     ->label(__('app.fields.filters'))
                     ->multiple()

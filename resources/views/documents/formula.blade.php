@@ -24,7 +24,6 @@
         </tbody>
     </table>
     <p style="margin-top:8px">
-        @if ($rx->lens_type) <strong>{{ __('app.fields.lens_type') }}:</strong> {{ $rx->lens_type->label() }}<br> @endif
         @if ($rx->filters) <strong>{{ __('app.fields.filters') }}:</strong> {{ implode(', ', (array) $rx->filters) }} @endif
     </p>
 @endsection

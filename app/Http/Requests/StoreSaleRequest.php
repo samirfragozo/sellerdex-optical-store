@@ -3,7 +3,6 @@
 namespace App\Http\Requests;
 
 use App\Enums\DocumentType;
-use App\Enums\LensType;
 use App\Enums\SaleDocumentType;
 use App\Models\Prescription;
 use App\Models\Sale;
@@ -46,7 +45,6 @@ class StoreSaleRequest extends FormRequest
             'prescription_id' => ['nullable', 'exists:prescriptions,id'],
             'prescription' => ['nullable', 'array'],
             'prescription.exam_date' => ['nullable', 'date', 'before_or_equal:today', 'after_or_equal:'.now()->subYears(2)->toDateString()],
-            'prescription.lens_type' => ['nullable', Rule::enum(LensType::class)],
             'prescription.diagnosis' => ['nullable', 'string', 'max:1000'],
             'prescription.od_sphere' => ['nullable', new Diopter(-20, 20)],
             'prescription.od_cylinder' => ['nullable', new Diopter(-10, 10)],
@@ -203,7 +201,6 @@ class StoreSaleRequest extends FormRequest
             'document_type' => 'tipo de documento',
             'prescription_id' => 'prescripción',
             'prescription.exam_date' => 'fecha del examen',
-            'prescription.lens_type' => 'tipo de lente',
             'prescription.od_sphere' => 'esfera OD',
             'prescription.od_cylinder' => 'cilindro OD',
             'prescription.od_axis' => 'eje OD',

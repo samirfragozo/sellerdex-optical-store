@@ -1,6 +1,7 @@
 <?php
 
 use App\Filament\Resources\Prescriptions\Pages\CreatePrescription;
+use App\Filament\Resources\Prescriptions\Pages\EditPrescription;
 use App\Models\Customer;
 use App\Models\Prescription;
 use App\Models\User;
@@ -44,7 +45,7 @@ it('combina el signo y el valor al crear una prescripción', function () {
 
     $prescription = Prescription::first();
     expect($prescription->od_sphere)->toBe('-2.25')
-        ->and($prescription->os_add)->toBe('+1');
+        ->and($prescription->os_add)->toBe('1.00');
 });
 
 it('valida el rango y el paso de los dioptrías en Filament', function () {
@@ -62,4 +63,22 @@ it('valida el rango y el paso de los dioptrías en Filament', function () {
         ])
         ->call('create')
         ->assertHasFormErrors(['od_sphere_num', 'od_axis']);
+});
+
+it('splits and recombines the stored decimal diopters when editing', function () {
+    $this->actingAs(User::factory()->admin()->create());
+    $prescription = Prescription::factory()->create(['od_sphere' => '-2.25', 'os_add' => '1.00']);
+
+    Livewire::test(EditPrescription::class, ['record' => $prescription->getRouteKey()])
+        ->assertSchemaStateSet([
+            'od_sphere_sign' => '-',
+            'od_sphere_num' => '2.25',
+            'os_add_num' => '1.00',
+        ])
+        ->fillForm(['od_sphere_sign' => '+'])
+        ->call('save')
+        ->assertHasNoFormErrors();
+
+    expect($prescription->fresh()->od_sphere)->toBe('2.25')
+        ->and($prescription->fresh()->os_add)->toBe('1.00');
 });
