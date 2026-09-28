@@ -403,6 +403,7 @@ return [
             'expired_warning' => 'This prescription has expired. You can still sell it, but ask the customer for a newer one.',
             'expired_badge' => 'Expired',
             'expires_on' => 'expires :date',
+            'unexpected_error' => 'The prescription could not be saved. Check your connection and try again.',
         ],
 
         'cash_session' => [

@@ -1,7 +1,9 @@
 import { ref } from 'vue';
 import type { Ref } from 'vue';
+import { useTranslations } from '@/composables/useTranslations';
 import { csrfFetch } from '@/lib/csrfFetch';
 import { store } from '@/routes/pos/prescriptions';
+import type { PrescriptionOption } from '@/types';
 
 export interface NewPrescriptionPayload {
     customer_id: number;
@@ -28,22 +30,14 @@ export interface NewPrescriptionPayload {
     os_va: string;
 }
 
-export interface CreatedPrescription {
-    id: number;
-    customer_id: number;
-    exam_date: string | null;
-    expires_at: string | null;
-    is_expired: boolean;
-    summary: string;
-}
-
 export function useCreatePrescription() {
     const errors: Ref<Record<string, string>> = ref({});
     const submitting = ref(false);
+    const { trans } = useTranslations();
 
     async function submit(
         payload: NewPrescriptionPayload,
-    ): Promise<CreatedPrescription | null> {
+    ): Promise<PrescriptionOption | null> {
         submitting.value = true;
         errors.value = {};
 
@@ -58,7 +52,10 @@ export function useCreatePrescription() {
         // driver's request bridge) don't parse.
         const body = payload.attachment
             ? entries.reduce((formData, [key, value]) => {
-                  formData.append(key, value as string | Blob);
+                  formData.append(
+                      key,
+                      value instanceof File ? value : String(value),
+                  );
 
                   return formData;
               }, new FormData())
@@ -87,10 +84,22 @@ export function useCreatePrescription() {
             }
 
             if (!response.ok) {
+                errors.value = {
+                    general: trans(
+                        'app.pos.prescription_form.unexpected_error',
+                    ),
+                };
+
                 return null;
             }
 
-            return (await response.json()) as CreatedPrescription;
+            return (await response.json()) as PrescriptionOption;
+        } catch {
+            errors.value = {
+                general: trans('app.pos.prescription_form.unexpected_error'),
+            };
+
+            return null;
         } finally {
             submitting.value = false;
         }

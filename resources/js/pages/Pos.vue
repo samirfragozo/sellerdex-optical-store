@@ -25,6 +25,7 @@ import { armadoTotal, usePosCart } from '@/composables/usePosCart';
 import { usePosCheckout } from '@/composables/usePosCheckout';
 import { useTranslations } from '@/composables/useTranslations';
 import { index } from '@/routes/pos';
+import type { PrescriptionOption } from '@/types';
 import type { CreatedSale, ReadinessIssue } from '@/types/global';
 
 const { trans } = useTranslations();
@@ -37,15 +38,6 @@ interface PaymentMethod {
     id: number;
     name: string;
     surcharge_percent: number;
-}
-
-interface PrescriptionOption {
-    id: number;
-    customer_id: number;
-    exam_date: string | null;
-    expires_at: string | null;
-    is_expired: boolean;
-    summary: string;
 }
 
 const props = defineProps<{

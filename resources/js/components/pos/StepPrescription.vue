@@ -8,22 +8,34 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import type { NewPrescriptionPayload } from '@/composables/useCreatePrescription';
 import { useCreatePrescription } from '@/composables/useCreatePrescription';
 import { useTranslations } from '@/composables/useTranslations';
+import type { PrescriptionOption } from '@/types';
 
 const { trans } = useTranslations();
 
-interface PrescriptionOption {
-    id: number;
-    customer_id: number;
-    exam_date: string | null;
-    expires_at: string | null;
-    is_expired: boolean;
-    summary: string;
+interface EyeFields {
+    sphere: string;
+    cylinder: string;
+    axis: string;
+    add: string;
+    prism: string;
+    prism_base: string;
+    pd: string;
+    va: string;
 }
 
-type NewPrescriptionForm = Omit<NewPrescriptionPayload, 'customer_id'>;
+interface PrescriptionForm {
+    exam_date: string;
+    prescriber_name: string;
+    prescriber_license: string;
+    notes: string;
+    attachment: File | null;
+    od: EyeFields;
+    os: EyeFields;
+}
+
+const eyes = ['od', 'os'] as const;
 
 const props = defineProps<{
     customerPrescriptions: PrescriptionOption[];
@@ -47,33 +59,32 @@ const customerId = defineModel<number | null>('customerId', {
     required: true,
 });
 
-function emptyForm(): NewPrescriptionForm {
+function emptyEye(): EyeFields {
+    return {
+        sphere: '',
+        cylinder: '',
+        axis: '',
+        add: '',
+        prism: '',
+        prism_base: '',
+        pd: '',
+        va: '',
+    };
+}
+
+function emptyForm(): PrescriptionForm {
     return {
         exam_date: props.today ?? '',
         prescriber_name: '',
         prescriber_license: '',
         notes: '',
         attachment: null,
-        od_sphere: '',
-        od_cylinder: '',
-        od_axis: '',
-        od_add: '',
-        od_prism: '',
-        od_prism_base: '',
-        od_pd: '',
-        od_va: '',
-        os_sphere: '',
-        os_cylinder: '',
-        os_axis: '',
-        os_add: '',
-        os_prism: '',
-        os_prism_base: '',
-        os_pd: '',
-        os_va: '',
+        od: emptyEye(),
+        os: emptyEye(),
     };
 }
 
-const form = ref<NewPrescriptionForm>(emptyForm());
+const form = ref<PrescriptionForm>(emptyForm());
 const attachmentName = ref('');
 const savedNotice = ref(false);
 const { errors: saveErrors, submitting, submit } = useCreatePrescription();
@@ -84,6 +95,13 @@ const selectedPrescription = computed(
             (rx) => rx.id === prescriptionId.value,
         ) ?? null,
 );
+
+function selectNewMode(): void {
+    prescriptionMode.value = 'new';
+    // A stale selection from "existing" mode must not keep the step valid
+    // (or show its expired warning) once the seller starts a fresh form.
+    prescriptionId.value = null;
+}
 
 function onFileChange(event: Event): void {
     const input = event.target as HTMLInputElement;
@@ -99,8 +117,28 @@ async function save(): Promise<void> {
 
     savedNotice.value = false;
     const created = await submit({
-        ...form.value,
         customer_id: customerId.value,
+        exam_date: form.value.exam_date,
+        prescriber_name: form.value.prescriber_name,
+        prescriber_license: form.value.prescriber_license,
+        notes: form.value.notes,
+        attachment: form.value.attachment,
+        od_sphere: form.value.od.sphere,
+        od_cylinder: form.value.od.cylinder,
+        od_axis: form.value.od.axis,
+        od_add: form.value.od.add,
+        od_prism: form.value.od.prism,
+        od_prism_base: form.value.od.prism_base,
+        od_pd: form.value.od.pd,
+        od_va: form.value.od.va,
+        os_sphere: form.value.os.sphere,
+        os_cylinder: form.value.os.cylinder,
+        os_axis: form.value.os.axis,
+        os_add: form.value.os.add,
+        os_prism: form.value.os.prism,
+        os_prism_base: form.value.os.prism_base,
+        os_pd: form.value.os.pd,
+        os_va: form.value.os.va,
     });
 
     if (created === null) {
@@ -162,7 +200,7 @@ async function save(): Promise<void> {
                             ? 'bg-primary text-primary-foreground'
                             : 'border border-input bg-transparent hover:bg-accent',
                     ]"
-                    @click="prescriptionMode = 'new'"
+                    @click="selectNewMode"
                 >
                     {{ trans('app.pos.prescription_form.create_new') }}
                 </button>
@@ -275,144 +313,104 @@ async function save(): Promise<void> {
                         <span>{{ trans('app.fields.va') }}</span>
                     </div>
                     <div
-                        class="mt-1 grid min-w-[36rem] grid-cols-[1.5rem_1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr] items-center gap-1.5"
+                        v-for="eye in eyes"
+                        :key="eye"
+                        class="mt-1.5 grid min-w-[36rem] grid-cols-[1.5rem_1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr] items-start gap-1.5"
                     >
-                        <span class="text-xs font-medium">OD</span>
-                        <DiopterInput
-                            v-model="form.od_sphere"
-                            :min="0"
-                            :max="20"
-                        />
-                        <DiopterInput
-                            v-model="form.od_cylinder"
-                            :min="0"
-                            :max="10"
-                        />
-                        <Input
-                            v-model="form.od_axis"
-                            type="number"
-                            min="1"
-                            max="180"
-                            class="h-8 w-full px-1.5 text-right text-xs"
-                        />
-                        <DiopterInput
-                            v-model="form.od_add"
-                            fixed-sign="+"
-                            :min="0"
-                            :max="4"
-                        />
-                        <Input
-                            v-model="form.od_prism"
-                            type="number"
-                            min="0"
-                            max="10"
-                            step="0.25"
-                            class="h-8 w-full px-1.5 text-right text-xs"
-                        />
-                        <select
-                            v-model="form.od_prism_base"
-                            class="h-8 w-full rounded-md border border-input bg-transparent px-1 text-xs outline-none dark:bg-input/30"
-                        >
-                            <option value="">—</option>
-                            <option value="up">
-                                {{ trans('app.prism_base.up') }}
-                            </option>
-                            <option value="down">
-                                {{ trans('app.prism_base.down') }}
-                            </option>
-                            <option value="in">
-                                {{ trans('app.prism_base.in') }}
-                            </option>
-                            <option value="out">
-                                {{ trans('app.prism_base.out') }}
-                            </option>
-                        </select>
-                        <Input
-                            v-model="form.od_pd"
-                            type="number"
-                            min="20"
-                            max="40"
-                            step="0.5"
-                            class="h-8 w-full px-1.5 text-right text-xs"
-                        />
-                        <Input
-                            v-model="form.od_va"
-                            class="h-8 w-full px-1.5 text-right text-xs"
-                        />
-                    </div>
-                    <div
-                        class="mt-1.5 grid min-w-[36rem] grid-cols-[1.5rem_1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr] items-center gap-1.5"
-                    >
-                        <span class="text-xs font-medium">OS</span>
-                        <DiopterInput
-                            v-model="form.os_sphere"
-                            :min="0"
-                            :max="20"
-                        />
-                        <DiopterInput
-                            v-model="form.os_cylinder"
-                            :min="0"
-                            :max="10"
-                        />
-                        <Input
-                            v-model="form.os_axis"
-                            type="number"
-                            min="1"
-                            max="180"
-                            class="h-8 w-full px-1.5 text-right text-xs"
-                        />
-                        <DiopterInput
-                            v-model="form.os_add"
-                            fixed-sign="+"
-                            :min="0"
-                            :max="4"
-                        />
-                        <Input
-                            v-model="form.os_prism"
-                            type="number"
-                            min="0"
-                            max="10"
-                            step="0.25"
-                            class="h-8 w-full px-1.5 text-right text-xs"
-                        />
-                        <select
-                            v-model="form.os_prism_base"
-                            class="h-8 w-full rounded-md border border-input bg-transparent px-1 text-xs outline-none dark:bg-input/30"
-                        >
-                            <option value="">—</option>
-                            <option value="up">
-                                {{ trans('app.prism_base.up') }}
-                            </option>
-                            <option value="down">
-                                {{ trans('app.prism_base.down') }}
-                            </option>
-                            <option value="in">
-                                {{ trans('app.prism_base.in') }}
-                            </option>
-                            <option value="out">
-                                {{ trans('app.prism_base.out') }}
-                            </option>
-                        </select>
-                        <Input
-                            v-model="form.os_pd"
-                            type="number"
-                            min="20"
-                            max="40"
-                            step="0.5"
-                            class="h-8 w-full px-1.5 text-right text-xs"
-                        />
-                        <Input
-                            v-model="form.os_va"
-                            class="h-8 w-full px-1.5 text-right text-xs"
-                        />
-                    </div>
-                    <div class="mt-1 flex flex-wrap gap-x-4 gap-y-0.5">
-                        <InputError :message="saveErrors.od_axis" />
-                        <InputError :message="saveErrors.od_cylinder" />
-                        <InputError :message="saveErrors.od_prism_base" />
-                        <InputError :message="saveErrors.os_axis" />
-                        <InputError :message="saveErrors.os_cylinder" />
-                        <InputError :message="saveErrors.os_prism_base" />
+                        <span class="pt-1.5 text-xs font-medium">{{
+                            eye.toUpperCase()
+                        }}</span>
+                        <div>
+                            <DiopterInput
+                                v-model="form[eye].sphere"
+                                :min="0"
+                                :max="20"
+                            />
+                            <InputError
+                                :message="saveErrors[`${eye}_sphere`]"
+                            />
+                        </div>
+                        <div>
+                            <DiopterInput
+                                v-model="form[eye].cylinder"
+                                :min="0"
+                                :max="10"
+                            />
+                            <InputError
+                                :message="saveErrors[`${eye}_cylinder`]"
+                            />
+                        </div>
+                        <div>
+                            <Input
+                                v-model="form[eye].axis"
+                                type="number"
+                                min="1"
+                                max="180"
+                                class="h-8 w-full px-1.5 text-right text-xs"
+                            />
+                            <InputError :message="saveErrors[`${eye}_axis`]" />
+                        </div>
+                        <div>
+                            <DiopterInput
+                                v-model="form[eye].add"
+                                fixed-sign="+"
+                                :min="0"
+                                :max="4"
+                            />
+                            <InputError :message="saveErrors[`${eye}_add`]" />
+                        </div>
+                        <div>
+                            <Input
+                                v-model="form[eye].prism"
+                                type="number"
+                                min="0"
+                                max="10"
+                                step="0.25"
+                                class="h-8 w-full px-1.5 text-right text-xs"
+                            />
+                            <InputError :message="saveErrors[`${eye}_prism`]" />
+                        </div>
+                        <div>
+                            <select
+                                v-model="form[eye].prism_base"
+                                class="h-8 w-full rounded-md border border-input bg-transparent px-1 text-xs outline-none dark:bg-input/30"
+                            >
+                                <option value="">—</option>
+                                <option value="up">
+                                    {{ trans('app.prism_base.up') }}
+                                </option>
+                                <option value="down">
+                                    {{ trans('app.prism_base.down') }}
+                                </option>
+                                <option value="in">
+                                    {{ trans('app.prism_base.in') }}
+                                </option>
+                                <option value="out">
+                                    {{ trans('app.prism_base.out') }}
+                                </option>
+                            </select>
+                            <InputError
+                                :message="saveErrors[`${eye}_prism_base`]"
+                            />
+                        </div>
+                        <div>
+                            <Input
+                                v-model="form[eye].pd"
+                                type="number"
+                                min="20"
+                                max="40"
+                                step="0.5"
+                                class="h-8 w-full px-1.5 text-right text-xs"
+                            />
+                            <InputError :message="saveErrors[`${eye}_pd`]" />
+                        </div>
+                        <div>
+                            <Input
+                                v-model="form[eye].va"
+                                class="h-8 w-full px-1.5 text-right text-xs"
+                            />
+                            <InputError :message="saveErrors[`${eye}_va`]" />
+                        </div>
                     </div>
                 </div>
 
@@ -440,7 +438,6 @@ async function save(): Promise<void> {
                         id="rx_attachment"
                         type="file"
                         accept="image/*,application/pdf"
-                        capture="environment"
                         class="mt-1 block w-full text-sm text-muted-foreground file:mr-3 file:rounded-md file:border-0 file:bg-accent file:px-3 file:py-1.5 file:text-sm file:font-medium"
                         @change="onFileChange"
                     />
@@ -467,6 +464,7 @@ async function save(): Promise<void> {
                     </span>
                 </div>
                 <InputError :message="saveErrors.customer_id" />
+                <InputError :message="saveErrors.general" />
             </div>
         </template>
 

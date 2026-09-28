@@ -403,6 +403,7 @@ return [
             'expired_warning' => 'Esta fórmula está vencida. Puedes venderla, pero confirma con el cliente si tiene una más reciente.',
             'expired_badge' => 'Vencida',
             'expires_on' => 'vence :date',
+            'unexpected_error' => 'No se pudo guardar la fórmula. Verifica tu conexión e inténtalo de nuevo.',
         ],
 
         'cash_session' => [

@@ -380,6 +380,43 @@ it('rejects a prescription that belongs to another customer', function () {
     expect(Sale::count())->toBe(0);
 });
 
+it('rejects a prescription from another company on a products-only sale', function () {
+    $seller = User::factory()->seller()->create();
+    openCashRegisterSession($seller);
+    $foreignPrescription = Prescription::factory()->create(['company_id' => Company::factory()->create()->id]);
+
+    $this->actingAs($seller)->postJson('/pos', [
+        'customer' => ['name' => 'Ana', 'last_name' => 'Pérez', 'document_type' => 'cc', 'id_number' => '123', 'phone' => '3000000000'],
+        'document_type' => 'order',
+        'prescription_id' => $foreignPrescription->id,
+        'products' => [['description' => 'Estuche', 'quantity' => 1, 'unit_price' => 10_000]],
+    ])->assertJsonValidationErrors('prescription_id');
+
+    expect(Sale::count())->toBe(0);
+});
+
+it('rejects a prescription belonging to another customer on an armado sale with an inline customer', function () {
+    $seller = User::factory()->seller()->create();
+    openCashRegisterSession($seller);
+    Supplier::factory()->laboratory()->create(['company_id' => $seller->company_id]);
+    // Same company as the seller, but tied to a different (existing) customer —
+    // the brand-new inline customer below cannot already own it.
+    $otherPrescription = Prescription::factory()->create(['company_id' => $seller->company_id]);
+    $lens = lensArmadoLens($seller->company_id);
+
+    $this->actingAs($seller)->postJson('/pos', [
+        'customer' => ['name' => 'Ana', 'last_name' => 'Pérez', 'document_type' => 'cc', 'id_number' => '123', 'phone' => '3000000000'],
+        'document_type' => 'order',
+        'prescription_id' => $otherPrescription->id,
+        'armados' => [[
+            'lens' => $lens,
+            'own_frame' => true,
+        ]],
+    ])->assertJsonValidationErrors('prescription_id');
+
+    expect(Sale::count())->toBe(0);
+});
+
 // Diopter/axis/exam-date validation for a new prescription now lives on the
 // dedicated POST pos/prescriptions endpoint (see PosPrescriptionTest) — a
 // sale only ever references a prescription_id, so those rules no longer

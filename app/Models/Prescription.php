@@ -48,6 +48,7 @@ class Prescription extends Model
             'os_pd' => 'decimal:1',
             'od_axis' => 'integer',
             'os_axis' => 'integer',
+            'customer_id' => 'integer',
             'od_prism_base' => PrismBase::class,
             'os_prism_base' => PrismBase::class,
             'filters' => 'array',
@@ -117,11 +118,13 @@ class Prescription extends Model
     public function toPosOption(): array
     {
         return [
-            // Cast explicitly: a prescription just created from a form-encoded
-            // POST holds these as strings until the model is refreshed from the
-            // database, and the POS frontend compares customer_id with `===`.
+            // The primary key has no model cast, so a prescription just created
+            // from a form-encoded POST still holds it as a string until the
+            // model is refreshed from the database — cast explicitly, since the
+            // POS frontend compares this id with `===`. customer_id doesn't
+            // need the same treatment: it has an `integer` cast above.
             'id' => (int) $this->id,
-            'customer_id' => (int) $this->customer_id,
+            'customer_id' => $this->customer_id,
             'exam_date' => $this->exam_date?->toDateString(),
             'expires_at' => $this->expires_at?->toDateString(),
             'is_expired' => $this->isExpired(),

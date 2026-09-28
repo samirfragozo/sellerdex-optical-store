@@ -18,15 +18,7 @@ import type {
 } from '@/composables/useLensCatalog';
 import type { Armado, KitProp } from '@/composables/usePosCart';
 import { useTranslations } from '@/composables/useTranslations';
-
-interface PrescriptionOption {
-    id: number;
-    customer_id: number;
-    exam_date: string | null;
-    expires_at: string | null;
-    is_expired: boolean;
-    summary: string;
-}
+import type { PrescriptionOption } from '@/types';
 
 const { trans } = useTranslations();
 

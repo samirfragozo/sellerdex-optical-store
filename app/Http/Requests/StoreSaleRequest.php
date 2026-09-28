@@ -43,7 +43,10 @@ class StoreSaleRequest extends FormRequest
             'customer.email' => ['nullable', 'email', 'max:255'],
             'customer.notes' => ['nullable', 'string', 'max:1000'],
             'document_type' => ['required', Rule::enum(SaleDocumentType::class)],
-            'prescription_id' => ['nullable', 'exists:prescriptions,id'],
+            'prescription_id' => [
+                'nullable',
+                Rule::exists('prescriptions', 'id')->where(fn ($query) => $query->where('company_id', $this->user()->company_id)),
+            ],
             'discount_percent' => ['nullable', 'numeric', 'between:0,100'],
             'notes' => ['nullable', 'string', 'max:1000'],
             'armados' => ['nullable', 'array'],
@@ -111,7 +114,11 @@ class StoreSaleRequest extends FormRequest
 
             if (empty($this->input('prescription_id'))) {
                 $validator->errors()->add('prescription_id', 'La venta de lentes formulados requiere una prescripción.');
-            } elseif ($this->filled('customer_id')) {
+            } else {
+                // Always check, even with a null customer_id (an inline
+                // `customer.name`): a brand-new customer, not yet created,
+                // cannot already own a prescription — where('customer_id', null)
+                // becomes whereNull(), so it correctly finds no match either way.
                 $belongsToCustomer = Prescription::query()
                     ->whereKey($this->input('prescription_id'))
                     ->where('customer_id', $this->input('customer_id'))

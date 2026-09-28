@@ -90,3 +90,15 @@ it('requires a prism base when a prism is provided', function () {
         'od_prism' => '2.00', 'od_prism_base' => null,
     ]))->assertStatus(422)->assertJsonValidationErrors('od_prism_base');
 });
+
+it('requires the cylinder when an axis is provided', function () {
+    $this->postJson(route('pos.prescriptions.store'), posRxPayload([
+        'od_cylinder' => null,
+    ]))->assertStatus(422)->assertJsonValidationErrors('od_cylinder');
+});
+
+it('rejects a pupillary distance off its 0.5 step and an overlong visual acuity value', function () {
+    $this->postJson(route('pos.prescriptions.store'), posRxPayload([
+        'od_pd' => '32.3', 'od_va' => str_repeat('x', 11),
+    ]))->assertStatus(422)->assertJsonValidationErrors(['od_pd', 'od_va']);
+});
