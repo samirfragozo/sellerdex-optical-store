@@ -7,12 +7,15 @@ use App\Models\Company;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Support\ReferenceCounterCatalog;
+use Filament\Actions\Action;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Utilities\Get;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 /** Everything the shop sells besides lenses: categories with their base products. */
 class CounterProductsStep extends OnboardingStep
@@ -40,7 +43,11 @@ class CounterProductsStep extends OnboardingStep
                 ->schema([
                     Hidden::make('category_id'),
                     Hidden::make('key'),
-                    TextInput::make('name')->label(__('app.fields.name'))->required()->distinct()->maxLength(255),
+                    Hidden::make('is_locked'),
+                    TextInput::make('name')->label(__('app.fields.name'))->required()->distinct()->maxLength(255)
+                        ->rule(fn (Get $get) => Rule::unique('product_categories', 'name')
+                            ->where('company_id', auth()->user()->company_id)
+                            ->ignore($get('category_id'))),
                     Repeater::make('products')
                         ->hiddenLabel()
                         ->schema([
@@ -54,6 +61,10 @@ class CounterProductsStep extends OnboardingStep
                         ->addActionLabel(__('app.onboarding.counter_products.add_product')),
                 ])
                 ->defaultItems(0)
+                // Rows the model's deletion guard would keep cannot be removed here, so they never silently come back.
+                ->deleteAction(fn (Action $action) => $action->visible(
+                    fn (array $arguments, Repeater $component): bool => ! ($component->getRawItemState($arguments['item'])['is_locked'] ?? false),
+                ))
                 ->addActionLabel(__('app.onboarding.counter_products.add_category')),
         ];
     }
@@ -67,6 +78,7 @@ class CounterProductsStep extends OnboardingStep
                 'category_id' => $category->id,
                 'key' => $category->key,
                 'name' => $category->name,
+                'is_locked' => ! $category->isDeletable(),
                 'products' => $category->products->map(fn (Product $product) => [
                     'product_id' => $product->id, 'name' => $product->name, 'price' => $product->price, 'cost' => $product->cost,
                 ])->all(),
@@ -78,11 +90,14 @@ class CounterProductsStep extends OnboardingStep
             'category_id' => $byKey->get($reference['key'])?->id,
             'key' => $reference['key'],
             'name' => $byKey->get($reference['key'])->name ?? $reference['name'],
+            'is_locked' => $byKey->has($reference['key']) && ! $byKey->get($reference['key'])->isDeletable(),
             'products' => array_map(fn (array $product) => ['product_id' => null, ...$product], $reference['products']),
         ], ReferenceCounterCatalog::categories());
 
         $others = $categories->whereNotIn('key', array_column(ReferenceCounterCatalog::categories(), 'key'))
-            ->map(fn (ProductCategory $category) => ['category_id' => $category->id, 'key' => $category->key, 'name' => $category->name, 'products' => []]);
+            ->map(fn (ProductCategory $category) => [
+                'category_id' => $category->id, 'key' => $category->key, 'name' => $category->name, 'is_locked' => ! $category->isDeletable(), 'products' => [],
+            ]);
 
         return ['categories' => [...$suggested, ...$others->values()->all()]];
     }

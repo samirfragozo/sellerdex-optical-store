@@ -9,6 +9,7 @@ use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\User;
 use App\Support\ReferenceKit;
+use Filament\Actions\Testing\TestAction;
 use Livewire\Livewire;
 
 function counterAdmin(): User
@@ -43,6 +44,8 @@ it('suggests the reference counter catalog and creates it', function () {
 it('renames and removes products when coming back instead of duplicating them', function () {
     counterAdmin();
     $page = Livewire::test(Onboarding::class)->call('next')->call('previous');
+    $smallCaseId = Product::where('name', 'Estuche pequeño')->sole()->id;
+    $counterProducts = Product::count();
 
     $state = $page->get('data.categories');
     $caseKey = collect($state)->search(fn ($c) => $c['key'] === 'case');
@@ -51,7 +54,8 @@ it('renames and removes products when coming back instead of duplicating them', 
     unset($state[$caseKey]['products'][$productKeys[1]]); // drop "Estuche grande"
     $page->set('data.categories', $state)->call('next')->assertHasNoErrors();
 
-    expect(Product::where('name', 'Estuche de cuero')->count())->toBe(1)
+    expect(Product::where('name', 'Estuche de cuero')->sole()->id)->toBe($smallCaseId)
+        ->and(Product::count())->toBe($counterProducts - 1)
         ->and(Product::where('name', 'Estuche pequeño')->exists())->toBeFalse()
         ->and(Product::where('name', 'Estuche grande')->exists())->toBeFalse();
 });
@@ -106,4 +110,40 @@ it('summarizes the counter products', function () {
 
     expect($step->isComplete($admin->company))->toBeTrue()
         ->and($step->summary($admin->company))->toBe(__('app.onboarding.counter_products.summary', ['products' => 8, 'categories' => 6]));
+});
+
+it('rejects a category name another category already uses', function () {
+    counterAdmin();
+    $page = Livewire::test(Onboarding::class);
+
+    $state = $page->get('data.categories');
+    $firstKey = array_key_first($state);
+    $state[$firstKey]['name'] = 'Lentes';
+    $page->set('data.categories', $state)->call('next')
+        ->assertHasErrors(["data.categories.{$firstKey}.name" => 'unique'])
+        ->assertSet('step', CounterProductsStep::key());
+
+    expect(ProductCategory::where('name', 'Lentes')->count())->toBe(1);
+});
+
+it('reports a removed category added again under the same name instead of failing', function () {
+    counterAdmin();
+    $page = Livewire::test(Onboarding::class)->call('next')->call('previous');
+
+    $state = collect($page->get('data.categories'))
+        ->reject(fn ($c) => $c['key'] === 'bag')
+        ->push(['category_id' => null, 'key' => null, 'is_locked' => false, 'name' => 'Bolsas', 'products' => []])
+        ->all();
+    $page->set('data.categories', $state)->call('next')->assertHasErrors();
+
+    expect(ProductCategory::where('name', 'Bolsas')->count())->toBe(1);
+});
+
+it('only offers to remove categories that would really be removed', function () {
+    counterAdmin();
+    $page = Livewire::test(Onboarding::class);
+    $keyOf = fn (string $categoryKey) => collect($page->get('data.categories'))->search(fn ($c) => $c['key'] === $categoryKey);
+
+    $page->assertActionHidden(TestAction::make('delete')->schemaComponent('categories')->arguments(['item' => $keyOf('frame')]))
+        ->assertActionVisible(TestAction::make('delete')->schemaComponent('categories')->arguments(['item' => $keyOf('case')]));
 });
