@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages\Onboarding;
 
+use App\Filament\Pages\Onboarding;
 use App\Models\Company;
 use Filament\Forms\Components\Field;
 use Filament\Schemas\Components\Component;
@@ -34,4 +35,17 @@ abstract class OnboardingStep
 
     /** One-line summary shown on the final "ready to sell" step. */
     abstract public function summary(Company $company): string;
+
+    /** Where the company's furthest reached step sits relative to this one: negative before, 0 here, positive past. */
+    protected function reachedOffset(Company $company): int
+    {
+        $keys = array_map(fn (string $class) => $class::key(), Onboarding::steps());
+        $reached = array_search($company->onboarding_step, $keys, true);
+
+        if ($reached === false) {
+            return $company->onboarded_at !== null ? 1 : -1;
+        }
+
+        return $reached - (int) array_search(static::key(), $keys, true);
+    }
 }

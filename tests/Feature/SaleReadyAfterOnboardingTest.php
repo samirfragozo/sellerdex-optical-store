@@ -35,6 +35,8 @@ function registerAndOnboard(string $email, VatRegime $regime): User
         ->call('next')->assertHasNoErrors()            // laboratories
         ->set('data.selected_combo_keys', ['monofocal-standard-cr39'])
         ->call('next')->assertHasNoErrors()            // lenses
+        ->call('next')->assertHasNoErrors()            // treatments (none)
+        ->call('next')->assertHasNoErrors()            // combos (reference kit)
         ->assertSet('step', 'summary')
         ->call('finish')
         ->assertRedirect(route('pos.index'));

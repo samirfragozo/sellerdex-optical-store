@@ -8,6 +8,7 @@ use App\Filament\Pages\Onboarding\Steps\LaboratoriesStep;
 use App\Filament\Pages\Onboarding\Steps\LensesStep;
 use App\Filament\Pages\Onboarding\Steps\PaymentMethodsStep;
 use App\Filament\Pages\Onboarding\Steps\SummaryStep;
+use App\Filament\Pages\Onboarding\Steps\TreatmentsStep;
 use App\Models\Company;
 use App\Models\LensCombination;
 use App\Models\LensType;
@@ -207,7 +208,7 @@ it('lets the user continue past lenses when combinations already exist', functio
         ->set('data.selected_combo_keys', [])
         ->call('next')
         ->assertHasNoErrors()
-        ->assertSet('step', 'summary');
+        ->assertSet('step', TreatmentsStep::key());
 });
 
 it('does not finish from a step before the summary', function () {

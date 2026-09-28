@@ -3,12 +3,14 @@
 namespace App\Filament\Pages;
 
 use App\Filament\Pages\Onboarding\OnboardingStep;
+use App\Filament\Pages\Onboarding\Steps\CombosStep;
 use App\Filament\Pages\Onboarding\Steps\CompanyStep;
 use App\Filament\Pages\Onboarding\Steps\CounterProductsStep;
 use App\Filament\Pages\Onboarding\Steps\LaboratoriesStep;
 use App\Filament\Pages\Onboarding\Steps\LensesStep;
 use App\Filament\Pages\Onboarding\Steps\PaymentMethodsStep;
 use App\Filament\Pages\Onboarding\Steps\SummaryStep;
+use App\Filament\Pages\Onboarding\Steps\TreatmentsStep;
 use App\Models\Company;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
@@ -42,6 +44,8 @@ class Onboarding extends Page
             CounterProductsStep::class,
             LaboratoriesStep::class,
             LensesStep::class,
+            TreatmentsStep::class,
+            CombosStep::class,
             SummaryStep::class,
         ];
     }

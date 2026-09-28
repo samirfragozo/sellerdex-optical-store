@@ -80,6 +80,11 @@ class Company extends Model
         return $this->hasMany(KitSlot::class);
     }
 
+    public function lensTreatments(): HasMany
+    {
+        return $this->hasMany(LensTreatment::class);
+    }
+
     /** What the frame of an armado is charged, per the company's frame-pricing setting. */
     public function armadoFrameUnitPrice(int $price): int
     {

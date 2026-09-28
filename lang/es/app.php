@@ -57,6 +57,7 @@ return [
         'lens_order' => ['label' => 'Orden de laboratorio', 'plural' => 'Órdenes de laboratorio', 'nav' => 'Laboratorio'],
         'user' => ['label' => 'Usuario', 'plural' => 'Usuarios', 'nav' => 'Usuarios'],
         'tax' => ['label' => 'Impuesto', 'plural' => 'Impuestos', 'nav' => 'Impuestos'],
+        'combo_settings' => ['nav' => 'Combos'],
     ],
 
     'users' => [
@@ -547,6 +548,33 @@ return [
             'selected_combo_keys' => 'Combinaciones que vendes',
             'already_have' => 'Ya tienes combinaciones creadas. Marca solo las que quieras agregar.',
             'summary' => ':count combinaciones con precio',
+        ],
+        'treatments' => [
+            'label' => 'Tratamientos',
+            'description' => 'Antirreflejo, filtro azul, fotocromático… con su precio y costo.',
+            'add' => 'Agregar tratamiento',
+            'summary' => ':count tratamientos',
+        ],
+        'combos' => [
+            'label' => 'Combos',
+            'description' => 'Lo que acompaña cada par de gafas. Una fila por categoría; el vendedor puede cambiar el producto dentro de la misma categoría.',
+            'armado' => 'Gafas formuladas',
+            'frame' => 'Montura sola',
+            'sale' => 'Toda venta',
+            'product' => 'Por producto',
+            'preview' => 'Así se verá en el POS',
+            'frame_pricing' => 'Precio de la montura dentro del combo',
+            'add' => 'Agregar artículo',
+            'duplicate_category' => 'Un producto no puede tener dos artículos de la misma categoría.',
+            'summary' => ':count artículos en Gafas formuladas',
+            'fields' => [
+                'trigger_product' => 'Al vender',
+                'price_mode' => 'Cómo se cobra',
+                'is_optional' => 'Opcional',
+                'is_preselected' => 'Marcado por defecto',
+                'upgrade_product' => 'Mejora',
+                'upgrade_min_total' => 'Mejora desde una compra de',
+            ],
         ],
         'summary' => [
             'label' => 'Listo para vender',
