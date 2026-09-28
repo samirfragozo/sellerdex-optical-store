@@ -173,11 +173,11 @@ it('taxes an older variant without its own tax with its base product tax', funct
         ->and($line->tax_amount)->toBe(19_000);
 });
 
-it('includes the payment-method surcharge in the taxable amount', function () {
+it('charges the payment-method surcharge on the tax-inclusive price without adding VAT to it', function () {
     $frame = Product::factory()->create(['price' => 119_000, 'tax_id' => $this->iva19->id]);
 
     $sale = sellProduct($frame, ['surcharge_percent' => 7]);
 
     expect($sale->total)->toBe(127_330)
-        ->and($sale->tax_amount)->toBe((int) round(19_000 * 127_330 / 119_000));
+        ->and($sale->tax_amount)->toBe(19_000);
 });
