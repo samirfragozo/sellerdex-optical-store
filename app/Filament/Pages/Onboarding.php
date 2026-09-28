@@ -4,6 +4,7 @@ namespace App\Filament\Pages;
 
 use App\Filament\Pages\Onboarding\OnboardingStep;
 use App\Filament\Pages\Onboarding\Steps\CompanyStep;
+use App\Filament\Pages\Onboarding\Steps\CounterProductsStep;
 use App\Filament\Pages\Onboarding\Steps\LaboratoriesStep;
 use App\Filament\Pages\Onboarding\Steps\LensesStep;
 use App\Filament\Pages\Onboarding\Steps\PaymentMethodsStep;
@@ -38,6 +39,7 @@ class Onboarding extends Page
         return [
             CompanyStep::class,
             PaymentMethodsStep::class,
+            CounterProductsStep::class,
             LaboratoriesStep::class,
             LensesStep::class,
             SummaryStep::class,

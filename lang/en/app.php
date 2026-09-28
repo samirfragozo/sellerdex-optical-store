@@ -526,6 +526,13 @@ return [
             'others' => 'Other payment methods',
             'add' => 'Add payment method',
         ],
+        'counter_products' => [
+            'label' => 'Counter products',
+            'description' => 'What you sell besides lenses. We suggest a list: rename, re-price or remove what you don\'t carry.',
+            'add_category' => 'Add category',
+            'add_product' => 'Add product',
+            'summary' => ':products products in :categories categories',
+        ],
         'laboratories' => [
             'label' => 'Laboratories',
             'description' => 'Where you send lenses to be made. You need at least one.',

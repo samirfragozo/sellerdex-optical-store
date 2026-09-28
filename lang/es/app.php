@@ -526,6 +526,13 @@ return [
             'others' => 'Otros métodos de pago',
             'add' => 'Agregar método de pago',
         ],
+        'counter_products' => [
+            'label' => 'Productos de mostrador',
+            'description' => 'Lo que vendes además de lentes. Te sugerimos una lista: renombra, cambia precios o borra lo que no manejes.',
+            'add_category' => 'Agregar categoría',
+            'add_product' => 'Agregar producto',
+            'summary' => ':products productos en :categories categorías',
+        ],
         'laboratories' => [
             'label' => 'Laboratorios',
             'description' => 'A dónde envías a fabricar los lentes. Necesitas al menos uno.',

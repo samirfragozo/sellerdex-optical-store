@@ -3,6 +3,7 @@
 use App\Enums\VatRegime;
 use App\Filament\Pages\Onboarding;
 use App\Filament\Pages\Onboarding\Steps\CompanyStep;
+use App\Filament\Pages\Onboarding\Steps\CounterProductsStep;
 use App\Filament\Pages\Onboarding\Steps\LaboratoriesStep;
 use App\Filament\Pages\Onboarding\Steps\LensesStep;
 use App\Filament\Pages\Onboarding\Steps\PaymentMethodsStep;
@@ -122,7 +123,7 @@ it('adds extra payment methods and keeps cash as the fixed default', function ()
         ])
         ->call('next')
         ->assertHasNoErrors()
-        ->assertSet('step', LaboratoriesStep::key());
+        ->assertSet('step', CounterProductsStep::key());
 
     expect(PaymentMethod::where('company_id', $admin->company_id)->orderBy('id')->pluck('name')->all())
         ->toBe(['Efectivo', 'Nequi', 'Addi']);
