@@ -1,13 +1,16 @@
 <?php
 
 use App\Actions\RegisterSale;
+use App\Enums\KitTrigger;
 use App\Models\Customer;
+use App\Models\KitSlot;
 use App\Models\LensCombination;
 use App\Models\LensTreatment;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\Tax;
 use App\Models\User;
+use App\Support\ReferenceKit;
 use Database\Seeders\ProductCatalogSeeder;
 use Database\Seeders\ProductCategorySeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -95,6 +98,12 @@ it('registra un lente con su configuración y tratamientos resueltos', function 
 it('builds two armados, each with its own grouped combo lines', function () {
     seedCatalog();
     $frame = Product::where('sku', 'MNT-COMPLETA-ACETATO')->first();
+    $smallEstuche = Product::where('sku', 'ACC-ESTUCHE-SMALL')->first();
+    $largeEstuche = Product::where('sku', 'ACC-ESTUCHE-LARGE')->first();
+    $caseSlot = KitSlot::factory()->create([
+        'slot_category_id' => $smallEstuche->product_category_id,
+        'default_product_id' => $smallEstuche->id,
+    ]);
 
     $sale = app(RegisterSale::class)->handle([
         'customer_id' => Customer::factory()->create()->id,
@@ -103,32 +112,31 @@ it('builds two armados, each with its own grouped combo lines', function () {
             [
                 'lens' => lensPayload(),
                 'frame' => ['product_id' => $frame->id, 'description' => $frame->name, 'unit_price' => $frame->price],
-                'combo' => ['with_exam' => false, 'estuche' => 'small', 'include_liquid' => true, 'include_pano' => true],
             ],
             [
                 'lens' => lensPayload(),
                 'own_frame' => true,
-                'combo' => ['with_exam' => false, 'estuche' => 'large', 'include_liquid' => false, 'include_pano' => true],
+                'slots' => [['kit_slot_id' => $caseSlot->id, 'product_id' => $largeEstuche->id]],
             ],
         ],
     ], $this->seller);
 
-    // Each armado gets its own group_key; the frame in armado 1 is dropped to $0.
+    // Each armado gets its own group_key; the frame is included in the armado price by default.
     $groups = $sale->items->pluck('group_key')->filter()->unique();
     expect($groups)->toHaveCount(2);
 
     $frameLine = $sale->items->firstWhere('product_id', $frame->id);
     expect($frameLine->unit_price)->toBe(0);
 
-    // Armado 1 has a small estuche + liquid; armado 2 has a large estuche + no liquid.
-    $smallEstuche = Product::where('sku', 'ACC-ESTUCHE-SMALL')->first();
-    $largeEstuche = Product::where('sku', 'ACC-ESTUCHE-LARGE')->first();
-    expect($sale->items->where('product_id', $smallEstuche->id))->toHaveCount(1);
-    expect($sale->items->where('product_id', $largeEstuche->id))->toHaveCount(1);
+    // Armado 1 gets the default small estuche; armado 2 swapped it for the large one.
+    expect($sale->items->where('product_id', $smallEstuche->id)->pluck('group_key')->all())->toBe(['g1'])
+        ->and($sale->items->where('product_id', $largeEstuche->id)->pluck('group_key')->all())->toBe(['g2']);
 });
 
 it('adds the free exam surcharge per armado when requested', function () {
     seedCatalog();
+    ReferenceKit::installFor($this->seller->company);
+    $examSlot = KitSlot::where('trigger', KitTrigger::Armado)->get()->firstWhere(fn ($s) => $s->slotCategory->key === 'service');
 
     $sale = app(RegisterSale::class)->handle([
         'customer_id' => Customer::factory()->create()->id,
@@ -136,7 +144,7 @@ it('adds the free exam surcharge per armado when requested', function () {
         'armados' => [[
             'lens' => lensPayload(['price' => 100000, 'installation_price' => 0]),
             'own_frame' => true,
-            'combo' => ['with_exam' => true, 'estuche' => 'small', 'include_liquid' => false, 'include_pano' => true],
+            'slots' => [['kit_slot_id' => $examSlot->id, 'product_id' => Product::where('sku', 'SRV-EXAMEN')->value('id'), 'selected' => true]],
         ]],
     ], $this->seller);
 
@@ -154,7 +162,6 @@ it('lets a seller-entered price_override win over the resolved catalog price', f
         'armados' => [[
             'lens' => lensPayload(['price' => 250000], ['price_override' => 90000]),
             'own_frame' => true,
-            'combo' => ['with_exam' => false, 'estuche' => 'small', 'include_liquid' => false, 'include_pano' => true],
         ]],
     ], $this->seller);
 
@@ -173,7 +180,6 @@ it('taxes armado frame lines with the frame\'s tax', function () {
         'armados' => [[
             'lens' => lensPayload(),
             'frame' => ['product_id' => $frame->id, 'description' => $frame->name, 'unit_price' => $frame->price],
-            'combo' => ['with_exam' => false, 'estuche' => 'small', 'include_liquid' => false, 'include_pano' => true],
         ]],
     ], $this->seller);
 
@@ -193,7 +199,6 @@ it('mixes an armado with a standalone product line', function () {
         'armados' => [[
             'lens' => lensPayload(),
             'own_frame' => true,
-            'combo' => ['with_exam' => false, 'estuche' => 'small', 'include_liquid' => false, 'include_pano' => true],
         ]],
         'products' => [
             ['product_id' => $accessory->id, 'description' => $accessory->name, 'quantity' => 2, 'unit_price' => $accessory->price],
@@ -214,7 +219,6 @@ it('adds a single global bag for the whole sale', function () {
         'armados' => [[
             'lens' => lensPayload(['price' => 125000]),
             'own_frame' => true,
-            'combo' => ['with_exam' => false, 'estuche' => 'small', 'include_liquid' => false, 'include_pano' => true],
         ]],
     ], $this->seller);
 

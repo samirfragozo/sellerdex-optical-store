@@ -275,6 +275,9 @@ return [
     ],
 
     'pos' => [
+        'kit' => [
+            'invalid_product' => 'El producto elegido no pertenece a la categoría del combo.',
+        ],
         'title' => 'Nueva venta',
         'created' => 'Venta :number creada exitosamente',
         'lab_order_pending_notice' => 'Se generó una orden de laboratorio pendiente para el lente vendido.',

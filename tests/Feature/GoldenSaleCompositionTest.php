@@ -1,16 +1,21 @@
 <?php
 
 use App\Actions\RegisterSale;
+use App\Enums\KitTrigger;
 use App\Models\Customer;
+use App\Models\KitSlot;
 use App\Models\PaymentMethod;
+use App\Models\Product;
 use App\Models\Sale;
 use App\Models\User;
+use App\Support\ReferenceKit;
 
 require_once __DIR__.'/../Support/GoldenCatalog.php';
 
 beforeEach(function () {
     $this->seller = User::factory()->seller()->create();
     $this->catalog = goldenCatalog($this->seller);
+    ReferenceKit::installFor($this->seller->company);
     $this->customer = Customer::factory()->create();
 });
 
@@ -26,6 +31,24 @@ function goldenLens(array $catalog): array
     ];
 }
 
+/**
+ * Map the old combo flags to slot selections for the reference kit.
+ *
+ * @return list<array{kit_slot_id: int, product_id?: int, selected: bool}>
+ */
+function goldenSlots(bool $exam, string $case, bool $cloth, bool $cleaning): array
+{
+    $slots = KitSlot::where('trigger', KitTrigger::Armado)->with('slotCategory')->get()->keyBy(fn ($s) => $s->slotCategory->key);
+    $caseProduct = Product::where('sku', $case === 'large' ? 'ACC-ESTUCHE-LARGE' : 'ACC-ESTUCHE-SMALL')->value('id');
+
+    return [
+        ['kit_slot_id' => $slots['case']->id, 'product_id' => $caseProduct, 'selected' => true],
+        ['kit_slot_id' => $slots['cloth']->id, 'selected' => $cloth],
+        ['kit_slot_id' => $slots['cleaning']->id, 'selected' => $cleaning],
+        ['kit_slot_id' => $slots['service']->id, 'selected' => $exam],
+    ];
+}
+
 function goldenRegister(array $payload): Sale
 {
     return app(RegisterSale::class)->handle($payload, test()->seller);
@@ -38,7 +61,7 @@ it('S1: armado with frame, exam, large case, cloth and liquid', function () {
         'armados' => [[
             'lens' => goldenLens($this->catalog),
             'frame' => ['product_id' => $this->catalog['frame']->id, 'description' => 'Montura Golden', 'unit_price' => 150_000],
-            'combo' => ['with_exam' => true, 'estuche' => 'large', 'include_pano' => true, 'include_liquid' => true],
+            'slots' => goldenSlots(true, 'large', true, true),
         ]],
     ]);
 
@@ -135,7 +158,7 @@ it('S7: armado combo without cloth or liquid omits the paño line', function () 
         'armados' => [[
             'lens' => goldenLens($this->catalog),
             'own_frame' => true,
-            'combo' => ['with_exam' => false, 'estuche' => 'small', 'include_pano' => false, 'include_liquid' => false],
+            'slots' => goldenSlots(false, 'small', false, false),
         ]],
     ]);
 

@@ -1,8 +1,10 @@
 <?php
 
 use App\Enums\DocumentType;
+use App\Enums\KitTrigger;
 use App\Models\Company;
 use App\Models\Customer;
+use App\Models\KitSlot;
 use App\Models\LensCombination;
 use App\Models\LensMaterial;
 use App\Models\LensTechnology;
@@ -17,6 +19,7 @@ use App\Models\Sale;
 use App\Models\Supplier;
 use App\Models\Tax;
 use App\Models\User;
+use App\Support\ReferenceKit;
 use Database\Seeders\ProductCatalogSeeder;
 use Database\Seeders\ProductCategorySeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -464,7 +467,7 @@ it('returns the created sale as json for printing', function () {
         ->and($sale->number)->not->toBeNull();
 });
 
-it('passes combo options and applies a paper bag', function () {
+it('passes combo slot selections and applies a paper bag', function () {
     $company = Company::factory()->create();
     $this->seed(ProductCategorySeeder::class);
     $this->seed(ProductCatalogSeeder::class);
@@ -475,6 +478,8 @@ it('passes combo options and applies a paper bag', function () {
     openCashRegisterSession($seller);
     Supplier::factory()->laboratory()->create(['company_id' => $seller->company_id]);
     $this->actingAs($seller);
+    ReferenceKit::installFor($company);
+    $examSlot = KitSlot::where('trigger', KitTrigger::Armado)->get()->firstWhere(fn ($s) => $s->slotCategory->key === 'service');
 
     $this->postJson('/pos', [
         'customer_id' => Customer::factory()->create()->id,
@@ -483,14 +488,14 @@ it('passes combo options and applies a paper bag', function () {
             // Manual override ≥ bag threshold of 215,000 wins over the catalog price.
             'lens' => lensArmadoLens($company->id, ['price_override' => 1_000_000]),
             'own_frame' => true,
-            'combo' => ['estuche' => 'small', 'include_liquid' => false, 'include_pano' => true, 'with_exam' => true],
+            'slots' => [['kit_slot_id' => $examSlot->id, 'product_id' => Product::where('sku', 'SRV-EXAMEN')->value('id'), 'selected' => true]],
         ]],
         'prescription' => ['exam_date' => '2026-06-20'],
     ])->assertOk();
 
     $sale = Sale::latest('id')->first();
     $skus = $sale->items->map(fn ($i) => Product::withoutGlobalScopes()->find($i->product_id)?->sku)->filter();
-    expect($skus)->toContain('ACC-ESTUCHE-SMALL', 'ACC-PANO', 'ACC-BOLSA-PAPEL', 'SRV-EXAMEN');
+    expect($skus)->toContain('ACC-BOLSA-PAPEL', 'SRV-EXAMEN');
 });
 
 it('rejects a lens armado without a customer', function () {
@@ -570,7 +575,6 @@ it('creates a sale from an armado with a new prescription', function () {
         'armados' => [[
             'lens' => lensArmadoLens($seller->company_id, ['description' => 'Lente progresivo']),
             'own_frame' => true,
-            'combo' => ['with_exam' => false, 'estuche' => 'small', 'include_liquid' => false, 'include_pano' => true],
         ]],
     ])
         ->assertOk();

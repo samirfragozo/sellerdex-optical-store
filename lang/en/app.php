@@ -275,6 +275,9 @@ return [
     ],
 
     'pos' => [
+        'kit' => [
+            'invalid_product' => 'The chosen product does not belong to the combo category.',
+        ],
         'title' => 'New sale',
         'created' => 'Sale :number created successfully',
         'lab_order_pending_notice' => 'A pending lab order was generated for the lens sold.',

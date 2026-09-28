@@ -14,15 +14,7 @@ use Illuminate\Validation\ValidationException;
 
 class RegisterSale
 {
-    private const EXAM_SURCHARGE = 20000;
-
     private const BAG_THRESHOLD = 215000;
-
-    private const SKU_EXAM = 'SRV-EXAMEN';
-
-    private const SKU_PANO = 'ACC-PANO';
-
-    private const SKU_LIQUIDO = 'ACC-LIQUIDO';
 
     private const SKU_FUNDA = 'ACC-FUNDA';
 
@@ -244,51 +236,13 @@ class RegisterSale
                     'product_id' => $frame['product_id'] ?? null,
                     'description' => $frame['description'],
                     'quantity' => $frame['quantity'] ?? 1,
-                    'unit_price' => $frame['unit_price'],
+                    'unit_price' => $this->seller->company->armadoFrameUnitPrice((int) $frame['unit_price']),
                     'unit_cost' => $frame['unit_cost'] ?? 0,
                     ...SaleItem::taxSnapshotFor(Product::find($frame['product_id'] ?? null), $this->seller->company),
                 ]);
             }
 
-            $this->composeArmadoCombo($sale, $groupKey, $armado['combo'] ?? null);
-        }
-    }
-
-    /**
-     * Apply the combo rules within a single armado group.
-     *
-     * @param  array<string,mixed>|null  $combo
-     */
-    private function composeArmadoCombo(Sale $sale, string $groupKey, ?array $combo): void
-    {
-        $combo ??= ['estuche' => 'small', 'include_liquid' => false, 'include_pano' => true, 'with_exam' => false];
-        $sale->load('items.product.category');
-
-        $groupItems = $sale->items->where('group_key', $groupKey);
-        $lensLine = $groupItems->first(fn ($i) => $i->isLens());
-
-        if ($lensLine === null) {
-            return;
-        }
-
-        if (! empty($combo['with_exam'])) {
-            $lensLine->update(['unit_price' => $lensLine->unit_price + self::EXAM_SURCHARGE]);
-            $this->addZeroLine($sale, self::SKU_EXAM, $groupKey);
-        }
-
-        foreach ($groupItems as $item) {
-            if ($item->product?->category?->key === 'frame' && $item->unit_price !== 0) {
-                $item->update(['unit_price' => 0]);
-            }
-        }
-
-        $estucheSku = ($combo['estuche'] ?? 'small') === 'large' ? 'ACC-ESTUCHE-LARGE' : 'ACC-ESTUCHE-SMALL';
-        $this->addZeroLine($sale, $estucheSku, $groupKey);
-        if (! empty($combo['include_pano'])) {
-            $this->addZeroLine($sale, self::SKU_PANO, $groupKey);
-        }
-        if (! empty($combo['include_liquid'])) {
-            $this->addZeroLine($sale, self::SKU_LIQUIDO, $groupKey);
+            app(ApplyKitRules::class)->forArmado($sale, $groupKey, $armado['slots'] ?? [], $this->seller);
         }
     }
 

@@ -1,13 +1,16 @@
 <?php
 
 use App\Actions\RegisterSale;
+use App\Enums\KitTrigger;
 use App\Models\Company;
 use App\Models\Customer;
+use App\Models\KitSlot;
 use App\Models\LensCombination;
 use App\Models\PaymentMethod;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\User;
+use App\Support\ReferenceKit;
 use Database\Seeders\PaymentMethodSeeder;
 use Database\Seeders\ProductCatalogSeeder;
 use Database\Seeders\ProductCategorySeeder;
@@ -28,6 +31,8 @@ it('renders a combo invoice with free exam, included lines and the surcharged to
     $seller = User::factory()->forCompany($company)->seller()->create();
     $admin = User::factory()->forCompany($company)->admin()->create();
     $this->actingAs($seller);
+    ReferenceKit::installFor($company);
+    $examSlot = KitSlot::where('trigger', KitTrigger::Armado)->get()->firstWhere(fn ($s) => $s->slotCategory->key === 'service');
 
     $combination = LensCombination::factory()->create(['price' => 295000, 'cost' => 6000, 'installation_price' => 0]);
     $addi = PaymentMethod::where('name', 'Addi')->first(); // 7%
@@ -44,7 +49,7 @@ it('renders a combo invoice with free exam, included lines and the surcharged to
                 'treatment_ids' => [],
             ],
             'own_frame' => true,
-            'combo' => ['with_exam' => true, 'estuche' => 'small', 'include_liquid' => false, 'include_pano' => true],
+            'slots' => [['kit_slot_id' => $examSlot->id, 'selected' => true]],
         ]],
         'surcharge_percent' => $addi->surcharge_percent,
     ], $seller);

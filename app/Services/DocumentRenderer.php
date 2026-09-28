@@ -103,7 +103,7 @@ class DocumentRenderer
     /** @return array<string, mixed> */
     private function invoiceData(Sale $sale): array
     {
-        $sale->loadMissing(['customer', 'seller', 'items.product', 'payments']);
+        $sale->loadMissing(['customer', 'seller', 'items.product.category', 'payments']);
 
         return [
             ...$this->businessHeader(),

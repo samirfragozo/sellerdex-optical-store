@@ -31,7 +31,7 @@
                     <td>{{ $item->quantity }}</td>
                     <td>{{ $item->description }}</td>
                     @if ((int) $item->line_total === 0)
-                        <td class="right" colspan="2">{{ $item->product?->sku === 'SRV-EXAMEN' ? __('app.documents.free') : __('app.documents.included') }}</td>
+                        <td class="right" colspan="2">{{ $item->product?->category?->key === 'service' ? __('app.documents.free') : __('app.documents.included') }}</td>
                     @else
                         <td class="right">{{ $fmt($item->unit_price) }}</td>
                         <td class="right">{{ $fmt($item->line_total) }}</td>
