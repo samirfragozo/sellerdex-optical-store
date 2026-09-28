@@ -63,6 +63,7 @@ it('rejects swapping a slot product for one outside its category', function () {
 it('charges the frame by the company frame pricing mode', function () {
     $this->seller->company->update(['armado_frame_price_mode' => ArmadoFramePriceMode::DiscountPercent, 'armado_frame_discount_percent' => 20]);
     $frame = $this->catalog['frame'];
+    $frame->update(['is_stockable' => true, 'stock' => 5]);
 
     $sale = kitSellArmado([
         'lens' => kitLens($this->catalog),
@@ -70,7 +71,8 @@ it('charges the frame by the company frame pricing mode', function () {
     ]);
 
     expect($sale->items->firstWhere('product_id', $frame->id)->unit_price)->toBe(120_000)
-        ->and($sale->total)->toBe(300_000);
+        ->and($sale->total)->toBe(300_000)
+        ->and($frame->fresh()->stock)->toBe(4);
 });
 
 it('prices a charged slot and a discounted slot', function () {
