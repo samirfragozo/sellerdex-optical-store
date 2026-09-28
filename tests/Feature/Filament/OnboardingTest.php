@@ -32,6 +32,7 @@ it('starts on the company step and saves it before moving on', function () {
 
     Livewire::test(Onboarding::class)
         ->assertSet('step', CompanyStep::key())
+        ->assertSet('data.prescription_validity_months', 12)
         ->set('data.name', 'Óptica Central')
         ->set('data.tax_id', '900123456-7')
         ->set('data.vat_regime', VatRegime::NotResponsible->value)
@@ -45,6 +46,7 @@ it('starts on the company step and saves it before moving on', function () {
         ->and($company->tax_id)->toBe('900123456-7')
         ->and($company->vat_regime)->toBe(VatRegime::NotResponsible)
         ->and($company->sale_number_prefix)->toBe('OC-')
+        ->and($company->prescription_validity_months)->toBe(12)
         ->and($company->onboarding_step)->not->toBe(CompanyStep::key())
         ->and($company->onboarded_at)->toBeNull();
 });

@@ -31,6 +31,7 @@ it('saves the business settings and requires the NIT', function () {
             'tax_id' => '900555111-2',
             'vat_regime' => VatRegime::Responsible->value,
             'sale_number_prefix' => 'ON-',
+            'prescription_validity_months' => 6,
         ])
         ->call('save')
         ->assertHasNoFormErrors();
@@ -39,10 +40,29 @@ it('saves the business settings and requires the NIT', function () {
     expect($company->name)->toBe('Óptica Norte')
         ->and($company->tax_id)->toBe('900555111-2')
         ->and($company->vat_regime)->toBe(VatRegime::Responsible)
-        ->and($company->sale_number_prefix)->toBe('ON-');
+        ->and($company->sale_number_prefix)->toBe('ON-')
+        ->and($company->prescription_validity_months)->toBe(6);
 
     Livewire::test(ManageBusinessSetting::class)
         ->fillForm(['tax_id' => ''])
         ->call('save')
         ->assertHasFormErrors(['tax_id' => 'required']);
+
+    Livewire::test(ManageBusinessSetting::class)
+        ->fillForm(['prescription_validity_months' => 61])
+        ->call('save')
+        ->assertHasFormErrors(['prescription_validity_months' => 'max']);
+});
+
+it('falls back to 12 months when the prescription validity is cleared', function () {
+    $admin = User::factory()->admin()->create();
+    $admin->company->update(['prescription_validity_months' => 6]);
+    $this->actingAs($admin);
+
+    Livewire::test(ManageBusinessSetting::class)
+        ->fillForm(['prescription_validity_months' => null])
+        ->call('save')
+        ->assertHasNoFormErrors();
+
+    expect($admin->company->fresh()->prescription_validity_months)->toBe(12);
 });

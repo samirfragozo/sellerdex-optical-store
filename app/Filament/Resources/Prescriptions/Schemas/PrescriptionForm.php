@@ -2,8 +2,10 @@
 
 namespace App\Filament\Resources\Prescriptions\Schemas;
 
+use App\Enums\PrismBase;
 use App\Rules\Diopter;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -29,6 +31,18 @@ class PrescriptionForm
                     ->required()
                     ->maxDate(now())
                     ->minDate(now()->subYears(2)),
+                DatePicker::make('expires_at')
+                    ->label(__('app.fields.expires_at'))
+                    ->disabled()
+                    ->dehydrated(false)
+                    ->visibleOn('edit'),
+                TextInput::make('prescriber_name')
+                    ->label(__('app.fields.prescriber_name'))
+                    ->required()
+                    ->maxLength(255),
+                TextInput::make('prescriber_license')
+                    ->label(__('app.fields.prescriber_license'))
+                    ->maxLength(255),
                 Select::make('filters')
                     ->label(__('app.fields.filters'))
                     ->multiple()
@@ -47,6 +61,20 @@ class PrescriptionForm
                 Section::make(__('app.sections.left_eye'))
                     ->columns(2)
                     ->schema(self::eyeFields('os')),
+                Textarea::make('notes')
+                    ->label(__('app.fields.notes'))
+                    ->maxLength(1000)
+                    ->columnSpanFull(),
+                // Health data: private `local` disk only, served through documents.prescription.attachment.
+                FileUpload::make('attachment')
+                    ->label(__('app.fields.attachment'))
+                    ->disk('local')
+                    ->directory('prescriptions')
+                    ->visibility('private')
+                    ->acceptedFileTypes(['image/*', 'application/pdf'])
+                    ->maxSize(10240)
+                    ->openable()
+                    ->columnSpanFull(),
             ]);
     }
 
@@ -81,6 +109,16 @@ class PrescriptionForm
                 ->minValue(20)
                 ->maxValue(40)
                 ->rule(new Diopter(20, 40, 0.5)),
+            TextInput::make("{$eye}_prism")
+                ->label(__('app.fields.prism'))
+                ->numeric()
+                ->minValue(0)
+                ->maxValue(10)
+                ->rule(new Diopter(0, 10)),
+            Select::make("{$eye}_prism_base")
+                ->label(__('app.fields.prism_base'))
+                ->options(PrismBase::options())
+                ->requiredWith("{$eye}_prism"),
         ];
     }
 

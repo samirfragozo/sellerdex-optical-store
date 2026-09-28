@@ -204,6 +204,13 @@ return [
         'all' => 'All',
         'laboratories' => 'Laboratories',
         'pending' => 'Pending',
+        'prescriber_name' => 'Prescribed by',
+        'prescriber_license' => 'Professional license',
+        'prism' => 'Prism',
+        'prism_base' => 'Base',
+        'attachment' => 'Photo or PDF of the prescription',
+        'expires_at' => 'Expires',
+        'prescription_validity_months' => 'Prescription validity (months)',
     ],
 
     'lens_kind' => [
@@ -474,6 +481,8 @@ return [
         'eye' => 'Eye',
         'diagnosis_short' => 'Dx',
         'control' => 'Follow-up',
+        'expired' => 'Expired',
+        'view_attachment' => 'View original prescription',
     ],
 
     'reports' => [

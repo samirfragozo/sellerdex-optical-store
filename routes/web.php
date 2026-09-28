@@ -8,6 +8,7 @@ use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\Locale\UpdateController as LocaleUpdateController;
 use App\Http\Controllers\Pos\LensRecommendationController;
 use App\Http\Controllers\PosController;
+use App\Http\Controllers\Prescription\AttachmentController;
 use App\Http\Controllers\Prescription\FormulaController;
 use App\Http\Controllers\Prescription\FormulaPdfController;
 use App\Http\Controllers\Sale\InvoiceController;
@@ -40,6 +41,7 @@ Route::middleware('auth')->group(function () {
     Route::get('sales/{sale}/invoice/pdf', InvoicePdfController::class)->name('documents.invoice.pdf');
     Route::get('prescriptions/{prescription}/formula', FormulaController::class)->name('documents.formula');
     Route::get('prescriptions/{prescription}/formula/pdf', FormulaPdfController::class)->name('documents.formula.pdf');
+    Route::get('prescriptions/{prescription}/attachment', AttachmentController::class)->name('documents.prescription.attachment');
 });
 
 require __DIR__.'/settings.php';

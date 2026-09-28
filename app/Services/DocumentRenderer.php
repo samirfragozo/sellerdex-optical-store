@@ -113,7 +113,7 @@ class DocumentRenderer
 
     public function formula(Prescription $prescription): View
     {
-        return view('documents.formula', $this->formulaData($prescription));
+        return view('documents.formula', [...$this->formulaData($prescription), 'showAttachmentLink' => true]);
     }
 
     public function formulaPdf(Prescription $prescription): Response

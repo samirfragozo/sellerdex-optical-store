@@ -1,11 +1,14 @@
 <?php
 
+use App\Enums\PrismBase;
 use App\Filament\Resources\Prescriptions\Pages\CreatePrescription;
 use App\Filament\Resources\Prescriptions\Pages\EditPrescription;
 use App\Models\Customer;
 use App\Models\Prescription;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 
 uses(RefreshDatabase::class);
@@ -26,6 +29,20 @@ it('el vendedor también puede ver el listado de prescripciones', function () {
         ->assertSuccessful();
 });
 
+it('flags expired prescriptions in the list', function () {
+    $this->actingAs(User::factory()->admin()->create());
+    Prescription::factory()->create(['exam_date' => now()->subMonths(13)->toDateString()]);
+
+    $this->get('/admin/prescriptions')->assertSee(__('app.documents.expired'));
+});
+
+it('does not flag current prescriptions as expired', function () {
+    $this->actingAs(User::factory()->admin()->create());
+    Prescription::factory()->create(['exam_date' => now()->subMonth()->toDateString()]);
+
+    $this->get('/admin/prescriptions')->assertDontSee(__('app.documents.expired'));
+});
+
 it('combina el signo y el valor al crear una prescripción', function () {
     $admin = User::factory()->admin()->create();
 
@@ -36,6 +53,7 @@ it('combina el signo y el valor al crear una prescripción', function () {
         ->fillForm([
             'customer_id' => $customer->id,
             'exam_date' => now()->subMonth()->toDateString(),
+            'prescriber_name' => 'Dra. Ana Gómez',
             'od_sphere_sign' => '-',
             'od_sphere_num' => '2.25',
             'os_add_num' => '1.00',
@@ -62,7 +80,7 @@ it('valida el rango y el paso de los dioptrías en Filament', function () {
             'od_cylinder_num' => '1.00', // cylinder without axis
         ])
         ->call('create')
-        ->assertHasFormErrors(['od_sphere_num', 'od_axis']);
+        ->assertHasFormErrors(['od_sphere_num', 'od_axis', 'prescriber_name' => 'required']);
 });
 
 it('splits and recombines the stored decimal diopters when editing', function () {
@@ -70,7 +88,9 @@ it('splits and recombines the stored decimal diopters when editing', function ()
     $prescription = Prescription::factory()->create(['od_sphere' => '-2.25', 'os_add' => '1.00']);
 
     Livewire::test(EditPrescription::class, ['record' => $prescription->getRouteKey()])
+        ->assertFormFieldIsDisabled('expires_at')
         ->assertSchemaStateSet([
+            'expires_at' => $prescription->expires_at->toDateString(),
             'od_sphere_sign' => '-',
             'od_sphere_num' => '2.25',
             'os_add_num' => '1.00',
@@ -81,4 +101,48 @@ it('splits and recombines the stored decimal diopters when editing', function ()
 
     expect($prescription->fresh()->od_sphere)->toBe('2.25')
         ->and($prescription->fresh()->os_add)->toBe('1.00');
+});
+
+it('stores the uploaded prescription privately along with prism and prescriber', function () {
+    Storage::fake('local');
+    Storage::fake('public');
+    $this->actingAs(User::factory()->admin()->create());
+    $customer = Customer::factory()->create();
+
+    Livewire::test(CreatePrescription::class)
+        ->fillForm([
+            'customer_id' => $customer->id,
+            'exam_date' => now()->subMonth()->toDateString(),
+            'prescriber_name' => 'Dra. Ana Gómez',
+            'prescriber_license' => 'TP 12345',
+            'od_prism' => '1.50',
+            'od_prism_base' => PrismBase::In->value,
+            'notes' => 'Uso permanente',
+            'attachment' => UploadedFile::fake()->image('rx.jpg'),
+        ])
+        ->call('create')
+        ->assertHasNoFormErrors();
+
+    $prescription = Prescription::sole();
+    expect($prescription->attachment)->toStartWith('prescriptions/')
+        ->and($prescription->prescriber_license)->toBe('TP 12345')
+        ->and($prescription->od_prism)->toBe('1.50')
+        ->and($prescription->od_prism_base)->toBe(PrismBase::In)
+        ->and($prescription->notes)->toBe('Uso permanente');
+    Storage::disk('local')->assertExists($prescription->attachment);
+    Storage::disk('public')->assertMissing($prescription->attachment);
+});
+
+it('requires the prism base when a prism is given', function () {
+    $this->actingAs(User::factory()->admin()->create());
+
+    Livewire::test(CreatePrescription::class)
+        ->fillForm([
+            'customer_id' => Customer::factory()->create()->id,
+            'exam_date' => now()->subMonth()->toDateString(),
+            'prescriber_name' => 'Dra. Ana Gómez',
+            'od_prism' => '1.30',
+        ])
+        ->call('create')
+        ->assertHasFormErrors(['od_prism', 'od_prism_base']);
 });

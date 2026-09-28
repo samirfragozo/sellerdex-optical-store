@@ -44,6 +44,14 @@ class CompanyStep extends OnboardingStep
                 ->helperText(__('app.onboarding.company.sale_number_prefix_help'))
                 ->maxLength(10)
                 ->alphaDash(),
+            TextInput::make('prescription_validity_months')
+                ->label(__('app.fields.prescription_validity_months'))
+                ->integer()
+                ->minValue(1)
+                ->maxValue(60)
+                ->placeholder('12')
+                // ponytail: optional in onboarding; a cleared value falls back to the column default.
+                ->dehydrateStateUsing(fn (mixed $state): int => filled($state) ? (int) $state : 12),
             FileUpload::make('logo')->label(__('app.fields.logo'))->image()->disk('public')->directory('business'),
         ];
     }
@@ -56,14 +64,14 @@ class CompanyStep extends OnboardingStep
     public function fill(Company $company): array
     {
         return [
-            ...$company->only(['name', 'tax_id', 'address', 'phones', 'sale_number_prefix', 'logo']),
+            ...$company->only(['name', 'tax_id', 'address', 'phones', 'sale_number_prefix', 'prescription_validity_months', 'logo']),
             'vat_regime' => $company->vat_regime?->value,
         ];
     }
 
     public function save(Company $company, array $state): void
     {
-        $company->update(collect($state)->only(['name', 'tax_id', 'vat_regime', 'address', 'phones', 'sale_number_prefix', 'logo'])->all());
+        $company->update(collect($state)->only(['name', 'tax_id', 'vat_regime', 'address', 'phones', 'sale_number_prefix', 'prescription_validity_months', 'logo'])->all());
     }
 
     public function isComplete(Company $company): bool

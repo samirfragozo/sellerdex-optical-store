@@ -28,6 +28,13 @@ class PrescriptionsTable
                     ->date()
                     ->sortable()
                     ->searchable(),
+                TextColumn::make('expires_at')
+                    ->label(__('app.fields.expires_at'))
+                    ->date()
+                    ->sortable()
+                    ->badge(fn (Prescription $record): bool => $record->isExpired())
+                    ->color(fn (Prescription $record): ?string => $record->isExpired() ? 'danger' : null)
+                    ->suffix(fn (Prescription $record): ?string => $record->isExpired() ? ' · '.__('app.documents.expired') : null),
                 TextColumn::make('deleted_at')
                     ->dateTime()
                     ->sortable()

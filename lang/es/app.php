@@ -198,6 +198,13 @@ return [
         'all' => 'Todos',
         'laboratories' => 'Laboratorios',
         'pending' => 'Pendientes',
+        'prescriber_name' => 'Quién formuló',
+        'prescriber_license' => 'Tarjeta profesional',
+        'prism' => 'Prisma',
+        'prism_base' => 'Base',
+        'attachment' => 'Foto o PDF de la fórmula',
+        'expires_at' => 'Vence',
+        'prescription_validity_months' => 'Vigencia de la fórmula (meses)',
     ],
 
     'sections' => [
@@ -474,6 +481,8 @@ return [
         'eye' => 'Ojo',
         'diagnosis_short' => 'R',
         'control' => 'Control',
+        'expired' => 'Vencida',
+        'view_attachment' => 'Ver fórmula original',
     ],
 
     'reports' => [
