@@ -11,6 +11,8 @@ use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\Sale;
 use App\Models\User;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 
 function registerAndOnboard(string $email, VatRegime $regime): User
@@ -140,4 +142,40 @@ it('lets a new shop onboard with its own counter products and combo and sell an 
     $sale = Sale::latest('id')->first();
     expect($sale->items->pluck('product.name'))->toContain('Estuche pequeño', 'Paño microfibra', 'Examen visual', 'Bolsa plástica')
         ->and($sale->items->first(fn ($i) => $i->isLens())->unit_price)->toBe($combination->price + $combination->installation_price + 20_000);
+});
+
+it('lets a new shop record an external prescription with a photo and sell glasses on it', function () {
+    Storage::fake('local');
+    $admin = registerAndOnboard('rx@optica.test', VatRegime::NotResponsible);
+    openCashRegisterSession($admin);
+    $customer = Customer::factory()->create();
+    $combination = LensCombination::firstOrFail();
+
+    $rxId = $this->post(route('pos.prescriptions.store'), [
+        'customer_id' => $customer->id,
+        'exam_date' => now()->subDays(3)->toDateString(),
+        'prescriber_name' => 'Dr. Luis Pérez',
+        'od_sphere' => '-2.00', 'os_sphere' => '-1.75',
+        'attachment' => UploadedFile::fake()->image('formula.jpg'),
+    ], ['Accept' => 'application/json'])->assertCreated()->json('id');
+
+    $this->postJson(route('pos.store'), [
+        'document_type' => 'order',
+        'customer_id' => $customer->id,
+        'prescription_id' => $rxId,
+        'armados' => [[
+            'lens' => [
+                'description' => 'Lente', 'quantity' => 1, 'treatment_ids' => [],
+                'lens_type_id' => $combination->lens_type_id,
+                'lens_technology_id' => $combination->lens_technology_id,
+                'lens_material_id' => $combination->lens_material_id,
+            ],
+            'own_frame' => true,
+        ]],
+        'payments' => [],
+    ])->assertOk();
+
+    $sale = Sale::latest('id')->first();
+    expect($sale->prescription_id)->toBe($rxId)
+        ->and(Prescription::find($rxId)->attachment)->not->toBeNull();
 });
