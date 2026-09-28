@@ -1,7 +1,9 @@
 <?php
 
+use App\Models\Customer;
 use App\Models\LensCombination;
 use App\Models\PaymentMethod;
+use App\Models\Prescription;
 use App\Models\Product;
 use App\Models\Supplier;
 use App\Models\User;
@@ -38,10 +40,13 @@ it('shares the fix link only with admins', function () {
 it('refuses a lens sale when the only laboratory was deactivated but still sells accessories', function () {
     $this->lab->update(['is_active' => false]);
 
+    $customer = Customer::factory()->create(['company_id' => $this->seller->company_id]);
+    $prescription = Prescription::factory()->create(['customer_id' => $customer->id]);
+
     $this->postJson(route('pos.store'), [
         'document_type' => 'order',
-        'customer' => ['name' => 'Ana', 'last_name' => 'Pérez', 'document_type' => 'cc', 'id_number' => '123', 'phone' => '3000000000'],
-        'prescription' => ['exam_date' => now()->toDateString()],
+        'customer_id' => $customer->id,
+        'prescription_id' => $prescription->id,
         'armados' => [[
             'lens' => [
                 'description' => 'Lente', 'quantity' => 1,

@@ -286,6 +286,9 @@ return [
 
     'validation' => [
         'payments_exceed_total' => 'La suma de los abonos no puede superar el total de la venta.',
+        'axis_required_with_cylinder' => 'Indica el eje cuando hay cilindro.',
+        'cylinder_required_with_axis' => 'Indica el cilindro cuando hay eje.',
+        'prism_base_required_with_prism' => 'Indica la base del prisma cuando hay prisma.',
     ],
 
     'pos' => [
@@ -394,6 +397,12 @@ return [
             'create_new' => 'Crear nueva',
             'select_prescription' => 'Seleccionar prescripción',
             'notes_placeholder' => 'Opcional...',
+            'save' => 'Guardar fórmula',
+            'saved' => 'Fórmula guardada',
+            'attachment_hint' => 'Toma una foto de la fórmula en papel o sube el PDF.',
+            'expired_warning' => 'Esta fórmula está vencida. Puedes venderla, pero confirma con el cliente si tiene una más reciente.',
+            'expired_badge' => 'Vencida',
+            'expires_on' => 'vence :date',
         ],
 
         'cash_session' => [

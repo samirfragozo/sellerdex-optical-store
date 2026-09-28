@@ -7,6 +7,7 @@ use App\Models\LensMaterial;
 use App\Models\LensTechnology;
 use App\Models\LensType;
 use App\Models\PaymentMethod;
+use App\Models\Prescription;
 use App\Models\ProductCategory;
 use App\Models\Supplier;
 use App\Models\User;
@@ -47,6 +48,10 @@ it('offers a prescription created earlier in the session as an existing option',
         ->click('Lentes')
         ->assertButtonDisabled('Usar existente')
         ->fill('#rx_exam_date', now()->toDateString())
+        ->fill('#rx_prescriber_name', 'Dra. Ana Gómez')
+        ->click('Guardar fórmula')
+        ->wait(1)
+        ->assertSee('Fórmula guardada')
         ->click('Continuar al lente')
         ->click('button:has-text("'.$type->name.'")')
         ->click('button:has-text("'.$technology->name.'")')
@@ -74,4 +79,40 @@ it('offers a prescription created earlier in the session as an existing option',
     );
 
     expect($optionCount)->toBe(2);
+});
+
+it('shows a warning when the seller selects an expired prescription', function () {
+    test()->seed(RolesAndPermissionsSeeder::class);
+    $seller = User::factory()->seller()->create();
+    CashRegisterSession::factory()->for($seller)->create(['company_id' => $seller->company_id]);
+    PaymentMethod::factory()->create(['company_id' => $seller->company_id, 'is_active' => true]);
+    Supplier::factory()->laboratory()->create(['company_id' => $seller->company_id]);
+    ProductCategory::factory()->create(['key' => 'lens', 'name' => 'Lentes', 'company_id' => $seller->company_id]);
+    // A priced, active lens combination — otherwise the "lens_price" readiness
+    // blocker opens the blocking dialog instead of the armado wizard.
+    LensCombination::factory()->create([
+        'company_id' => $seller->company_id,
+        'lens_type_id' => LensType::factory()->create(['company_id' => $seller->company_id])->id,
+        'lens_technology_id' => LensTechnology::factory()->create(['company_id' => $seller->company_id])->id,
+        'lens_material_id' => LensMaterial::factory()->create(['company_id' => $seller->company_id])->id,
+    ]);
+
+    $customer = Customer::factory()->create(['company_id' => $seller->company_id, 'name' => 'Ana', 'last_name' => 'Gómez', 'id_number' => '99999999']);
+    $expired = Prescription::factory()->create([
+        'company_id' => $seller->company_id,
+        'customer_id' => $customer->id,
+        'exam_date' => now()->subMonths(14)->toDateString(),
+    ]);
+
+    $this->actingAs($seller);
+
+    visit('/pos')
+        ->fill('#customer_id', 'Ana')
+        ->wait(1)
+        ->click('text=Ana Gómez')
+        ->click('Lentes')
+        ->click('Usar existente')
+        ->select('#prescription_id', (string) $expired->id)
+        ->assertSee('Esta fórmula está vencida')
+        ->assertNoJavaScriptErrors();
 });

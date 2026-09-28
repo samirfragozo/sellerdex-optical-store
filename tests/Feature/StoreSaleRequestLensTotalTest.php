@@ -4,6 +4,7 @@ use App\Models\Customer;
 use App\Models\LensCombination;
 use App\Models\LensTreatment;
 use App\Models\PaymentMethod;
+use App\Models\Prescription;
 use App\Models\Supplier;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -19,6 +20,7 @@ beforeEach(function () {
     $this->seller = User::factory()->seller()->create();
     $this->actingAs($this->seller);
     $this->customer = Customer::factory()->create();
+    $this->prescription = Prescription::factory()->create(['customer_id' => $this->customer->id]);
     $this->method = PaymentMethod::factory()->create();
 
     $this->combination = LensCombination::factory()->create([
@@ -38,7 +40,7 @@ function lensSalePayload(int $paymentAmount, array $lensExtra = []): array
     return [
         'customer_id' => test()->customer->id,
         'document_type' => 'order',
-        'prescription' => ['exam_date' => now()->toDateString()],
+        'prescription_id' => test()->prescription->id,
         'armados' => [[
             'own_frame' => true,
             'lens' => array_merge([

@@ -1,10 +1,12 @@
 <?php
 
+use App\Models\Customer;
 use App\Models\LensCombination;
 use App\Models\LensMaterial;
 use App\Models\LensTechnology;
 use App\Models\LensTreatment;
 use App\Models\LensType;
+use App\Models\Prescription;
 use App\Models\Sale;
 use App\Models\Supplier;
 use App\Models\User;
@@ -28,14 +30,13 @@ it('registra una venta de lente completa desde el POS y genera su orden de labor
         'installation_price' => 3000,
     ]);
     $treatment = LensTreatment::factory()->create(['company_id' => $seller->company_id, 'price' => 50000, 'cost' => 20000]);
+    $customer = Customer::factory()->create(['company_id' => $seller->company_id]);
+    $prescription = Prescription::factory()->create(['customer_id' => $customer->id]);
 
     $response = $this->postJson(route('pos.store'), [
         'document_type' => 'order',
-        'customer' => [
-            'name' => 'Ana', 'last_name' => 'Pérez', 'document_type' => 'cc',
-            'id_number' => '123', 'phone' => '3000000000',
-        ],
-        'prescription' => ['exam_date' => now()->toDateString()],
+        'customer_id' => $customer->id,
+        'prescription_id' => $prescription->id,
         'armados' => [[
             'lens' => [
                 'description' => 'Lente formulado',

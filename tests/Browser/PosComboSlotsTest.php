@@ -34,6 +34,9 @@ it('lets the seller pick combo slot products for an armado', function () {
         ->click('text=Ana Gómez')
         ->click('Lentes')
         ->fill('#rx_exam_date', now()->toDateString())
+        ->fill('#rx_prescriber_name', 'Dra. Ana Gómez')
+        ->click('Guardar fórmula')
+        ->wait(1)
         ->click('Continuar al lente')
         ->click('button:has-text("'.$lens->lensType->name.'")')
         ->click('button:has-text("'.$lens->lensTechnology->name.'")')
@@ -76,7 +79,10 @@ it('keeps an armado\'s slot choices when it is reopened and saved from the cart'
         ->wait(1)
         ->click('text=Ana Gómez')
         ->click('Lentes')
-        ->fill('#rx_exam_date', now()->toDateString());
+        ->fill('#rx_exam_date', now()->toDateString())
+        ->fill('#rx_prescriber_name', 'Dra. Ana Gómez')
+        ->click('Guardar fórmula')
+        ->wait(1);
 
     // Armado 1 takes the large case; armado 2 keeps the default (small) one.
     foreach (['Estuche grande', null] as $case) {

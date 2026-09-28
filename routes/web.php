@@ -11,6 +11,7 @@ use App\Http\Controllers\PosController;
 use App\Http\Controllers\Prescription\AttachmentController;
 use App\Http\Controllers\Prescription\FormulaController;
 use App\Http\Controllers\Prescription\FormulaPdfController;
+use App\Http\Controllers\Prescription\PosPrescriptionController;
 use App\Http\Controllers\Sale\InvoiceController;
 use App\Http\Controllers\Sale\InvoicePdfController;
 use App\Http\Controllers\SaleController;
@@ -28,6 +29,7 @@ Route::middleware(['auth', 'verified', EnsureCompanyIsOnboarded::class])->group(
     Route::get('pos/customers/search', CustomerSearchController::class)->name('pos.customers.search');
     Route::post('pos/lens-recommendation', LensRecommendationController::class)
         ->name('pos.lens-recommendation');
+    Route::post('pos/prescriptions', [PosPrescriptionController::class, 'store'])->name('pos.prescriptions.store');
     Route::post('pos/cash-sessions', [CashRegisterSessionController::class, 'store'])
         ->name('pos.cash-sessions.store');
     Route::get('pos/cash-sessions/{cashRegisterSession}/preview', PreviewController::class)

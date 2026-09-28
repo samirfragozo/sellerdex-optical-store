@@ -8,7 +8,6 @@ use App\Enums\SaleDocumentType;
 use App\Models\LensType;
 use App\Models\Prescription;
 use App\Models\Sale;
-use App\Rules\Diopter;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
@@ -45,21 +44,6 @@ class StoreSaleRequest extends FormRequest
             'customer.notes' => ['nullable', 'string', 'max:1000'],
             'document_type' => ['required', Rule::enum(SaleDocumentType::class)],
             'prescription_id' => ['nullable', 'exists:prescriptions,id'],
-            'prescription' => ['nullable', 'array'],
-            'prescription.exam_date' => ['nullable', 'date', 'before_or_equal:today', 'after_or_equal:'.now()->subYears(2)->toDateString()],
-            'prescription.diagnosis' => ['nullable', 'string', 'max:1000'],
-            'prescription.od_sphere' => ['nullable', new Diopter(-20, 20)],
-            'prescription.od_cylinder' => ['nullable', new Diopter(-10, 10)],
-            'prescription.od_axis' => ['nullable', 'integer', 'between:1,180'],
-            'prescription.od_add' => ['nullable', new Diopter(0.25, 4)],
-            'prescription.od_va' => ['nullable', 'string', 'max:10'],
-            'prescription.od_pd' => ['nullable', new Diopter(20, 40, 0.5)],
-            'prescription.os_sphere' => ['nullable', new Diopter(-20, 20)],
-            'prescription.os_cylinder' => ['nullable', new Diopter(-10, 10)],
-            'prescription.os_axis' => ['nullable', 'integer', 'between:1,180'],
-            'prescription.os_add' => ['nullable', new Diopter(0.25, 4)],
-            'prescription.os_va' => ['nullable', 'string', 'max:10'],
-            'prescription.os_pd' => ['nullable', new Diopter(20, 40, 0.5)],
             'discount_percent' => ['nullable', 'numeric', 'between:0,100'],
             'notes' => ['nullable', 'string', 'max:1000'],
             'armados' => ['nullable', 'array'],
@@ -117,20 +101,6 @@ class StoreSaleRequest extends FormRequest
                 }
             }
 
-            // An eye's axis and cylinder must be provided together.
-            foreach (['od', 'os'] as $eye) {
-                $cylinder = $this->input("prescription.{$eye}_cylinder");
-                $axis = $this->input("prescription.{$eye}_axis");
-
-                if (filled($cylinder) && blank($axis)) {
-                    $validator->errors()->add("prescription.{$eye}_axis", 'Indica el eje cuando hay cilindro.');
-                }
-
-                if (filled($axis) && blank($cylinder)) {
-                    $validator->errors()->add("prescription.{$eye}_cylinder", 'Indica el cilindro cuando hay eje.');
-                }
-            }
-
             if (! $this->cartHasLens()) {
                 return;
             }
@@ -139,14 +109,9 @@ class StoreSaleRequest extends FormRequest
                 $validator->errors()->add('customer', 'La venta de lentes formulados requiere un cliente.');
             }
 
-            $hasExisting = ! empty($this->input('prescription_id'));
-            $hasNew = ! empty($this->input('prescription.exam_date'));
-
-            if (! $hasExisting && ! $hasNew) {
-                $validator->errors()->add('prescription', 'La venta de lentes formulados requiere una prescripción.');
-            }
-
-            if ($hasExisting && $this->filled('customer_id')) {
+            if (empty($this->input('prescription_id'))) {
+                $validator->errors()->add('prescription_id', 'La venta de lentes formulados requiere una prescripción.');
+            } elseif ($this->filled('customer_id')) {
                 $belongsToCustomer = Prescription::query()
                     ->whereKey($this->input('prescription_id'))
                     ->where('customer_id', $this->input('customer_id'))
@@ -198,18 +163,13 @@ class StoreSaleRequest extends FormRequest
         }
     }
 
-    /** Whether the selected or inline prescription has addition on either eye. */
+    /** Whether the selected prescription has addition on either eye. */
     protected function prescriptionHasAddition(): bool
     {
-        if ($this->filled('prescription_id')) {
-            $prescription = Prescription::find($this->input('prescription_id'));
+        $prescription = Prescription::find($this->input('prescription_id'));
 
-            return $prescription !== null
-                && ((float) ($prescription->od_add ?? 0) > 0 || (float) ($prescription->os_add ?? 0) > 0);
-        }
-
-        return (float) ($this->input('prescription.od_add') ?? 0) > 0
-            || (float) ($this->input('prescription.os_add') ?? 0) > 0;
+        return $prescription !== null
+            && ((float) ($prescription->od_add ?? 0) > 0 || (float) ($prescription->os_add ?? 0) > 0);
     }
 
     /** A lens sale is any sale that carries at least one armado. */
@@ -234,8 +194,6 @@ class StoreSaleRequest extends FormRequest
             'payments.*.payment_method_id.required' => 'Selecciona el método de pago.',
             'payments.*.amount.required' => 'Ingresa el monto del abono.',
             'payments.*.amount.min' => 'El monto del abono debe ser mayor a 0.',
-            'prescription.exam_date.before_or_equal' => 'La fecha del examen no puede ser futura.',
-            'prescription.exam_date.after_or_equal' => 'La fecha del examen no puede tener más de 2 años.',
         ];
     }
 
@@ -255,19 +213,6 @@ class StoreSaleRequest extends FormRequest
             'customer.phone' => 'celular',
             'document_type' => 'tipo de documento',
             'prescription_id' => 'prescripción',
-            'prescription.exam_date' => 'fecha del examen',
-            'prescription.od_sphere' => 'esfera OD',
-            'prescription.od_cylinder' => 'cilindro OD',
-            'prescription.od_axis' => 'eje OD',
-            'prescription.od_add' => 'adición OD',
-            'prescription.od_va' => 'AV OD',
-            'prescription.od_pd' => 'DP OD',
-            'prescription.os_sphere' => 'esfera OS',
-            'prescription.os_cylinder' => 'cilindro OS',
-            'prescription.os_axis' => 'eje OS',
-            'prescription.os_add' => 'adición OS',
-            'prescription.os_va' => 'AV OS',
-            'prescription.os_pd' => 'DP OS',
             'discount_percent' => 'descuento',
             'notes' => 'observaciones',
             'armados.*.lens.product_id' => 'lente',

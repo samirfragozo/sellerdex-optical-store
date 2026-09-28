@@ -286,6 +286,9 @@ return [
 
     'validation' => [
         'payments_exceed_total' => 'The payments cannot exceed the sale total.',
+        'axis_required_with_cylinder' => 'Enter the axis when there is a cylinder.',
+        'cylinder_required_with_axis' => 'Enter the cylinder when there is an axis.',
+        'prism_base_required_with_prism' => 'Enter the prism base when there is a prism.',
     ],
 
     'pos' => [
@@ -394,6 +397,12 @@ return [
             'create_new' => 'Create new',
             'select_prescription' => 'Select prescription',
             'notes_placeholder' => 'Optional...',
+            'save' => 'Save prescription',
+            'saved' => 'Prescription saved',
+            'attachment_hint' => 'Take a photo of the paper prescription or upload the PDF.',
+            'expired_warning' => 'This prescription has expired. You can still sell it, but ask the customer for a newer one.',
+            'expired_badge' => 'Expired',
+            'expires_on' => 'expires :date',
         ],
 
         'cash_session' => [

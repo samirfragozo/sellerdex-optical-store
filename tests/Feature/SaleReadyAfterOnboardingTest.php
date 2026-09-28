@@ -3,8 +3,10 @@
 use App\Enums\KitTrigger;
 use App\Enums\VatRegime;
 use App\Filament\Pages\Onboarding;
+use App\Models\Customer;
 use App\Models\KitSlot;
 use App\Models\LensCombination;
+use App\Models\Prescription;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\Sale;
@@ -59,11 +61,13 @@ it('lets a brand-new shop register, finish the onboarding and sell prescription 
 
     openCashRegisterSession($admin);
     $combination = LensCombination::sole();
+    $customer = Customer::factory()->create(['company_id' => $admin->company_id]);
+    $prescription = Prescription::factory()->create(['customer_id' => $customer->id]);
 
     $this->postJson(route('pos.store'), [
         'document_type' => 'order',
-        'customer' => ['name' => 'Ana', 'last_name' => 'Pérez', 'document_type' => 'cc', 'id_number' => '123', 'phone' => '3000000000'],
-        'prescription' => ['exam_date' => now()->toDateString()],
+        'customer_id' => $customer->id,
+        'prescription_id' => $prescription->id,
         'armados' => [[
             'lens' => [
                 'description' => 'Lente formulado', 'quantity' => 1,
@@ -113,11 +117,13 @@ it('lets a new shop onboard with its own counter products and combo and sell an 
     $combination = LensCombination::firstOrFail();
     $examSlot = KitSlot::where('trigger', KitTrigger::Armado)->get()
         ->firstWhere(fn ($s) => $s->slotCategory->key === 'service');
+    $customer = Customer::factory()->create(['company_id' => $admin->company_id]);
+    $prescription = Prescription::factory()->create(['customer_id' => $customer->id]);
 
     $this->postJson(route('pos.store'), [
         'document_type' => 'order',
-        'customer' => ['name' => 'Ana', 'last_name' => 'Pérez', 'document_type' => 'cc', 'id_number' => '999', 'phone' => '3000000000'],
-        'prescription' => ['exam_date' => now()->toDateString()],
+        'customer_id' => $customer->id,
+        'prescription_id' => $prescription->id,
         'armados' => [[
             'lens' => [
                 'description' => 'Lente', 'quantity' => 1, 'treatment_ids' => [],

@@ -93,14 +93,7 @@ class PosController extends Controller
                 ->orderByDesc('exam_date')
                 ->limit(200)
                 ->get(['id', 'customer_id', 'exam_date', 'expires_at', 'od_sphere', 'os_sphere'])
-                ->map(fn (Prescription $p) => [
-                    'id' => $p->id,
-                    'customer_id' => $p->customer_id,
-                    'exam_date' => $p->exam_date?->toDateString(),
-                    'expires_at' => $p->expires_at?->toDateString(),
-                    'is_expired' => $p->isExpired(),
-                    'summary' => sprintf('OD %s / OS %s', Prescription::formatDiopter($p->od_sphere) ?: '—', Prescription::formatDiopter($p->os_sphere) ?: '—'),
-                ]),
+                ->map(fn (Prescription $p) => $p->toPosOption()),
         ]);
     }
 

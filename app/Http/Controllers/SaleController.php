@@ -7,7 +7,6 @@ use App\Enums\ReadinessSeverity;
 use App\Http\Requests\StoreSaleRequest;
 use App\Models\CashRegisterSession;
 use App\Models\Customer;
-use App\Models\Prescription;
 use App\Support\Readiness\ReadinessIssue;
 use Illuminate\Http\JsonResponse;
 
@@ -35,15 +34,6 @@ class SaleController extends Controller
         // Create the customer inline when new customer data was provided.
         if (empty($data['customer_id']) && ! empty($data['customer']['name'])) {
             $data['customer_id'] = Customer::create($data['customer'])->id;
-        }
-
-        // Create the prescription inline when new exam data was provided.
-        if (empty($data['prescription_id']) && ! empty($data['prescription']['exam_date'])) {
-            $data['prescription_id'] = Prescription::create([
-                ...$data['prescription'],
-                'customer_id' => $data['customer_id'],
-                'created_by' => $request->user()->id,
-            ])->id;
         }
 
         $sale = $registerSale->handle($data, $request->user());

@@ -28,19 +28,6 @@ interface PrescriptionOption {
     summary: string;
 }
 
-interface NewPrescription {
-    exam_date: string;
-    od_sphere: string;
-    od_cylinder: string;
-    od_axis: string;
-    od_add: string;
-    os_sphere: string;
-    os_cylinder: string;
-    os_axis: string;
-    os_add: string;
-    diagnosis: string;
-}
-
 const { trans } = useTranslations();
 
 const props = defineProps<{
@@ -59,15 +46,13 @@ const props = defineProps<{
 const emit = defineEmits<{
     'update:open': [boolean];
     save: [Armado];
+    saved: [PrescriptionOption];
 }>();
 
 const prescriptionMode = defineModel<'existing' | 'new'>('prescriptionMode', {
     required: true,
 });
 const prescriptionId = defineModel<number | null>('prescriptionId', {
-    required: true,
-});
-const prescription = defineModel<NewPrescription>('prescription', {
     required: true,
 });
 const customerId = defineModel<number | null>('customerId', {
@@ -137,9 +122,7 @@ const currentStepValid = computed(() => {
                 return customerId.value !== null;
             }
 
-            return prescriptionMode.value === 'existing'
-                ? prescriptionId.value !== null
-                : prescription.value.exam_date !== '';
+            return prescriptionId.value !== null;
         case 'lens':
             return draft.value.lens !== null;
         case 'frame':
@@ -177,13 +160,13 @@ function save(): void {
                 v-if="step === 'prescription'"
                 v-model:prescription-mode="prescriptionMode"
                 v-model:prescription-id="prescriptionId"
-                v-model:prescription="prescription"
                 v-model:customer-id="customerId"
                 :customer-prescriptions="customerPrescriptions"
                 :lens-needs-customer="lensNeedsCustomer"
                 :errors="errors"
                 :today="today"
                 :min-exam-date="minExamDate"
+                @saved="emit('saved', $event)"
             />
 
             <StepLens

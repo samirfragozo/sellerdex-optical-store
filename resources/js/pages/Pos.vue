@@ -98,18 +98,6 @@ const prescriptions = ref<PrescriptionOption[]>([...props.prescriptions]);
 // --- Prescription mode (used inside the armado modal) ---
 const prescriptionMode = ref<'existing' | 'new'>('new');
 const prescriptionId = ref<number | null>(null);
-const newPrescription = ref({
-    exam_date: today,
-    od_sphere: '',
-    od_cylinder: '',
-    od_axis: '',
-    od_add: '',
-    os_sphere: '',
-    os_cylinder: '',
-    os_axis: '',
-    os_add: '',
-    diagnosis: '',
-});
 
 const customerPrescriptions = computed<PrescriptionOption[]>(() =>
     customerId.value === null
@@ -168,6 +156,13 @@ function openArmadoModal(id: number | null): void {
 
     editingArmadoId.value = id;
     armadoModalOpen.value = true;
+}
+
+// A prescription saved from the wizard's "new" form is already selected
+// (StepPrescription sets prescriptionId itself) — just grow the shared list
+// so it shows up as an "existing" option without a page reload.
+function onPrescriptionSaved(prescription: PrescriptionOption): void {
+    prescriptions.value = [prescription, ...prescriptions.value];
 }
 
 function onArmadoSave(armado: Armado): void {
@@ -272,14 +267,7 @@ async function confirmCheckout(): Promise<void> {
         customer_id: customerId.value,
         customer: null,
         prescription_id:
-            cart.armados.value.length > 0 &&
-            prescriptionMode.value === 'existing'
-                ? prescriptionId.value
-                : null,
-        prescription:
-            cart.armados.value.length > 0 && prescriptionMode.value === 'new'
-                ? newPrescription.value
-                : null,
+            cart.armados.value.length > 0 ? prescriptionId.value : null,
         armados: cartPayload.armados,
         products: cartPayload.products,
         discount_percent: cart.discountPercent.value,
@@ -288,24 +276,6 @@ async function confirmCheckout(): Promise<void> {
 
     if (result === null) {
         return;
-    }
-
-    if (
-        result.prescription_id !== null &&
-        prescriptionMode.value === 'new' &&
-        customerId.value !== null
-    ) {
-        prescriptions.value = [
-            {
-                id: result.prescription_id,
-                customer_id: customerId.value,
-                exam_date: newPrescription.value.exam_date,
-                expires_at: null,
-                is_expired: false,
-                summary: `OD ${newPrescription.value.od_sphere || '—'} / OS ${newPrescription.value.os_sphere || '—'}`,
-            },
-            ...prescriptions.value,
-        ];
     }
 
     createdSale.value = result;
@@ -318,18 +288,6 @@ async function confirmCheckout(): Promise<void> {
     customerId.value = null;
     prescriptionMode.value = 'new';
     prescriptionId.value = null;
-    newPrescription.value = {
-        exam_date: today,
-        od_sphere: '',
-        od_cylinder: '',
-        od_axis: '',
-        od_add: '',
-        os_sphere: '',
-        os_cylinder: '',
-        os_axis: '',
-        os_add: '',
-        diagnosis: '',
-    };
 }
 </script>
 
@@ -477,10 +435,10 @@ async function confirmCheckout(): Promise<void> {
                     :min-exam-date="minExamDate"
                     v-model:prescription-mode="prescriptionMode"
                     v-model:prescription-id="prescriptionId"
-                    v-model:prescription="newPrescription"
                     v-model:customer-id="customerId"
                     @update:open="armadoModalOpen = $event"
                     @save="onArmadoSave"
+                    @saved="onPrescriptionSaved"
                 />
 
                 <div

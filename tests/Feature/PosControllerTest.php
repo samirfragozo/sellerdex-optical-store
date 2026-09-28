@@ -238,7 +238,7 @@ it('enforces prescription validation even after the lens category is renamed', f
         ]],
     ])->assertJsonValidationErrors([
         'customer' => 'La venta de lentes formulados requiere un cliente.',
-        'prescription' => 'La venta de lentes formulados requiere una prescripción.',
+        'prescription_id' => 'La venta de lentes formulados requiere una prescripción.',
     ]);
 
     expect(Sale::count())->toBe(0);
@@ -299,18 +299,26 @@ it('blocks selling a lens without a customer or prescription', function () {
         ]],
     ])->assertJsonValidationErrors([
         'customer' => 'La venta de lentes formulados requiere un cliente.',
-        'prescription' => 'La venta de lentes formulados requiere una prescripción.',
+        'prescription_id' => 'La venta de lentes formulados requiere una prescripción.',
     ]);
 
     expect(Sale::count())->toBe(0);
 });
 
-it('creates and links an inline prescription when selling a lens', function () {
+it('creates a prescription via the pos endpoint and links it when selling a lens', function () {
     $seller = User::factory()->seller()->create();
     openCashRegisterSession($seller);
     Supplier::factory()->laboratory()->create(['company_id' => $seller->company_id]);
-    $customer = Customer::factory()->create();
+    $customer = Customer::factory()->create(['company_id' => $seller->company_id]);
     $lens = lensArmadoLens($seller->company_id);
+
+    $rxResponse = $this->actingAs($seller)->postJson(route('pos.prescriptions.store'), [
+        'customer_id' => $customer->id,
+        'exam_date' => '2026-06-20',
+        'prescriber_name' => 'Dra. Ana Gómez',
+        'od_sphere' => '-1.25',
+        'os_sphere' => '-1.00',
+    ])->assertCreated();
 
     $this->actingAs($seller)->postJson('/pos', [
         'customer_id' => $customer->id,
@@ -319,7 +327,7 @@ it('creates and links an inline prescription when selling a lens', function () {
             'lens' => $lens,
             'own_frame' => true,
         ]],
-        'prescription' => ['exam_date' => '2026-06-20', 'od_sphere' => '-1.25', 'os_sphere' => '-1.00'],
+        'prescription_id' => $rxResponse->json('id'),
     ])->assertOk();
 
     $sale = Sale::first();
@@ -372,73 +380,10 @@ it('rejects a prescription that belongs to another customer', function () {
     expect(Sale::count())->toBe(0);
 });
 
-it('rejects prescription diopters out of range or off-step', function () {
-    $seller = User::factory()->seller()->create();
-    $customer = Customer::factory()->create();
-    $lens = lensProduct();
-
-    $this->actingAs($seller)->postJson('/pos', [
-        'customer_id' => $customer->id,
-        'document_type' => 'order',
-        'armados' => [[
-            'lens' => ['product_id' => $lens->id, 'description' => 'Lente', 'unit_price' => 100_000],
-            'own_frame' => true,
-        ]],
-        'prescription' => ['exam_date' => '2026-06-20', 'od_sphere' => '99', 'os_sphere' => '-2.30'],
-    ])->assertJsonValidationErrors(['prescription.od_sphere', 'prescription.os_sphere']);
-});
-
-it('rejects a pupillary distance off its 0.5 step or an overlong visual acuity value', function () {
-    $seller = User::factory()->seller()->create();
-    $customer = Customer::factory()->create();
-    $lens = lensProduct();
-
-    $this->actingAs($seller)->postJson('/pos', [
-        'customer_id' => $customer->id,
-        'document_type' => 'order',
-        'armados' => [[
-            'lens' => ['product_id' => $lens->id, 'description' => 'Lente', 'unit_price' => 100_000],
-            'own_frame' => true,
-        ]],
-        'prescription' => [
-            'exam_date' => '2026-06-20',
-            'od_pd' => '32.3',
-            'od_va' => str_repeat('x', 11),
-        ],
-    ])->assertJsonValidationErrors(['prescription.od_pd', 'prescription.od_va']);
-});
-
-it('requires the axis when a cylinder is provided', function () {
-    $seller = User::factory()->seller()->create();
-    $customer = Customer::factory()->create();
-    $lens = lensProduct();
-
-    $this->actingAs($seller)->postJson('/pos', [
-        'customer_id' => $customer->id,
-        'document_type' => 'order',
-        'armados' => [[
-            'lens' => ['product_id' => $lens->id, 'description' => 'Lente', 'unit_price' => 100_000],
-            'own_frame' => true,
-        ]],
-        'prescription' => ['exam_date' => '2026-06-20', 'od_cylinder' => '-1.00'],
-    ])->assertJsonValidationErrors(['prescription.od_axis' => 'Indica el eje cuando hay cilindro.']);
-});
-
-it('rejects an exam date older than two years', function () {
-    $seller = User::factory()->seller()->create();
-    $customer = Customer::factory()->create();
-    $lens = lensProduct();
-
-    $this->actingAs($seller)->postJson('/pos', [
-        'customer_id' => $customer->id,
-        'document_type' => 'order',
-        'armados' => [[
-            'lens' => ['product_id' => $lens->id, 'description' => 'Lente', 'unit_price' => 100_000],
-            'own_frame' => true,
-        ]],
-        'prescription' => ['exam_date' => now()->subYears(3)->toDateString()],
-    ])->assertJsonValidationErrors(['prescription.exam_date' => 'La fecha del examen no puede tener más de 2 años.']);
-});
+// Diopter/axis/exam-date validation for a new prescription now lives on the
+// dedicated POST pos/prescriptions endpoint (see PosPrescriptionTest) — a
+// sale only ever references a prescription_id, so those rules no longer
+// apply at this layer.
 
 it('returns the created sale as json for printing', function () {
     $seller = User::factory()->seller()->create();
@@ -479,9 +424,11 @@ it('passes combo slot selections and applies a paper bag', function () {
     $this->actingAs($seller);
     ReferenceKit::installFor($company);
     $examSlot = KitSlot::where('trigger', KitTrigger::Armado)->get()->firstWhere(fn ($s) => $s->slotCategory->key === 'service');
+    $customer = Customer::factory()->create();
+    $prescription = Prescription::factory()->create(['customer_id' => $customer->id]);
 
     $this->postJson('/pos', [
-        'customer_id' => Customer::factory()->create()->id,
+        'customer_id' => $customer->id,
         'document_type' => 'order',
         'armados' => [[
             // Manual override ≥ bag threshold of 215,000 wins over the catalog price.
@@ -489,7 +436,7 @@ it('passes combo slot selections and applies a paper bag', function () {
             'own_frame' => true,
             'slots' => [['kit_slot_id' => $examSlot->id, 'product_id' => Product::where('sku', 'SRV-EXAMEN')->value('id'), 'selected' => true]],
         ]],
-        'prescription' => ['exam_date' => '2026-06-20'],
+        'prescription_id' => $prescription->id,
     ])->assertOk();
 
     $sale = Sale::latest('id')->first();
@@ -522,11 +469,12 @@ it('accepts two armados where only one carries a frame', function () {
     openCashRegisterSession($seller);
     Supplier::factory()->laboratory()->create(['company_id' => $seller->company_id]);
     $this->actingAs($seller);
+    $prescription = Prescription::factory()->create(['customer_id' => $customer->id, 'od_sphere' => '-1.00']);
 
     $this->postJson('/pos', [
         'document_type' => 'order',
         'customer_id' => $customer->id,
-        'prescription' => ['exam_date' => now()->toDateString(), 'od_sphere' => '-1.00'],
+        'prescription_id' => $prescription->id,
         'armados' => [
             [
                 'lens' => lensArmadoLens($seller->company_id, ['description' => 'Lente A']),
@@ -557,20 +505,21 @@ it('rejects a lens armado without a prescription', function () {
                 'own_frame' => true,
             ]],
         ])
-        ->assertJsonValidationErrors('prescription');
+        ->assertJsonValidationErrors('prescription_id');
 });
 
-it('creates a sale from an armado with a new prescription', function () {
+it('creates a sale from an armado with an existing prescription that has addition', function () {
     $customer = Customer::factory()->create();
     $seller = User::factory()->seller()->create();
     openCashRegisterSession($seller);
     Supplier::factory()->laboratory()->create(['company_id' => $seller->company_id]);
     $this->actingAs($seller);
+    $prescription = Prescription::factory()->create(['customer_id' => $customer->id, 'od_add' => '2.00']);
 
     $this->postJson('/pos', [
         'document_type' => 'order',
         'customer_id' => $customer->id,
-        'prescription' => ['exam_date' => now()->toDateString(), 'od_add' => '2.00'],
+        'prescription_id' => $prescription->id,
         'armados' => [[
             'lens' => lensArmadoLens($seller->company_id, ['description' => 'Lente progresivo']),
             'own_frame' => true,
@@ -655,14 +604,15 @@ it('keeps the pos page working after a sale with comma decimals in the prescript
     $seller = User::factory()->seller()->create();
     openCashRegisterSession($seller);
     Supplier::factory()->laboratory()->create(['company_id' => $seller->company_id]);
-    $customer = Customer::factory()->create();
+    $customer = Customer::factory()->create(['company_id' => $seller->company_id]);
     $lens = lensArmadoLens($seller->company_id);
+    $prescription = Prescription::factory()->create(['company_id' => $seller->company_id, 'customer_id' => $customer->id, 'od_sphere' => '1,25', 'os_sphere' => null, 'os_cylinder' => null, 'os_axis' => null, 'os_pd' => '31,5']);
 
     $this->actingAs($seller)->postJson('/pos', [
         'customer_id' => $customer->id,
         'document_type' => 'order',
         'armados' => [['lens' => $lens, 'own_frame' => true]],
-        'prescription' => ['exam_date' => now()->toDateString(), 'od_sphere' => '1,25', 'os_pd' => '31,5'],
+        'prescription_id' => $prescription->id,
     ])->assertOk();
 
     $this->get('/pos')
@@ -686,11 +636,12 @@ it('rejects a treatment id that does not exist', function () {
     $seller = User::factory()->seller()->create();
     openCashRegisterSession($seller);
     $customer = Customer::factory()->create();
+    $prescription = Prescription::factory()->create(['customer_id' => $customer->id]);
 
     $response = $this->actingAs($seller)->postJson('/pos', [
         'customer_id' => $customer->id,
         'document_type' => 'order',
-        'prescription' => ['exam_date' => now()->toDateString()],
+        'prescription_id' => $prescription->id,
         'armados' => [[
             'lens' => lensArmadoLens($seller->company_id, ['treatment_ids' => [999999]]),
             'own_frame' => true,
@@ -890,11 +841,12 @@ it('flags the sale response when a lens item generates a pending lab order', fun
     openCashRegisterSession($seller);
     Supplier::factory()->laboratory()->create(['company_id' => $seller->company_id]);
     $this->actingAs($seller);
+    $prescription = Prescription::factory()->create(['customer_id' => $customer->id, 'od_sphere' => '-1.00']);
 
     $response = $this->postJson('/pos', [
         'document_type' => 'order',
         'customer_id' => $customer->id,
-        'prescription' => ['exam_date' => now()->toDateString(), 'od_sphere' => '-1.00'],
+        'prescription_id' => $prescription->id,
         'armados' => [[
             'lens' => lensArmadoLens($seller->company_id),
             'own_frame' => true,

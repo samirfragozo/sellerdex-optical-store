@@ -108,6 +108,27 @@ class Prescription extends Model
         return $this->expires_at !== null && $this->expires_at->lt(($at ?? now())->copy()->startOfDay());
     }
 
+    /**
+     * Shape this prescription as a POS "option": the list entry the prescription
+     * step shows (existing prescriptions on page load, or the one just saved).
+     *
+     * @return array{id: int, customer_id: int, exam_date: ?string, expires_at: ?string, is_expired: bool, summary: string}
+     */
+    public function toPosOption(): array
+    {
+        return [
+            // Cast explicitly: a prescription just created from a form-encoded
+            // POST holds these as strings until the model is refreshed from the
+            // database, and the POS frontend compares customer_id with `===`.
+            'id' => (int) $this->id,
+            'customer_id' => (int) $this->customer_id,
+            'exam_date' => $this->exam_date?->toDateString(),
+            'expires_at' => $this->expires_at?->toDateString(),
+            'is_expired' => $this->isExpired(),
+            'summary' => sprintf('OD %s / OS %s', self::formatDiopter($this->od_sphere) ?: '—', self::formatDiopter($this->os_sphere) ?: '—'),
+        ];
+    }
+
     /** Signed diopter for display: +1.25 / -0.75 / 0.00, '' when missing. */
     public static function formatDiopter(mixed $value): string
     {
