@@ -1,7 +1,9 @@
 <?php
 
+use App\Enums\KitTrigger;
 use App\Enums\VatRegime;
 use App\Filament\Pages\Onboarding;
+use App\Models\KitSlot;
 use App\Models\LensCombination;
 use App\Models\Product;
 use App\Models\ProductCategory;
@@ -101,4 +103,35 @@ it('lets a VAT-responsible shop sell a frame with VAT included after onboarding'
 
     $sale = Sale::sole();
     expect($sale->total)->toBe(119_000)->and($sale->tax_amount)->toBe(19_000);
+});
+
+it('lets a new shop onboard with its own counter products and combo and sell an armado with it', function () {
+    // registerAndOnboard() walks every step with the suggested defaults
+    // (counter products, treatments, combos included).
+    $admin = registerAndOnboard('combo@optica.test', VatRegime::NotResponsible);
+    openCashRegisterSession($admin);
+    $combination = LensCombination::firstOrFail();
+    $examSlot = KitSlot::where('trigger', KitTrigger::Armado)->get()
+        ->firstWhere(fn ($s) => $s->slotCategory->key === 'service');
+
+    $this->postJson(route('pos.store'), [
+        'document_type' => 'order',
+        'customer' => ['name' => 'Ana', 'last_name' => 'Pérez', 'document_type' => 'cc', 'id_number' => '999', 'phone' => '3000000000'],
+        'prescription' => ['exam_date' => now()->toDateString(), 'lens_type' => 'single_vision'],
+        'armados' => [[
+            'lens' => [
+                'description' => 'Lente', 'quantity' => 1, 'treatment_ids' => [],
+                'lens_type_id' => $combination->lens_type_id,
+                'lens_technology_id' => $combination->lens_technology_id,
+                'lens_material_id' => $combination->lens_material_id,
+            ],
+            'own_frame' => true,
+            'slots' => [['kit_slot_id' => $examSlot->id, 'selected' => true]],
+        ]],
+        'payments' => [],
+    ])->assertOk();
+
+    $sale = Sale::latest('id')->first();
+    expect($sale->items->pluck('product.name'))->toContain('Estuche pequeño', 'Paño microfibra', 'Examen visual', 'Bolsa plástica')
+        ->and($sale->items->first(fn ($i) => $i->isLens())->unit_price)->toBe($combination->price + $combination->installation_price + 20_000);
 });
