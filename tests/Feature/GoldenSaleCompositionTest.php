@@ -128,3 +128,21 @@ it('S6: layaway armado keeps the same lines', function () {
     expect(array_column(goldenLines($sale), 'sku'))->toBe([null, 'ACC-ESTUCHE-SMALL', 'ACC-PANO', 'ACC-BOLSA-PLASTICO'])
         ->and($sale->total)->toBe(180_000);
 });
+
+it('S7: armado combo without cloth or liquid omits the paño line', function () {
+    $sale = goldenRegister([
+        'customer_id' => $this->customer->id,
+        'document_type' => 'order',
+        'armados' => [[
+            'lens' => goldenLens($this->catalog),
+            'own_frame' => true,
+            'combo' => ['with_exam' => false, 'estuche' => 'small', 'include_pano' => false, 'include_liquid' => false],
+        ]],
+    ]);
+
+    expect(goldenLines($sale))->toBe([
+        ['group' => 'g1', 'sku' => null, 'description' => 'Lente formulado', 'qty' => 1, 'price' => 180_000],
+        ['group' => 'g1', 'sku' => 'ACC-ESTUCHE-SMALL', 'description' => 'Estuche pequeño', 'qty' => 1, 'price' => 0],
+        ['group' => null, 'sku' => 'ACC-BOLSA-PLASTICO', 'description' => 'Bolsa plástica', 'qty' => 1, 'price' => 0],
+    ])->and($sale->total)->toBe(180_000);
+});

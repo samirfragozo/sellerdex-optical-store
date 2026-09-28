@@ -12,9 +12,9 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 uses(RefreshDatabase::class);
 
 /**
- * `StoreSaleRequest::saleTotal()` must price a lens armado from the catalog
- * (or its override), not from a `unit_price` the payload no longer carries —
- * otherwise the split-payment guard rejects every legitimate lens payment.
+ * `RegisterSale`'s payment guard compares against the real, catalog-resolved
+ * lens total (or its override), not a `unit_price` the payload no longer
+ * carries — otherwise it rejects every legitimate lens payment.
  */
 beforeEach(function () {
     $this->seller = User::factory()->seller()->create();
