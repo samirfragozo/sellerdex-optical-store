@@ -71,7 +71,8 @@ class PrescriptionForm
                     ->disk('local')
                     ->directory('prescriptions')
                     ->visibility('private')
-                    ->acceptedFileTypes(['image/*', 'application/pdf'])
+                    // No SVG: it could carry script served from the app origin.
+                    ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp', 'application/pdf'])
                     ->maxSize(10240)
                     ->openable()
                     ->columnSpanFull(),

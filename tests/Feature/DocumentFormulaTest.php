@@ -49,7 +49,11 @@ it('prints prism, prescriber, expiry and notes on the formula', function () {
         ->assertSee($rx->expires_at->format('d/m/Y'))
         ->assertSee('Uso permanente')
         ->assertSee(route('documents.prescription.attachment', $rx))
-        ->assertSee(__('app.documents.view_attachment'));
+        ->assertSee(__('app.documents.view_attachment'))
+        ->assertSee(__('app.fields.prescriber_name'))
+        ->assertSee(__('app.fields.prism'))
+        ->assertSee(__('app.fields.expires_at'))
+        ->assertDontSee('app.fields.');
 });
 
 it('downloads the formula as a PDF', function () {

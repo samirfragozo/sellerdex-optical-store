@@ -192,12 +192,6 @@ return [
         'received_date' => 'Fecha de recepción',
         'laboratory' => 'Laboratorio',
         'sale_item' => 'Lente (venta)',
-    ],
-
-    'tabs' => [
-        'all' => 'Todos',
-        'laboratories' => 'Laboratorios',
-        'pending' => 'Pendientes',
         'prescriber_name' => 'Quién formuló',
         'prescriber_license' => 'Tarjeta profesional',
         'prism' => 'Prisma',
@@ -205,6 +199,12 @@ return [
         'attachment' => 'Foto o PDF de la fórmula',
         'expires_at' => 'Vence',
         'prescription_validity_months' => 'Vigencia de la fórmula (meses)',
+    ],
+
+    'tabs' => [
+        'all' => 'Todos',
+        'laboratories' => 'Laboratorios',
+        'pending' => 'Pendientes',
     ],
 
     'sections' => [

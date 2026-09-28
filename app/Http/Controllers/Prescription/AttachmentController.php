@@ -17,6 +17,9 @@ class AttachmentController extends Controller
 
         abort_unless($prescription->attachment && Storage::disk('local')->exists($prescription->attachment), 404);
 
-        return Storage::disk('local')->response($prescription->attachment);
+        return Storage::disk('local')->response($prescription->attachment, headers: [
+            'X-Content-Type-Options' => 'nosniff',
+            'Content-Security-Policy' => 'sandbox',
+        ]);
     }
 }

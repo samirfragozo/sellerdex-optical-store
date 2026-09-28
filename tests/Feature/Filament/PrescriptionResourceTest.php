@@ -146,3 +146,35 @@ it('requires the prism base when a prism is given', function () {
         ->call('create')
         ->assertHasFormErrors(['od_prism', 'od_prism_base']);
 });
+
+it('renders translated labels on the prescription form and list', function () {
+    $this->actingAs(User::factory()->admin()->create());
+    Prescription::factory()->create();
+
+    $this->get('/admin/prescriptions/create')
+        ->assertSuccessful()
+        ->assertSee(__('app.fields.prescriber_name'))
+        ->assertSee(__('app.fields.attachment'))
+        ->assertDontSee('app.fields.');
+
+    $this->get('/admin/prescriptions')
+        ->assertSee(__('app.fields.expires_at'))
+        ->assertDontSee('app.fields.');
+});
+
+it('rejects an SVG attachment', function () {
+    Storage::fake('local');
+    $this->actingAs(User::factory()->admin()->create());
+
+    Livewire::test(CreatePrescription::class)
+        ->fillForm([
+            'customer_id' => Customer::factory()->create()->id,
+            'exam_date' => now()->subMonth()->toDateString(),
+            'prescriber_name' => 'Dra. Ana Gómez',
+            'attachment' => UploadedFile::fake()->createWithContent('rx.svg', '<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>'),
+        ])
+        ->call('create')
+        ->assertHasFormErrors(['attachment']);
+
+    expect(Prescription::count())->toBe(0);
+});

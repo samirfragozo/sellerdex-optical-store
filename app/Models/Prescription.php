@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Storage;
 
 #[Fillable([
     'company_id', 'customer_id', 'created_by', 'exam_date',
@@ -58,6 +59,18 @@ class Prescription extends Model
         // Registered after BelongsToCompany's `creating` listener, so company_id is set.
         static::creating(fn (Prescription $rx) => $rx->deriveExpiry());
         static::updating(fn (Prescription $rx) => $rx->deriveExpiry());
+
+        // Health data: never keep an orphaned scan of a replaced/cleared attachment or a purged prescription.
+        static::updated(function (Prescription $rx): void {
+            if ($rx->wasChanged('attachment') && filled($old = $rx->getOriginal('attachment'))) {
+                Storage::disk('local')->delete($old);
+            }
+        });
+        static::forceDeleted(function (Prescription $rx): void {
+            if (filled($rx->attachment)) {
+                Storage::disk('local')->delete($rx->attachment);
+            }
+        });
     }
 
     /**

@@ -12,7 +12,9 @@ uses(RefreshDatabase::class);
 it('lets an admin open the single business-settings record', function () {
     $this->actingAs(User::factory()->admin()->create())
         ->get(BusinessSettingResource::getUrl())
-        ->assertSuccessful();
+        ->assertSuccessful()
+        ->assertSee(__('app.fields.prescription_validity_months'))
+        ->assertDontSee('app.fields.');
 });
 
 it('forbids a seller from the business settings', function () {
