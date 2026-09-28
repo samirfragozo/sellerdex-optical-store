@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\LensKind;
 use App\Models\LensType;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -19,6 +20,7 @@ class LensTypeFactory extends Factory
     {
         return [
             'name' => fake()->unique()->words(2, true),
+            'kind' => LensKind::SingleVision,
             'is_active' => true,
             'sort_order' => fake()->numberBetween(1, 100),
         ];

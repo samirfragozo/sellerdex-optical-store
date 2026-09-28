@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\LensTypes\Schemas;
 
+use App\Enums\LensKind;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Schema;
@@ -15,6 +17,11 @@ class LensTypeForm
                 ->label(__('app.fields.name'))
                 ->required()
                 ->maxLength(255),
+            Select::make('kind')
+                ->label(__('app.fields.kind'))
+                ->options(LensKind::options())
+                ->default(LensKind::SingleVision->value)
+                ->required(),
             TextInput::make('sort_order')
                 ->label(__('app.fields.sort_order'))
                 ->numeric(),

@@ -32,7 +32,7 @@ class CreateReferenceLensCombinations
 
             $pricing = $overrides[$key] ?? $reference;
 
-            $lensType = LensType::firstOrCreate(['name' => $reference['type']], ['is_active' => true]);
+            $lensType = LensType::firstOrCreate(['name' => $reference['type']], ['kind' => $reference['kind'], 'is_active' => true]);
             $lensTechnology = LensTechnology::firstOrCreate(['name' => $reference['technology']], ['is_active' => true]);
             $lensMaterial = LensMaterial::firstOrCreate(['name' => $reference['material']], ['is_active' => true]);
 

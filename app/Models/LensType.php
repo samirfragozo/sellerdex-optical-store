@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\LensKind;
 use App\Traits\BelongsToCompany;
 use Database\Factories\LensTypeFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -10,7 +11,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-#[Fillable(['company_id', 'name', 'is_active', 'sort_order'])]
+#[Fillable(['company_id', 'name', 'kind', 'is_active', 'sort_order'])]
 class LensType extends Model
 {
     /** @use HasFactory<LensTypeFactory> */
@@ -25,6 +26,7 @@ class LensType extends Model
     protected function casts(): array
     {
         return [
+            'kind' => LensKind::class,
             'is_active' => 'boolean',
         ];
     }

@@ -3,7 +3,9 @@
 namespace App\Http\Requests;
 
 use App\Enums\DocumentType;
+use App\Enums\LensKind;
 use App\Enums\SaleDocumentType;
+use App\Models\LensType;
 use App\Models\Prescription;
 use App\Models\Sale;
 use App\Rules\Diopter;
@@ -154,7 +156,60 @@ class StoreSaleRequest extends FormRequest
                     $validator->errors()->add('prescription_id', 'La prescripción no pertenece al cliente seleccionado.');
                 }
             }
+
+            $this->validateAdditionRequirement($validator);
         });
+    }
+
+    /**
+     * Multifocal lens kinds (bifocal, progressive) require a prescription
+     * with addition on at least one eye.
+     */
+    protected function validateAdditionRequirement(Validator $validator): void
+    {
+        $armados = (array) $this->input('armados', []);
+
+        if (empty($armados)) {
+            return;
+        }
+
+        $lensTypeIds = collect($armados)->pluck('lens.lens_type_id')->filter()->unique()->all();
+
+        if (empty($lensTypeIds)) {
+            return;
+        }
+
+        $kinds = LensType::query()->whereIn('id', $lensTypeIds)->pluck('kind', 'id');
+        $hasAddition = $this->prescriptionHasAddition();
+
+        foreach ($armados as $index => $armado) {
+            $lensTypeId = $armado['lens']['lens_type_id'] ?? null;
+            $kind = $lensTypeId !== null ? $kinds->get($lensTypeId) : null;
+
+            if ($kind === null) {
+                continue;
+            }
+
+            $kind = $kind instanceof LensKind ? $kind : LensKind::from($kind);
+
+            if ($kind->requiresAddition() && ! $hasAddition) {
+                $validator->errors()->add("armados.{$index}.lens.lens_type_id", __('app.pos.lens_form.requires_addition'));
+            }
+        }
+    }
+
+    /** Whether the selected or inline prescription has addition on either eye. */
+    protected function prescriptionHasAddition(): bool
+    {
+        if ($this->filled('prescription_id')) {
+            $prescription = Prescription::find($this->input('prescription_id'));
+
+            return $prescription !== null
+                && ((float) ($prescription->od_add ?? 0) > 0 || (float) ($prescription->os_add ?? 0) > 0);
+        }
+
+        return (float) ($this->input('prescription.od_add') ?? 0) > 0
+            || (float) ($this->input('prescription.os_add') ?? 0) > 0;
     }
 
     /** A lens sale is any sale that carries at least one armado. */

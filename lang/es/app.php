@@ -79,6 +79,7 @@ return [
 
     'fields' => [
         'name' => 'Nombre',
+        'kind' => 'Tipo',
         'first_name' => 'Nombres',
         'last_name' => 'Apellidos',
         'full_name' => 'Nombre completo',
@@ -205,7 +206,7 @@ return [
         'options' => 'Opciones',
     ],
 
-    'lens_type' => [
+    'lens_kind' => [
         'single_vision' => 'Monofocal',
         'extended_range' => 'Monofocal rango extendido',
         'bifocal' => 'Bifocal',
@@ -369,6 +370,7 @@ return [
             'pick_treatments' => 'Tratamientos funcionales',
             'invalid_combination' => 'Esa combinación de tipo, tecnología y material no está disponible.',
             'invalid_treatment' => 'Uno o más tratamientos seleccionados no son válidos.',
+            'requires_addition' => 'Este tipo de lente necesita una fórmula con adición.',
         ],
 
         'payment_form' => [

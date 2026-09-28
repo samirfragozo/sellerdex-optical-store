@@ -19,6 +19,10 @@ class LensTypesTable
                 TextColumn::make('name')
                     ->label(__('app.fields.name'))
                     ->searchable(),
+                TextColumn::make('kind')
+                    ->label(__('app.fields.kind'))
+                    ->badge()
+                    ->sortable(),
                 TextColumn::make('sort_order')
                     ->label(__('app.fields.sort_order'))
                     ->sortable(),

@@ -97,6 +97,7 @@ return [
         'laboratory' => 'Laboratory',
         'sale_item' => 'Lens (sale)',
         'name' => 'Name',
+        'kind' => 'Kind',
         'first_name' => 'First name',
         'last_name' => 'Last name',
         'full_name' => 'Full name',
@@ -205,7 +206,7 @@ return [
         'pending' => 'Pending',
     ],
 
-    'lens_type' => [
+    'lens_kind' => [
         'single_vision' => 'Single vision',
         'extended_range' => 'Extended range single vision',
         'bifocal' => 'Bifocal',
@@ -369,6 +370,7 @@ return [
             'pick_treatments' => 'Functional treatments',
             'invalid_combination' => 'That type, technology and material combination is not available.',
             'invalid_treatment' => 'One or more selected treatments are not valid.',
+            'requires_addition' => 'This lens type needs a prescription with addition.',
         ],
 
         'payment_form' => [
