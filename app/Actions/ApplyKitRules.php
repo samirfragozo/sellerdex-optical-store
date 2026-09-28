@@ -31,7 +31,7 @@ class ApplyKitRules
             if ($product === null) {
                 continue;
             }
-            $this->addLine($sale, $slot, $product, $groupKey, $seller);
+            $this->addLine($sale, $slot, $product, $groupKey, $slot->unitPriceFor($product), $seller);
 
             if ($lensLine !== null && $slot->lensSurcharge() > 0) {
                 $lensLine->update(['unit_price' => $lensLine->unit_price + $slot->lensSurcharge()]);
@@ -103,14 +103,17 @@ class ApplyKitRules
         return $product?->is_active ? $product : null;
     }
 
-    /** Add a sale-level (ungrouped) slot line unless that product is already on the sale outside an armado. */
+    /**
+     * Add a free sale-level (ungrouped) slot line unless that product is already on the sale outside an armado.
+     * Only armado slots may charge: the POS never shows a price for these, whatever mode is stored.
+     */
     private function addLineOnce(Sale $sale, KitSlot $slot, ?Product $product, User $seller): void
     {
         if ($product === null || $this->alreadyHas($sale, $product->id)) {
             return;
         }
 
-        $this->addLine($sale, $slot, $product, null, $seller);
+        $this->addLine($sale, $slot, $product, null, 0, $seller);
     }
 
     private function alreadyHas(Sale $sale, int $productId): bool
@@ -118,14 +121,14 @@ class ApplyKitRules
         return $sale->items()->where('product_id', $productId)->whereNull('group_key')->exists();
     }
 
-    private function addLine(Sale $sale, KitSlot $slot, Product $product, ?string $groupKey, User $seller): void
+    private function addLine(Sale $sale, KitSlot $slot, Product $product, ?string $groupKey, int $unitPrice, User $seller): void
     {
         $sale->items()->create([
             'group_key' => $groupKey,
             'product_id' => $product->id,
             'description' => $product->name,
             'quantity' => $slot->quantity,
-            'unit_price' => $slot->unitPriceFor($product),
+            'unit_price' => $unitPrice,
             'unit_cost' => $product->cost,
             ...SaleItem::taxSnapshotFor($product, $seller->company),
         ]);

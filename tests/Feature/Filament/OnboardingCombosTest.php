@@ -146,6 +146,33 @@ it('offers added-to-lens pricing only for prescription glasses', function () {
         ->assertHasErrors(['data.saleSlots.new.price_mode']);
 });
 
+it('offers only free pricing for the frame and every-sale combos', function (string $section, string $mode) {
+    combosAdmin();
+    $page = Livewire::test(Onboarding::class);
+
+    $page->set("data.{$section}", [...$page->get("data.{$section}"), 'new' => combosRow('cloth', ['price_mode' => $mode, 'price_value' => 10])])
+        ->call('next')
+        ->assertHasErrors(["data.{$section}.new.price_mode"]);
+})->with([
+    'frame normal' => ['frameSlots', 'normal'],
+    'frame discount' => ['frameSlots', 'discount_percent'],
+    'sale normal' => ['saleSlots', 'normal'],
+    'sale discount' => ['saleSlots', 'discount_percent'],
+]);
+
+it('caps combo amounts so they fit the database', function () {
+    combosAdmin();
+    $page = Livewire::test(Onboarding::class);
+    $slots = $page->get('data.armadoSlots');
+    $service = array_key_first(array_filter($slots, fn (array $slot) => $slot['price_mode'] === 'added_to_lens'));
+    $slots[$service]['price_value'] = 100_000_001;
+
+    $page->set('data.armadoSlots', $slots)
+        ->set('data.saleSlots', [...$page->get('data.saleSlots'), 'new' => combosRow('cleaning', ['upgrade_product_id' => ProductCategory::keyed('cleaning')->products()->value('id'), 'upgrade_min_total' => 100_000_001])])
+        ->call('next')
+        ->assertHasErrors(["data.armadoSlots.{$service}.price_value", 'data.saleSlots.new.upgrade_min_total']);
+});
+
 it('keeps added-to-lens amounts in whole pesos', function () {
     combosAdmin();
     $page = Livewire::test(Onboarding::class);

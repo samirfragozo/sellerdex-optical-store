@@ -117,7 +117,8 @@ class CombosStep extends OnboardingStep
     private function slotsRepeater(string $name, KitTrigger $trigger, ?int $triggerCategoryId = null): Repeater
     {
         $isProductCombo = $trigger === KitTrigger::Product;
-        $priceModes = $trigger === KitTrigger::Armado ? KitPriceMode::options() : Arr::except(KitPriceMode::options(), KitPriceMode::AddedToLens->value);
+        // ponytail: the POS only prices armado slots, so every other combo is free (ApplyKitRules enforces it too); charged ones need POS pricing first.
+        $priceModes = $trigger === KitTrigger::Armado ? KitPriceMode::options() : Arr::only(KitPriceMode::options(), KitPriceMode::Free->value);
 
         return Repeater::make($name)
             ->hiddenLabel()
@@ -156,7 +157,7 @@ class CombosStep extends OnboardingStep
                     ->label(fn (Get $get): string => $get('price_mode') === KitPriceMode::DiscountPercent->value ? __('app.fields.discount_percent') : __('app.fields.amount'))
                     ->visible(fn (Get $get): bool => in_array($get('price_mode'), [KitPriceMode::DiscountPercent->value, KitPriceMode::AddedToLens->value], true))
                     ->required()->numeric()->minValue(0)
-                    ->maxValue(fn (Get $get): ?int => $get('price_mode') === KitPriceMode::DiscountPercent->value ? 100 : null)
+                    ->maxValue(fn (Get $get): int => $get('price_mode') === KitPriceMode::DiscountPercent->value ? 100 : 100_000_000)
                     // Money is integer COP; only a discount may carry decimals.
                     ->rule('integer', fn (Get $get): bool => $get('price_mode') === KitPriceMode::AddedToLens->value)
                     ->live(onBlur: true),
@@ -169,7 +170,7 @@ class CombosStep extends OnboardingStep
                     Select::make('upgrade_product_id')->label(__('app.onboarding.combos.fields.upgrade_product'))
                         ->options(fn (Get $get) => Product::query()->counter()->where('product_category_id', $get('slot_category_id'))->orderBy('name')->pluck('name', 'id')),
                     TextInput::make('upgrade_min_total')->label(__('app.onboarding.combos.fields.upgrade_min_total'))
-                        ->integer()->minValue(0)->prefix('$')
+                        ->integer()->minValue(0)->maxValue(100_000_000)->prefix('$')
                         ->requiredWith('upgrade_product_id'),
                 ] : []),
             ])

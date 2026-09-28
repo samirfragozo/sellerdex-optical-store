@@ -57,7 +57,20 @@ it('adds a specific-product slot once per sale (replaces product additions)', fu
     $sale = kitSellProducts([kitLine($contactLens, 90_000, 2)]);
     $solutionLines = $sale->items->where('product_id', $solution->id);
 
-    expect($solutionLines)->toHaveCount(1)->and($solutionLines->first()->unit_price)->toBe(4_000);
+    // Non-armado combos are always free; the POS has no way to show their price yet.
+    expect($solutionLines)->toHaveCount(1)->and($solutionLines->first()->unit_price)->toBe(0);
+});
+
+it('gives a sale-trigger slot for free even when it is stored as charged', function () {
+    ReferenceKit::installFor($this->seller->company);
+    KitSlot::where('trigger', KitTrigger::Sale)->update(['price_mode' => KitPriceMode::Normal]);
+    KitSlot::where('trigger', KitTrigger::Category)->update(['price_mode' => KitPriceMode::DiscountPercent, 'price_value' => 10]);
+
+    $sale = kitSellProducts([kitLine($this->catalog['frame'], 150_000)]);
+
+    expect($sale->items->where('product_id', '!=', $this->catalog['frame']->id)->pluck('unit_price', 'product.sku')->all())
+        ->toBe(['ACC-FUNDA' => 0, 'ACC-BOLSA-PLASTICO' => 0])
+        ->and($sale->total)->toBe(150_000);
 });
 
 it('does not add a standalone-category slot for a frame inside an armado', function () {
@@ -83,7 +96,8 @@ it('does not add a standalone-category slot for a frame inside an armado', funct
 
 it('registers the sale without a bag when the bag slot product was deleted', function () {
     ReferenceKit::installFor($this->seller->company);
-    Product::where('sku', 'ACC-BOLSA-PLASTICO')->sole()->delete();
+    // The model guard keeps slot products; a query delete stands in for older data.
+    Product::where('sku', 'ACC-BOLSA-PLASTICO')->delete();
 
     $sale = kitSellProducts([kitLine($this->catalog['sunglasses'], 100_000)]);
 
