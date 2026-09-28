@@ -28,7 +28,7 @@ class Diopter implements ValidationRule
         }
 
         if (! is_string($value) && ! is_numeric($value)) {
-            $fail('El valor de :attribute no es válido.');
+            $fail(__('app.validation.diopter.invalid'));
 
             return;
         }
@@ -36,7 +36,7 @@ class Diopter implements ValidationRule
         $normalized = str_replace([' ', ','], ['', '.'], (string) $value);
 
         if (! preg_match('/^[+-]?\d+(\.\d+)?$/', $normalized)) {
-            $fail('El valor de :attribute no es válido. Usa solo números, por ejemplo 1.25.');
+            $fail(__('app.validation.diopter.invalid_format'));
 
             return;
         }
@@ -44,7 +44,10 @@ class Diopter implements ValidationRule
         $number = (float) $normalized;
 
         if ($number < $this->min || $number > $this->max) {
-            $fail(sprintf('El valor de :attribute debe estar entre %s y %s.', $this->format($this->min), $this->format($this->max)));
+            $fail(__('app.validation.diopter.out_of_range', [
+                'min' => $this->format($this->min),
+                'max' => $this->format($this->max),
+            ]));
 
             return;
         }
@@ -52,7 +55,7 @@ class Diopter implements ValidationRule
         // Multiple-of-step check: number / step must be a whole number.
         $ratio = $number / $this->step;
         if (abs($ratio - round($ratio)) > 1e-6) {
-            $fail(sprintf('El valor de :attribute debe ir en pasos de %s.', $this->format($this->step)));
+            $fail(__('app.validation.diopter.step', ['step' => $this->format($this->step)]));
         }
     }
 

@@ -140,7 +140,6 @@ return [
         'date' => 'Date',
         'payment_method' => 'Payment method',
         'customer' => 'Customer',
-        'lens_type' => 'Lens type',
         'filters' => 'Filters',
         'diagnosis' => 'Diagnosis',
         'sphere' => 'Sphere',
@@ -170,6 +169,7 @@ return [
         'paid_at' => 'Payment date',
         'reference' => 'Reference',
         'prescription' => 'Prescription',
+        'prescription_option' => 'Exam :exam_date · Expires :expires_at',
         'items' => 'Items',
         'payments' => 'Payments',
         'opening_cash' => 'Opening cash',
@@ -289,6 +289,14 @@ return [
         'axis_required_with_cylinder' => 'Enter the axis when there is a cylinder.',
         'cylinder_required_with_axis' => 'Enter the cylinder when there is an axis.',
         'prism_base_required_with_prism' => 'Enter the prism base when there is a prism.',
+        'lens_requires_prescription' => 'Selling a prescription lens requires a prescription.',
+        'prescription_not_owned' => 'The prescription does not belong to the selected customer.',
+        'diopter' => [
+            'invalid' => 'The value of :attribute is not valid.',
+            'invalid_format' => 'The value of :attribute is not valid. Use only numbers, e.g. 1.25.',
+            'out_of_range' => 'The value of :attribute must be between :min and :max.',
+            'step' => 'The value of :attribute must be in steps of :step.',
+        ],
     ],
 
     'pos' => [

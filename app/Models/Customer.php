@@ -26,6 +26,17 @@ class Customer extends Model
         ];
     }
 
+    protected static function booted(): void
+    {
+        // The `prescriptions.customer_id` FK cascades at the DB level on force
+        // delete, but that bypasses Eloquent — Prescription::forceDeleted (which
+        // purges the attachment from disk) would never fire. Force-delete each
+        // prescription explicitly first so its own event still runs.
+        static::forceDeleting(function (Customer $customer): void {
+            $customer->prescriptions()->withTrashed()->get()->each->forceDelete();
+        });
+    }
+
     /** Full name (first name + last name). */
     protected function fullName(): Attribute
     {
@@ -41,5 +52,10 @@ class Customer extends Model
     public function sales(): HasMany
     {
         return $this->hasMany(Sale::class);
+    }
+
+    public function prescriptions(): HasMany
+    {
+        return $this->hasMany(Prescription::class);
     }
 }

@@ -104,6 +104,10 @@ class StoreSaleRequest extends FormRequest
                 }
             }
 
+            // A prescription's ownership must hold whenever one is referenced,
+            // even on a products-only sale — not only when the cart carries a lens.
+            $this->validatePrescriptionOwnership($validator);
+
             if (! $this->cartHasLens()) {
                 return;
             }
@@ -113,24 +117,33 @@ class StoreSaleRequest extends FormRequest
             }
 
             if (empty($this->input('prescription_id'))) {
-                $validator->errors()->add('prescription_id', 'La venta de lentes formulados requiere una prescripción.');
-            } else {
-                // Always check, even with a null customer_id (an inline
-                // `customer.name`): a brand-new customer, not yet created,
-                // cannot already own a prescription — where('customer_id', null)
-                // becomes whereNull(), so it correctly finds no match either way.
-                $belongsToCustomer = Prescription::query()
-                    ->whereKey($this->input('prescription_id'))
-                    ->where('customer_id', $this->input('customer_id'))
-                    ->exists();
-
-                if (! $belongsToCustomer) {
-                    $validator->errors()->add('prescription_id', 'La prescripción no pertenece al cliente seleccionado.');
-                }
+                $validator->errors()->add('prescription_id', __('app.validation.lens_requires_prescription'));
             }
 
             $this->validateAdditionRequirement($validator);
         });
+    }
+
+    /**
+     * A referenced prescription must belong to the sale's customer — even with
+     * a null customer_id (an inline `customer.name`): a brand-new customer,
+     * not yet created, cannot already own a prescription — where('customer_id',
+     * null) becomes whereNull(), so it correctly finds no match either way.
+     */
+    protected function validatePrescriptionOwnership(Validator $validator): void
+    {
+        if (empty($this->input('prescription_id'))) {
+            return;
+        }
+
+        $belongsToCustomer = Prescription::query()
+            ->whereKey($this->input('prescription_id'))
+            ->where('customer_id', $this->input('customer_id'))
+            ->exists();
+
+        if (! $belongsToCustomer) {
+            $validator->errors()->add('prescription_id', __('app.validation.prescription_not_owned'));
+        }
     }
 
     /**

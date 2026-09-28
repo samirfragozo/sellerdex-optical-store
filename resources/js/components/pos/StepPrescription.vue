@@ -325,8 +325,11 @@ async function save(): Promise<void> {
                                 v-model="form[eye].sphere"
                                 :min="0"
                                 :max="20"
+                                :aria-label="`${eye.toUpperCase()} — ${trans('app.fields.sphere')}`"
+                                :aria-describedby="`rx_${eye}_sphere_error`"
                             />
                             <InputError
+                                :id="`rx_${eye}_sphere_error`"
                                 :message="saveErrors[`${eye}_sphere`]"
                             />
                         </div>
@@ -335,8 +338,11 @@ async function save(): Promise<void> {
                                 v-model="form[eye].cylinder"
                                 :min="0"
                                 :max="10"
+                                :aria-label="`${eye.toUpperCase()} — ${trans('app.fields.cylinder')}`"
+                                :aria-describedby="`rx_${eye}_cylinder_error`"
                             />
                             <InputError
+                                :id="`rx_${eye}_cylinder_error`"
                                 :message="saveErrors[`${eye}_cylinder`]"
                             />
                         </div>
@@ -346,9 +352,14 @@ async function save(): Promise<void> {
                                 type="number"
                                 min="1"
                                 max="180"
+                                :aria-label="`${eye.toUpperCase()} — ${trans('app.fields.axis')}`"
+                                :aria-describedby="`rx_${eye}_axis_error`"
                                 class="h-8 w-full px-1.5 text-right text-xs"
                             />
-                            <InputError :message="saveErrors[`${eye}_axis`]" />
+                            <InputError
+                                :id="`rx_${eye}_axis_error`"
+                                :message="saveErrors[`${eye}_axis`]"
+                            />
                         </div>
                         <div>
                             <DiopterInput
@@ -356,8 +367,13 @@ async function save(): Promise<void> {
                                 fixed-sign="+"
                                 :min="0"
                                 :max="4"
+                                :aria-label="`${eye.toUpperCase()} — ${trans('app.fields.add')}`"
+                                :aria-describedby="`rx_${eye}_add_error`"
                             />
-                            <InputError :message="saveErrors[`${eye}_add`]" />
+                            <InputError
+                                :id="`rx_${eye}_add_error`"
+                                :message="saveErrors[`${eye}_add`]"
+                            />
                         </div>
                         <div>
                             <Input
@@ -366,13 +382,20 @@ async function save(): Promise<void> {
                                 min="0"
                                 max="10"
                                 step="0.25"
+                                :aria-label="`${eye.toUpperCase()} — ${trans('app.fields.prism')}`"
+                                :aria-describedby="`rx_${eye}_prism_error`"
                                 class="h-8 w-full px-1.5 text-right text-xs"
                             />
-                            <InputError :message="saveErrors[`${eye}_prism`]" />
+                            <InputError
+                                :id="`rx_${eye}_prism_error`"
+                                :message="saveErrors[`${eye}_prism`]"
+                            />
                         </div>
                         <div>
                             <select
                                 v-model="form[eye].prism_base"
+                                :aria-label="`${eye.toUpperCase()} — ${trans('app.fields.prism_base')}`"
+                                :aria-describedby="`rx_${eye}_prism_base_error`"
                                 class="h-8 w-full rounded-md border border-input bg-transparent px-1 text-xs outline-none dark:bg-input/30"
                             >
                                 <option value="">—</option>
@@ -390,6 +413,7 @@ async function save(): Promise<void> {
                                 </option>
                             </select>
                             <InputError
+                                :id="`rx_${eye}_prism_base_error`"
                                 :message="saveErrors[`${eye}_prism_base`]"
                             />
                         </div>
@@ -400,16 +424,26 @@ async function save(): Promise<void> {
                                 min="20"
                                 max="40"
                                 step="0.5"
+                                :aria-label="`${eye.toUpperCase()} — ${trans('app.fields.pd')}`"
+                                :aria-describedby="`rx_${eye}_pd_error`"
                                 class="h-8 w-full px-1.5 text-right text-xs"
                             />
-                            <InputError :message="saveErrors[`${eye}_pd`]" />
+                            <InputError
+                                :id="`rx_${eye}_pd_error`"
+                                :message="saveErrors[`${eye}_pd`]"
+                            />
                         </div>
                         <div>
                             <Input
                                 v-model="form[eye].va"
+                                :aria-label="`${eye.toUpperCase()} — ${trans('app.fields.va')}`"
+                                :aria-describedby="`rx_${eye}_va_error`"
                                 class="h-8 w-full px-1.5 text-right text-xs"
                             />
-                            <InputError :message="saveErrors[`${eye}_va`]" />
+                            <InputError
+                                :id="`rx_${eye}_va_error`"
+                                :message="saveErrors[`${eye}_va`]"
+                            />
                         </div>
                     </div>
                 </div>

@@ -5,6 +5,7 @@ use App\Filament\Resources\Prescriptions\Pages\CreatePrescription;
 use App\Filament\Resources\Prescriptions\Pages\EditPrescription;
 use App\Models\Customer;
 use App\Models\Prescription;
+use App\Models\Sale;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -160,6 +161,38 @@ it('renders translated labels on the prescription form and list', function () {
     $this->get('/admin/prescriptions')
         ->assertSee(__('app.fields.expires_at'))
         ->assertDontSee('app.fields.');
+});
+
+it('disables the customer field once the prescription has a sale', function () {
+    $this->actingAs(User::factory()->admin()->create());
+    $prescription = Prescription::factory()->create();
+    Sale::factory()->create(['customer_id' => $prescription->customer_id, 'prescription_id' => $prescription->id]);
+
+    Livewire::test(EditPrescription::class, ['record' => $prescription->getRouteKey()])
+        ->assertFormFieldIsDisabled('customer_id');
+});
+
+it('keeps the customer field editable when the prescription has no sale', function () {
+    $this->actingAs(User::factory()->admin()->create());
+    $prescription = Prescription::factory()->create();
+
+    Livewire::test(EditPrescription::class, ['record' => $prescription->getRouteKey()])
+        ->assertFormFieldIsEnabled('customer_id');
+});
+
+it('caps the prescriber license length to match the POS limit', function () {
+    $this->actingAs(User::factory()->admin()->create());
+    $customer = Customer::factory()->create();
+
+    Livewire::test(CreatePrescription::class)
+        ->fillForm([
+            'customer_id' => $customer->id,
+            'exam_date' => now()->subMonth()->toDateString(),
+            'prescriber_name' => 'Dra. Ana Gómez',
+            'prescriber_license' => str_repeat('9', 51),
+        ])
+        ->call('create')
+        ->assertHasFormErrors(['prescriber_license' => 'max']);
 });
 
 it('rejects an SVG attachment', function () {

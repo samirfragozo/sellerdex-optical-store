@@ -50,10 +50,16 @@ it('saves the business settings and requires the NIT', function () {
         ->call('save')
         ->assertHasFormErrors(['tax_id' => 'required']);
 
+    // Capped at 24 months (2 years) so it fits the exam-date window.
     Livewire::test(ManageBusinessSetting::class)
-        ->fillForm(['prescription_validity_months' => 61])
+        ->fillForm(['prescription_validity_months' => 25])
         ->call('save')
         ->assertHasFormErrors(['prescription_validity_months' => 'max']);
+
+    Livewire::test(ManageBusinessSetting::class)
+        ->fillForm(['prescription_validity_months' => 24])
+        ->call('save')
+        ->assertHasNoFormErrors();
 });
 
 it('falls back to 12 months when the prescription validity is cleared', function () {

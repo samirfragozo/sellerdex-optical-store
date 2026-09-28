@@ -1,6 +1,11 @@
 <?php
 
 use App\Rules\Diopter;
+use Tests\TestCase;
+
+// Diopter's messages go through __(), which needs a booted app — this dir
+// isn't extended with Tests\TestCase by default (see tests/Pest.php).
+uses(TestCase::class);
 
 function diopterPasses(string $value, float $min = -20, float $max = 20): bool
 {

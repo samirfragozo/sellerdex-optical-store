@@ -238,7 +238,7 @@ it('enforces prescription validation even after the lens category is renamed', f
         ]],
     ])->assertJsonValidationErrors([
         'customer' => 'La venta de lentes formulados requiere un cliente.',
-        'prescription_id' => 'La venta de lentes formulados requiere una prescripción.',
+        'prescription_id' => __('app.validation.lens_requires_prescription'),
     ]);
 
     expect(Sale::count())->toBe(0);
@@ -299,7 +299,7 @@ it('blocks selling a lens without a customer or prescription', function () {
         ]],
     ])->assertJsonValidationErrors([
         'customer' => 'La venta de lentes formulados requiere un cliente.',
-        'prescription_id' => 'La venta de lentes formulados requiere una prescripción.',
+        'prescription_id' => __('app.validation.lens_requires_prescription'),
     ]);
 
     expect(Sale::count())->toBe(0);
@@ -391,6 +391,24 @@ it('rejects a prescription from another company on a products-only sale', functi
         'prescription_id' => $foreignPrescription->id,
         'products' => [['description' => 'Estuche', 'quantity' => 1, 'unit_price' => 10_000]],
     ])->assertJsonValidationErrors('prescription_id');
+
+    expect(Sale::count())->toBe(0);
+});
+
+it('rejects a prescription belonging to another customer of the same company on a products-only sale', function () {
+    $seller = User::factory()->seller()->create();
+    openCashRegisterSession($seller);
+    $customer = Customer::factory()->create(['company_id' => $seller->company_id]);
+    $othersPrescription = Prescription::factory()->create(['company_id' => $seller->company_id]);
+
+    $this->actingAs($seller)->postJson('/pos', [
+        'customer_id' => $customer->id,
+        'document_type' => 'order',
+        'prescription_id' => $othersPrescription->id,
+        'products' => [['description' => 'Estuche', 'quantity' => 1, 'unit_price' => 10_000]],
+    ])->assertJsonValidationErrors([
+        'prescription_id' => __('app.validation.prescription_not_owned'),
+    ]);
 
     expect(Sale::count())->toBe(0);
 });

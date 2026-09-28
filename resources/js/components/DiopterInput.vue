@@ -10,6 +10,8 @@ const props = withDefaults(
         max?: number;
         step?: number;
         placeholder?: string;
+        ariaLabel?: string;
+        ariaDescribedby?: string;
     }>(),
     {
         fixedSign: null,
@@ -17,6 +19,8 @@ const props = withDefaults(
         max: 20,
         step: 0.25,
         placeholder: '0.00',
+        ariaLabel: undefined,
+        ariaDescribedby: undefined,
     },
 );
 
@@ -39,7 +43,9 @@ function parseMagnitude(value: string | null): string {
 }
 
 const sign = ref<'+' | '-'>(parseSign(props.modelValue));
-const magnitude = ref<string>(parseMagnitude(props.modelValue));
+// Vue casts a v-model bound to <input type="number"> to a number, so this
+// must accept both — a plain `.trim()` on a numeric value throws.
+const magnitude = ref<string | number>(parseMagnitude(props.modelValue));
 
 // Keep internal state in sync when the bound value changes externally (e.g. form reset).
 watch(
@@ -51,7 +57,7 @@ watch(
 );
 
 function emitValue(): void {
-    const mag = magnitude.value.trim();
+    const mag = String(magnitude.value ?? '').trim();
     emit(
         'update:modelValue',
         mag === '' ? '' : `${props.fixedSign ?? sign.value}${mag}`,
@@ -105,6 +111,8 @@ function signClass(value: '+' | '-'): string {
             :max="max"
             :step="step"
             :placeholder="placeholder"
+            :aria-label="ariaLabel"
+            :aria-describedby="ariaDescribedby"
             class="h-8 w-full min-w-0 rounded-r-md border border-input bg-transparent px-1.5 py-1 text-right text-xs shadow-xs outline-none focus-visible:ring-2 focus-visible:ring-ring/50 dark:bg-input/30"
             @input="emitValue"
         />

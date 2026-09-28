@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Prescriptions\Schemas;
 
 use App\Enums\PrismBase;
+use App\Models\Prescription;
 use App\Rules\Diopter;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\FileUpload;
@@ -25,7 +26,10 @@ class PrescriptionForm
                     ->label(__('app.fields.customer'))
                     ->relationship('customer', 'name')
                     ->searchable()
-                    ->required(),
+                    ->required()
+                    // Once sold on, re-pointing the prescription to another
+                    // customer would desync it from the sale's own customer.
+                    ->disabled(fn (?Prescription $record): bool => $record?->sales()->exists() ?? false),
                 DatePicker::make('exam_date')
                     ->label(__('app.fields.exam_date'))
                     ->required()
@@ -42,7 +46,7 @@ class PrescriptionForm
                     ->maxLength(255),
                 TextInput::make('prescriber_license')
                     ->label(__('app.fields.prescriber_license'))
-                    ->maxLength(255),
+                    ->maxLength(50),
                 Select::make('filters')
                     ->label(__('app.fields.filters'))
                     ->multiple()

@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Customer;
 use App\Models\Prescription;
 use App\Models\User;
 use Illuminate\Support\Facades\Storage;
@@ -65,4 +66,19 @@ it('keeps the file on soft delete and removes it on force delete', function () {
 
     $rx->forceDelete();
     Storage::disk('local')->assertMissing('prescriptions/rx.jpg');
+});
+
+it('removes the attachment when the owning customer is force-deleted', function () {
+    $this->actingAs(User::factory()->seller()->create());
+    Storage::disk('local')->put('prescriptions/rx.jpg', 'image-bytes');
+    $customer = Customer::factory()->create();
+    $rx = Prescription::factory()->create(['customer_id' => $customer->id, 'attachment' => 'prescriptions/rx.jpg']);
+
+    $customer->delete();
+    Storage::disk('local')->assertExists('prescriptions/rx.jpg');
+
+    $customer->forceDelete();
+
+    Storage::disk('local')->assertMissing('prescriptions/rx.jpg');
+    expect(Prescription::withTrashed()->find($rx->id))->toBeNull();
 });

@@ -48,7 +48,8 @@ class CompanyStep extends OnboardingStep
                 ->label(__('app.fields.prescription_validity_months'))
                 ->integer()
                 ->minValue(1)
-                ->maxValue(60)
+                // Must fit within the 2-year exam-date window (see PrescriptionForm's exam_date minDate).
+                ->maxValue(24)
                 ->placeholder('12')
                 // ponytail: optional in onboarding; a cleared value falls back to the column default.
                 ->dehydrateStateUsing(fn (mixed $state): int => filled($state) ? (int) $state : 12),

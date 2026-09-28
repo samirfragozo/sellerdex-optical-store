@@ -122,7 +122,6 @@ return [
         'date' => 'Fecha',
         'payment_method' => 'Método de pago',
         'customer' => 'Cliente',
-        'lens_type' => 'Tipo de lente',
         'filters' => 'Filtros',
         'diagnosis' => 'Diagnóstico',
         'sphere' => 'Esfera',
@@ -152,6 +151,7 @@ return [
         'paid_at' => 'Fecha de pago',
         'reference' => 'Referencia',
         'prescription' => 'Prescripción',
+        'prescription_option' => 'Examen :exam_date · Vence :expires_at',
         'items' => 'Ítems',
         'payments' => 'Pagos / Abonos',
         'opening_cash' => 'Caja inicial',
@@ -289,6 +289,14 @@ return [
         'axis_required_with_cylinder' => 'Indica el eje cuando hay cilindro.',
         'cylinder_required_with_axis' => 'Indica el cilindro cuando hay eje.',
         'prism_base_required_with_prism' => 'Indica la base del prisma cuando hay prisma.',
+        'lens_requires_prescription' => 'La venta de lentes formulados requiere una prescripción.',
+        'prescription_not_owned' => 'La prescripción no pertenece al cliente seleccionado.',
+        'diopter' => [
+            'invalid' => 'El valor de :attribute no es válido.',
+            'invalid_format' => 'El valor de :attribute no es válido. Usa solo números, por ejemplo 1.25.',
+            'out_of_range' => 'El valor de :attribute debe estar entre :min y :max.',
+            'step' => 'El valor de :attribute debe ir en pasos de :step.',
+        ],
     ],
 
     'pos' => [

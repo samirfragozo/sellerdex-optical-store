@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Sales\Schemas;
 
 use App\Enums\SaleDocumentType;
+use App\Models\Prescription;
 use App\Models\Sale;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Placeholder;
@@ -12,6 +13,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Illuminate\Database\Eloquent\Builder;
 
 class SaleForm
 {
@@ -24,7 +26,11 @@ class SaleForm
                     ->relationship('customer', 'name')
                     ->searchable()
                     ->preload()
-                    ->required(),
+                    ->required()
+                    ->live()
+                    // A prescription selected for the previous customer must not
+                    // silently stay linked once the customer changes.
+                    ->afterStateUpdated(fn ($set) => $set('prescription_id', null)),
                 Select::make('document_type')
                     ->label(__('app.fields.document_type_sale'))
                     ->options(SaleDocumentType::options())
@@ -35,7 +41,15 @@ class SaleForm
                     ->dehydrated(),
                 Select::make('prescription_id')
                     ->label(__('app.fields.prescription'))
-                    ->relationship('prescription', 'id')
+                    ->relationship(
+                        name: 'prescription',
+                        titleAttribute: 'id',
+                        modifyQueryUsing: fn (Builder $query, $get) => $query->where('customer_id', $get('customer_id')),
+                    )
+                    ->getOptionLabelFromRecordUsing(fn (Prescription $record): string => __('app.fields.prescription_option', [
+                        'exam_date' => $record->exam_date?->toDateString() ?? '—',
+                        'expires_at' => $record->expires_at?->toDateString() ?? '—',
+                    ]))
                     ->searchable(),
                 DatePicker::make('sold_at')
                     ->label(__('app.fields.sold_at'))
