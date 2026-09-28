@@ -97,3 +97,45 @@ it('does not resolve a prescription belonging to a different customer as the sel
             'expires_at' => $othersPrescription->expires_at->toDateString(),
         ]));
 });
+
+it('rejects a crafted prescription that belongs to another customer on save', function () {
+    $admin = User::factory()->admin()->create();
+    $this->actingAs($admin);
+    $customer = Customer::factory()->create();
+    $othersPrescription = Prescription::factory()->create(['customer_id' => Customer::factory()->create()->id]);
+
+    Livewire::test(CreateSale::class)
+        ->fillForm(['customer_id' => $customer->id])
+        ->set('data.prescription_id', $othersPrescription->id)
+        ->call('create')
+        ->assertHasFormErrors(['prescription_id']);
+
+    expect(Sale::where('prescription_id', $othersPrescription->id)->exists())->toBeFalse();
+});
+
+it('rejects a crafted customer from another company on save', function () {
+    $admin = User::factory()->admin()->create();
+    $this->actingAs($admin);
+    $foreignCustomer = Customer::withoutGlobalScopes()->create([
+        ...Customer::factory()->make()->getAttributes(),
+        'company_id' => User::factory()->admin()->create()->company_id,
+    ]);
+
+    Livewire::test(CreateSale::class)
+        ->set('data.customer_id', $foreignCustomer->id)
+        ->call('create')
+        ->assertHasFormErrors(['customer_id']);
+});
+
+it('accepts the sale customer\'s own prescription on save', function () {
+    $admin = User::factory()->admin()->create();
+    $this->actingAs($admin);
+    $customer = Customer::factory()->create();
+    $prescription = Prescription::factory()->create(['customer_id' => $customer->id]);
+
+    Livewire::test(CreateSale::class)
+        ->fillForm(['customer_id' => $customer->id])
+        ->set('data.prescription_id', $prescription->id)
+        ->call('create')
+        ->assertHasNoFormErrors(['prescription_id']);
+});
