@@ -33,12 +33,14 @@ class ComboSettings extends Page
 
     public static function canAccess(): bool
     {
-        return auth()->user()?->isAdmin() === true;
+        $user = auth()->user();
+
+        return $user?->company_id !== null && $user->isAdmin();
     }
 
     public static function shouldRegisterNavigation(): bool
     {
-        return auth()->user()?->isAdmin() === true;
+        return static::canAccess();
     }
 
     /** Unlike the onboarding step, the reference combo is not reinstalled here: the admin may want none. */

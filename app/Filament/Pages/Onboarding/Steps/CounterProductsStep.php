@@ -71,7 +71,7 @@ class CounterProductsStep extends OnboardingStep
 
     public function fill(Company $company): array
     {
-        $categories = $this->categories()->with(['products' => fn ($query) => $query->where('is_active', true)->whereNull('base_product_id')->orderBy('id')])->orderBy('id')->get();
+        $categories = $this->categories()->with(['products' => fn ($query) => $query->sellableBase()->orderBy('id')])->orderBy('id')->get();
 
         if ($this->products()->exists()) {
             return ['categories' => $categories->map(fn (ProductCategory $category) => [
@@ -164,13 +164,13 @@ class CounterProductsStep extends OnboardingStep
     /** @return Builder<ProductCategory> the company's non-lens categories */
     private function categories(): Builder
     {
-        return ProductCategory::query()->where('key', '!=', 'lens');
+        return ProductCategory::query()->counter();
     }
 
     /** @return Builder<Product> the active base products of the non-lens categories */
     private function products(): Builder
     {
-        return Product::query()->where('is_active', true)->whereNull('base_product_id')->whereHas('category', fn (Builder $query) => $query->where('key', '!=', 'lens'));
+        return Product::query()->counter();
     }
 
     private function uniqueKey(string $base): string

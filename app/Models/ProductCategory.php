@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Traits\BelongsToCompany;
 use Database\Factories\ProductCategoryFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -106,5 +107,15 @@ class ProductCategory extends Model
     public function hasChildren(): bool
     {
         return $this->products()->withTrashed()->exists();
+    }
+
+    /**
+     * Counter categories: everything sold besides lenses.
+     *
+     * @param  Builder<ProductCategory>  $query
+     */
+    public function scopeCounter(Builder $query): void
+    {
+        $query->where('key', '!=', 'lens');
     }
 }

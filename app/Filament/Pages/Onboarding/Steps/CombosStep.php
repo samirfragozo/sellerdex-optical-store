@@ -123,16 +123,18 @@ class CombosStep extends OnboardingStep
             ->hiddenLabel()
             ->relationship('kitSlots', fn (Builder $query) => $query->where('trigger', $trigger)
                 ->when($triggerCategoryId, fn (Builder $query) => $query->where('trigger_category_id', $triggerCategoryId)))
+            // The decimal cast loads "20000.00", which the integer rule would reject; show it as typed ("20000", "12.5").
+            ->mutateRelationshipDataBeforeFillUsing(fn (array $data): array => [...$data, 'price_value' => (string) ((float) $data['price_value'])])
             ->mutateRelationshipDataBeforeCreateUsing(fn (array $data): array => [...$data, 'trigger' => $trigger, 'trigger_category_id' => $triggerCategoryId])
             ->orderColumn('sort_order')
             ->schema([
                 ...($isProductCombo ? [
                     Select::make('trigger_product_id')->label(__('app.onboarding.combos.fields.trigger_product'))
-                        ->options(fn () => $this->products()->pluck('name', 'id'))
+                        ->options(fn () => Product::query()->counter()->orderBy('name')->pluck('name', 'id'))
                         ->searchable()->required(),
                 ] : []),
                 Select::make('slot_category_id')->label(__('app.fields.category'))
-                    ->options(fn () => ProductCategory::query()->where('key', '!=', 'lens')->orderBy('name')->pluck('name', 'id'))
+                    ->options(fn () => ProductCategory::query()->counter()->orderBy('name')->pluck('name', 'id'))
                     ->required()
                     // A duplicate category in one combo would hit the unique index; refuse it as a validation error.
                     ->distinct(! $isProductCombo)
@@ -142,7 +144,7 @@ class CombosStep extends OnboardingStep
                         $set('upgrade_product_id', null);
                     }),
                 Select::make('default_product_id')->label(__('app.fields.product'))
-                    ->options(fn (Get $get) => $this->products()->where('product_category_id', $get('slot_category_id'))->pluck('name', 'id'))
+                    ->options(fn (Get $get) => Product::query()->counter()->where('product_category_id', $get('slot_category_id'))->orderBy('name')->pluck('name', 'id'))
                     ->required()
                     ->live(),
                 Select::make('price_mode')->label(__('app.onboarding.combos.fields.price_mode'))
@@ -155,6 +157,8 @@ class CombosStep extends OnboardingStep
                     ->visible(fn (Get $get): bool => in_array($get('price_mode'), [KitPriceMode::DiscountPercent->value, KitPriceMode::AddedToLens->value], true))
                     ->required()->numeric()->minValue(0)
                     ->maxValue(fn (Get $get): ?int => $get('price_mode') === KitPriceMode::DiscountPercent->value ? 100 : null)
+                    // Money is integer COP; only a discount may carry decimals.
+                    ->rule('integer', fn (Get $get): bool => $get('price_mode') === KitPriceMode::AddedToLens->value)
                     ->live(onBlur: true),
                 Toggle::make('is_optional')->label(__('app.onboarding.combos.fields.is_optional'))->live(),
                 Toggle::make('is_preselected')->label(__('app.onboarding.combos.fields.is_preselected'))
@@ -163,7 +167,7 @@ class CombosStep extends OnboardingStep
                     ->live(),
                 ...($trigger === KitTrigger::Sale ? [
                     Select::make('upgrade_product_id')->label(__('app.onboarding.combos.fields.upgrade_product'))
-                        ->options(fn (Get $get) => $this->products()->where('product_category_id', $get('slot_category_id'))->pluck('name', 'id')),
+                        ->options(fn (Get $get) => Product::query()->counter()->where('product_category_id', $get('slot_category_id'))->orderBy('name')->pluck('name', 'id')),
                     TextInput::make('upgrade_min_total')->label(__('app.onboarding.combos.fields.upgrade_min_total'))
                         ->integer()->minValue(0)->prefix('$')
                         ->requiredWith('upgrade_product_id'),
@@ -212,15 +216,5 @@ class CombosStep extends OnboardingStep
     private function money(int $amount): string
     {
         return '$'.number_format($amount, 0, ',', '.');
-    }
-
-    /** @return Builder<Product> active non-lens base products */
-    private function products(): Builder
-    {
-        return Product::query()
-            ->where('is_active', true)
-            ->whereNull('base_product_id')
-            ->whereHas('category', fn (Builder $query) => $query->where('key', '!=', 'lens'))
-            ->orderBy('name');
     }
 }

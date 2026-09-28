@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Traits\BelongsToCompany;
 use Database\Factories\ProductFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -74,5 +75,25 @@ class Product extends Model
     public function margin(): int
     {
         return $this->price - $this->cost;
+    }
+
+    /**
+     * Active base products (no variants).
+     *
+     * @param  Builder<Product>  $query
+     */
+    public function scopeSellableBase(Builder $query): void
+    {
+        $query->where('is_active', true)->whereNull('base_product_id');
+    }
+
+    /**
+     * Active base products of the counter (non-lens) categories.
+     *
+     * @param  Builder<Product>  $query
+     */
+    public function scopeCounter(Builder $query): void
+    {
+        $query->sellableBase()->whereHas('category', fn (Builder $category) => $category->counter());
     }
 }
