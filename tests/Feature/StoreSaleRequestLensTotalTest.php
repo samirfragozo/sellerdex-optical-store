@@ -40,8 +40,8 @@ function lensSalePayload(int $paymentAmount, array $lensExtra = []): array
     return [
         'customer_id' => test()->customer->id,
         'document_type' => 'order',
-        'prescription_id' => test()->prescription->id,
         'armados' => [[
+            'prescription_id' => test()->prescription->id,
             'own_frame' => true,
             'lens' => array_merge([
                 'description' => 'Lente formulado',

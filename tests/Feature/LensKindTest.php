@@ -22,8 +22,8 @@ function kindSalePayload(LensCombination $combination, Prescription $rx): array
     return [
         'document_type' => 'order',
         'customer_id' => $rx->customer_id,
-        'prescription_id' => $rx->id,
         'armados' => [[
+            'prescription_id' => $rx->id,
             'lens' => [
                 'description' => 'Lente', 'quantity' => 1, 'treatment_ids' => [],
                 'lens_type_id' => $combination->lens_type_id,

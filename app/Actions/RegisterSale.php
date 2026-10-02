@@ -31,7 +31,6 @@ class RegisterSale
                 'customer_id' => $data['customer_id'] ?? null,
                 'seller_id' => $seller->id,
                 'created_by' => $seller->id,
-                'prescription_id' => $data['prescription_id'] ?? null,
                 'document_type' => $data['document_type'] ?? 'order',
                 'discount_percent' => $data['discount_percent'] ?? 0,
                 'surcharge_percent' => $this->resolveSurcharge($data),
@@ -149,6 +148,9 @@ class RegisterSale
             ]);
 
             $lensConfig = $lensItem->lensConfig()->create([
+                // The sale's customer pays; the armado may be for someone else.
+                'patient_id' => $armado['patient_id'] ?? $sale->customer_id,
+                'prescription_id' => $armado['prescription_id'] ?? null,
                 'lens_combination_id' => $combination->id,
                 'type_name' => $combination->lensType->name,
                 'technology_name' => $combination->lensTechnology->name,

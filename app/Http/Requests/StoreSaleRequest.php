@@ -10,6 +10,7 @@ use App\Models\Prescription;
 use App\Models\Sale;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Exists;
 use Illuminate\Validation\Validator;
 
 class StoreSaleRequest extends FormRequest
@@ -30,7 +31,7 @@ class StoreSaleRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'customer_id' => ['nullable', 'exists:customers,id'],
+            'customer_id' => ['nullable', $this->companyCustomer()],
             'customer' => ['nullable', 'array'],
             'customer.name' => ['required_with:customer', 'string', 'max:255'],
             'customer.last_name' => ['required_with:customer', 'string', 'max:255'],
@@ -43,13 +44,14 @@ class StoreSaleRequest extends FormRequest
             'customer.email' => ['nullable', 'email', 'max:255'],
             'customer.notes' => ['nullable', 'string', 'max:1000'],
             'document_type' => ['required', Rule::enum(SaleDocumentType::class)],
-            'prescription_id' => [
-                'nullable',
-                Rule::exists('prescriptions', 'id')->where(fn ($query) => $query->where('company_id', $this->user()->company_id)),
-            ],
             'discount_percent' => ['nullable', 'numeric', 'between:0,100'],
             'notes' => ['nullable', 'string', 'max:1000'],
             'armados' => ['nullable', 'array'],
+            'armados.*.patient_id' => ['nullable', $this->companyCustomer()],
+            'armados.*.prescription_id' => [
+                'required',
+                Rule::exists('prescriptions', 'id')->where('company_id', $this->user()->company_id)->withoutTrashed(),
+            ],
             'armados.*.lens.description' => ['required', 'string', 'max:255'],
             'armados.*.lens.quantity' => ['nullable', 'integer', 'min:1', 'max:100'],
             'armados.*.lens.price_override' => ['nullable', 'integer', 'min:0', 'max:100000000'],
@@ -104,10 +106,6 @@ class StoreSaleRequest extends FormRequest
                 }
             }
 
-            // A prescription's ownership must hold whenever one is referenced,
-            // even on a products-only sale — not only when the cart carries a lens.
-            $this->validatePrescriptionOwnership($validator);
-
             if (! $this->cartHasLens()) {
                 return;
             }
@@ -116,80 +114,64 @@ class StoreSaleRequest extends FormRequest
                 $validator->errors()->add('customer', 'La venta de lentes formulados requiere un cliente.');
             }
 
-            if (empty($this->input('prescription_id'))) {
-                $validator->errors()->add('prescription_id', __('app.validation.lens_requires_prescription'));
-            }
-
-            $this->validateAdditionRequirement($validator);
+            $this->validateArmadoPrescriptions($validator);
         });
     }
 
-    /**
-     * A referenced prescription must belong to the sale's customer — even with
-     * a null customer_id (an inline `customer.name`): a brand-new customer,
-     * not yet created, cannot already own a prescription — where('customer_id',
-     * null) becomes whereNull(), so it correctly finds no match either way.
-     */
-    protected function validatePrescriptionOwnership(Validator $validator): void
+    /** A live customer of the seller's company — the payer or an armado's patient. */
+    private function companyCustomer(): Exists
     {
-        if (empty($this->input('prescription_id'))) {
-            return;
-        }
-
-        $belongsToCustomer = Prescription::query()
-            ->whereKey($this->input('prescription_id'))
-            ->where('customer_id', $this->input('customer_id'))
-            ->exists();
-
-        if (! $belongsToCustomer) {
-            $validator->errors()->add('prescription_id', __('app.validation.prescription_not_owned'));
-        }
+        return Rule::exists('customers', 'id')->where('company_id', $this->user()->company_id)->withoutTrashed();
     }
 
     /**
-     * Multifocal lens kinds (bifocal, progressive) require a prescription
-     * with addition on at least one eye.
+     * Each armado's prescription must belong to that armado's patient (the
+     * payer when no patient is given — a brand-new inline customer has no id
+     * yet, so it owns none), and a multifocal lens needs addition on it.
      */
-    protected function validateAdditionRequirement(Validator $validator): void
+    protected function validateArmadoPrescriptions(Validator $validator): void
     {
         $armados = (array) $this->input('armados', []);
 
-        if (empty($armados)) {
-            return;
-        }
+        $prescriptions = Prescription::query()
+            ->whereKey(collect($armados)->pluck('prescription_id')->filter()->all())
+            ->get(['id', 'customer_id', 'od_add', 'os_add'])
+            ->keyBy('id');
 
-        $lensTypeIds = collect($armados)->pluck('lens.lens_type_id')->filter()->unique()->all();
-
-        if (empty($lensTypeIds)) {
-            return;
-        }
-
-        $kinds = LensType::query()->whereIn('id', $lensTypeIds)->pluck('kind', 'id');
-        $hasAddition = $this->prescriptionHasAddition();
+        $kinds = LensType::query()
+            ->whereKey(collect($armados)->pluck('lens.lens_type_id')->filter()->all())
+            ->pluck('kind', 'id');
 
         foreach ($armados as $index => $armado) {
-            $lensTypeId = $armado['lens']['lens_type_id'] ?? null;
-            $kind = $lensTypeId !== null ? $kinds->get($lensTypeId) : null;
+            $prescriptionId = $armado['prescription_id'] ?? null;
+
+            // A missing or foreign prescription was already reported by its rule.
+            if ($prescriptionId === null || ! $prescriptions->has($prescriptionId)) {
+                continue;
+            }
+
+            $prescription = $prescriptions->get($prescriptionId);
+            $patientId = $armado['patient_id'] ?? $this->input('customer_id');
+
+            if ((int) $prescription->customer_id !== (int) $patientId) {
+                $validator->errors()->add("armados.{$index}.prescription_id", __('app.validation.prescription_not_owned'));
+
+                continue;
+            }
+
+            $kind = $kinds->get($armado['lens']['lens_type_id'] ?? 0);
 
             if ($kind === null) {
                 continue;
             }
 
             $kind = $kind instanceof LensKind ? $kind : LensKind::from($kind);
+            $hasAddition = (float) ($prescription->od_add ?? 0) > 0 || (float) ($prescription->os_add ?? 0) > 0;
 
             if ($kind->requiresAddition() && ! $hasAddition) {
                 $validator->errors()->add("armados.{$index}.lens.lens_type_id", __('app.pos.lens_form.requires_addition'));
             }
         }
-    }
-
-    /** Whether the selected prescription has addition on either eye. */
-    protected function prescriptionHasAddition(): bool
-    {
-        $prescription = Prescription::find($this->input('prescription_id'));
-
-        return $prescription !== null
-            && ((float) ($prescription->od_add ?? 0) > 0 || (float) ($prescription->os_add ?? 0) > 0);
     }
 
     /** A lens sale is any sale that carries at least one armado. */
@@ -206,6 +188,7 @@ class StoreSaleRequest extends FormRequest
     public function messages(): array
     {
         return [
+            'armados.*.prescription_id.required' => __('app.validation.lens_requires_prescription'),
             'document_type.required' => 'Selecciona el tipo de documento.',
             'armados.*.lens.product_id.required' => 'Selecciona el lente del armado.',
             'armados.*.lens.unit_price.required' => 'Indica el precio del lente.',
@@ -232,9 +215,10 @@ class StoreSaleRequest extends FormRequest
             'customer.id_number' => 'número de documento',
             'customer.phone' => 'celular',
             'document_type' => 'tipo de documento',
-            'prescription_id' => 'prescripción',
             'discount_percent' => 'descuento',
             'notes' => 'observaciones',
+            'armados.*.patient_id' => __('app.fields.patient'),
+            'armados.*.prescription_id' => __('app.fields.prescription'),
             'armados.*.lens.product_id' => 'lente',
             'armados.*.lens.description' => 'descripción del lente',
             'armados.*.frame.description' => 'descripción de la montura',

@@ -46,8 +46,8 @@ it('refuses a lens sale when the only laboratory was deactivated but still sells
     $this->postJson(route('pos.store'), [
         'document_type' => 'order',
         'customer_id' => $customer->id,
-        'prescription_id' => $prescription->id,
         'armados' => [[
+            'prescription_id' => $prescription->id,
             'lens' => [
                 'description' => 'Lente', 'quantity' => 1,
                 'lens_type_id' => $this->combination->lens_type_id,

@@ -18,6 +18,8 @@ class LensOrdersTable
                 TextColumn::make('saleItem.sale.customer.name')
                     ->label(__('app.fields.customer'))
                     ->searchable(),
+                TextColumn::make('saleItem.lensConfig.patient.full_name')
+                    ->label(__('app.fields.patient')),
                 TextColumn::make('saleItem.description')
                     ->label(__('app.fields.sale_item'))
                     ->searchable(),

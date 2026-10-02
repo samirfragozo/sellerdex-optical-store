@@ -70,7 +70,7 @@ it('paginates the pos product list and filters by search and category', function
 
 it('rejects sale creation when the seller has no open cash register session', function () {
     $seller = User::factory()->seller()->create();
-    $customer = Customer::factory()->create();
+    $customer = Customer::factory()->create(['company_id' => $seller->company_id]);
 
     $this->actingAs($seller)->postJson('/pos', [
         'customer_id' => $customer->id,
@@ -84,7 +84,7 @@ it('rejects sale creation when the seller has no open cash register session', fu
 
 it('still returns a plain message field on a 403 cash-session error for the frontend fallback to key off of', function () {
     $seller = User::factory()->seller()->create();
-    $customer = Customer::factory()->create();
+    $customer = Customer::factory()->create(['company_id' => $seller->company_id]);
 
     $this->actingAs($seller)->postJson('/pos', [
         'customer_id' => $customer->id,
@@ -96,7 +96,7 @@ it('still returns a plain message field on a 403 cash-session error for the fron
 it('stores a sale from the pos with an existing customer and split payments', function () {
     $seller = User::factory()->seller()->create();
     openCashRegisterSession($seller);
-    $customer = Customer::factory()->create();
+    $customer = Customer::factory()->create(['company_id' => $seller->company_id]);
     $method = PaymentMethod::factory()->create();
 
     $this->actingAs($seller)->postJson('/pos', [
@@ -142,7 +142,7 @@ it('returns a specific spanish error for a product with an invalid quantity', fu
 
     $this->actingAs($seller)
         ->postJson('/pos', [
-            'customer_id' => Customer::factory()->create()->id,
+            'customer_id' => Customer::factory()->create(['company_id' => $seller->company_id])->id,
             'document_type' => 'order',
             'products' => [['description' => 'Lente', 'quantity' => 0, 'unit_price' => 100_000]],
         ])
@@ -152,7 +152,7 @@ it('returns a specific spanish error for a product with an invalid quantity', fu
 it('accepts an existing customer even if a null customer payload is sent', function () {
     $seller = User::factory()->seller()->create();
     openCashRegisterSession($seller);
-    $customer = Customer::factory()->create();
+    $customer = Customer::factory()->create(['company_id' => $seller->company_id]);
 
     // The POS sends `customer: null` (not an object) when an existing one is picked.
     $this->actingAs($seller)->postJson('/pos', [
@@ -238,7 +238,7 @@ it('enforces prescription validation even after the lens category is renamed', f
         ]],
     ])->assertJsonValidationErrors([
         'customer' => 'La venta de lentes formulados requiere un cliente.',
-        'prescription_id' => __('app.validation.lens_requires_prescription'),
+        'armados.0.prescription_id' => __('app.validation.lens_requires_prescription'),
     ]);
 
     expect(Sale::count())->toBe(0);
@@ -246,7 +246,7 @@ it('enforces prescription validation even after the lens category is renamed', f
 
 it('rejects payments that sum to more than the sale total', function () {
     $seller = User::factory()->seller()->create();
-    $customer = Customer::factory()->create();
+    $customer = Customer::factory()->create(['company_id' => $seller->company_id]);
     $method = PaymentMethod::factory()->create();
     openCashRegisterSession($seller);
 
@@ -299,7 +299,7 @@ it('blocks selling a lens without a customer or prescription', function () {
         ]],
     ])->assertJsonValidationErrors([
         'customer' => 'La venta de lentes formulados requiere un cliente.',
-        'prescription_id' => __('app.validation.lens_requires_prescription'),
+        'armados.0.prescription_id' => __('app.validation.lens_requires_prescription'),
     ]);
 
     expect(Sale::count())->toBe(0);
@@ -325,9 +325,9 @@ it('creates a prescription via the pos endpoint and links it when selling a lens
         'document_type' => 'order',
         'armados' => [[
             'lens' => $lens,
+            'prescription_id' => $rxResponse->json('id'),
             'own_frame' => true,
         ]],
-        'prescription_id' => $rxResponse->json('id'),
     ])->assertOk();
 
     $sale = Sale::first();
@@ -335,7 +335,7 @@ it('creates a prescription via the pos endpoint and links it when selling a lens
 
     expect($prescription->customer_id)->toBe($customer->id)
         ->and($prescription->created_by)->toBe($seller->id)
-        ->and($sale->prescription_id)->toBe($prescription->id);
+        ->and($sale->lensConfigs()->sole()->prescription_id)->toBe($prescription->id);
 });
 
 it('links an existing prescription that belongs to the customer when selling a lens', function () {
@@ -343,7 +343,7 @@ it('links an existing prescription that belongs to the customer when selling a l
     openCashRegisterSession($seller);
     Supplier::factory()->laboratory()->create(['company_id' => $seller->company_id]);
     $this->actingAs($seller);
-    $customer = Customer::factory()->create();
+    $customer = Customer::factory()->create(['company_id' => $seller->company_id]);
     $prescription = Prescription::factory()->create(['customer_id' => $customer->id]);
     $lens = lensArmadoLens($seller->company_id);
 
@@ -352,18 +352,18 @@ it('links an existing prescription that belongs to the customer when selling a l
         'document_type' => 'order',
         'armados' => [[
             'lens' => $lens,
+            'prescription_id' => $prescription->id,
             'own_frame' => true,
         ]],
-        'prescription_id' => $prescription->id,
     ])->assertOk();
 
-    expect(Sale::first()->prescription_id)->toBe($prescription->id)
+    expect(Sale::first()->lensConfigs()->sole()->prescription_id)->toBe($prescription->id)
         ->and(Prescription::count())->toBe(1);
 });
 
 it('rejects a prescription that belongs to another customer', function () {
     $seller = User::factory()->seller()->create();
-    $customer = Customer::factory()->create();
+    $customer = Customer::factory()->create(['company_id' => $seller->company_id]);
     $otherPrescription = Prescription::factory()->create();
     $lens = lensProduct();
 
@@ -372,43 +372,10 @@ it('rejects a prescription that belongs to another customer', function () {
         'document_type' => 'order',
         'armados' => [[
             'lens' => ['product_id' => $lens->id, 'description' => 'Lente', 'unit_price' => 100_000],
+            'prescription_id' => $otherPrescription->id,
             'own_frame' => true,
         ]],
-        'prescription_id' => $otherPrescription->id,
-    ])->assertJsonValidationErrors('prescription_id');
-
-    expect(Sale::count())->toBe(0);
-});
-
-it('rejects a prescription from another company on a products-only sale', function () {
-    $seller = User::factory()->seller()->create();
-    openCashRegisterSession($seller);
-    $foreignPrescription = Prescription::factory()->create(['company_id' => Company::factory()->create()->id]);
-
-    $this->actingAs($seller)->postJson('/pos', [
-        'customer' => ['name' => 'Ana', 'last_name' => 'Pérez', 'document_type' => 'cc', 'id_number' => '123', 'phone' => '3000000000'],
-        'document_type' => 'order',
-        'prescription_id' => $foreignPrescription->id,
-        'products' => [['description' => 'Estuche', 'quantity' => 1, 'unit_price' => 10_000]],
-    ])->assertJsonValidationErrors('prescription_id');
-
-    expect(Sale::count())->toBe(0);
-});
-
-it('rejects a prescription belonging to another customer of the same company on a products-only sale', function () {
-    $seller = User::factory()->seller()->create();
-    openCashRegisterSession($seller);
-    $customer = Customer::factory()->create(['company_id' => $seller->company_id]);
-    $othersPrescription = Prescription::factory()->create(['company_id' => $seller->company_id]);
-
-    $this->actingAs($seller)->postJson('/pos', [
-        'customer_id' => $customer->id,
-        'document_type' => 'order',
-        'prescription_id' => $othersPrescription->id,
-        'products' => [['description' => 'Estuche', 'quantity' => 1, 'unit_price' => 10_000]],
-    ])->assertJsonValidationErrors([
-        'prescription_id' => __('app.validation.prescription_not_owned'),
-    ]);
+    ])->assertJsonValidationErrors('armados.0.prescription_id');
 
     expect(Sale::count())->toBe(0);
 });
@@ -425,25 +392,25 @@ it('rejects a prescription belonging to another customer on an armado sale with 
     $this->actingAs($seller)->postJson('/pos', [
         'customer' => ['name' => 'Ana', 'last_name' => 'Pérez', 'document_type' => 'cc', 'id_number' => '123', 'phone' => '3000000000'],
         'document_type' => 'order',
-        'prescription_id' => $otherPrescription->id,
         'armados' => [[
+            'prescription_id' => $otherPrescription->id,
             'lens' => $lens,
             'own_frame' => true,
         ]],
-    ])->assertJsonValidationErrors('prescription_id');
+    ])->assertJsonValidationErrors('armados.0.prescription_id');
 
     expect(Sale::count())->toBe(0);
 });
 
 // Diopter/axis/exam-date validation for a new prescription now lives on the
 // dedicated POST pos/prescriptions endpoint (see PosPrescriptionTest) — a
-// sale only ever references a prescription_id, so those rules no longer
+// armado only ever references a prescription_id, so those rules no longer
 // apply at this layer.
 
 it('returns the created sale as json for printing', function () {
     $seller = User::factory()->seller()->create();
     openCashRegisterSession($seller);
-    $customer = Customer::factory()->create();
+    $customer = Customer::factory()->create(['company_id' => $seller->company_id]);
 
     $this->actingAs($seller)
         ->postJson('/pos', [
@@ -486,12 +453,12 @@ it('passes combo slot selections and applies a paper bag', function () {
         'customer_id' => $customer->id,
         'document_type' => 'order',
         'armados' => [[
+            'prescription_id' => $prescription->id,
             // Manual override ≥ bag threshold of 215,000 wins over the catalog price.
             'lens' => lensArmadoLens($company->id, ['price_override' => 1_000_000]),
             'own_frame' => true,
             'slots' => [['kit_slot_id' => $examSlot->id, 'product_id' => Product::where('sku', 'SRV-EXAMEN')->value('id'), 'selected' => true]],
         ]],
-        'prescription_id' => $prescription->id,
     ])->assertOk();
 
     $sale = Sale::latest('id')->first();
@@ -519,8 +486,8 @@ it('accepts two armados where only one carries a frame', function () {
     $this->seed(ProductCategorySeeder::class);
     $this->seed(ProductCatalogSeeder::class);
     $frame = Product::where('sku', 'MNT-COMPLETA-ACETATO')->first();
-    $customer = Customer::factory()->create();
     $seller = User::factory()->seller()->create();
+    $customer = Customer::factory()->create(['company_id' => $seller->company_id]);
     openCashRegisterSession($seller);
     Supplier::factory()->laboratory()->create(['company_id' => $seller->company_id]);
     $this->actingAs($seller);
@@ -529,14 +496,15 @@ it('accepts two armados where only one carries a frame', function () {
     $this->postJson('/pos', [
         'document_type' => 'order',
         'customer_id' => $customer->id,
-        'prescription_id' => $prescription->id,
         'armados' => [
             [
+                'prescription_id' => $prescription->id,
                 'lens' => lensArmadoLens($seller->company_id, ['description' => 'Lente A']),
                 'frame' => ['product_id' => $frame->id, 'description' => $frame->name, 'unit_price' => $frame->price],
                 'own_frame' => false,
             ],
             [
+                'prescription_id' => $prescription->id,
                 'lens' => lensArmadoLens($seller->company_id, ['description' => 'Lente B']),
                 'frame' => null,
                 'own_frame' => true,
@@ -560,12 +528,12 @@ it('rejects a lens armado without a prescription', function () {
                 'own_frame' => true,
             ]],
         ])
-        ->assertJsonValidationErrors('prescription_id');
+        ->assertJsonValidationErrors('armados.0.prescription_id');
 });
 
 it('creates a sale from an armado with an existing prescription that has addition', function () {
-    $customer = Customer::factory()->create();
     $seller = User::factory()->seller()->create();
+    $customer = Customer::factory()->create(['company_id' => $seller->company_id]);
     openCashRegisterSession($seller);
     Supplier::factory()->laboratory()->create(['company_id' => $seller->company_id]);
     $this->actingAs($seller);
@@ -574,8 +542,8 @@ it('creates a sale from an armado with an existing prescription that has additio
     $this->postJson('/pos', [
         'document_type' => 'order',
         'customer_id' => $customer->id,
-        'prescription_id' => $prescription->id,
         'armados' => [[
+            'prescription_id' => $prescription->id,
             'lens' => lensArmadoLens($seller->company_id, ['description' => 'Lente progresivo']),
             'own_frame' => true,
         ]],
@@ -590,7 +558,7 @@ it('creates a sale from an armado with an existing prescription that has additio
     $lensItem = $sale->items->first(fn ($i) => $i->isLens());
 
     expect($sale->customer_id)->toBe($customer->id)
-        ->and($sale->prescription_id)->not->toBeNull()
+        ->and($sale->lensConfigs()->sole()->prescription_id)->not->toBeNull()
         ->and($lensItem)->not->toBeNull()
         ->and($lensItem->group_key)->toBe('g1');
 });
@@ -666,8 +634,7 @@ it('keeps the pos page working after a sale with comma decimals in the prescript
     $this->actingAs($seller)->postJson('/pos', [
         'customer_id' => $customer->id,
         'document_type' => 'order',
-        'armados' => [['lens' => $lens, 'own_frame' => true]],
-        'prescription_id' => $prescription->id,
+        'armados' => [['prescription_id' => $prescription->id, 'lens' => $lens, 'own_frame' => true]],
     ])->assertOk();
 
     $this->get('/pos')
@@ -690,14 +657,14 @@ it('exposes a null cash session when the seller has none open', function () {
 it('rejects a treatment id that does not exist', function () {
     $seller = User::factory()->seller()->create();
     openCashRegisterSession($seller);
-    $customer = Customer::factory()->create();
+    $customer = Customer::factory()->create(['company_id' => $seller->company_id]);
     $prescription = Prescription::factory()->create(['customer_id' => $customer->id]);
 
     $response = $this->actingAs($seller)->postJson('/pos', [
         'customer_id' => $customer->id,
         'document_type' => 'order',
-        'prescription_id' => $prescription->id,
         'armados' => [[
+            'prescription_id' => $prescription->id,
             'lens' => lensArmadoLens($seller->company_id, ['treatment_ids' => [999999]]),
             'own_frame' => true,
         ]],
@@ -805,7 +772,7 @@ it('includes frame variant products on the pos payload', function () {
 it('applies discount percent and per-line included tax when registering a pos sale', function () {
     $seller = User::factory()->seller()->create();
     openCashRegisterSession($seller);
-    $customer = Customer::factory()->create();
+    $customer = Customer::factory()->create(['company_id' => $seller->company_id]);
     $tax = Tax::factory()->create(['company_id' => $seller->company_id, 'rate' => 19]);
     $product = Product::factory()->create(['company_id' => $seller->company_id, 'price' => 100_000, 'tax_id' => $tax->id, 'is_pos_selectable' => true]);
 
@@ -831,7 +798,7 @@ it('applies discount percent and per-line included tax when registering a pos sa
 it('accepts a single payment covering the full total of a taxed sale', function () {
     $seller = User::factory()->seller()->create();
     openCashRegisterSession($seller);
-    $customer = Customer::factory()->create();
+    $customer = Customer::factory()->create(['company_id' => $seller->company_id]);
     $method = PaymentMethod::factory()->create();
     $tax = Tax::factory()->create(['company_id' => $seller->company_id, 'rate' => 19]);
     $product = Product::factory()->create([
@@ -864,7 +831,7 @@ it('accepts a single payment covering the full total of a taxed sale', function 
 it('rejects a discount_percent over 100', function () {
     $seller = User::factory()->seller()->create();
     openCashRegisterSession($seller);
-    $customer = Customer::factory()->create();
+    $customer = Customer::factory()->create(['company_id' => $seller->company_id]);
 
     $this->actingAs($seller)->postJson('/pos', [
         'customer_id' => $customer->id,
@@ -877,7 +844,7 @@ it('rejects a discount_percent over 100', function () {
 it('returns a discount_percent validation error usable by the pos frontend', function () {
     $seller = User::factory()->seller()->create();
     openCashRegisterSession($seller);
-    $customer = Customer::factory()->create();
+    $customer = Customer::factory()->create(['company_id' => $seller->company_id]);
 
     $response = $this->actingAs($seller)->postJson('/pos', [
         'customer_id' => $customer->id,
@@ -891,8 +858,8 @@ it('returns a discount_percent validation error usable by the pos frontend', fun
 });
 
 it('flags the sale response when a lens item generates a pending lab order', function () {
-    $customer = Customer::factory()->create();
     $seller = User::factory()->seller()->create();
+    $customer = Customer::factory()->create(['company_id' => $seller->company_id]);
     openCashRegisterSession($seller);
     Supplier::factory()->laboratory()->create(['company_id' => $seller->company_id]);
     $this->actingAs($seller);
@@ -901,8 +868,8 @@ it('flags the sale response when a lens item generates a pending lab order', fun
     $response = $this->postJson('/pos', [
         'document_type' => 'order',
         'customer_id' => $customer->id,
-        'prescription_id' => $prescription->id,
         'armados' => [[
+            'prescription_id' => $prescription->id,
             'lens' => lensArmadoLens($seller->company_id),
             'own_frame' => true,
         ]],
@@ -914,7 +881,7 @@ it('flags the sale response when a lens item generates a pending lab order', fun
 it('does not flag a plain-product sale as having a pending lab order', function () {
     $seller = User::factory()->seller()->create();
     openCashRegisterSession($seller);
-    $customer = Customer::factory()->create();
+    $customer = Customer::factory()->create(['company_id' => $seller->company_id]);
 
     $response = $this->actingAs($seller)->postJson('/pos', [
         'customer_id' => $customer->id,

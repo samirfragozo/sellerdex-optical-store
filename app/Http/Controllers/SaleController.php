@@ -7,6 +7,7 @@ use App\Enums\ReadinessSeverity;
 use App\Http\Requests\StoreSaleRequest;
 use App\Models\CashRegisterSession;
 use App\Models\Customer;
+use App\Models\SaleItemLensConfig;
 use App\Support\Readiness\ReadinessIssue;
 use Illuminate\Http\JsonResponse;
 
@@ -41,10 +42,16 @@ class SaleController extends Controller
         return response()->json([
             'id' => $sale->id,
             'number' => $sale->number,
-            'prescription_id' => $sale->prescription_id,
             'invoice_url' => route('documents.invoice', $sale),
             'invoice_pdf_url' => route('documents.invoice.pdf', $sale),
-            'formula_url' => $sale->prescription_id ? route('documents.formula', $sale->prescription_id) : null,
+            // One printable formula per distinct prescription, named after its patient.
+            'formulas' => $sale->lensConfigs()->with('patient')->whereNotNull('prescription_id')->get()
+                ->unique('prescription_id')
+                ->map(fn (SaleItemLensConfig $config): array => [
+                    'url' => route('documents.formula', $config->prescription_id),
+                    'patient_name' => $config->patient?->full_name ?? '',
+                ])
+                ->values(),
             'has_pending_lab_order' => $sale->hasPendingLensWork(),
         ]);
     }

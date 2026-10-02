@@ -64,13 +64,12 @@ it('requires a prescription of the same customer to sell lenses', function () {
     $this->postJson(route('pos.store'), [
         'document_type' => 'order',
         'customer_id' => $this->customer->id,
-        'prescription_id' => $other->id,
-        'armados' => [['lens' => [
+        'armados' => [['prescription_id' => $other->id, 'lens' => [
             'description' => 'Lente', 'quantity' => 1, 'treatment_ids' => [],
             'lens_type_id' => $combination->lens_type_id, 'lens_technology_id' => $combination->lens_technology_id,
             'lens_material_id' => $combination->lens_material_id,
         ], 'own_frame' => true]],
-    ])->assertStatus(422)->assertJsonValidationErrors('prescription_id');
+    ])->assertStatus(422)->assertJsonValidationErrors('armados.0.prescription_id');
 });
 
 it('lists expired prescriptions with a flag so the POS can warn', function () {

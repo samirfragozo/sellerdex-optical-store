@@ -28,8 +28,8 @@ class PrescriptionForm
                     ->searchable()
                     ->required()
                     // Once sold on, re-pointing the prescription to another
-                    // customer would desync it from the sale's own customer.
-                    ->disabled(fn (?Prescription $record): bool => $record?->sales()->exists() ?? false),
+                    // customer would desync it from the armado's patient.
+                    ->disabled(fn (?Prescription $record): bool => $record?->lensConfigs()->exists() ?? false),
                 DatePicker::make('exam_date')
                     ->label(__('app.fields.exam_date'))
                     ->required()

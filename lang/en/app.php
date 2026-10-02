@@ -78,6 +78,7 @@ return [
     ],
 
     'fields' => [
+        'patient' => 'Patient',
         'category_key' => 'Key (internal)',
         'requires_prescription' => 'Requires prescription',
         'generates_lab_order' => 'Generates lab order',
@@ -290,7 +291,7 @@ return [
         'cylinder_required_with_axis' => 'Enter the cylinder when there is an axis.',
         'prism_base_required_with_prism' => 'Enter the prism base when there is a prism.',
         'lens_requires_prescription' => 'Selling a prescription lens requires a prescription.',
-        'prescription_not_owned' => 'The prescription does not belong to the selected customer.',
+        'prescription_not_owned' => 'The prescription does not belong to this armado\'s patient.',
         'diopter' => [
             'invalid' => 'The value of :attribute is not valid.',
             'invalid_format' => 'The value of :attribute is not valid. Use only numbers, e.g. 1.25.',

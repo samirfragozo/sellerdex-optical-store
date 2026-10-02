@@ -5,7 +5,7 @@ use App\Filament\Resources\Prescriptions\Pages\CreatePrescription;
 use App\Filament\Resources\Prescriptions\Pages\EditPrescription;
 use App\Models\Customer;
 use App\Models\Prescription;
-use App\Models\Sale;
+use App\Models\SaleItemLensConfig;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -166,7 +166,7 @@ it('renders translated labels on the prescription form and list', function () {
 it('disables the customer field once the prescription has a sale', function () {
     $this->actingAs(User::factory()->admin()->create());
     $prescription = Prescription::factory()->create();
-    Sale::factory()->create(['customer_id' => $prescription->customer_id, 'prescription_id' => $prescription->id]);
+    SaleItemLensConfig::factory()->create(['prescription_id' => $prescription->id, 'patient_id' => $prescription->customer_id]);
 
     Livewire::test(EditPrescription::class, ['record' => $prescription->getRouteKey()])
         ->assertFormFieldIsDisabled('customer_id');

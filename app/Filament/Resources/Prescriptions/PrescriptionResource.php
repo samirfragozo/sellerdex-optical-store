@@ -5,7 +5,6 @@ namespace App\Filament\Resources\Prescriptions;
 use App\Filament\Resources\Prescriptions\Pages\CreatePrescription;
 use App\Filament\Resources\Prescriptions\Pages\EditPrescription;
 use App\Filament\Resources\Prescriptions\Pages\ListPrescriptions;
-use App\Filament\Resources\Prescriptions\RelationManagers\SalesRelationManager;
 use App\Filament\Resources\Prescriptions\Schemas\PrescriptionForm;
 use App\Filament\Resources\Prescriptions\Tables\PrescriptionsTable;
 use App\Filament\Resources\Resource;
@@ -36,7 +35,6 @@ class PrescriptionResource extends Resource
     public static function getRelations(): array
     {
         return [
-            SalesRelationManager::class,
         ];
     }
 

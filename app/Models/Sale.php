@@ -15,10 +15,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
 
-#[Fillable(['company_id', 'number', 'customer_id', 'seller_id', 'prescription_id', 'document_type', 'status', 'subtotal', 'discount', 'discount_percent', 'surcharge_percent', 'tax_amount', 'total', 'is_delivered', 'delivered_at', 'sold_at', 'notes', 'created_by'])]
+#[Fillable(['company_id', 'number', 'customer_id', 'seller_id', 'document_type', 'status', 'subtotal', 'discount', 'discount_percent', 'surcharge_percent', 'tax_amount', 'total', 'is_delivered', 'delivered_at', 'sold_at', 'notes', 'created_by'])]
 class Sale extends Model
 {
     /** @use HasFactory<SaleFactory> */
@@ -221,9 +222,10 @@ class Sale extends Model
         return $this->belongsTo(User::class, 'seller_id');
     }
 
-    public function prescription(): BelongsTo
+    /** The lens configuration of every armado in this sale. */
+    public function lensConfigs(): HasManyThrough
     {
-        return $this->belongsTo(Prescription::class);
+        return $this->hasManyThrough(SaleItemLensConfig::class, SaleItem::class);
     }
 
     public function items(): HasMany

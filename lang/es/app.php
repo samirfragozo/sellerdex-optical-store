@@ -78,6 +78,7 @@ return [
     ],
 
     'fields' => [
+        'patient' => 'Paciente',
         'name' => 'Nombre',
         'kind' => 'Tipo',
         'first_name' => 'Nombres',
@@ -290,7 +291,7 @@ return [
         'cylinder_required_with_axis' => 'Indica el cilindro cuando hay eje.',
         'prism_base_required_with_prism' => 'Indica la base del prisma cuando hay prisma.',
         'lens_requires_prescription' => 'La venta de lentes formulados requiere una prescripción.',
-        'prescription_not_owned' => 'La prescripción no pertenece al cliente seleccionado.',
+        'prescription_not_owned' => 'La fórmula no pertenece al paciente de este armado.',
         'diopter' => [
             'invalid' => 'El valor de :attribute no es válido.',
             'invalid_format' => 'El valor de :attribute no es válido. Usa solo números, por ejemplo 1.25.',

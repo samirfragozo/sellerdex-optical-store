@@ -1,7 +1,7 @@
 <?php
 
 use App\Models\Prescription;
-use App\Models\Sale;
+use App\Models\SaleItemLensConfig;
 use App\Models\User;
 use App\Support\PermissionsTeam;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -15,10 +15,10 @@ it('guarda filtros como array', function () {
         ->and($rx->filters)->toContain('Antirreflejo Blue');
 });
 
-it('lists the sales issued with it', function () {
+it('lists the armados sold on it', function () {
     $rx = Prescription::factory()->create();
-    $sale = Sale::factory()->create(['prescription_id' => $rx->id]);
-    expect($rx->sales->first()->is($sale))->toBeTrue();
+    $config = SaleItemLensConfig::factory()->create(['prescription_id' => $rx->id, 'patient_id' => $rx->customer_id]);
+    expect($rx->lensConfigs->first()->is($config))->toBeTrue();
 });
 
 it('el vendedor crea/edita prescripciones pero no las elimina', function () {

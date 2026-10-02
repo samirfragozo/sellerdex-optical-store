@@ -36,8 +36,8 @@ it('registra una venta de lente completa desde el POS y genera su orden de labor
     $response = $this->postJson(route('pos.store'), [
         'document_type' => 'order',
         'customer_id' => $customer->id,
-        'prescription_id' => $prescription->id,
         'armados' => [[
+            'prescription_id' => $prescription->id,
             'lens' => [
                 'description' => 'Lente formulado',
                 'quantity' => 1,

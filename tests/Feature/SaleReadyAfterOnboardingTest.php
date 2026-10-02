@@ -69,8 +69,8 @@ it('lets a brand-new shop register, finish the onboarding and sell prescription 
     $this->postJson(route('pos.store'), [
         'document_type' => 'order',
         'customer_id' => $customer->id,
-        'prescription_id' => $prescription->id,
         'armados' => [[
+            'prescription_id' => $prescription->id,
             'lens' => [
                 'description' => 'Lente formulado', 'quantity' => 1,
                 'lens_type_id' => $combination->lens_type_id,
@@ -125,8 +125,8 @@ it('lets a new shop onboard with its own counter products and combo and sell an 
     $this->postJson(route('pos.store'), [
         'document_type' => 'order',
         'customer_id' => $customer->id,
-        'prescription_id' => $prescription->id,
         'armados' => [[
+            'prescription_id' => $prescription->id,
             'lens' => [
                 'description' => 'Lente', 'quantity' => 1, 'treatment_ids' => [],
                 'lens_type_id' => $combination->lens_type_id,
@@ -162,8 +162,8 @@ it('lets a new shop record an external prescription with a photo and sell glasse
     $this->postJson(route('pos.store'), [
         'document_type' => 'order',
         'customer_id' => $customer->id,
-        'prescription_id' => $rxId,
         'armados' => [[
+            'prescription_id' => $rxId,
             'lens' => [
                 'description' => 'Lente', 'quantity' => 1, 'treatment_ids' => [],
                 'lens_type_id' => $combination->lens_type_id,
@@ -176,6 +176,33 @@ it('lets a new shop record an external prescription with a photo and sell glasse
     ])->assertOk();
 
     $sale = Sale::latest('id')->first();
-    expect($sale->prescription_id)->toBe($rxId)
+    expect($sale->lensConfigs()->sole()->prescription_id)->toBe($rxId)
         ->and(Prescription::find($rxId)->attachment)->not->toBeNull();
+});
+
+it('lets a new shop sell two armados for two patients on one sale', function () {
+    $admin = registerAndOnboard('m5@optica.test', VatRegime::NotResponsible);
+    openCashRegisterSession($admin);
+    $payer = Customer::factory()->create();
+    $son = Customer::factory()->create();
+    $combination = LensCombination::firstOrFail();
+    $lens = [
+        'description' => 'Lente', 'quantity' => 1, 'treatment_ids' => [],
+        'lens_type_id' => $combination->lens_type_id,
+        'lens_technology_id' => $combination->lens_technology_id,
+        'lens_material_id' => $combination->lens_material_id,
+    ];
+
+    $this->postJson(route('pos.store'), [
+        'document_type' => 'order',
+        'customer_id' => $payer->id,
+        'armados' => [
+            ['patient_id' => $payer->id, 'prescription_id' => Prescription::factory()->create(['customer_id' => $payer->id])->id, 'lens' => $lens, 'own_frame' => true],
+            ['patient_id' => $son->id, 'prescription_id' => Prescription::factory()->create(['customer_id' => $son->id])->id, 'lens' => $lens, 'own_frame' => true],
+        ],
+        'payments' => [],
+    ])->assertOk();
+
+    expect(Sale::latest('id')->first()->lensConfigs()->pluck('patient_id')->sort()->values()->all())
+        ->toBe(collect([$payer->id, $son->id])->sort()->values()->all());
 });

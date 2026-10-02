@@ -149,9 +149,9 @@ class Prescription extends Model
         return $this->belongsTo(Customer::class);
     }
 
-    /** Sales (documents) issued using this prescription. */
-    public function sales(): HasMany
+    /** Armados sold on this prescription. */
+    public function lensConfigs(): HasMany
     {
-        return $this->hasMany(Sale::class);
+        return $this->hasMany(SaleItemLensConfig::class);
     }
 }
