@@ -1,5 +1,6 @@
 <?php
 
+use App\Actions\CloseCashRegisterSession;
 use App\Models\CashMovement;
 use App\Models\CashRegisterSession;
 use App\Models\Payment;
@@ -71,11 +72,14 @@ it('blocks a cashier whose session is open since a previous day until it is clos
     visit('/pos')
         ->assertSee('Tu caja sigue abierta desde un día anterior')
         ->click('button:has-text("Cerrar caja ahora")')
-        ->fill('#cash_total', '0')
-        ->fill('#cash_left', '0')
+        ->fill('#cash_total', '30000')
+        ->fill('#cash_left', '20000')
+        ->fill('#close_notes', 'Sobró un billete')
         ->click('button:has-text("Cerrar caja")')
         ->click('button:has-text("Listo")')
+        ->wait(1)
         ->assertSee('Abrir caja')
+        ->assertValue('#opening_cash', '20000')
         ->assertNoJavaScriptErrors();
 });
 
@@ -91,8 +95,8 @@ it('freezes a blind count on the first submission and requires the note before f
     $page = visit('/pos')
         ->click('[data-test="user-menu-trigger"]')
         ->click('text=Cerrar caja')
-        ->assertDontSee('Esperado')
         ->fill('#cash_total', '4000')
+        ->assertDontSee('Esperado')
         ->fill('#cash_left', '0')
         ->click('button:has-text("Cerrar caja")')
         ->assertSee('Hay una diferencia: explica el motivo para terminar.')
@@ -105,4 +109,26 @@ it('freezes a blind count on the first submission and requires the note before f
 
     expect($session->fresh()->closed_at)->not->toBeNull()
         ->and($session->fresh()->notes)->toBe('Faltó un billete');
+});
+
+it('keeps asking a cashier for the note still owed from a blind close before opening a new session', function () {
+    test()->seed(RolesAndPermissionsSeeder::class);
+    $cashier = User::factory()->seller()->create();
+    $cashier->company->update(['blind_cash_count' => true]);
+    cashMethodFor($cashier);
+    $session = CashRegisterSession::factory()->for($cashier)->create(['company_id' => $cashier->company_id, 'opened_at' => now(), 'opening_cash' => 10_000]);
+    app(CloseCashRegisterSession::class)->handle($session, [cashMethodFor($cashier)->id => 4_000], 0, null, $cashier);
+
+    $this->actingAs($cashier);
+
+    visit('/pos')
+        ->assertSee('Explica la diferencia de tu último cierre')
+        ->assertDontSee('Abrir caja')
+        ->fill('#close_note', 'Faltó un billete')
+        ->click('button:has-text("Guardar nota")')
+        ->wait(1)
+        ->assertSee('Abrir caja')
+        ->assertNoJavaScriptErrors();
+
+    expect($session->fresh()->notes)->toBe('Faltó un billete');
 });

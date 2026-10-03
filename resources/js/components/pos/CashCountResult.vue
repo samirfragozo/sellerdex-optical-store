@@ -1,14 +1,7 @@
 <script setup lang="ts">
 import { CircleCheck, TriangleAlert } from '@lucide/vue';
 import { useTranslations } from '@/composables/useTranslations';
-
-export interface CashCountLine {
-    payment_method_id: number;
-    name: string;
-    expected: number;
-    counted: number;
-    difference: number;
-}
+import type { CashCountLine } from '@/types/global';
 
 defineProps<{ counts: CashCountLine[] }>();
 
@@ -84,7 +77,7 @@ function label(difference: number): string {
                                 class="size-4"
                                 aria-hidden="true"
                             />
-                            {{ formatCOP(line.difference) }}
+                            {{ formatCOP(Math.abs(line.difference)) }}
                             <span class="text-xs font-normal">{{
                                 label(line.difference)
                             }}</span>

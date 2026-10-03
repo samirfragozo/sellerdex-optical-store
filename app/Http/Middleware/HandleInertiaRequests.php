@@ -58,6 +58,16 @@ class HandleInertiaRequests extends Middleware
                     'is_stale' => $session->isStale(),
                 ];
             },
+            // A blind close freezes the counts first; the cashier still owes the note before opening again.
+            'pendingCashNote' => function () use ($request): ?array {
+                $last = $request->user() === null ? null : CashRegisterSession::query()
+                    ->where('user_id', $request->user()->id)
+                    ->whereNotNull('closed_at')
+                    ->latest('closed_at')
+                    ->first();
+
+                return $last?->needsNote() ? ['id' => $last->id, 'counts' => $last->countsSummary()] : null;
+            },
             'suggestedOpeningCash' => fn (): int => $request->user()?->company === null ? 0 : CashRegisterSession::suggestedOpeningCash($request->user()->company),
             'readiness' => fn (): array => $request->user()?->company_id === null
                 ? []

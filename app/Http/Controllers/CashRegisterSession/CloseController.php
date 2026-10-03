@@ -5,7 +5,6 @@ namespace App\Http\Controllers\CashRegisterSession;
 use App\Actions\CloseCashRegisterSession;
 use App\Http\Controllers\Controller;
 use App\Models\CashRegisterSession;
-use App\Models\CashRegisterSessionCount;
 use App\Models\PaymentMethod;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -58,13 +57,7 @@ class CloseController extends Controller
         return response()->json([
             ...$session->toSummary(),
             'requires_note' => $session->needsNote(),
-            'counts' => $session->counts->map(fn (CashRegisterSessionCount $count): array => [
-                'payment_method_id' => $count->payment_method_id,
-                'name' => $count->paymentMethod?->name,
-                'expected' => $count->expected,
-                'counted' => $count->counted,
-                'difference' => $count->difference,
-            ])->sortBy('payment_method_id')->values(),
+            'counts' => $session->countsSummary(),
         ]);
     }
 }

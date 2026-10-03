@@ -211,3 +211,19 @@ it('throws on a second direct close of the same session', function () {
         expect($exception->errors())->toHaveKey('session');
     }
 });
+
+it('shares the note still owed after a blind close until the cashier saves it', function () {
+    $this->cashier->company->update(['blind_cash_count' => true]);
+
+    $this->get(route('pos.index'))->assertInertia(fn ($page) => $page->where('pendingCashNote', null));
+
+    closeSessionRequest([$this->cash->id => 79_000, $this->card->id => 80_000], 0)->assertOk();
+
+    $this->get(route('pos.index'))->assertInertia(fn ($page) => $page
+        ->where('pendingCashNote.id', $this->session->id)
+        ->where('pendingCashNote.counts.0.counted', 79_000));
+
+    $this->postJson(route('pos.cash-sessions.note', $this->session), ['notes' => 'Faltó un billete'])->assertOk();
+
+    $this->get(route('pos.index'))->assertInertia(fn ($page) => $page->where('pendingCashNote', null));
+});

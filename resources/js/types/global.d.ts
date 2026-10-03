@@ -35,6 +35,14 @@ export interface CashRegisterSession {
     is_stale: boolean;
 }
 
+export interface CashCountLine {
+    payment_method_id: number;
+    name: string;
+    expected: number;
+    counted: number;
+    difference: number;
+}
+
 export interface ReadinessIssue {
     key: string;
     severity: 'blocking' | 'warning';
@@ -53,6 +61,7 @@ declare module '@inertiajs/core' {
             sidebarOpen: boolean;
             cashRegisterSession: CashRegisterSession | null;
             suggestedOpeningCash: number;
+            pendingCashNote: { id: number; counts: CashCountLine[] } | null;
             readiness: ReadinessIssue[];
             flash: {
                 success: string | null;

@@ -7,6 +7,7 @@ import CartItemRow from '@/components/pos/CartItemRow.vue';
 import CartSummary from '@/components/pos/CartSummary.vue';
 import CashSessionGateModal from '@/components/pos/CashSessionGateModal.vue';
 import CheckoutModal from '@/components/pos/CheckoutModal.vue';
+import PendingCashNoteDialog from '@/components/pos/PendingCashNoteDialog.vue';
 import ProductCatalog from '@/components/pos/ProductCatalog.vue';
 import ReadinessBanner from '@/components/pos/ReadinessBanner.vue';
 import ReadinessBlockingDialog from '@/components/pos/ReadinessBlockingDialog.vue';
@@ -73,6 +74,7 @@ const { session, onSessionOpened, isStale, closeModalOpen, openCloseModal } =
 
 // --- Sale readiness (banner for warnings, modals for blockers) ---
 const page = usePage();
+const pendingNote = computed(() => page.props.pendingCashNote);
 const readiness = computed<ReadinessIssue[]>(() => page.props.readiness ?? []);
 const globalBlockers = computed(() =>
     readiness.value.filter(
@@ -336,7 +338,16 @@ async function confirmCheckout(): Promise<void> {
 <template>
     <Head :title="trans('app.pos.title')" />
 
-    <CashSessionGateModal :open="session === null" @opened="onSessionOpened" />
+    <PendingCashNoteDialog
+        v-if="pendingNote"
+        :open="session === null && !closeModalOpen"
+        :session-id="pendingNote.id"
+        :counts="pendingNote.counts"
+    />
+    <CashSessionGateModal
+        :open="session === null && !pendingNote"
+        @opened="onSessionOpened"
+    />
 
     <Dialog :open="isStale && !closeModalOpen">
         <DialogContent

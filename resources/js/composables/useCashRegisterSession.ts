@@ -1,4 +1,4 @@
-import { usePage } from '@inertiajs/vue3';
+import { router, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import type { CashRegisterSession } from '@/types/global';
 
@@ -24,6 +24,8 @@ export function useCashRegisterSession() {
     function onSessionClosed(): void {
         session.value = null;
         closeModalOpen.value = false;
+        // The last close decides the next suggested float and any note still owed.
+        router.reload({ only: ['suggestedOpeningCash', 'pendingCashNote'] });
     }
 
     function openCloseModal(): void {

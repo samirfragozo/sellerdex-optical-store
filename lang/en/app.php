@@ -606,6 +606,8 @@ return [
             'close_now' => 'Close it now',
             'note_required_notice' => 'There is a difference: explain the reason to finish.',
             'save_note' => 'Save note',
+            'count_incomplete' => 'Count every payment method to close the register.',
+            'pending_note_title' => 'Explain the difference in your last close',
             'difference_over' => 'Over',
             'difference_short' => 'Short',
             'difference_match' => 'Balanced',

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { usePage } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import InputError from '@/components/InputError.vue';
 import { Button } from '@/components/ui/button';
 import {
@@ -19,7 +19,7 @@ import type { CashRegisterSession } from '@/types/global';
 
 const { trans } = useTranslations();
 
-defineProps<{
+const props = defineProps<{
     open: boolean;
 }>();
 
@@ -27,8 +27,19 @@ const emit = defineEmits<{
     opened: [CashRegisterSession];
 }>();
 
-const suggested = usePage().props.suggestedOpeningCash ?? 0;
-const openingCash = ref(suggested);
+const page = usePage();
+const suggested = computed(() => page.props.suggestedOpeningCash ?? 0);
+const openingCash = ref(suggested.value);
+
+// Each time the gate shows (and when a fresh suggestion lands) start from the last close's float.
+watch(
+    () => [props.open, suggested.value] as const,
+    ([open, value]) => {
+        if (open) {
+            openingCash.value = value;
+        }
+    },
+);
 const error = ref<string | null>(null);
 const submitting = ref(false);
 

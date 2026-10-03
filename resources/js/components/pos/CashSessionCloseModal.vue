@@ -8,8 +8,8 @@ export const COP_DENOMINATIONS = [
 import { usePage } from '@inertiajs/vue3';
 import { computed, ref, watch } from 'vue';
 import InputError from '@/components/InputError.vue';
-import type { CashCountLine } from '@/components/pos/CashCountResult.vue';
 import CashCountResult from '@/components/pos/CashCountResult.vue';
+import CashNoteForm from '@/components/pos/CashNoteForm.vue';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -23,7 +23,8 @@ import { Label } from '@/components/ui/label';
 import { useCashRegisterSession } from '@/composables/useCashRegisterSession';
 import { useTranslations } from '@/composables/useTranslations';
 import { csrfFetch } from '@/lib/csrfFetch';
-import { close, note, preview } from '@/routes/pos/cash-sessions';
+import { close, preview } from '@/routes/pos/cash-sessions';
+import type { CashCountLine } from '@/types/global';
 
 interface PreviewMethod {
     payment_method_id: number;
@@ -69,12 +70,12 @@ function firstErrors(body: {
 }
 
 const methods = ref<PreviewMethod[]>([]);
-const blind = ref(false);
 const byDenomination = ref(false);
 const cashTotal = ref<number | ''>('');
 const quantities = ref<Record<number, number | ''>>({});
 const otherAmounts = ref<Record<number, number | ''>>({});
 const cashLeft = ref<number | ''>(0);
+const cashLeftEdited = ref(false);
 const notes = ref('');
 const errors = ref<Record<string, string>>({});
 const submitting = ref(false);
@@ -92,6 +93,15 @@ const countedCash = computed(() =>
           )
         : toAmount(cashTotal.value),
 );
+const suggestedFloat = computed(() => page.props.suggestedOpeningCash ?? 0);
+const countComplete = computed(
+    () =>
+        methods.value.length > 0 &&
+        (byDenomination.value || cashTotal.value !== '') &&
+        otherMethods.value.every(
+            (m) => (otherAmounts.value[m.payment_method_id] ?? '') !== '',
+        ),
+);
 const mustSaveNote = computed(
     () => result.value?.requires_note === true && !noteSaved.value,
 );
@@ -101,12 +111,21 @@ function reset(): void {
     cashTotal.value = '';
     quantities.value = {};
     otherAmounts.value = {};
-    cashLeft.value = page.props.suggestedOpeningCash ?? 0;
+    cashLeft.value = 0;
+    cashLeftEdited.value = false;
+    methods.value = [];
     notes.value = '';
     errors.value = {};
     result.value = null;
     noteSaved.value = false;
 }
+
+// Until the cashier edits it, the float to leave follows the count (capped at the suggestion).
+watch(countedCash, (counted) => {
+    if (!cashLeftEdited.value) {
+        cashLeft.value = Math.min(counted, suggestedFloat.value);
+    }
+});
 
 watch(closeModalOpen, async (open) => {
     if (!open || session.value === null) {
@@ -123,11 +142,9 @@ watch(closeModalOpen, async (open) => {
         }
 
         const body = (await response.json()) as {
-            blind: boolean;
             methods: PreviewMethod[];
         };
         methods.value = body.methods;
-        blind.value = body.blind;
     } catch {
         errors.value = { general: trans('app.pos.checkout.unexpected_error') };
     }
@@ -197,19 +214,6 @@ async function submitCount(): Promise<void> {
 
     if (response !== null) {
         result.value = (await response.json()) as CloseResult;
-    }
-}
-
-async function saveNote(): Promise<void> {
-    if (session.value === null) {
-        return;
-    }
-
-    if (
-        (await post(note.url(session.value.id), { notes: notes.value })) !==
-        null
-    ) {
-        noteSaved.value = true;
     }
 }
 </script>
@@ -283,26 +287,33 @@ async function saveNote(): Promise<void> {
                             v-model.number="cashTotal"
                             type="number"
                             min="0"
+                            step="1"
+                            required
                             class="mt-1 w-full text-right"
                         />
                     </div>
                     <div v-else class="grid grid-cols-2 gap-2">
-                        <Input
-                            v-for="value in COP_DENOMINATIONS"
-                            :key="value"
-                            v-model.number="quantities[value]"
-                            type="number"
-                            min="0"
-                            class="text-right"
-                            :placeholder="formatCOP(value)"
-                            :aria-label="
-                                trans(
-                                    value >= 2000
-                                        ? 'app.pos.cash_session.bills_of'
-                                        : 'app.pos.cash_session.coins_of',
-                                ).replace(':amount', formatCOP(value))
-                            "
-                        />
+                        <div v-for="value in COP_DENOMINATIONS" :key="value">
+                            <Label :for="`denomination_${value}`">{{
+                                formatCOP(value)
+                            }}</Label>
+                            <Input
+                                :id="`denomination_${value}`"
+                                v-model.number="quantities[value]"
+                                type="number"
+                                min="0"
+                                step="1"
+                                placeholder="0"
+                                class="mt-1 text-right"
+                                :aria-label="
+                                    trans(
+                                        value >= 2000
+                                            ? 'app.pos.cash_session.bills_of'
+                                            : 'app.pos.cash_session.coins_of',
+                                    ).replace(':amount', formatCOP(value))
+                                "
+                            />
+                        </div>
                         <p class="col-span-2 text-right text-sm font-medium">
                             {{ trans('app.pos.cash_session.counted') }}:
                             {{ formatCOP(countedCash) }}
@@ -329,6 +340,8 @@ async function saveNote(): Promise<void> {
                         v-model.number="otherAmounts[method.payment_method_id]"
                         type="number"
                         min="0"
+                        step="1"
+                        required
                         class="mt-1 w-full text-right"
                     />
                 </div>
@@ -342,6 +355,8 @@ async function saveNote(): Promise<void> {
                         v-model.number="cashLeft"
                         type="number"
                         min="0"
+                        step="1"
+                        @input="cashLeftEdited = true"
                         class="mt-1 w-full text-right"
                         :aria-describedby="
                             errors.cash_left
@@ -379,40 +394,29 @@ async function saveNote(): Promise<void> {
                 <InputError :message="errors.general" />
 
                 <DialogFooter>
-                    <Button type="submit" :disabled="submitting">
+                    <Button
+                        type="submit"
+                        :disabled="submitting || !countComplete"
+                    >
                         {{ trans('app.pos.cash_session.close_action') }}
                     </Button>
                 </DialogFooter>
+                <p
+                    v-if="methods.length > 0 && !countComplete"
+                    class="text-right text-xs text-muted-foreground"
+                >
+                    {{ trans('app.pos.cash_session.count_incomplete') }}
+                </p>
             </form>
 
             <div v-else class="flex flex-col gap-4">
                 <CashCountResult :counts="result.counts" />
 
-                <form
-                    v-if="result.requires_note && !noteSaved"
-                    class="flex flex-col gap-2"
-                    @submit.prevent="saveNote"
-                >
-                    <Label for="close_note">{{
-                        trans('app.pos.cash_session.note_required_notice')
-                    }}</Label>
-                    <textarea
-                        id="close_note"
-                        v-model="notes"
-                        rows="2"
-                        required
-                        class="w-full resize-none rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring/50 dark:bg-input/30"
-                    ></textarea>
-                    <InputError :message="errors.notes ?? errors.general" />
-                    <Button
-                        type="submit"
-                        variant="secondary"
-                        class="self-end"
-                        :disabled="submitting"
-                    >
-                        {{ trans('app.pos.cash_session.save_note') }}
-                    </Button>
-                </form>
+                <CashNoteForm
+                    v-if="session && result.requires_note && !noteSaved"
+                    :session-id="session.id"
+                    @saved="noteSaved = true"
+                />
 
                 <DialogFooter>
                     <Button

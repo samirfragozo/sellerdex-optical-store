@@ -606,6 +606,8 @@ return [
             'close_now' => 'Cerrar caja ahora',
             'note_required_notice' => 'Hay una diferencia: explica el motivo para terminar.',
             'save_note' => 'Guardar nota',
+            'count_incomplete' => 'Cuenta todos los métodos de pago para cerrar la caja.',
+            'pending_note_title' => 'Explica la diferencia de tu último cierre',
             'difference_over' => 'Sobrante',
             'difference_short' => 'Faltante',
             'difference_match' => 'Cuadra',

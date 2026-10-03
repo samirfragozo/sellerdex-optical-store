@@ -169,6 +169,23 @@ class CashRegisterSession extends Model
         return $this->counts()->withoutGlobalScopes()->get()->contains(fn (CashRegisterSessionCount $count): bool => abs($count->difference) > $threshold);
     }
 
+    /**
+     * The per-method arqueo lines as the POS shows them.
+     *
+     * @return list<array{payment_method_id: int, name: string|null, expected: int, counted: int, difference: int}>
+     */
+    public function countsSummary(): array
+    {
+        return $this->counts()->with('paymentMethod')->orderBy('payment_method_id')->get()
+            ->map(fn (CashRegisterSessionCount $count): array => [
+                'payment_method_id' => $count->payment_method_id,
+                'name' => $count->paymentMethod?->name,
+                'expected' => $count->expected,
+                'counted' => $count->counted,
+                'difference' => $count->difference,
+            ])->all();
+    }
+
     /** One drawer per shop: tomorrow's float is what the last close left in it. */
     public static function suggestedOpeningCash(Company $company): int
     {
