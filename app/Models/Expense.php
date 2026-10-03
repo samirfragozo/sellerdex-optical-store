@@ -30,7 +30,7 @@ class Expense extends Model
             if ($expense->cash_register_session_id === null
                 && $expense->created_by !== null
                 && $expense->payment_method_id !== null
-                && PaymentMethod::whereKey($expense->payment_method_id)->where('is_default', true)->exists()) {
+                && PaymentMethod::withoutGlobalScopes()->whereKey($expense->payment_method_id)->where('is_default', true)->exists()) {
                 $expense->cash_register_session_id = CashRegisterSession::openFor(User::find($expense->created_by))?->id;
             }
         });

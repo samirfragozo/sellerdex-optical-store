@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\CashMovementType;
+use App\Scopes\CompanyScope;
 use App\Traits\BelongsToCompany;
 use Database\Factories\CashRegisterSessionFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -109,9 +110,11 @@ class CashRegisterSession extends Model
      */
     public function expectedByMethod(): array
     {
-        $cashMethodId = PaymentMethod::where('is_default', true)->value('id');
+        $cashMethodId = $this->cashMethodId();
 
+        // The session's own rows, whoever is logged in: skip CompanyScope, keep soft deletes.
         $byMethod = $this->payments()
+            ->withoutGlobalScope(CompanyScope::class)
             ->selectRaw('payment_method_id, sum(amount) as total')
             ->groupBy('payment_method_id')
             ->pluck('total', 'payment_method_id')
@@ -119,12 +122,12 @@ class CashRegisterSession extends Model
             ->all();
 
         if ($cashMethodId !== null) {
-            $movements = $this->movements()->selectRaw('type, sum(amount) as total')->groupBy('type')->pluck('total', 'type');
+            $movements = $this->movements()->withoutGlobalScope(CompanyScope::class)->selectRaw('type, sum(amount) as total')->groupBy('type')->pluck('total', 'type');
             $byMethod[$cashMethodId] = $this->opening_cash
                 + ($byMethod[$cashMethodId] ?? 0)
                 + (int) ($movements[CashMovementType::Income->value] ?? 0)
                 - (int) ($movements[CashMovementType::Withdrawal->value] ?? 0)
-                - (int) $this->expenses()->where('payment_method_id', $cashMethodId)->sum('amount');
+                - (int) $this->expenses()->withoutGlobalScope(CompanyScope::class)->where('payment_method_id', $cashMethodId)->sum('amount');
         }
 
         ksort($byMethod);
@@ -134,9 +137,18 @@ class CashRegisterSession extends Model
 
     public function expectedCash(): int
     {
-        $cashMethodId = PaymentMethod::where('is_default', true)->value('id');
+        $cashMethodId = $this->cashMethodId();
 
-        return $this->expectedByMethod()[$cashMethodId] ?? $this->opening_cash;
+        return $cashMethodId === null ? $this->opening_cash : $this->expectedByMethod()[$cashMethodId];
+    }
+
+    /** The shop's cash method, independent of who is logged in. */
+    public function cashMethodId(): ?int
+    {
+        return PaymentMethod::withoutGlobalScopes()
+            ->where('company_id', $this->company_id)
+            ->where('is_default', true)
+            ->value('id');
     }
 
     /** Still open although its day is over — its cashier must close it before selling again. */
@@ -146,9 +158,9 @@ class CashRegisterSession extends Model
     }
 
     /** One drawer per shop: tomorrow's float is what the last close left in it. */
-    public static function suggestedOpeningCash(): int
+    public static function suggestedOpeningCash(Company $company): int
     {
-        return (int) static::query()->whereNotNull('closed_at')->latest('closed_at')->value('cash_left');
+        return (int) static::withoutGlobalScopes()->where('company_id', $company->id)->whereNotNull('closed_at')->latest('closed_at')->value('cash_left');
     }
 
     /**

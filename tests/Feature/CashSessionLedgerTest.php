@@ -51,11 +51,48 @@ it('expects per method from the session own payments, movements and cash expense
 });
 
 it('suggests the float from the cash left at the company last close', function () {
-    expect(CashRegisterSession::suggestedOpeningCash())->toBe(0);
+    expect(CashRegisterSession::suggestedOpeningCash($this->cashier->company))->toBe(0);
 
     $this->session->update(['closed_at' => now(), 'closed_cash' => 120_000, 'expected_cash' => 120_000, 'cash_left' => 40_000]);
 
-    expect(CashRegisterSession::suggestedOpeningCash())->toBe(40_000);
+    expect(CashRegisterSession::suggestedOpeningCash($this->cashier->company))->toBe(40_000);
+});
+
+it('ignores other companies when suggesting the float and picks the latest close', function () {
+    $this->session->update(['closed_at' => now()->subHours(3), 'closed_cash' => 1, 'expected_cash' => 1, 'cash_left' => 10_000]);
+    $later = openCashRegisterSession($this->cashier, 0);
+    $later->update(['closed_at' => now()->subHour(), 'closed_cash' => 1, 'expected_cash' => 1, 'cash_left' => 25_000]);
+    openCashRegisterSession($this->cashier, 0); // still open: not a close
+
+    $otherUser = User::factory()->seller()->create();
+    $otherSession = openCashRegisterSession($otherUser, 0);
+    $otherSession->update(['closed_at' => now(), 'closed_cash' => 1, 'expected_cash' => 1, 'cash_left' => 77_000]);
+
+    expect(CashRegisterSession::suggestedOpeningCash($this->cashier->company))->toBe(25_000)
+        ->and(CashRegisterSession::suggestedOpeningCash($otherUser->company))->toBe(77_000);
+});
+
+it('computes expected amounts for its own shop whoever is logged in', function () {
+    Payment::factory()->create(['sale_id' => Sale::factory(), 'payment_method_id' => $this->cash->id, 'amount' => 30_000, 'received_by' => $this->cashier->id]);
+    Payment::factory()->create(['sale_id' => Sale::factory(), 'payment_method_id' => $this->card->id, 'amount' => 80_000, 'received_by' => $this->cashier->id]);
+    Expense::factory()->create(['payment_method_id' => $this->cash->id, 'amount' => 5_000, 'created_by' => $this->cashier->id]);
+    CashMovement::factory()->create(['cash_register_session_id' => $this->session->id, 'type' => CashMovementType::Income, 'amount' => 10_000]);
+
+    $expected = [$this->cash->id => 85_000, $this->card->id => 80_000];
+    ksort($expected);
+    expect($this->session->fresh()->expectedByMethod())->toBe($expected);
+
+    $otherUser = User::factory()->seller()->create();
+    PaymentMethod::withoutGlobalScopes()->where('company_id', $otherUser->company_id)->where('is_default', true)->exists()
+        || PaymentMethod::factory()->create(['is_default' => true, 'company_id' => $otherUser->company_id]);
+    $session = $this->session->fresh();
+
+    $this->actingAs($otherUser);
+    expect($session->expectedByMethod())->toBe($expected)
+        ->and($session->expectedCash())->toBe(85_000);
+
+    $this->actingAs(User::factory()->superadmin()->create());
+    expect($session->expectedByMethod())->toBe($expected);
 });
 
 it('is stale once a later day starts with it still open', function () {

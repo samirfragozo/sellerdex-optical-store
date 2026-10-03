@@ -3,14 +3,17 @@
 namespace App\Models;
 
 use App\Traits\BelongsToCompany;
+use Database\Factories\CashRegisterSessionCountFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 #[Fillable(['company_id', 'cash_register_session_id', 'payment_method_id', 'expected', 'counted', 'difference'])]
 class CashRegisterSessionCount extends Model
 {
-    use BelongsToCompany;
+    /** @use HasFactory<CashRegisterSessionCountFactory> */
+    use BelongsToCompany, HasFactory;
 
     protected function casts(): array
     {
