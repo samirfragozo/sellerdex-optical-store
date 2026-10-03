@@ -453,6 +453,8 @@ return [
 
         'frame_form' => [
             'own_frame_toggle' => 'Customer brings their own frame',
+            'measurements' => 'Measurements for the lab',
+            'measurements_hint' => 'Optional now; you can complete them on the lab order before sending it.',
             'select_frame' => 'Select the frame',
         ],
 

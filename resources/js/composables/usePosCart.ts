@@ -53,6 +53,16 @@ export interface ArmadoSlot {
     selected: boolean;
 }
 
+/** Measurements the lab needs, taken with the frame on the patient (all optional at sale time). */
+export interface ArmadoMeasurements {
+    od_height: number | null;
+    os_height: number | null;
+    frame_a: number | null;
+    frame_b: number | null;
+    frame_dbl: number | null;
+    frame_type: 'full_rim' | 'semi_rimless' | 'rimless' | null;
+}
+
 export interface Armado {
     id: number;
     /** The customer the armado is for; the sale's customer only pays. */
@@ -63,6 +73,9 @@ export interface Armado {
     lens: ArmadoLensLine | null;
     frame: ArmadoLine | null;
     own_frame: boolean;
+    measurements: ArmadoMeasurements;
+    own_frame_description: string;
+    own_frame_condition: string;
     slots: ArmadoSlot[];
 }
 
@@ -251,6 +264,13 @@ export function usePosCart(kit: KitProp) {
                     },
                     frame: a.own_frame ? null : a.frame,
                     own_frame: a.own_frame,
+                    measurements: a.measurements,
+                    own_frame_description: a.own_frame
+                        ? a.own_frame_description
+                        : null,
+                    own_frame_condition: a.own_frame
+                        ? a.own_frame_condition
+                        : null,
                     slots: a.slots,
                 })),
             products: products.value.filter((p) => p.description !== ''),

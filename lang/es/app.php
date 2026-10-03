@@ -453,6 +453,8 @@ return [
 
         'frame_form' => [
             'own_frame_toggle' => 'El cliente trae su montura',
+            'measurements' => 'Medidas para el laboratorio',
+            'measurements_hint' => 'Opcionales ahora; puedes completarlas en la orden de laboratorio antes de enviarla.',
             'select_frame' => 'Selecciona la montura',
         ],
 

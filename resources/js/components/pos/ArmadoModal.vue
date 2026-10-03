@@ -59,6 +59,16 @@ const emptyArmado = (): Armado => ({
     lens: null,
     frame: null,
     own_frame: false,
+    measurements: {
+        od_height: null,
+        os_height: null,
+        frame_a: null,
+        frame_b: null,
+        frame_dbl: null,
+        frame_type: null,
+    },
+    own_frame_description: '',
+    own_frame_condition: '',
     // A slot whose default product is inactive or gone is left out, as the
     // server skips it too.
     slots: props.kit.armado_slots.flatMap((slot) => {
@@ -270,6 +280,9 @@ function save(): void {
                 v-else-if="step === 'frame'"
                 v-model:frame="draft.frame"
                 v-model:own-frame="draft.own_frame"
+                v-model:own-frame-description="draft.own_frame_description"
+                v-model:own-frame-condition="draft.own_frame_condition"
+                v-model:measurements="draft.measurements"
                 :frame-products="frameProducts"
             />
 

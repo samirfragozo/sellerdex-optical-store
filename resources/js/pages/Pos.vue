@@ -203,6 +203,9 @@ function onArmadoSave(armado: Armado): void {
         lens: armado.lens,
         frame: armado.frame,
         own_frame: armado.own_frame,
+        measurements: armado.measurements,
+        own_frame_description: armado.own_frame_description,
+        own_frame_condition: armado.own_frame_condition,
         slots: armado.slots,
     };
 
