@@ -150,6 +150,18 @@ class Sale extends Model
             ->sum('total');
     }
 
+    /** The share of a line's value actually charged after the sale discount (the stored discount, not the editable percent). */
+    public function chargedFactor(): float
+    {
+        return $this->subtotal > 0 ? 1 - $this->discount / $this->subtotal : 1;
+    }
+
+    /** Returns, value adjustments and voids freeze the sale's value: totals, discount and lines can no longer change. */
+    public function isLockedForEdits(): bool
+    {
+        return $this->status === SaleStatus::Voided || $this->returns()->exists();
+    }
+
     /** The sale's value once returns are taken out. */
     public function netTotal(): int
     {

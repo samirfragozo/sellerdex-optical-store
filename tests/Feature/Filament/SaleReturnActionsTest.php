@@ -223,3 +223,35 @@ it('hides every post-sale action on a quote', function () {
         ->assertActionHidden('valueAdjustment')
         ->assertActionHidden('voidSale');
 });
+
+it('locks the discount percent on the sale form once the sale has returns or is voided', function () {
+    Livewire::test(EditSale::class, ['record' => $this->sale->getRouteKey()])
+        ->assertFormFieldIsEnabled('discount_percent');
+
+    SaleReturn::factory()->create(['sale_id' => $this->sale->id]);
+
+    Livewire::test(EditSale::class, ['record' => $this->sale->getRouteKey()])
+        ->assertFormFieldIsDisabled('discount_percent');
+
+    $voided = Sale::factory()->create(['status' => SaleStatus::Voided]);
+
+    Livewire::test(EditSale::class, ['record' => $voided->getRouteKey()])
+        ->assertFormFieldIsDisabled('discount_percent');
+});
+
+it('prices the return hint with the discount actually charged', function () {
+    $this->sale->payments()->forceDelete();
+    $this->sale->update(['discount_percent' => 50]);
+    $this->sale->recalculateTotals();
+    Payment::factory()->create(['sale_id' => $this->sale->id, 'payment_method_id' => $this->cash->id, 'amount' => 50_000]);
+    $this->sale->update(['discount_percent' => 0]);
+
+    $lines = [['sale_item_id' => $this->line->id, 'quantity' => 1, 'restock' => false]];
+
+    // 25 000 of value is owed back, so the store credit is capped there, not at 50 000.
+    Livewire::test(EditSale::class, ['record' => $this->sale->getRouteKey()])
+        ->callAction(TestAction::make('returnItems'), [
+            'lines' => $lines, 'reason' => 'x', 'refund_amount' => 0, 'store_credit_amount' => 50_000,
+        ])
+        ->assertHasActionErrors(['store_credit_amount']);
+});

@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\Sales\RelationManagers;
 
-use App\Enums\SaleStatus;
 use App\Models\Product;
 use App\Models\SaleItem;
 use Filament\Actions\BulkActionGroup;
@@ -118,9 +117,7 @@ class ItemsRelationManager extends RelationManager
     /** Editing lines after a return or a void could push the sale's value below what was already given back. */
     private function isLocked(): bool
     {
-        $sale = $this->getOwnerRecord();
-
-        return $sale->status === SaleStatus::Voided || $sale->returns()->exists();
+        return $this->getOwnerRecord()->isLockedForEdits();
     }
 
     /**

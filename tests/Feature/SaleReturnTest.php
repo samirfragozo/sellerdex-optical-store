@@ -297,3 +297,19 @@ it('rejects a line of another sale', function () {
     expect(saleReturnErrors(SaleReturnType::Return, ['reason' => 'x', 'items' => [['sale_item_id' => $other->id, 'quantity' => 1, 'restock' => false]],
         'refund_amount' => 0, 'store_credit_amount' => 0]))->toHaveKey('items.0.sale_item_id');
 });
+
+it('values a returned line with the discount actually charged, not the editable discount percent', function () {
+    $this->sale->payments()->forceDelete();
+    $this->sale->update(['discount_percent' => 50]);
+    $this->sale->recalculateTotals();
+    Payment::factory()->create(['sale_id' => $this->sale->id, 'payment_method_id' => $this->cash->id, 'amount' => 50_000]);
+    // The percent is edited on the sale page without recalculating: the stored discount stays 50 000.
+    $this->sale->update(['discount_percent' => 0]);
+
+    $return = returnSale(SaleReturnType::Return, [
+        'reason' => 'x', 'items' => [['sale_item_id' => $this->line->id, 'quantity' => 1, 'restock' => false]],
+        'refund_amount' => 0, 'store_credit_amount' => 0,
+    ]);
+
+    expect($return->total)->toBe(25_000);
+});

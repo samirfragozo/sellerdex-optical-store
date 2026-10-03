@@ -303,7 +303,7 @@ class SaleReturnActions
     private static function maxMoneyForLines(Sale $sale, array $lines): int
     {
         $items = $sale->items->keyBy('id');
-        $factor = 1 - (float) $sale->discount_percent / 100;
+        $factor = $sale->chargedFactor();
         $value = collect($lines)->sum(function (array $line) use ($items, $factor): int {
             $item = $items->get((int) ($line['sale_item_id'] ?? 0));
 

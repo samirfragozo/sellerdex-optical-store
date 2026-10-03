@@ -43,7 +43,9 @@ class SaleForm
                     ->default(0)
                     ->minValue(0)
                     ->maxValue(100)
-                    ->suffix('%'),
+                    ->suffix('%')
+                    // The charged value is frozen once returns or a void exist.
+                    ->disabled(fn (?Sale $record): bool => $record?->isLockedForEdits() ?? false),
                 Placeholder::make('total')
                     ->label(__('app.fields.total'))
                     ->visibleOn('edit')

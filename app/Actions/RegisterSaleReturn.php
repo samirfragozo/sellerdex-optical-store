@@ -115,7 +115,7 @@ class RegisterSaleReturn
     private function returnLines(Sale $sale, SaleReturn $return, array $lines): void
     {
         $items = $sale->items()->with(['product', 'lensConfig', 'lensOrder'])->get()->keyBy('id');
-        $factor = 1 - (float) $sale->discount_percent / 100;
+        $factor = $sale->chargedFactor();
         $valueOf = fn (SaleItem $item, int $units): int => (int) round($item->line_total * $units / $item->quantity * $factor);
         $rows = [];
 
