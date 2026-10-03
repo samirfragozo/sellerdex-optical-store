@@ -74,9 +74,13 @@ class ProductForm
                     ->helperText(__('app.taxes.price_includes_tax'))
                     ->visible(fn (): bool => Company::current()->vat_regime === VatRegime::Responsible),
                 TextInput::make('stock')
-                    ->label(__('app.fields.stock'))
+                    ->label(fn (string $operation): string => $operation === 'create' ? __('app.inventory.initial_stock') : __('app.fields.stock'))
                     ->numeric()
-                    ->minValue(0),
+                    ->minValue(0)
+                    ->default(0)
+                    ->disabled(fn (string $operation): bool => $operation === 'edit')
+                    ->dehydrated(false)
+                    ->visible(fn (): bool => Company::current()->tracksInventory()),
                 Textarea::make('specs')
                     ->label(__('app.fields.specs'))
                     ->columnSpanFull(),
@@ -85,7 +89,8 @@ class ProductForm
                     ->schema([
                         Toggle::make('is_stockable')
                             ->label(__('app.fields.is_stockable'))
-                            ->required(),
+                            ->required()
+                            ->visible(fn (): bool => Company::current()->tracksInventory()),
                         Toggle::make('is_active')
                             ->label(__('app.fields.active'))
                             ->required(),

@@ -6,6 +6,7 @@ use App\Filament\Clusters\Catalogo\CatalogoCluster;
 use App\Filament\Resources\Products\Pages\CreateProduct;
 use App\Filament\Resources\Products\Pages\EditProduct;
 use App\Filament\Resources\Products\Pages\ListProducts;
+use App\Filament\Resources\Products\RelationManagers\StockMovementsRelationManager;
 use App\Filament\Resources\Products\Schemas\ProductForm;
 use App\Filament\Resources\Products\Tables\ProductsTable;
 use App\Filament\Resources\Resource;
@@ -39,7 +40,9 @@ class ProductResource extends Resource
 
     public static function getRelations(): array
     {
-        return [];
+        return [
+            StockMovementsRelationManager::class,
+        ];
     }
 
     public static function getPages(): array

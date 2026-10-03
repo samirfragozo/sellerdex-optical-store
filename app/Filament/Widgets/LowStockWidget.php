@@ -2,6 +2,7 @@
 
 namespace App\Filament\Widgets;
 
+use App\Models\Company;
 use App\Models\Product;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -11,7 +12,7 @@ class LowStockWidget extends BaseWidget
 {
     public static function canView(): bool
     {
-        return auth()->user()?->isAdmin() === true;
+        return auth()->user()?->isAdmin() === true && Company::current()->tracksInventory();
     }
 
     public function table(Table $table): Table

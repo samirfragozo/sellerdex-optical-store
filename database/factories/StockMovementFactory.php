@@ -16,6 +16,7 @@ class StockMovementFactory extends Factory
     {
         return [
             'product_id' => Product::factory(),
+            'company_id' => fn (array $attributes) => Product::withoutGlobalScopes()->find($attributes['product_id'])?->company_id,
             'type' => StockMovementType::Adjustment->value,
             'quantity' => 1,
             'balance_after' => 1,

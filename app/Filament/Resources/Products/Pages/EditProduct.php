@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Products\Pages;
 
 use App\Actions\GenerateProductVariants;
 use App\Filament\Concerns\RedirectsToResourceIndex;
+use App\Filament\Resources\Products\Actions\AdjustStockAction;
 use App\Filament\Resources\Products\ProductResource;
 use App\Models\Product;
 use Filament\Actions\Action;
@@ -22,6 +23,7 @@ class EditProduct extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
+            AdjustStockAction::make()->after(fn () => $this->refreshFormData(['stock'])),
             Action::make('generateVariants')
                 ->label(__('app.product_actions.generate_variants'))
                 ->icon('heroicon-o-squares-plus')

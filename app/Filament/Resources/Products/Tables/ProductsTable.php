@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\Products\Tables;
 
+use App\Filament\Resources\Products\Actions\AdjustStockAction;
+use App\Models\Company;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -42,7 +44,8 @@ class ProductsTable
                 TextColumn::make('stock')
                     ->label(__('app.fields.stock'))
                     ->numeric()
-                    ->sortable(),
+                    ->sortable()
+                    ->visible(fn (): bool => Company::current()->tracksInventory()),
                 IconColumn::make('is_active')
                     ->label(__('app.fields.active'))
                     ->boolean(),
@@ -66,6 +69,7 @@ class ProductsTable
                 TrashedFilter::make(),
             ])
             ->recordActions([
+                AdjustStockAction::make(),
                 EditAction::make(),
             ])
             ->toolbarActions([

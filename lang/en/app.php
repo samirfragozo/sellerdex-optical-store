@@ -333,6 +333,25 @@ return [
         'ready' => 'Ready for pickup',
     ],
 
+    'inventory' => [
+        'adjust' => 'Adjust stock',
+        'counted' => 'Counted quantity',
+        'current' => 'Current stock: :stock',
+        'same_count' => 'It equals the current stock; nothing to adjust.',
+        'reason' => 'Reason',
+        'adjusted' => 'Stock adjusted',
+        'initial_stock' => 'Initial stock',
+        'kardex' => 'Stock history',
+        'date' => 'Date',
+        'type' => 'Type',
+        'quantity' => 'Quantity',
+        'balance' => 'Balance',
+        'source' => 'Source',
+        'user' => 'User',
+        'sale_source' => 'Sale :number',
+        'purchase_source' => 'Purchase #:number',
+    ],
+
     'stock_movement_type' => [
         'initial' => 'Initial count',
         'sale' => 'Sale',

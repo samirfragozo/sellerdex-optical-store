@@ -28,7 +28,8 @@ class StockLedger
             $balance = (int) $locked->stock + $quantity;
 
             Product::withoutGlobalScopes()->whereKey($locked->getKey())->update(['stock' => $balance]);
-            $product->setRawAttributes([...$product->getAttributes(), 'stock' => $balance], true);
+            $product->stock = $balance;
+            $product->syncOriginalAttribute('stock');
 
             return StockMovement::create([
                 'company_id' => $locked->company_id,

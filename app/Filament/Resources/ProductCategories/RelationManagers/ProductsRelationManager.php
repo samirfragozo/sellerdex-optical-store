@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\ProductCategories\RelationManagers;
 
 use App\Filament\Resources\Products\ProductResource;
+use App\Models\Company;
 use App\Models\Product;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\TextInput;
@@ -58,7 +59,8 @@ class ProductsRelationManager extends RelationManager
                 TextColumn::make('stock')
                     ->label(__('app.fields.stock'))
                     ->numeric()
-                    ->sortable(),
+                    ->sortable()
+                    ->visible(fn (): bool => Company::current()->tracksInventory()),
                 IconColumn::make('is_active')
                     ->label(__('app.fields.active'))
                     ->boolean(),

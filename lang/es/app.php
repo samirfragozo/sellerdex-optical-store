@@ -300,6 +300,25 @@ return [
         'nit' => 'NIT',
     ],
 
+    'inventory' => [
+        'adjust' => 'Ajustar stock',
+        'counted' => 'Cantidad contada',
+        'current' => 'Stock actual: :stock',
+        'same_count' => 'Es igual al stock actual; no hay nada que ajustar.',
+        'reason' => 'Motivo',
+        'adjusted' => 'Stock ajustado',
+        'initial_stock' => 'Stock inicial',
+        'kardex' => 'Kardex',
+        'date' => 'Fecha',
+        'type' => 'Tipo',
+        'quantity' => 'Cantidad',
+        'balance' => 'Saldo',
+        'source' => 'Origen',
+        'user' => 'Usuario',
+        'sale_source' => 'Venta :number',
+        'purchase_source' => 'Compra #:number',
+    ],
+
     'stock_movement_type' => [
         'initial' => 'Conteo inicial',
         'sale' => 'Venta',

@@ -28,6 +28,7 @@ class PosController extends Controller
             'variants' => fn ($q) => $q->where('is_active', true),
             'variants.variantOptions',
         ];
+        $tracksInventory = Company::current()->tracksInventory();
         $catalogColumns = ['id', 'name', 'price', 'cost', 'is_stockable', 'stock', 'product_category_id', 'specs'];
 
         $products = Product::query()->where('is_active', true)
@@ -49,7 +50,7 @@ class PosController extends Controller
             ->orderBy('name')
             ->paginate(20, $catalogColumns)
             ->withQueryString()
-            ->through(fn (Product $p) => $this->mapCatalogProduct($p));
+            ->through(fn (Product $p) => $this->mapCatalogProduct($p, $tracksInventory));
 
         // Frame and lens products keep their option groups regardless of the
         // exclusion above: the armado wizard (StepFrame/StepLens) needs the
@@ -60,7 +61,7 @@ class PosController extends Controller
             ->with($withCatalogRelations)
             ->orderBy('name')
             ->get($catalogColumns)
-            ->map(fn (Product $p) => $this->mapCatalogProduct($p))
+            ->map(fn (Product $p) => $this->mapCatalogProduct($p, $tracksInventory))
             ->values();
 
         return Inertia::render('Pos', [
@@ -141,7 +142,7 @@ class PosController extends Controller
      *
      * @return array<string, mixed>
      */
-    private function mapCatalogProduct(Product $p): array
+    private function mapCatalogProduct(Product $p, bool $tracksInventory): array
     {
         return [
             'id' => $p->id,
@@ -149,7 +150,7 @@ class PosController extends Controller
             'price' => $p->price,
             'cost' => $p->cost,
             'is_stockable' => $p->is_stockable,
-            'stock' => $p->stock,
+            'stock' => $tracksInventory ? $p->stock : null,
             'category_name' => $p->category?->name,
             'category_key' => $p->category?->key,
             'specs' => $p->specs,
@@ -170,7 +171,7 @@ class PosController extends Controller
                     'id' => $v->id,
                     'price' => $v->price,
                     'cost' => $v->cost,
-                    'stock' => $v->stock,
+                    'stock' => $tracksInventory ? $v->stock : null,
                     'is_stockable' => $v->is_stockable,
                     'option_ids' => $v->variantOptions->pluck('id')->sort()->values(),
                 ])
