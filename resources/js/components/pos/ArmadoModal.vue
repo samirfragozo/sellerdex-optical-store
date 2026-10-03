@@ -30,6 +30,8 @@ const props = defineProps<{
     kit: KitProp;
     frameProducts: ProductProp[];
     prescriptions: PrescriptionOption[];
+    /** The previous armado's prescription, offered again to a new armado. */
+    suggestedPrescriptionId?: number | null;
     errors?: Record<string, string>;
     today?: string;
     minExamDate?: string;
@@ -106,7 +108,9 @@ const patientPrescriptions = computed<PrescriptionOption[]>(() =>
 // patient — switching patient invalidates a stale pick instead of carrying
 // it over to someone else.
 const hasPatientPrescription = computed(() =>
-    patientPrescriptions.value.some((p) => p.id === draft.value.prescription_id),
+    patientPrescriptions.value.some(
+        (p) => p.id === draft.value.prescription_id,
+    ),
 );
 
 watch(patientPrescriptions, (list) => {
@@ -135,6 +139,21 @@ watch(
         patientMode.value = forOther ? 'other' : 'payer';
         otherPatientId.value = forOther ? draft.value.patient_id : null;
         otherPatientLabel.value = forOther ? draft.value.patient_name : '';
+
+        // A new armado starts on the previous armado's prescription (same
+        // payer) so a second pair doesn't repeat the pick; the seller can
+        // still switch patient or prescription.
+        if (
+            props.armado === null &&
+            props.prescriptions.some(
+                (p) =>
+                    p.id === props.suggestedPrescriptionId &&
+                    p.customer_id === customerId.value,
+            )
+        ) {
+            draft.value.prescription_id = props.suggestedPrescriptionId ?? null;
+        }
+
         prescriptionMode.value =
             draft.value.prescription_id !== null ? 'existing' : 'new';
     },

@@ -137,6 +137,14 @@ function onPrescriptionSaved(prescription: PrescriptionOption): void {
     prescriptions.value = [prescription, ...prescriptions.value];
 }
 
+// A new armado defaults to the last one's prescription, when it was for the
+// payer.
+const suggestedPrescriptionId = computed<number | null>(
+    () =>
+        cart.armados.value.findLast((a) => a.patient_id === customerId.value)
+            ?.prescription_id ?? null,
+);
+
 function onArmadoSave(armado: Armado): void {
     const data = {
         patient_id: armado.patient_id,
@@ -417,6 +425,7 @@ async function confirmCheckout(): Promise<void> {
                     :kit="kit"
                     :frame-products="frameProducts"
                     :prescriptions="prescriptions"
+                    :suggested-prescription-id="suggestedPrescriptionId"
                     :today="today"
                     :min-exam-date="minExamDate"
                     v-model:customer-label="customerLabel"
