@@ -91,3 +91,27 @@ it('names the combination and the lab in the out-of-range message', function () 
         ->and(LensCombinationPrice::outOfRangeMessage($this->combination, null))
         ->toBe(__('app.pos.lens_form.out_of_range_any', ['combination' => $this->combination->label()]));
 });
+
+it('lets a narrow non-preferred row win within the preferred lab', function () {
+    $broad = rangePriceRow($this->labA, ['price' => 150_000, 'is_preferred' => true]);
+    $narrow = rangePriceRow($this->labA, ['sphere_min' => -20, 'sphere_max' => -6.25, 'price' => 280_000]);
+    rangePriceRow($this->labB, ['price' => 140_000]);
+    $strong = Prescription::factory()->make(['od_sphere' => '-8.00', 'os_sphere' => null, 'od_cylinder' => null, 'os_cylinder' => null, 'od_add' => null, 'os_add' => null]);
+
+    $offers = LensCombinationPrice::offers($this->combination, $strong);
+
+    expect(LensCombinationPrice::resolve($this->combination, $strong)->is($narrow))->toBeTrue()
+        ->and(LensCombinationPrice::resolve($this->combination, $strong, $this->labA->id)->is($narrow))->toBeTrue()
+        ->and($offers->pluck('supplier_id')->all())->toBe([$this->labA->id, $this->labB->id])
+        ->and($offers->first()->is($narrow))->toBeTrue()
+        ->and(LensCombinationPrice::resolve($this->combination, null)->is($broad))->toBeTrue();
+});
+
+it('ranks the preferred lab ahead of a lab with only a narrower non-preferred row', function () {
+    $preferred = rangePriceRow($this->labA, ['price' => 150_000, 'is_preferred' => true]);
+    rangePriceRow($this->labB, ['sphere_min' => -20, 'sphere_max' => -6.25, 'price' => 200_000]);
+    $strong = Prescription::factory()->make(['od_sphere' => '-8.00', 'os_sphere' => null, 'od_cylinder' => null, 'os_cylinder' => null, 'od_add' => null, 'os_add' => null]);
+
+    expect(LensCombinationPrice::resolve($this->combination, $strong)->is($preferred))->toBeTrue()
+        ->and(LensCombinationPrice::offers($this->combination, $strong)->pluck('supplier_id')->all())->toBe([$this->labA->id, $this->labB->id]);
+});

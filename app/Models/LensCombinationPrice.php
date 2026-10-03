@@ -53,8 +53,10 @@ class LensCombinationPrice extends Model
     /**
      * Active rows of $combination, at active labs, whose range covers the
      * prescription's governing eye (plano when there is no prescription) —
-     * best first: preferred lab, then the narrowest range (so a specific
-     * high-power range beats "all prescriptions"), then the oldest row.
+     * best first: preferred lab first — a lab is preferred when any of its
+     * active rows for this combination is marked preferred — then the
+     * narrowest range (so a specific high-power range beats "all
+     * prescriptions"), then the oldest row.
      *
      * @return Builder<self>
      */
@@ -71,7 +73,7 @@ class LensCombinationPrice extends Model
             ->where('cylinder_min', '<=', $cylinder)->where('cylinder_max', '>=', $cylinder)
             ->where(fn (Builder $query) => $query->whereNull('add_min')->orWhere('add_min', '<=', $add))
             ->where(fn (Builder $query) => $query->whereNull('add_max')->orWhere('add_max', '>=', $add))
-            ->orderByDesc('is_preferred')
+            ->orderByRaw('(select max(p2.is_preferred) from lens_combination_prices as p2 where p2.lens_combination_id = lens_combination_prices.lens_combination_id and p2.supplier_id = lens_combination_prices.supplier_id and p2.is_active = 1) desc')
             ->orderByRaw('(sphere_max - sphere_min) + (cylinder_max - cylinder_min)')
             ->orderBy('id');
     }
