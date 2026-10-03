@@ -6,6 +6,8 @@ use App\Http\Controllers\CashRegisterSessionController;
 use App\Http\Controllers\Customer\PrescriptionsController as CustomerPrescriptionsController;
 use App\Http\Controllers\Customer\SearchController as CustomerSearchController;
 use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\LensOrder\DocumentController as LabOrderDocumentController;
+use App\Http\Controllers\LensOrder\DocumentPdfController as LabOrderDocumentPdfController;
 use App\Http\Controllers\Locale\UpdateController as LocaleUpdateController;
 use App\Http\Controllers\Pos\LensOffersController;
 use App\Http\Controllers\Pos\LensRecommendationController;
@@ -47,6 +49,8 @@ Route::middleware('auth')->group(function () {
     Route::get('sales/{sale}/invoice/pdf', InvoicePdfController::class)->name('documents.invoice.pdf');
     Route::get('prescriptions/{prescription}/formula', FormulaController::class)->name('documents.formula');
     Route::get('prescriptions/{prescription}/formula/pdf', FormulaPdfController::class)->name('documents.formula.pdf');
+    Route::get('lens-orders/{lensOrder}/document', LabOrderDocumentController::class)->name('documents.lab-order');
+    Route::get('lens-orders/{lensOrder}/document/pdf', LabOrderDocumentPdfController::class)->name('documents.lab-order.pdf');
     Route::get('prescriptions/{prescription}/attachment', AttachmentController::class)->name('documents.prescription.attachment');
 });
 

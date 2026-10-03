@@ -228,10 +228,27 @@ return [
 
     'lab_order' => [
         'actions' => [
+            'print' => 'Imprimir orden',
+            'download' => 'Descargar PDF',
+            'whatsapp' => 'Enviar por WhatsApp',
+            'email' => 'Enviar por e-mail',
             'send' => 'Marcar como enviada',
             'receive' => 'Marcar como recibida',
             'ready' => 'Lista para entregar',
             'remake' => 'Rehacer',
+        ],
+        'height' => 'Altura',
+        'lens' => 'Lente',
+        'message' => [
+            'title' => 'Orden de laboratorio #:number (venta :sale)',
+            'patient' => 'Paciente: :name',
+            'eye' => ':eye: Esf :sphere · Cil :cylinder · Eje :axis · Add :add · Prisma :prism',
+            'pd' => 'DP: OD :od / OS :os',
+            'heights' => 'Alturas: OD :od / OS :os',
+            'lens' => 'Lente: :lens',
+            'frame' => 'Montura: :type · A :a · B :b · DBL :dbl · :source · :description',
+            'frame_condition' => 'Estado de la montura: :condition',
+            'notes' => 'Notas: :notes',
         ],
         'incomplete' => 'La orden está incompleta',
         'missing' => 'Falta: :fields.',
@@ -591,6 +608,8 @@ return [
         'diagnosis_short' => 'R',
         'control' => 'Control',
         'expired' => 'Vencida',
+        'lab_order_title' => 'Orden de laboratorio',
+        'lab_order_heading' => 'ORDEN DE LABORATORIO',
         'view_attachment' => 'Ver fórmula original',
     ],
 

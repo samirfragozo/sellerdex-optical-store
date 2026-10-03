@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Company;
+use App\Models\LensOrder;
 use App\Models\Prescription;
 use App\Models\Sale;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -131,6 +132,30 @@ class DocumentRenderer
         return [
             ...$this->businessHeader(),
             'rx' => $prescription,
+        ];
+    }
+
+    public function labOrder(LensOrder $order): View
+    {
+        return view('documents.lab-order', $this->labOrderData($order));
+    }
+
+    public function labOrderPdf(LensOrder $order): Response
+    {
+        return Pdf::loadView('documents.lab-order', $this->labOrderData($order))
+            ->setPaper('a5')
+            ->download('orden-laboratorio-'.$order->id.'.pdf');
+    }
+
+    /** @return array<string, mixed> */
+    private function labOrderData(LensOrder $order): array
+    {
+        $order->loadMissing(['saleItem.sale', 'saleItem.lensConfig.patient', 'supplier', 'remakeOf']);
+
+        return [
+            ...$this->businessHeader(),
+            'order' => $order,
+            'frame' => $order->frameDescription(),
         ];
     }
 }

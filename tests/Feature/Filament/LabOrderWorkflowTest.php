@@ -251,3 +251,20 @@ it('allows only one remake per order at the database level', function () {
     expect(fn () => LensOrder::factory()->create(['sale_item_id' => $order->sale_item_id, 'remake_of_id' => $order->id]))
         ->toThrow(QueryException::class);
 });
+
+it('offers print, PDF, WhatsApp and e-mail on the lab order page, hiding links the lab cannot use', function () {
+    $this->lab->update(['phone' => null, 'email' => null]);
+    $order = workflowOrder();
+
+    Livewire::test(EditLensOrder::class, ['record' => $order->getRouteKey()])
+        ->assertActionVisible('printLabOrder')
+        ->assertActionVisible('downloadLabOrder')
+        ->assertActionHidden('whatsappLab')
+        ->assertActionHidden('emailLab');
+
+    $this->lab->update(['phone' => '3001234567', 'email' => 'lab@test.test']);
+
+    Livewire::test(EditLensOrder::class, ['record' => $order->getRouteKey()])
+        ->assertActionVisible('whatsappLab')
+        ->assertActionVisible('emailLab');
+});

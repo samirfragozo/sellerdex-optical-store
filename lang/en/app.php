@@ -234,10 +234,27 @@ return [
 
     'lab_order' => [
         'actions' => [
+            'print' => 'Print order',
+            'download' => 'Download PDF',
+            'whatsapp' => 'Send via WhatsApp',
+            'email' => 'Send via e-mail',
             'send' => 'Mark as sent',
             'receive' => 'Mark as received',
             'ready' => 'Ready for pickup',
             'remake' => 'Remake',
+        ],
+        'height' => 'Height',
+        'lens' => 'Lens',
+        'message' => [
+            'title' => 'Lab order #:number (sale :sale)',
+            'patient' => 'Patient: :name',
+            'eye' => ':eye: Sph :sphere · Cyl :cylinder · Axis :axis · Add :add · Prism :prism',
+            'pd' => 'PD: OD :od / OS :os',
+            'heights' => 'Heights: OD :od / OS :os',
+            'lens' => 'Lens: :lens',
+            'frame' => 'Frame: :type · A :a · B :b · DBL :dbl · :source · :description',
+            'frame_condition' => 'Frame condition: :condition',
+            'notes' => 'Notes: :notes',
         ],
         'incomplete' => 'The order is incomplete',
         'missing' => 'Missing: :fields.',
@@ -591,6 +608,8 @@ return [
         'diagnosis_short' => 'Dx',
         'control' => 'Follow-up',
         'expired' => 'Expired',
+        'lab_order_title' => 'Lab order',
+        'lab_order_heading' => 'LAB ORDER',
         'view_attachment' => 'View original prescription',
     ],
 

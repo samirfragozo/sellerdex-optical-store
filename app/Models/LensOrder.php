@@ -155,6 +155,23 @@ class LensOrder extends Model
         return $this->hasMany(self::class, 'remake_of_id');
     }
 
+    /** How the lab should identify the frame: the armado's sold frame line, or the customer's own frame. */
+    public function frameDescription(): ?string
+    {
+        if ($this->frame_source === FrameSource::CustomerOwn) {
+            return $this->customer_frame_description;
+        }
+
+        $lensItem = $this->saleItem;
+
+        return $lensItem?->group_key === null ? null : SaleItem::query()
+            ->where('sale_id', $lensItem->sale_id)
+            ->where('group_key', $lensItem->group_key)
+            ->whereKeyNot($lensItem->id)
+            ->whereHas('product.category', fn ($query) => $query->where('key', 'frame'))
+            ->value('description');
+    }
+
     public function saleItem(): BelongsTo
     {
         return $this->belongsTo(SaleItem::class);
