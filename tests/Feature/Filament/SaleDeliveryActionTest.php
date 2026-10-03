@@ -42,7 +42,7 @@ it('no entrega la venta si el lente sigue pendiente', function () {
     expect($sale->fresh()->is_delivered)->toBeFalse();
 });
 
-it('entrega la venta cuando el lente está recibido', function () {
+it('entrega la venta cuando el lente está listo', function () {
     $this->actingAs(User::factory()->admin()->create());
     $sale = deliverySaleWithLens(LensOrderStatus::Ready->value);
 

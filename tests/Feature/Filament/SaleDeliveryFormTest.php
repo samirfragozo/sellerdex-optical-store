@@ -27,7 +27,7 @@ it('el campo is_delivered está deshabilitado cuando hay lentes pendientes', fun
         ->assertFormFieldIsDisabled('is_delivered');
 });
 
-it('el campo is_delivered está habilitado cuando todos los lentes están recibidos', function () {
+it('el campo is_delivered está habilitado cuando todos los lentes están listos', function () {
     $this->actingAs(User::factory()->admin()->create());
 
     $sale = Sale::factory()->create(['is_delivered' => false]);

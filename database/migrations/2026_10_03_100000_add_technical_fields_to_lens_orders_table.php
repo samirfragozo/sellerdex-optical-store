@@ -11,11 +11,17 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // A remake is a second order on the same sale item. The unique index backs
+        // the sale_item_id foreign key, so a plain index must exist before it can go.
         Schema::table('lens_orders', function (Blueprint $table) {
-            // A remake is a second order on the same sale item.
-            $table->dropUnique(['sale_item_id']);
             $table->index('sale_item_id');
+        });
 
+        Schema::table('lens_orders', function (Blueprint $table) {
+            $table->dropUnique(['sale_item_id']);
+        });
+
+        Schema::table('lens_orders', function (Blueprint $table) {
             $table->decimal('od_pd', 4, 1)->nullable();
             $table->decimal('os_pd', 4, 1)->nullable();
             $table->decimal('od_height', 4, 1)->nullable();
@@ -42,6 +48,7 @@ return new class extends Migration
      */
     public function down(): void
     {
+        // Rolling back fails once an item has a remake (duplicate sale_item_id) — acceptable.
         Schema::table('lens_orders', function (Blueprint $table) {
             $table->dropConstrainedForeignId('remake_of_id');
             $table->dropColumn([
@@ -50,8 +57,11 @@ return new class extends Migration
                 'prescription_snapshot', 'sent_at', 'customer_notified_at',
                 'remake_reason', 'remake_responsible', 'remake_cost',
             ]);
-            $table->dropIndex(['sale_item_id']);
             $table->unique('sale_item_id');
+        });
+
+        Schema::table('lens_orders', function (Blueprint $table) {
+            $table->dropIndex(['sale_item_id']);
         });
     }
 };

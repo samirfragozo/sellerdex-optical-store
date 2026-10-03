@@ -26,7 +26,7 @@ function saleWithLens(): array
     return [$sale, $item];
 }
 
-it('bloquea la entrega si el lente no tiene orden recibida', function () {
+it('bloquea la entrega si el lente no tiene orden lista', function () {
     [$sale, $item] = saleWithLens();
     // No lens order at all → strict rule blocks.
 
@@ -37,7 +37,7 @@ it('bloquea la entrega si el lente no tiene orden recibida', function () {
     expect($sale->fresh()->is_delivered)->toBeFalse();
 });
 
-it('bloquea la entrega si la orden existe pero no está recibida', function () {
+it('bloquea la entrega si la orden existe pero no está lista', function () {
     [$sale, $item] = saleWithLens();
     LensOrder::factory()->create(['sale_item_id' => $item->id, 'lab_status' => LensOrderStatus::Sent->value]);
 
@@ -48,7 +48,7 @@ it('bloquea la entrega si la orden existe pero no está recibida', function () {
     expect($sale->fresh()->is_delivered)->toBeFalse();
 });
 
-it('permite la entrega cuando todos los lentes están recibidos', function () {
+it('permite la entrega cuando todos los lentes están listos', function () {
     [$sale, $item] = saleWithLens();
     LensOrder::factory()->ready()->create(['sale_item_id' => $item->id]);
 

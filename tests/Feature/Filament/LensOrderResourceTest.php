@@ -21,7 +21,7 @@ it('permite a un vendedor ver las órdenes de laboratorio', function () {
         ->assertSuccessful();
 });
 
-it('la pestaña pendientes filtra las órdenes no recibidas', function () {
+it('la pestaña pendientes filtra las órdenes no listas', function () {
     $this->actingAs(User::factory()->admin()->create());
 
     $pending = LensOrder::factory()->create(['lab_status' => LensOrderStatus::Sent->value]);

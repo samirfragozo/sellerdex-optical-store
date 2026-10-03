@@ -39,8 +39,11 @@ it('reconoce el ítem de lente y filtra órdenes pendientes', function () {
     LensOrder::factory()->create(['sale_item_id' => $item->id, 'lab_status' => LensOrderStatus::Sent->value]);
 
     $ready = LensOrder::factory()->ready()->create();
+    $received = LensOrder::factory()->received()->create();
 
     expect($item->isLens())->toBeTrue()
-        ->and(LensOrder::pending()->count())->toBe(1)
+        ->and(LensOrder::pending()->count())->toBe(2)
+        // Received alone is still pending: only Ready closes the order.
+        ->and(LensOrder::pending()->whereKey($received->id)->exists())->toBeTrue()
         ->and($ready->isReady())->toBeTrue();
 });
