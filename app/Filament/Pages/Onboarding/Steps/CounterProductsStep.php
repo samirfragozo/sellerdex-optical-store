@@ -9,6 +9,7 @@ use App\Models\ProductCategory;
 use App\Support\ReferenceCounterCatalog;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Hidden;
+use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Utilities\Get;
@@ -67,6 +68,10 @@ class CounterProductsStep extends OnboardingStep
                 ->defaultItems(0)
                 ->deleteAction(fn (Action $action) => $this->hideForLockedRows($action))
                 ->addActionLabel(__('app.onboarding.counter_products.add_category')),
+            Radio::make('tracks_inventory')
+                ->label(__('app.onboarding.counter_products.tracks_inventory'))
+                ->helperText(__('app.onboarding.counter_products.tracks_inventory_help'))
+                ->boolean()->required()->inline(),
         ];
     }
 
@@ -74,8 +79,10 @@ class CounterProductsStep extends OnboardingStep
     {
         $categories = $this->categories()->with(['products' => fn ($query) => $query->sellableBase()->orderBy('id')])->orderBy('id')->get();
 
+        $tracksInventory = $company->tracks_inventory === null ? null : (int) $company->tracks_inventory;
+
         if ($this->products()->exists()) {
-            return ['categories' => $categories->map(fn (ProductCategory $category) => [
+            return ['tracks_inventory' => $tracksInventory, 'categories' => $categories->map(fn (ProductCategory $category) => [
                 'category_id' => $category->id,
                 'key' => $category->key,
                 'name' => $category->name,
@@ -100,7 +107,7 @@ class CounterProductsStep extends OnboardingStep
                 'category_id' => $category->id, 'key' => $category->key, 'name' => $category->name, 'is_locked' => ! $category->isDeletable(), 'products' => [],
             ]);
 
-        return ['categories' => [...$suggested, ...$others->values()->all()]];
+        return ['tracks_inventory' => $tracksInventory, 'categories' => [...$suggested, ...$others->values()->all()]];
     }
 
     public function save(Company $company, array $state): void
@@ -141,6 +148,9 @@ class CounterProductsStep extends OnboardingStep
                 }
             }
 
+            // The updating hook resets the count date when inventory is turned on.
+            $company->update(['tracks_inventory' => (bool) $state['tracks_inventory']]);
+
             // The model guards keep products used by kit slots, system categories and those used by products or kit slots.
             // A guarded delete() returns false, which would stop `each->delete()`; keep going past it.
             $removed = [...$this->products()->whereNotIn('id', $keptProductIds)->get(), ...$this->categories()->whereNotIn('id', $keptCategoryIds)->get()];
@@ -152,7 +162,7 @@ class CounterProductsStep extends OnboardingStep
 
     public function isComplete(Company $company): bool
     {
-        return $this->products()->exists();
+        return $this->products()->exists() && $company->tracks_inventory !== null;
     }
 
     public function summary(Company $company): string

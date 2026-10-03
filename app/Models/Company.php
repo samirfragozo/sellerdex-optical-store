@@ -53,6 +53,13 @@ class Company extends Model
         static::creating(function (Company $company): void {
             $company->slug ??= self::uniqueSlug($company->name);
         });
+
+        static::updating(function (Company $company): void {
+            // Turning inventory on (again) starts from a physical count.
+            if ($company->isDirty('tracks_inventory') && $company->tracks_inventory === true) {
+                $company->inventory_counted_at = null;
+            }
+        });
     }
 
     private static function uniqueSlug(string $name): string

@@ -14,6 +14,7 @@ use App\Models\LensCombination;
 use App\Models\LensCombinationPrice;
 use App\Models\LensType;
 use App\Models\PaymentMethod;
+use App\Models\Product;
 use App\Models\Supplier;
 use App\Models\User;
 use App\Support\ReferenceLensCatalog;
@@ -285,4 +286,37 @@ it('does not show the readiness banner while the company is onboarding', functio
     $this->get(Onboarding::getUrl())
         ->assertSuccessful()
         ->assertDontSee(__('app.readiness.laboratory_lead_time'));
+});
+
+it('is not complete on the counter products step until inventory is decided, either way', function (?bool $decision, bool $complete) {
+    $admin = onboardingAt(CounterProductsStep::key());
+    $admin->company->update(['tracks_inventory' => $decision]);
+    Product::factory()->create(['company_id' => $admin->company_id, 'is_active' => true, 'base_product_id' => null]);
+
+    expect((new CounterProductsStep)->isComplete($admin->company->fresh()))->toBe($complete);
+})->with([
+    'undecided' => [null, false],
+    'yes' => [true, true],
+    'no' => [false, true],
+]);
+
+it('stores the inventory decision from the counter products step', function (int $answer) {
+    $admin = onboardingAt(CounterProductsStep::key());
+    $admin->company->update(['tracks_inventory' => null]);
+
+    Livewire::test(Onboarding::class)
+        ->assertSet('data.tracks_inventory', null)
+        ->set('data.tracks_inventory', $answer)
+        ->call('next')->assertHasNoErrors();
+
+    $company = $admin->company->fresh();
+    expect($company->tracks_inventory)->toBe($answer === 1)
+        ->and($company->inventory_counted_at === null)->toBe($answer === 1);
+})->with([1, 0]);
+
+it('requires the inventory decision on the counter products step', function () {
+    $admin = onboardingAt(CounterProductsStep::key());
+    $admin->company->update(['tracks_inventory' => null]);
+
+    Livewire::test(Onboarding::class)->call('next')->assertHasErrors(['data.tracks_inventory' => 'required']);
 });

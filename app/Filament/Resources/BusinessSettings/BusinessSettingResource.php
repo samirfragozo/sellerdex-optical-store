@@ -6,6 +6,7 @@ use App\Filament\Pages\Onboarding\Steps\CompanyStep;
 use App\Filament\Resources\BusinessSettings\Pages\ManageBusinessSetting;
 use App\Models\Company;
 use BackedEnum;
+use Filament\Forms\Components\Toggle;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -48,7 +49,12 @@ class BusinessSettingResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema
-            ->components(CompanyStep::fields());
+            ->components([
+                ...CompanyStep::fields(),
+                Toggle::make('tracks_inventory')
+                    ->label(__('app.business.tracks_inventory'))
+                    ->helperText(__('app.business.tracks_inventory_help')),
+            ]);
     }
 
     public static function getPages(): array

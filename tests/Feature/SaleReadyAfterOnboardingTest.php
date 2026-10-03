@@ -40,6 +40,7 @@ function registerAndOnboard(string $email, VatRegime $regime): User
         ->set('data.vat_regime', $regime->value)
         ->call('next')->assertHasNoErrors()            // company
         ->call('next')->assertHasNoErrors()            // payment methods (cash only)
+        ->set('data.tracks_inventory', 0)
         ->call('next')->assertHasNoErrors()            // counter products (reference catalog)
         ->set('data.laboratories', [['name' => 'Lab Central', 'phone' => '3000000000', 'lead_time_days' => 5]])
         ->call('next')->assertHasNoErrors()            // laboratories

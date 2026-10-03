@@ -4,6 +4,7 @@ namespace App\Support\Readiness;
 
 use App\Enums\ReadinessSeverity;
 use App\Filament\Pages\ComboSettings;
+use App\Filament\Pages\InventoryCount;
 use App\Filament\Resources\LensCombinations\LensCombinationResource;
 use App\Filament\Resources\PaymentMethods\PaymentMethodResource;
 use App\Filament\Resources\Suppliers\SupplierResource;
@@ -72,6 +73,13 @@ class SaleReadiness
             $issues[] = new ReadinessIssue(
                 'combo_product_inactive', ReadinessSeverity::Warning,
                 __('app.readiness.combo_product_inactive'), ComboSettings::getUrl(panel: 'admin'),
+            );
+        }
+
+        if ($company->tracks_inventory === true && $company->inventory_counted_at === null) {
+            $issues[] = new ReadinessIssue(
+                'inventory_initial_count', ReadinessSeverity::Warning,
+                __('app.readiness.inventory_initial_count'), InventoryCount::getUrl(panel: 'admin'),
             );
         }
 

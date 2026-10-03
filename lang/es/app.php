@@ -301,6 +301,11 @@ return [
     ],
 
     'inventory' => [
+        'initial_count' => 'Conteo inicial',
+        'count_help' => 'Escribe lo que tienes físicamente de cada producto. Deja en blanco lo que no hayas contado.',
+        'save_count' => 'Guardar conteo',
+        'counted_done' => 'Conteo inicial guardado',
+        'no_products_to_count' => 'No hay productos con stock para contar.',
         'adjust' => 'Ajustar stock',
         'counted' => 'Cantidad contada',
         'current' => 'Stock actual: :stock',
@@ -606,6 +611,8 @@ return [
     'cash_close_status' => ['open' => 'Abierto', 'closed' => 'Cerrado', 'approved' => 'Aprobado'],
 
     'business' => [
+        'tracks_inventory' => 'Llevar inventario',
+        'tracks_inventory_help' => 'Al activarlo te pediremos un conteo inicial. Al desactivarlo se conserva el historial.',
         'title' => 'Datos del negocio',
         'save' => 'Guardar',
         'saved' => 'Datos guardados',
@@ -704,6 +711,8 @@ return [
             'add' => 'Agregar método de pago',
         ],
         'counter_products' => [
+            'tracks_inventory' => '¿Llevas inventario de estos productos?',
+            'tracks_inventory_help' => 'Si lo activas, cada venta y compra mueve el stock y queda en el kardex. Puedes cambiarlo luego en la configuración.',
             'label' => 'Productos de mostrador',
             'description' => 'Lo que vendes además de lentes. Te sugerimos una lista: renombra, cambia precios o borra lo que no manejes.',
             'add_category' => 'Agregar categoría',
@@ -759,6 +768,7 @@ return [
     ],
 
     'readiness' => [
+        'inventory_initial_count' => 'Activaste el inventario: haz el conteo inicial de tus productos.',
         'payment_method' => 'No hay ningún método de pago activo. Activa al menos uno para poder cobrar.',
         'laboratory' => 'No hay ningún laboratorio activo: las gafas formuladas no pueden generar su orden.',
         'lens_price' => 'No hay ninguna combinación de lentes activa con precio: no puedes vender gafas formuladas.',

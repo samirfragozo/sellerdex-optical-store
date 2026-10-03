@@ -334,6 +334,11 @@ return [
     ],
 
     'inventory' => [
+        'initial_count' => 'Initial count',
+        'count_help' => "Enter what you physically have of each product. Leave blank what you didn't count.",
+        'save_count' => 'Save count',
+        'counted_done' => 'Initial count saved',
+        'no_products_to_count' => 'There are no stocked products to count.',
         'adjust' => 'Adjust stock',
         'counted' => 'Counted quantity',
         'current' => 'Current stock: :stock',
@@ -606,6 +611,8 @@ return [
     'cash_close_status' => ['open' => 'Open', 'closed' => 'Closed', 'approved' => 'Approved'],
 
     'business' => [
+        'tracks_inventory' => 'Track inventory',
+        'tracks_inventory_help' => 'Turning it on asks for an initial count. Turning it off keeps the history.',
         'title' => 'Business details',
         'save' => 'Save',
         'saved' => 'Details saved',
@@ -704,6 +711,8 @@ return [
             'add' => 'Add payment method',
         ],
         'counter_products' => [
+            'tracks_inventory' => 'Do you track inventory for these products?',
+            'tracks_inventory_help' => 'If you turn it on, every sale and purchase moves stock and is kept in the stock history. You can change it later in the settings.',
             'label' => 'Counter products',
             'description' => 'What you sell besides lenses. We suggest a list: rename, re-price or remove what you don\'t carry.',
             'add_category' => 'Add category',
@@ -759,6 +768,7 @@ return [
     ],
 
     'readiness' => [
+        'inventory_initial_count' => 'Inventory is on: do the initial count of your products.',
         'payment_method' => 'There is no active payment method. Activate at least one to take payments.',
         'laboratory' => 'There is no active laboratory: prescription glasses cannot generate their lab order.',
         'lens_price' => 'There is no active, priced lens combination: you cannot sell prescription glasses.',
