@@ -357,6 +357,11 @@ return [
         'purchase_source' => 'Purchase #:number',
     ],
 
+    'cash_movement_type' => [
+        'income' => 'Cash in',
+        'withdrawal' => 'Cash out',
+    ],
+
     'stock_movement_type' => [
         'initial' => 'Initial count',
         'sale' => 'Sale',

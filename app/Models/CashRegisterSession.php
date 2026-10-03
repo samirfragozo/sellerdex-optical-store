@@ -2,14 +2,16 @@
 
 namespace App\Models;
 
+use App\Enums\CashMovementType;
 use App\Traits\BelongsToCompany;
 use Database\Factories\CashRegisterSessionFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['company_id', 'user_id', 'opened_at', 'opening_cash', 'closed_at', 'closed_cash', 'expected_cash', 'difference', 'notes'])]
+#[Fillable(['company_id', 'user_id', 'opened_at', 'opening_cash', 'closed_at', 'closed_cash', 'expected_cash', 'difference', 'notes', 'cash_left', 'closed_by', 'closed_by_admin', 'reviewed_at', 'reviewed_by'])]
 class CashRegisterSession extends Model
 {
     /** @use HasFactory<CashRegisterSessionFactory> */
@@ -24,6 +26,9 @@ class CashRegisterSession extends Model
             'closed_cash' => 'integer',
             'expected_cash' => 'integer',
             'difference' => 'integer',
+            'cash_left' => 'integer',
+            'closed_by_admin' => 'boolean',
+            'reviewed_at' => 'datetime',
         ];
     }
 
@@ -65,22 +70,85 @@ class CashRegisterSession extends Model
             ->first();
     }
 
-    /** Cash payments received by this session's cashier since it opened. */
-    public function cashCollected(): int
+    public function closedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'closed_by');
+    }
+
+    public function reviewedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'reviewed_by');
+    }
+
+    public function payments(): HasMany
+    {
+        return $this->hasMany(Payment::class);
+    }
+
+    public function expenses(): HasMany
+    {
+        return $this->hasMany(Expense::class);
+    }
+
+    public function movements(): HasMany
+    {
+        return $this->hasMany(CashMovement::class);
+    }
+
+    public function counts(): HasMany
+    {
+        return $this->hasMany(CashRegisterSessionCount::class);
+    }
+
+    /**
+     * What should be in the drawer for each payment method: cash is the float
+     * plus cash taken, cash in, minus cash out and cash expenses; any other
+     * method is just what was taken with it in this session.
+     *
+     * @return array<int, int> payment method id => expected amount, ordered by id
+     */
+    public function expectedByMethod(): array
     {
         $cashMethodId = PaymentMethod::where('is_default', true)->value('id');
 
-        return $cashMethodId
-            ? (int) Payment::where('received_by', $this->user_id)
-                ->where('payment_method_id', $cashMethodId)
-                ->where('created_at', '>=', $this->opened_at)
-                ->sum('amount')
-            : 0;
+        $byMethod = $this->payments()
+            ->selectRaw('payment_method_id, sum(amount) as total')
+            ->groupBy('payment_method_id')
+            ->pluck('total', 'payment_method_id')
+            ->map(fn ($total): int => (int) $total)
+            ->all();
+
+        if ($cashMethodId !== null) {
+            $movements = $this->movements()->selectRaw('type, sum(amount) as total')->groupBy('type')->pluck('total', 'type');
+            $byMethod[$cashMethodId] = $this->opening_cash
+                + ($byMethod[$cashMethodId] ?? 0)
+                + (int) ($movements[CashMovementType::Income->value] ?? 0)
+                - (int) ($movements[CashMovementType::Withdrawal->value] ?? 0)
+                - (int) $this->expenses()->where('payment_method_id', $cashMethodId)->sum('amount');
+        }
+
+        ksort($byMethod);
+
+        return $byMethod;
     }
 
     public function expectedCash(): int
     {
-        return $this->opening_cash + $this->cashCollected();
+        $cashMethodId = PaymentMethod::where('is_default', true)->value('id');
+
+        return $this->expectedByMethod()[$cashMethodId] ?? $this->opening_cash;
+    }
+
+    /** Still open although its day is over — its cashier must close it before selling again. */
+    public function isStale(): bool
+    {
+        return $this->closed_at === null && $this->opened_at->lt(today());
+    }
+
+    /** One drawer per shop: tomorrow's float is what the last close left in it. */
+    public static function suggestedOpeningCash(): int
+    {
+        return (int) static::query()->whereNotNull('closed_at')->latest('closed_at')->value('cash_left');
     }
 
     /**
@@ -96,6 +164,9 @@ class CashRegisterSession extends Model
             'closed_cash' => $this->closed_cash,
             'expected_cash' => $this->expected_cash,
             'difference' => $this->difference,
+            'cash_left' => $this->cash_left,
+            'closed_by_admin' => $this->closed_by_admin,
+            'is_stale' => $this->isStale(),
         ];
     }
 }

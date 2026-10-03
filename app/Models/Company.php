@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
-#[Fillable(['name', 'slug', 'tax_id', 'vat_regime', 'sale_number_prefix', 'next_sale_number', 'prescription_validity_months', 'address', 'phones', 'logo', 'is_active', 'plan', 'onboarding_step', 'onboarded_at', 'armado_frame_price_mode', 'armado_frame_discount_percent', 'tracks_inventory', 'inventory_counted_at'])]
+#[Fillable(['name', 'slug', 'tax_id', 'vat_regime', 'sale_number_prefix', 'next_sale_number', 'prescription_validity_months', 'address', 'phones', 'logo', 'is_active', 'plan', 'onboarding_step', 'onboarded_at', 'armado_frame_price_mode', 'armado_frame_discount_percent', 'tracks_inventory', 'inventory_counted_at', 'blind_cash_count', 'cash_difference_note_threshold'])]
 class Company extends Model
 {
     /** @use HasFactory<CompanyFactory> */
@@ -34,6 +34,8 @@ class Company extends Model
             'armado_frame_discount_percent' => 'decimal:2',
             'tracks_inventory' => 'boolean',
             'inventory_counted_at' => 'datetime',
+            'blind_cash_count' => 'boolean',
+            'cash_difference_note_threshold' => 'integer',
         ];
     }
 

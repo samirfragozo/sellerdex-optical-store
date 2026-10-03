@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
 
-#[Fillable(['company_id', 'expense_category_id', 'description', 'amount', 'payment_method_id', 'spent_at', 'created_by', 'notes'])]
+#[Fillable(['company_id', 'expense_category_id', 'description', 'amount', 'payment_method_id', 'spent_at', 'created_by', 'cash_register_session_id', 'notes'])]
 class Expense extends Model
 {
     /** @use HasFactory<ExpenseFactory> */
@@ -21,6 +21,19 @@ class Expense extends Model
     protected function casts(): array
     {
         return ['amount' => 'integer', 'spent_at' => 'date'];
+    }
+
+    protected static function booted(): void
+    {
+        // The drawer that paid the money (cash expenses only).
+        static::creating(function (Expense $expense): void {
+            if ($expense->cash_register_session_id === null
+                && $expense->created_by !== null
+                && $expense->payment_method_id !== null
+                && PaymentMethod::whereKey($expense->payment_method_id)->where('is_default', true)->exists()) {
+                $expense->cash_register_session_id = CashRegisterSession::openFor(User::find($expense->created_by))?->id;
+            }
+        });
     }
 
     public function getActivitylogOptions(): LogOptions

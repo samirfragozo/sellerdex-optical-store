@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
 
-#[Fillable(['company_id', 'sale_id', 'payment_method_id', 'amount', 'paid_at', 'received_by', 'reference', 'notes'])]
+#[Fillable(['company_id', 'sale_id', 'payment_method_id', 'amount', 'paid_at', 'received_by', 'cash_register_session_id', 'reference', 'notes'])]
 class Payment extends Model
 {
     /** @use HasFactory<PaymentFactory> */
@@ -32,6 +32,12 @@ class Payment extends Model
 
     protected static function booted(): void
     {
+        // The drawer that received the money.
+        static::creating(function (Payment $payment): void {
+            if ($payment->cash_register_session_id === null && $payment->received_by !== null) {
+                $payment->cash_register_session_id = CashRegisterSession::openFor(User::find($payment->received_by))?->id;
+            }
+        });
         static::saved(fn (Payment $payment) => $payment->sale?->recalculateStatus());
         static::deleted(fn (Payment $payment) => $payment->sale?->recalculateStatus());
     }

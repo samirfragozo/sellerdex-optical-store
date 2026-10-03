@@ -324,6 +324,11 @@ return [
         'purchase_source' => 'Compra #:number',
     ],
 
+    'cash_movement_type' => [
+        'income' => 'Ingreso',
+        'withdrawal' => 'Retiro',
+    ],
+
     'stock_movement_type' => [
         'initial' => 'Conteo inicial',
         'sale' => 'Venta',
