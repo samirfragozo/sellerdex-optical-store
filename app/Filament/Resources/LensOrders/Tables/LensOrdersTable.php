@@ -2,7 +2,9 @@
 
 namespace App\Filament\Resources\LensOrders\Tables;
 
+use App\Filament\Resources\LensOrders\Actions\LabOrderActions;
 use Filament\Actions\EditAction;
+use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -38,9 +40,20 @@ class LensOrdersTable
                     ->label(__('app.fields.expected_date'))
                     ->date()
                     ->sortable(),
+                TextColumn::make('sent_at')
+                    ->label(__('app.fields.sent_at'))
+                    ->dateTime()
+                    ->sortable(),
+                IconColumn::make('remake_of_id')
+                    ->label(__('app.lab_order.is_remake'))
+                    ->icon(fn ($state): ?string => $state === null ? null : 'heroicon-o-arrow-path')
+                    ->color('warning'),
             ])
             ->recordActions([
                 EditAction::make(),
+                LabOrderActions::send(),
+                LabOrderActions::receive(),
+                LabOrderActions::ready(),
             ]);
     }
 }

@@ -79,6 +79,10 @@ return [
     ],
 
     'fields' => [
+        'remake_reason' => 'Reason',
+        'remake_responsible' => 'Responsible',
+        'remake_cost' => 'Remake cost',
+        'sent_at' => 'Sent',
         'od_height' => 'OD height',
         'os_height' => 'OS height',
         'od_pd' => 'OD PD',
@@ -225,6 +229,28 @@ return [
         'right_eye' => 'Right eye (OD)',
         'left_eye' => 'Left eye (OS)',
         'options' => 'Options',
+    ],
+
+    'lab_order' => [
+        'actions' => [
+            'send' => 'Mark as sent',
+            'receive' => 'Mark as received',
+            'ready' => 'Ready for pickup',
+            'remake' => 'Remake',
+        ],
+        'incomplete' => 'The order is incomplete',
+        'missing' => 'Missing: :fields.',
+        'sent' => 'Order marked as sent',
+        'remade' => 'Remake order created',
+        'cannot_remake' => 'This order can\'t be remade.',
+        'remake_cost_help' => 'What remaking the lens costs the store; it lowers the sale\'s real margin.',
+        'is_remake' => 'Remake',
+        'remake_of' => 'Remakes order #:id',
+        'sections' => [
+            'measurements' => 'Measurements',
+            'frame' => 'Frame',
+            'prescription' => 'Prescription sent to the lab',
+        ],
     ],
 
     'tabs' => [

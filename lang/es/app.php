@@ -79,6 +79,10 @@ return [
     ],
 
     'fields' => [
+        'remake_reason' => 'Motivo',
+        'remake_responsible' => 'Responsable',
+        'remake_cost' => 'Costo de la rehechura',
+        'sent_at' => 'Enviada',
         'od_height' => 'Altura OD',
         'os_height' => 'Altura OS',
         'od_pd' => 'DP OD',
@@ -219,6 +223,28 @@ return [
         'attachment' => 'Foto o PDF de la fórmula',
         'expires_at' => 'Vence',
         'prescription_validity_months' => 'Vigencia de la fórmula (meses)',
+    ],
+
+    'lab_order' => [
+        'actions' => [
+            'send' => 'Marcar como enviada',
+            'receive' => 'Marcar como recibida',
+            'ready' => 'Lista para entregar',
+            'remake' => 'Rehacer',
+        ],
+        'incomplete' => 'La orden está incompleta',
+        'missing' => 'Falta: :fields.',
+        'sent' => 'Orden marcada como enviada',
+        'remade' => 'Se creó la orden de rehechura',
+        'cannot_remake' => 'Esta orden no se puede rehacer.',
+        'remake_cost_help' => 'Lo que le cuesta a la óptica rehacer el lente; reduce el margen real de la venta.',
+        'is_remake' => 'Rehechura',
+        'remake_of' => 'Rehace la orden #:id',
+        'sections' => [
+            'measurements' => 'Medidas',
+            'frame' => 'Montura',
+            'prescription' => 'Fórmula enviada al laboratorio',
+        ],
     ],
 
     'tabs' => [
