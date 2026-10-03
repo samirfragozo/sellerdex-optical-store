@@ -119,9 +119,10 @@ class SaleItem extends Model
         return $this->belongsTo(Product::class);
     }
 
+    /** The item's current lab order — the latest, so a remake replaces the original. */
     public function lensOrder(): HasOne
     {
-        return $this->hasOne(LensOrder::class);
+        return $this->hasOne(LensOrder::class)->latestOfMany();
     }
 
     public function lensConfig(): HasOne

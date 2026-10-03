@@ -39,7 +39,7 @@ it('bloquea la entrega si el lente no tiene orden recibida', function () {
 
 it('bloquea la entrega si la orden existe pero no está recibida', function () {
     [$sale, $item] = saleWithLens();
-    LensOrder::factory()->create(['sale_item_id' => $item->id, 'lab_status' => LensOrderStatus::InProcess->value]);
+    LensOrder::factory()->create(['sale_item_id' => $item->id, 'lab_status' => LensOrderStatus::Sent->value]);
 
     expect($sale->canBeDelivered())->toBeFalse()
         ->and(fn () => $sale->update(['is_delivered' => true]))
@@ -50,7 +50,7 @@ it('bloquea la entrega si la orden existe pero no está recibida', function () {
 
 it('permite la entrega cuando todos los lentes están recibidos', function () {
     [$sale, $item] = saleWithLens();
-    LensOrder::factory()->received()->create(['sale_item_id' => $item->id]);
+    LensOrder::factory()->ready()->create(['sale_item_id' => $item->id]);
 
     expect($sale->canBeDelivered())->toBeTrue();
 

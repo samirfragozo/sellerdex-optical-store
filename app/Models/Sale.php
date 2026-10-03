@@ -199,11 +199,11 @@ class Sale extends Model
             ->filter(fn (SaleItem $item): bool => $item->isLens());
     }
 
-    /** True if any lens item lacks a received lab order (missing order counts as pending). */
+    /** True if any lens item lacks a ready lab order (missing order counts as pending). */
     public function hasPendingLensWork(): bool
     {
         return $this->lensItems()->contains(
-            fn (SaleItem $item): bool => $item->lensOrder?->lab_status !== LensOrderStatus::Received
+            fn (SaleItem $item): bool => $item->lensOrder?->lab_status !== LensOrderStatus::Ready
         );
     }
 

@@ -33,7 +33,7 @@ it('el campo is_delivered está habilitado cuando todos los lentes están recibi
     $sale = Sale::factory()->create(['is_delivered' => false]);
     $item = SaleItem::factory()->create(['sale_id' => $sale->id, 'product_id' => null]);
     SaleItemLensConfig::factory()->create(['sale_item_id' => $item->id]);
-    LensOrder::factory()->create(['sale_item_id' => $item->id, 'lab_status' => LensOrderStatus::Received->value]);
+    LensOrder::factory()->create(['sale_item_id' => $item->id, 'lab_status' => LensOrderStatus::Ready->value]);
 
     Livewire::test(EditSale::class, ['record' => $sale->getRouteKey()])
         ->assertFormFieldIsEnabled('is_delivered');

@@ -25,6 +25,11 @@ class LensOrderFactory extends Factory
         ];
     }
 
+    public function ready(): static
+    {
+        return $this->state(fn (): array => ['lab_status' => LensOrderStatus::Ready->value]);
+    }
+
     public function received(): static
     {
         return $this->state(fn (): array => ['lab_status' => LensOrderStatus::Received->value]);

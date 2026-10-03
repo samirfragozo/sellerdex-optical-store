@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Enums\DocumentType;
+use App\Enums\FrameType;
 use App\Enums\LensKind;
 use App\Enums\SaleDocumentType;
 use App\Models\LensCombination;
@@ -76,6 +77,15 @@ class StoreSaleRequest extends FormRequest
             'armados.*.frame.unit_price' => ['nullable', 'integer', 'min:0', 'max:100000000'],
             'armados.*.frame.unit_cost' => ['nullable', 'integer', 'min:0', 'max:100000000'],
             'armados.*.own_frame' => ['boolean'],
+            'armados.*.measurements' => ['nullable', 'array'],
+            'armados.*.measurements.od_height' => ['nullable', 'numeric', 'between:10,40'],
+            'armados.*.measurements.os_height' => ['nullable', 'numeric', 'between:10,40'],
+            'armados.*.measurements.frame_a' => ['nullable', 'numeric', 'between:30,80'],
+            'armados.*.measurements.frame_b' => ['nullable', 'numeric', 'between:15,60'],
+            'armados.*.measurements.frame_dbl' => ['nullable', 'numeric', 'between:10,30'],
+            'armados.*.measurements.frame_type' => ['nullable', Rule::enum(FrameType::class)],
+            'armados.*.own_frame_description' => ['nullable', 'string', 'max:255'],
+            'armados.*.own_frame_condition' => ['nullable', 'string', 'max:255'],
             'armados.*.slots' => ['nullable', 'array'],
             'armados.*.slots.*.kit_slot_id' => ['required', 'integer', 'exists:kit_slots,id'],
             'armados.*.slots.*.product_id' => ['nullable', 'integer', 'exists:products,id'],
@@ -270,6 +280,14 @@ class StoreSaleRequest extends FormRequest
             'armados.*.lens.description' => 'descripción del lente',
             'armados.*.frame.description' => 'descripción de la montura',
             'armados.*.frame.unit_price' => 'precio de la montura',
+            'armados.*.measurements.od_height' => __('app.fields.od_height'),
+            'armados.*.measurements.os_height' => __('app.fields.os_height'),
+            'armados.*.measurements.frame_a' => __('app.fields.frame_a'),
+            'armados.*.measurements.frame_b' => __('app.fields.frame_b'),
+            'armados.*.measurements.frame_dbl' => __('app.fields.frame_dbl'),
+            'armados.*.measurements.frame_type' => __('app.fields.frame_type'),
+            'armados.*.own_frame_description' => __('app.fields.customer_frame_description'),
+            'armados.*.own_frame_condition' => __('app.fields.customer_frame_condition'),
             'products.*.description' => 'descripción del producto',
             'products.*.quantity' => 'cantidad',
             'products.*.unit_price' => 'precio unitario',

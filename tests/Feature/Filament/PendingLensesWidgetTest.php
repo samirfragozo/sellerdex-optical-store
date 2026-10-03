@@ -17,8 +17,8 @@ it('lista los laboratorios con lentes pendientes y su conteo', function () {
     $labB = Supplier::factory()->laboratory()->create(['name' => 'Lab B']);
 
     LensOrder::factory()->count(2)->create(['supplier_id' => $labA->id, 'lab_status' => LensOrderStatus::Sent->value]);
-    LensOrder::factory()->received()->create(['supplier_id' => $labA->id]); // not pending
-    LensOrder::factory()->received()->create(['supplier_id' => $labB->id]); // lab B has no pending
+    LensOrder::factory()->ready()->create(['supplier_id' => $labA->id]); // not pending
+    LensOrder::factory()->ready()->create(['supplier_id' => $labB->id]); // lab B has no pending
 
     Livewire::test(PendingLensesWidget::class)
         ->assertCanSeeTableRecords([$labA])

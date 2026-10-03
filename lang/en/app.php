@@ -79,6 +79,17 @@ return [
     ],
 
     'fields' => [
+        'od_height' => 'OD height',
+        'os_height' => 'OS height',
+        'od_pd' => 'OD PD',
+        'os_pd' => 'OS PD',
+        'frame_a' => 'Width (A)',
+        'frame_b' => 'Height (B)',
+        'frame_dbl' => 'Bridge (DBL)',
+        'frame_type' => 'Frame type',
+        'frame_source' => 'Frame',
+        'customer_frame_description' => 'Customer\'s frame description',
+        'customer_frame_condition' => 'Customer\'s frame condition',
         'patient' => 'Patient',
         'category_key' => 'Key (internal)',
         'requires_prescription' => 'Requires prescription',
@@ -244,11 +255,37 @@ return [
         'nit' => 'Tax ID (NIT)',
     ],
 
+    'frame_type' => [
+        'full_rim' => 'Full rim',
+        'semi_rimless' => 'Semi-rimless',
+        'rimless' => 'Rimless',
+    ],
+
+    'frame_source' => [
+        'sold' => 'Sold',
+        'customer_own' => 'Customer\'s own',
+    ],
+
+    'remake_reason' => [
+        'prescription' => 'Prescription',
+        'measurements' => 'Measurements',
+        'lab_defect' => 'Lab defect',
+        'breakage' => 'Breakage',
+        'non_adaptation' => 'Non-adaptation',
+        'other' => 'Other',
+    ],
+
+    'remake_responsible' => [
+        'store' => 'Store',
+        'lab' => 'Lab',
+        'customer' => 'Customer',
+    ],
+
     'lens_order_status' => [
         'pending_assignment' => 'Pending shipment to lab',
         'sent' => 'Sent',
-        'in_process' => 'In process',
         'received' => 'Received',
+        'ready' => 'Ready for pickup',
     ],
 
     'purchase_order_status' => [

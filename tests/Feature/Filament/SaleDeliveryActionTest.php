@@ -44,7 +44,7 @@ it('no entrega la venta si el lente sigue pendiente', function () {
 
 it('entrega la venta cuando el lente está recibido', function () {
     $this->actingAs(User::factory()->admin()->create());
-    $sale = deliverySaleWithLens(LensOrderStatus::Received->value);
+    $sale = deliverySaleWithLens(LensOrderStatus::Ready->value);
 
     Livewire::test(ListSales::class)
         ->callAction(TestAction::make('markDelivered')->table($sale));

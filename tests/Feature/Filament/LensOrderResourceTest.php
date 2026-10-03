@@ -25,12 +25,12 @@ it('la pestaña pendientes filtra las órdenes no recibidas', function () {
     $this->actingAs(User::factory()->admin()->create());
 
     $pending = LensOrder::factory()->create(['lab_status' => LensOrderStatus::Sent->value]);
-    $received = LensOrder::factory()->received()->create();
+    $ready = LensOrder::factory()->ready()->create();
 
     Livewire::test(ListLensOrders::class)
         ->set('activeTab', 'pendientes')
         ->assertCanSeeTableRecords([$pending])
-        ->assertCanNotSeeTableRecords([$received]);
+        ->assertCanNotSeeTableRecords([$ready]);
 });
 
 it('shows the armado patient on the lens orders list', function () {

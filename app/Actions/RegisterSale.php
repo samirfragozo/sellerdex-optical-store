@@ -2,6 +2,7 @@
 
 namespace App\Actions;
 
+use App\Enums\FrameSource;
 use App\Enums\LensOrderStatus;
 use App\Models\PaymentMethod;
 use App\Models\Prescription;
@@ -120,12 +121,14 @@ class RegisterSale
             $groupKey = 'g'.($index + 1);
             $lens = $armado['lens'];
 
+            $prescription = isset($armado['prescription_id']) ? Prescription::find($armado['prescription_id']) : null;
+
             $resolved = (new ResolveLensPricing)->handle(
                 (int) $lens['lens_type_id'],
                 (int) $lens['lens_technology_id'],
                 (int) $lens['lens_material_id'],
                 $lens['treatment_ids'] ?? [],
-                isset($armado['prescription_id']) ? Prescription::find($armado['prescription_id']) : null,
+                $prescription,
                 isset($lens['supplier_id']) ? (int) $lens['supplier_id'] : null,
             );
 
@@ -173,10 +176,25 @@ class RegisterSale
             }
 
             // Every lens in this business is made-to-order and needs a lab order.
-            // The lab that priced the lens makes it; M7 sends the order.
+            $ownFrame = ! empty($armado['own_frame']);
+            $measurements = $armado['measurements'] ?? [];
+
             $lensItem->lensOrder()->create([
+                // The lab that priced the lens makes it; the order carries everything it needs.
                 'supplier_id' => $resolved['price_row']->supplier_id,
                 'lab_status' => LensOrderStatus::PendingAssignment,
+                'prescription_snapshot' => $prescription?->labSnapshot(),
+                'od_pd' => $prescription?->od_pd,
+                'os_pd' => $prescription?->os_pd,
+                'od_height' => $measurements['od_height'] ?? null,
+                'os_height' => $measurements['os_height'] ?? null,
+                'frame_a' => $measurements['frame_a'] ?? null,
+                'frame_b' => $measurements['frame_b'] ?? null,
+                'frame_dbl' => $measurements['frame_dbl'] ?? null,
+                'frame_type' => $measurements['frame_type'] ?? null,
+                'frame_source' => $ownFrame ? FrameSource::CustomerOwn : FrameSource::Sold,
+                'customer_frame_description' => $ownFrame ? ($armado['own_frame_description'] ?? null) : null,
+                'customer_frame_condition' => $ownFrame ? ($armado['own_frame_condition'] ?? null) : null,
             ]);
 
             if (empty($armado['own_frame']) && ! empty($armado['frame'])) {

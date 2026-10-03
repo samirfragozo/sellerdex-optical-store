@@ -79,6 +79,17 @@ return [
     ],
 
     'fields' => [
+        'od_height' => 'Altura OD',
+        'os_height' => 'Altura OS',
+        'od_pd' => 'DP OD',
+        'os_pd' => 'DP OS',
+        'frame_a' => 'Horizontal (A)',
+        'frame_b' => 'Vertical (B)',
+        'frame_dbl' => 'Puente (DBL)',
+        'frame_type' => 'Tipo de montura',
+        'frame_source' => 'Montura',
+        'customer_frame_description' => 'Descripción de la montura del cliente',
+        'customer_frame_condition' => 'Estado de la montura del cliente',
         'patient' => 'Paciente',
         'name' => 'Nombre',
         'kind' => 'Tipo',
@@ -251,11 +262,37 @@ return [
         'cancelled' => 'Cancelada',
     ],
 
+    'frame_type' => [
+        'full_rim' => 'Aro completo',
+        'semi_rimless' => 'Semi al aire',
+        'rimless' => 'Al aire',
+    ],
+
+    'frame_source' => [
+        'sold' => 'Vendida',
+        'customer_own' => 'Del cliente',
+    ],
+
+    'remake_reason' => [
+        'prescription' => 'Fórmula',
+        'measurements' => 'Medidas',
+        'lab_defect' => 'Defecto del laboratorio',
+        'breakage' => 'Rotura',
+        'non_adaptation' => 'No adaptación',
+        'other' => 'Otro',
+    ],
+
+    'remake_responsible' => [
+        'store' => 'Óptica',
+        'lab' => 'Laboratorio',
+        'customer' => 'Cliente',
+    ],
+
     'lens_order_status' => [
         'pending_assignment' => 'Pendiente de enviar al laboratorio',
         'sent' => 'Enviado',
-        'in_process' => 'En proceso',
         'received' => 'Recibido',
+        'ready' => 'Listo para entregar',
     ],
 
     'sale_status' => [

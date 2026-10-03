@@ -31,6 +31,30 @@ class Prescription extends Model
         'os_sphere', 'os_cylinder', 'os_add', 'os_prism', 'os_pd',
     ];
 
+    /**
+     * The refraction a lab needs, frozen into the lab order at sale time so
+     * later edits to the prescription never change what was ordered.
+     *
+     * @return array<string, mixed>
+     */
+    public function labSnapshot(): array
+    {
+        $snapshot = [
+            'exam_date' => $this->exam_date?->toDateString(),
+            'prescriber_name' => $this->prescriber_name,
+            'prescriber_license' => $this->prescriber_license,
+        ];
+
+        foreach (['od', 'os'] as $eye) {
+            foreach (['sphere', 'cylinder', 'axis', 'add', 'prism', 'va'] as $field) {
+                $snapshot["{$eye}_{$field}"] = $this->getAttribute("{$eye}_{$field}");
+            }
+            $snapshot["{$eye}_prism_base"] = $this->getAttribute("{$eye}_prism_base")?->value;
+        }
+
+        return $snapshot;
+    }
+
     protected function casts(): array
     {
         return [

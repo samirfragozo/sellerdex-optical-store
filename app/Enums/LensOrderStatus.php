@@ -9,8 +9,8 @@ enum LensOrderStatus: string implements HasColor, HasLabel
 {
     case PendingAssignment = 'pending_assignment';
     case Sent = 'sent';
-    case InProcess = 'in_process';
     case Received = 'received';
+    case Ready = 'ready';
 
     public function label(): string
     {
@@ -27,8 +27,8 @@ enum LensOrderStatus: string implements HasColor, HasLabel
         return match ($this) {
             self::PendingAssignment => 'danger',
             self::Sent => 'gray',
-            self::InProcess => 'warning',
-            self::Received => 'success',
+            self::Received => 'info',
+            self::Ready => 'success',
         };
     }
 
