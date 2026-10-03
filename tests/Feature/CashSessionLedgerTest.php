@@ -8,6 +8,7 @@ use App\Models\Payment;
 use App\Models\PaymentMethod;
 use App\Models\Sale;
 use App\Models\User;
+use App\Support\Readiness\SaleReadiness;
 use Illuminate\Support\Carbon;
 
 beforeEach(function () {
@@ -101,6 +102,22 @@ it('is stale once a later day starts with it still open', function () {
     Carbon::setTestNow(now()->addDay()->startOfDay()->addHour());
 
     expect($this->session->fresh()->isStale())->toBeTrue();
+});
+
+it('keeps a session open at 09:00 Bogota fresh at 19:30 Bogota and stale the next morning', function () {
+    // The beforeEach session would itself go stale on this date.
+    $this->session->update(['closed_at' => now()]);
+    Carbon::setTestNow(Carbon::parse('2026-10-05 09:00', 'America/Bogota'));
+    $session = openCashRegisterSession($this->cashier, 0);
+    $hasStaleIssue = fn (): bool => collect(SaleReadiness::for($this->cashier->company))->contains(fn ($issue): bool => $issue->key === 'cash_session_stale');
+
+    Carbon::setTestNow(Carbon::parse('2026-10-05 19:30', 'America/Bogota'));
+    expect($session->fresh()->isStale())->toBeFalse()
+        ->and($hasStaleIssue())->toBeFalse();
+
+    Carbon::setTestNow(Carbon::parse('2026-10-06 08:00', 'America/Bogota'));
+    expect($session->fresh()->isStale())->toBeTrue()
+        ->and($hasStaleIssue())->toBeTrue();
 });
 
 afterEach(fn () => Carbon::setTestNow());
