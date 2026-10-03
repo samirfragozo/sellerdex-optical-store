@@ -52,6 +52,12 @@ class SaleForm
                     ->label(__('app.fields.balance'))
                     ->visibleOn('edit')
                     ->content(fn (?Sale $record): string => $record ? '$'.number_format($record->balance, 0, ',', '.') : '—'),
+                Placeholder::make('real_margin')
+                    ->label(__('app.fields.real_margin'))
+                    // A record only exists when editing; costs are internal, so only admins see the margin.
+                    // (visible() replaces visibleOn(), so the record check stands in for the 'edit' operation.)
+                    ->visible(fn (?Sale $record): bool => $record !== null && auth()->user()?->isAdmin() === true)
+                    ->content(fn (?Sale $record): string => $record ? '$'.number_format($record->realMargin(), 0, ',', '.') : '—'),
                 Textarea::make('notes')
                     ->label(__('app.fields.notes'))
                     ->columnSpanFull(),

@@ -165,6 +165,7 @@ return [
         'tax' => 'Impuesto',
         'total' => 'Total',
         'balance' => 'Saldo',
+        'real_margin' => 'Margen real',
         'sold_at' => 'Fecha de venta',
         'delivered_at' => 'Fecha de entrega',
         'is_delivered' => '¿Entregado?',

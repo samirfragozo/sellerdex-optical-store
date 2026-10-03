@@ -57,3 +57,17 @@ it('rejects a crafted customer from another company on save', function () {
         ->call('create')
         ->assertHasFormErrors(['customer_id']);
 });
+
+it('shows the real margin on the sale edit page to admins only', function () {
+    $admin = User::factory()->admin()->create();
+    $this->actingAs($admin);
+    $sale = Sale::factory()->create();
+    SaleItem::factory()->create(['sale_id' => $sale->id]);
+
+    $this->get("/admin/sales/{$sale->id}/edit")
+        ->assertSuccessful()->assertSee('Margen real');
+
+    $seller = User::factory()->seller()->create(['company_id' => $admin->company_id]);
+    $this->actingAs($seller)->get("/admin/sales/{$sale->id}/edit")
+        ->assertSuccessful()->assertDontSee('Margen real');
+});

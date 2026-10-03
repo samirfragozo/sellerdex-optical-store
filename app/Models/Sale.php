@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\LensOrderStatus;
+use App\Enums\RemakeResponsible;
 use App\Enums\SaleDocumentType;
 use App\Enums\SaleStatus;
 use App\Exceptions\PendingLensOrderException;
@@ -18,6 +19,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 #[Fillable(['company_id', 'number', 'customer_id', 'seller_id', 'document_type', 'status', 'subtotal', 'discount', 'discount_percent', 'surcharge_percent', 'tax_amount', 'total', 'is_delivered', 'delivered_at', 'sold_at', 'notes', 'created_by'])]
 class Sale extends Model
@@ -210,6 +212,23 @@ class Sale extends Model
     public function canBeDelivered(): bool
     {
         return ! $this->hasPendingLensWork();
+    }
+
+    /**
+     * What the sale really earns: revenue without taxes (the payment surcharge
+     * is left out — it pays the platform's fee) minus the cost of what was
+     * sold and of every remake the store was responsible for.
+     */
+    public function realMargin(): int
+    {
+        $revenue = $this->subtotal - $this->discount - $this->tax_amount;
+        $cost = (int) $this->items()->sum(DB::raw('unit_cost * quantity'));
+        $storeRemakes = (int) LensOrder::query()
+            ->whereIn('sale_item_id', $this->items()->select('id'))
+            ->where('remake_responsible', RemakeResponsible::Store->value)
+            ->sum('remake_cost');
+
+        return $revenue - $cost - $storeRemakes;
     }
 
     public function customer(): BelongsTo

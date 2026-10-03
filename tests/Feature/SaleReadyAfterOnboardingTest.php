@@ -1,6 +1,9 @@
 <?php
 
 use App\Enums\KitTrigger;
+use App\Enums\LensOrderStatus;
+use App\Enums\RemakeReason;
+use App\Enums\RemakeResponsible;
 use App\Enums\VatRegime;
 use App\Filament\Pages\Onboarding;
 use App\Models\Customer;
@@ -238,4 +241,38 @@ it('prices a lens by the prescription range at the lab onboarding set up', funct
 
     expect($sell('-2.00'))->toBe($base->price + $combination->installation_price)
         ->and($sell('-8.00'))->toBe($base->price + 100_000 + $combination->installation_price);
+});
+
+it('lowers the sale margin when the store remakes a lens', function () {
+    $admin = registerAndOnboard('m7@optica.test', VatRegime::NotResponsible);
+    openCashRegisterSession($admin);
+    $customer = Customer::factory()->create();
+    $combination = LensCombination::firstOrFail();
+    // Addition too, in case that combination is multifocal.
+    $rx = Prescription::factory()->create(['customer_id' => $customer->id, 'od_pd' => '31.0', 'os_pd' => '31.0', 'od_add' => '2.00', 'os_add' => '2.00']);
+
+    $this->postJson(route('pos.store'), [
+        'document_type' => 'order', 'customer_id' => $customer->id, 'payments' => [],
+        'armados' => [['prescription_id' => $rx->id, 'own_frame' => true,
+            // Heights too: the first reference combination may be multifocal.
+            'measurements' => ['frame_type' => 'full_rim', 'od_height' => 18, 'os_height' => 18],
+            'lens' => [
+                'description' => 'Lente', 'quantity' => 1, 'treatment_ids' => [],
+                'lens_type_id' => $combination->lens_type_id,
+                'lens_technology_id' => $combination->lens_technology_id,
+                'lens_material_id' => $combination->lens_material_id,
+            ]]],
+    ])->assertOk();
+
+    $sale = Sale::latest('id')->first();
+    $order = $sale->lensItems()->first()->lensOrder;
+    $marginBefore = $sale->realMargin();
+
+    expect($order->missingForSending())->toBe([]);
+    $order->markSent();
+    $order->fresh()->update(['lab_status' => LensOrderStatus::Received]);
+    $order->fresh()->remake(RemakeReason::Measurements, RemakeResponsible::Store, 45_000);
+
+    expect($sale->fresh()->realMargin())->toBe($marginBefore - 45_000)
+        ->and($sale->fresh()->canBeDelivered())->toBeFalse();
 });

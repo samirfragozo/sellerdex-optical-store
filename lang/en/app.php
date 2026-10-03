@@ -183,6 +183,7 @@ return [
         'tax' => 'Tax',
         'total' => 'Total',
         'balance' => 'Balance',
+        'real_margin' => 'Real margin',
         'sold_at' => 'Sale date',
         'delivered_at' => 'Delivery date',
         'is_delivered' => 'Delivered?',
