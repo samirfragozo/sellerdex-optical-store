@@ -3,6 +3,7 @@
 use App\Enums\StockMovementType;
 use App\Filament\Resources\Products\Pages\CreateProduct;
 use App\Filament\Resources\Products\Pages\EditProduct;
+use App\Filament\Resources\Products\Pages\ListProducts;
 use App\Filament\Resources\Products\RelationManagers\StockMovementsRelationManager;
 use App\Filament\Widgets\LowStockWidget;
 use App\Models\Product;
@@ -108,4 +109,51 @@ it('does not send stock to the POS when the shop does not track inventory', func
 
     $this->get(route('pos.index'))->assertInertia(fn ($page) => $page
         ->where('products.data', fn ($products) => collect($products)->every(fn ($p) => $p['stock'] === null)));
+});
+
+it('does not offer the adjustment on a trashed product', function () {
+    $this->product->delete();
+
+    Livewire::test(EditProduct::class, ['record' => $this->product->getRouteKey()])
+        ->assertActionHidden('adjustStock');
+});
+
+it('does not offer the adjustment or the kardex to a seller', function () {
+    $this->actingAs(User::factory()->seller()->forCompany($this->admin->company)->create());
+
+    expect(StockMovementsRelationManager::canViewForRecord($this->product, EditProduct::class))->toBeFalse();
+
+    Livewire::test(ListProducts::class)
+        ->assertTableActionHidden('adjustStock', $this->product);
+});
+
+it('records no initial movement when the shop does not track inventory', function () {
+    $this->admin->company->update(['tracks_inventory' => false]);
+
+    Livewire::test(CreateProduct::class)
+        ->fillForm(['name' => 'Paño', 'price' => 2000, 'cost' => 500, 'product_category_id' => $this->product->product_category_id, 'is_active' => true, 'stock' => 12])
+        ->call('create')
+        ->assertHasNoFormErrors();
+
+    $created = Product::where('name', 'Paño')->sole();
+    expect($created->stock)->not->toBe(12)
+        ->and(StockMovement::count())->toBe(0);
+});
+
+it('records no initial movement for a product that is not stockable', function () {
+    Livewire::test(CreateProduct::class)
+        ->fillForm(['name' => 'Servicio', 'price' => 2000, 'cost' => 500, 'product_category_id' => $this->product->product_category_id, 'is_stockable' => false, 'is_active' => true, 'stock' => 12])
+        ->call('create')
+        ->assertHasNoFormErrors();
+
+    expect(Product::where('name', 'Servicio')->sole()->stock)->not->toBe(12)
+        ->and(StockMovement::count())->toBe(0);
+});
+
+it('shows the stock column only when the shop tracks inventory', function () {
+    Livewire::test(ListProducts::class)->assertTableColumnVisible('stock');
+
+    $this->admin->company->update(['tracks_inventory' => false]);
+
+    Livewire::test(ListProducts::class)->assertTableColumnHidden('stock');
 });

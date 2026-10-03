@@ -26,7 +26,9 @@ class StockMovementsRelationManager extends RelationManager
 
     public static function canViewForRecord(Model $ownerRecord, string $pageClass): bool
     {
-        return $ownerRecord->is_stockable
+        // Admin only (like the low-stock widget): there is no StockMovement policy, so the parent check lets any product viewer in.
+        return auth()->user()?->isAdmin() === true
+            && $ownerRecord->is_stockable
             && Company::current()->tracksInventory()
             && parent::canViewForRecord($ownerRecord, $pageClass);
     }

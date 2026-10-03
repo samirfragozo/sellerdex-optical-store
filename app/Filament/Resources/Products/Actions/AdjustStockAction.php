@@ -19,7 +19,7 @@ class AdjustStockAction
         return Action::make('adjustStock')
             ->label(__('app.inventory.adjust'))
             ->icon('heroicon-o-adjustments-horizontal')
-            ->visible(fn (Product $record): bool => $record->is_stockable && Company::current()->tracksInventory())
+            ->visible(fn (Product $record): bool => $record->is_stockable && ! $record->trashed() && Company::current()->tracksInventory())
             ->authorize('update')
             ->schema(fn (Product $record): array => [
                 TextInput::make('counted')
@@ -35,7 +35,7 @@ class AdjustStockAction
                 TextInput::make('reason')->label(__('app.inventory.reason'))->required()->maxLength(255),
             ])
             ->action(function (Product $record, array $data): void {
-                StockLedger::record($record, StockMovementType::Adjustment, (int) $data['counted'] - (int) $record->fresh()->stock, reason: $data['reason']);
+                StockLedger::setBalance($record, (int) $data['counted'], StockMovementType::Adjustment, reason: $data['reason']);
                 Notification::make()->success()->title(__('app.inventory.adjusted'))->send();
             });
     }

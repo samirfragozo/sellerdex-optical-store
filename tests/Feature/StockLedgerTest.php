@@ -114,3 +114,19 @@ it('does not let another company see a movement', function () {
 
     expect(StockMovement::count())->toBe(0);
 });
+
+it('sets the balance from the locked stock, so a sale in between cannot skew the count', function () {
+    // The adjustment form read 10; a sale of 2 lands before the count is written.
+    StockLedger::record($this->product, StockMovementType::Sale, -2);
+    $movement = StockLedger::setBalance($this->product, 7, StockMovementType::Adjustment, reason: 'Conteo');
+
+    expect($movement->quantity)->toBe(-1)
+        ->and($movement->balance_after)->toBe(7)
+        ->and($this->product->fresh()->stock)->toBe(7);
+});
+
+it('writes nothing when the counted balance already equals the stock', function () {
+    expect(StockLedger::setBalance($this->product, 10, StockMovementType::Adjustment, reason: 'x'))->toBeNull()
+        ->and(StockMovement::count())->toBe(0)
+        ->and($this->product->fresh()->stock)->toBe(10);
+});
