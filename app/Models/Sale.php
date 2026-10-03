@@ -122,11 +122,13 @@ class Sale extends Model
         $this->adjustStock(decrement: false);
     }
 
+    /** Only the units still sold move: returned units were already restocked or written off by their return. */
     private function adjustStock(bool $decrement): void
     {
         foreach ($this->items()->with('product')->get() as $item) {
-            if ($item->product !== null) {
-                StockLedger::record($item->product, StockMovementType::Sale, $decrement ? -$item->quantity : $item->quantity, $this);
+            $quantity = $item->returnableQuantity();
+            if ($item->product !== null && $quantity > 0) {
+                StockLedger::record($item->product, StockMovementType::Sale, $decrement ? -$quantity : $quantity, $this);
             }
         }
     }

@@ -383,6 +383,15 @@ return [
 
     'money_destination' => ['refund' => 'Reembolso', 'sale_balance' => 'Saldo de la venta', 'store_credit' => 'Saldo a favor', 'combined' => 'Combinado'],
 
+    'sale_return' => [
+        'cash_needs_session' => 'Abre tu caja para reembolsar en efectivo.',
+        'too_many_units' => 'Solo quedan :count unidades por devolver.',
+        'money_exceeds' => 'Puedes devolver como máximo $:max en dinero o saldo a favor.',
+        'void_money_mismatch' => 'En una anulación debes devolver $:amount entre reembolso y saldo a favor.',
+        'cannot_void' => 'Solo se pueden anular ventas no entregadas ni anuladas.',
+        'amount_exceeds' => 'El ajuste no puede superar el valor de la venta.',
+    ],
+
     'store_credit' => [
         'needs_customer' => 'El saldo a favor necesita un cliente en la venta.',
         'not_enough' => 'El cliente solo tiene $:balance de saldo a favor.',

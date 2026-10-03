@@ -78,6 +78,7 @@ class Payment extends Model
 
         // Deleting a grant must not leave the customer with negative credit; restoring a spend must still be covered.
         static::deleting(function (Payment $payment): void {
+            $payment->lockRow();
             $delta = $payment->ledgerDelta(active: false);
             if ($delta < 0) {
                 $payment->assertCreditCovers($payment->ledgerCustomerId(), $delta, 'app.store_credit.would_go_negative');
@@ -85,6 +86,7 @@ class Payment extends Model
         });
         static::deleted(fn (Payment $payment) => $payment->syncStoreCredit(active: false));
         static::restoring(function (Payment $payment): void {
+            $payment->lockRow();
             $delta = $payment->ledgerDelta(active: true);
             if ($delta < 0) {
                 $payment->assertCreditCovers($payment->ledgerCustomerId(), $delta, 'app.store_credit.would_go_negative');
@@ -118,6 +120,12 @@ class Payment extends Model
     public function restore(): bool
     {
         return DB::transaction(fn (): bool => $this->restoreWithoutTransaction());
+    }
+
+    /** Lock this payment so two concurrent deletes (or restores) can't both compute and write the same reversal. */
+    private function lockRow(): void
+    {
+        static::withoutGlobalScopes()->whereKey($this->getKey())->lockForUpdate()->first();
     }
 
     /** Throw unless the customer's credit, locked for the check, stays at or above zero after $delta. */

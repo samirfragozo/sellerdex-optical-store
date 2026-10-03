@@ -5,6 +5,7 @@ use App\Filament\Resources\Sales\Pages\EditSale;
 use App\Filament\Resources\Sales\RelationManagers\PaymentsRelationManager;
 use App\Models\Company;
 use App\Models\Customer;
+use App\Models\CustomerCredit;
 use App\Models\Payment;
 use App\Models\PaymentMethod;
 use App\Models\Sale;
@@ -174,4 +175,16 @@ it('refuses to delete a grant that would leave the customer below zero', functio
     expect(fn () => $grant->delete())->toThrow(ValidationException::class)
         ->and($grant->fresh()->trashed())->toBeFalse()
         ->and($this->customer->creditBalance())->toBe(0);
+});
+
+it('reverses a store-credit payment only once when it is deleted twice', function () {
+    [, , $spend] = creditedPayments();
+    $stale = Payment::find($spend->id);
+
+    $spend->delete();
+    $stale->delete();
+    $spend->delete();
+
+    expect($this->customer->creditBalance())->toBe(30_000)
+        ->and(CustomerCredit::where('source_id', $spend->id)->where('amount', '>', 0)->count())->toBe(1);
 });

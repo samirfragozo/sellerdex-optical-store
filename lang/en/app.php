@@ -385,6 +385,15 @@ return [
 
     'money_destination' => ['refund' => 'Refund', 'sale_balance' => 'Sale balance', 'store_credit' => 'Store credit', 'combined' => 'Combined'],
 
+    'sale_return' => [
+        'cash_needs_session' => 'Open your cash session to refund in cash.',
+        'too_many_units' => 'Only :count units left to return.',
+        'money_exceeds' => 'You can give back at most $:max as money or store credit.',
+        'void_money_mismatch' => 'A void must give back $:amount between refund and store credit.',
+        'cannot_void' => 'Only undelivered, not yet voided sales can be voided.',
+        'amount_exceeds' => "The adjustment can't exceed the sale value.",
+    ],
+
     'store_credit' => [
         'needs_customer' => 'Store credit needs a customer on the sale.',
         'not_enough' => 'The customer only has $:balance in store credit.',
