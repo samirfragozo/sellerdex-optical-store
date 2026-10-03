@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Company;
 use App\Models\Customer;
 use App\Models\CustomerCredit;
 use App\Models\PaymentMethod;
@@ -31,13 +32,54 @@ it('pays part of a sale with the customer store credit', function () {
         ->and(Sale::sole()->balance)->toBe(20_000);
 });
 
-it('rejects spending more credit than the customer has, or without a customer', function () {
+it('rejects spending more credit than the customer has with a specific message', function () {
     $this->postJson(route('pos.store'), storeCreditSale($this->customer->id, 40_000))
-        ->assertStatus(422)->assertJsonValidationErrors('payments');
-    $this->postJson(route('pos.store'), storeCreditSale(null, 10_000))
-        ->assertStatus(422)->assertJsonValidationErrors('payments');
+        ->assertStatus(422)
+        ->assertJsonValidationErrors(['payments' => __('app.validation.store_credit_exceeds_balance', ['balance' => '$30.000'])]);
 
     expect(Sale::count())->toBe(0);
+});
+
+it('sums several store credit payments against the balance', function () {
+    $payload = storeCreditSale($this->customer->id, 20_000);
+    $payload['payments'][] = ['payment_method_id' => $this->credit->id, 'amount' => 20_000];
+
+    $this->postJson(route('pos.store'), $payload)
+        ->assertStatus(422)
+        ->assertJsonValidationErrors(['payments' => __('app.validation.store_credit_exceeds_balance', ['balance' => '$30.000'])]);
+
+    expect(Sale::count())->toBe(0);
+});
+
+it('rejects store credit without a customer or with an inline new customer', function () {
+    $message = __('app.validation.store_credit_needs_customer');
+
+    $this->postJson(route('pos.store'), storeCreditSale(null, 10_000))
+        ->assertStatus(422)->assertJsonValidationErrors(['payments' => $message]);
+
+    $this->postJson(route('pos.store'), storeCreditSale(null, 10_000) + ['customer' => [
+        'name' => 'Nuevo', 'last_name' => 'Cliente', 'document_type' => 'CC', 'id_number' => '12345', 'phone' => '3001234567',
+    ]])->assertStatus(422)->assertJsonValidationErrors(['payments' => $message]);
+
+    expect(Sale::count())->toBe(0);
+});
+
+it('rejects spending the credit of a customer from another company', function () {
+    $foreign = Customer::factory()->for(Company::factory()->create())->create();
+    CustomerCredit::withoutGlobalScopes()->create(['company_id' => $foreign->company_id, 'customer_id' => $foreign->id, 'amount' => 50_000]);
+
+    $this->postJson(route('pos.store'), storeCreditSale($foreign->id, 10_000))
+        ->assertStatus(422)->assertJsonValidationErrors('customer_id');
+
+    expect(Sale::count())->toBe(0);
+});
+
+it('never charges a surcharge on the store credit part of a payment', function () {
+    $this->credit->update(['surcharge_percent' => 5]);
+
+    $this->postJson(route('pos.store'), storeCreditSale($this->customer->id, 30_000))->assertOk();
+
+    expect((float) Sale::sole()->surcharge_percent)->toBe(0.0);
 });
 
 it('shows the customer credit in the POS search and keeps the method out of the normal list', function () {

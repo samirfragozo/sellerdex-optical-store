@@ -75,13 +75,16 @@ function selectPaymentMethod(paymentMethodId: number): void {
 }
 
 function selectStoreCredit(): void {
-    if (props.storeCreditMethodId === null) {
+    if (
+        props.storeCreditMethodId === null ||
+        props.checkout.remaining.value <= 0
+    ) {
         return;
     }
 
     props.checkout.addPayment(
         props.storeCreditMethodId,
-        Math.min(props.checkout.amount.value, availableCredit.value),
+        Math.min(availableCredit.value, props.checkout.remaining.value),
     );
     // eslint-disable-next-line vue/no-mutating-props
     props.checkout.amount.value = Math.max(props.checkout.remaining.value, 0);
@@ -174,7 +177,7 @@ watch(
                         "
                         type="button"
                         class="rounded-lg border border-input bg-transparent px-4 py-2.5 text-sm font-medium hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50"
-                        :disabled="checkout.amount.value <= 0"
+                        :disabled="checkout.remaining.value <= 0"
                         @click="selectStoreCredit"
                     >
                         {{

@@ -30,8 +30,9 @@ const props = withDefaults(
         optional?: boolean;
         inputId?: string;
         label?: string;
+        showCredit?: boolean;
     }>(),
-    { optional: true, inputId: 'customer_id' },
+    { optional: true, inputId: 'customer_id', showCredit: false },
 );
 
 const customerId = defineModel<number | null>('customerId', { required: true });
@@ -146,7 +147,7 @@ function onCustomerCreated(customer: CreatedCustomer): void {
         </div>
         <InputError class="mt-1" :message="props.errors?.customer_id" />
         <p
-            v-if="creditBalance > 0"
+            v-if="props.showCredit && creditBalance > 0"
             class="mt-1 text-sm font-medium text-primary"
         >
             {{

@@ -100,7 +100,9 @@ class RegisterSale
             return 0.0;
         }
 
+        // Store credit is the customer's own money: it never carries a surcharge.
         $surchargeByMethod = PaymentMethod::whereIn('id', $payments->pluck('payment_method_id')->unique())
+            ->where('is_store_credit', false)
             ->pluck('surcharge_percent', 'id');
 
         $weighted = $payments->sum(

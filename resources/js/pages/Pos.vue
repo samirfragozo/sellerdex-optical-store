@@ -309,6 +309,14 @@ watch(
     { deep: true },
 );
 
+// Store credit belongs to the customer it was added for: drop those payments
+// when the customer changes, so another customer's balance is never debited.
+watch(customerId, () => {
+    checkout.payments.value = checkout.payments.value.filter(
+        (p) => p.payment_method_id !== props.storeCreditMethodId,
+    );
+});
+
 async function confirmCheckout(): Promise<void> {
     const cartPayload = cart.buildPayload();
 
@@ -435,6 +443,7 @@ async function confirmCheckout(): Promise<void> {
                     v-model:customer-id="customerId"
                     v-model:selected-label="customerLabel"
                     v-model:credit-balance="customerCreditBalance"
+                    show-credit
                     :today="today"
                 />
 
