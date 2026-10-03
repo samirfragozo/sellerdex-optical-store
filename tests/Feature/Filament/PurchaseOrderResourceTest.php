@@ -29,6 +29,7 @@ it('prohíbe a un vendedor el módulo de compras', function () {
 });
 
 it('repone stock cuando la orden se marca recibida', function () {
+    test()->actingAs(User::factory()->admin()->create());
     $product = Product::factory()->create(['is_stockable' => true, 'stock' => 2]);
     $order = PurchaseOrder::factory()->create();
     PurchaseOrderItem::factory()->create([

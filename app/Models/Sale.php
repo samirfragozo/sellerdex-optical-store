@@ -6,7 +6,9 @@ use App\Enums\LensOrderStatus;
 use App\Enums\RemakeResponsible;
 use App\Enums\SaleDocumentType;
 use App\Enums\SaleStatus;
+use App\Enums\StockMovementType;
 use App\Exceptions\PendingLensOrderException;
+use App\Support\StockLedger;
 use App\Traits\BelongsToCompany;
 use Database\Factories\SaleFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -122,10 +124,8 @@ class Sale extends Model
     private function adjustStock(bool $decrement): void
     {
         foreach ($this->items()->with('product')->get() as $item) {
-            if ($item->product?->is_stockable) {
-                $decrement
-                    ? $item->product->decrement('stock', $item->quantity)
-                    : $item->product->increment('stock', $item->quantity);
+            if ($item->product !== null) {
+                StockLedger::record($item->product, StockMovementType::Sale, $decrement ? -$item->quantity : $item->quantity, $this);
             }
         }
     }

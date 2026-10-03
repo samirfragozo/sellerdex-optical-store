@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use App\Enums\PurchaseOrderStatus;
+use App\Enums\StockMovementType;
+use App\Support\StockLedger;
 use App\Traits\BelongsToCompany;
 use Database\Factories\PurchaseOrderFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -56,8 +58,8 @@ class PurchaseOrder extends Model
 
             $this->loadMissing('items.product');
             foreach ($this->items as $item) {
-                if ($item->product?->is_stockable === true) {
-                    $item->product->increment('stock', $item->quantity);
+                if ($item->product !== null) {
+                    StockLedger::record($item->product, StockMovementType::Purchase, $item->quantity, $this);
                 }
             }
 
@@ -77,8 +79,8 @@ class PurchaseOrder extends Model
             if ($locked->status === PurchaseOrderStatus::Received) {
                 $this->loadMissing('items.product');
                 foreach ($this->items as $item) {
-                    if ($item->product?->is_stockable === true) {
-                        $item->product->decrement('stock', $item->quantity);
+                    if ($item->product !== null) {
+                        StockLedger::record($item->product, StockMovementType::Purchase, -$item->quantity, $this);
                     }
                 }
             }

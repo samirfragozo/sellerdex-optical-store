@@ -75,6 +75,11 @@ class Product extends Model
         return $this->belongsTo(self::class, 'base_product_id');
     }
 
+    public function stockMovements(): HasMany
+    {
+        return $this->hasMany(StockMovement::class)->latest('id');
+    }
+
     public function variants(): HasMany
     {
         return $this->hasMany(self::class, 'base_product_id');

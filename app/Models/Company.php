@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
-#[Fillable(['name', 'slug', 'tax_id', 'vat_regime', 'sale_number_prefix', 'next_sale_number', 'prescription_validity_months', 'address', 'phones', 'logo', 'is_active', 'plan', 'onboarding_step', 'onboarded_at', 'armado_frame_price_mode', 'armado_frame_discount_percent'])]
+#[Fillable(['name', 'slug', 'tax_id', 'vat_regime', 'sale_number_prefix', 'next_sale_number', 'prescription_validity_months', 'address', 'phones', 'logo', 'is_active', 'plan', 'onboarding_step', 'onboarded_at', 'armado_frame_price_mode', 'armado_frame_discount_percent', 'tracks_inventory', 'inventory_counted_at'])]
 class Company extends Model
 {
     /** @use HasFactory<CompanyFactory> */
@@ -32,7 +32,15 @@ class Company extends Model
             'onboarded_at' => 'datetime',
             'armado_frame_price_mode' => ArmadoFramePriceMode::class,
             'armado_frame_discount_percent' => 'decimal:2',
+            'tracks_inventory' => 'boolean',
+            'inventory_counted_at' => 'datetime',
         ];
+    }
+
+    /** Whether the shop keeps stock and a kardex (null — not decided yet — counts as no). */
+    public function tracksInventory(): bool
+    {
+        return $this->tracks_inventory === true;
     }
 
     public function needsOnboarding(): bool

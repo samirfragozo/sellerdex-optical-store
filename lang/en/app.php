@@ -333,6 +333,14 @@ return [
         'ready' => 'Ready for pickup',
     ],
 
+    'stock_movement_type' => [
+        'initial' => 'Initial count',
+        'sale' => 'Sale',
+        'sale_return' => 'Return',
+        'purchase' => 'Purchase',
+        'adjustment' => 'Adjustment',
+    ],
+
     'purchase_order_status' => [
         'draft' => 'Draft',
         'sent' => 'Sent',

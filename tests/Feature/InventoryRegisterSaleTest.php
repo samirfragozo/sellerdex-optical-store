@@ -11,6 +11,8 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 uses(RefreshDatabase::class);
 
 it('decrements a real frame stock when sold via RegisterSale', function () {
+    $seller = User::factory()->seller()->create();
+    $this->actingAs($seller);
     $this->seed(ProductCategorySeeder::class);
     $this->seed(ProductCatalogSeeder::class);
 
@@ -23,7 +25,7 @@ it('decrements a real frame stock when sold via RegisterSale', function () {
         'products' => [
             ['product_id' => $frame->id, 'description' => $frame->name, 'quantity' => 1, 'unit_price' => 0],
         ],
-    ], User::factory()->seller()->create());
+    ], $seller);
 
     // No combo slots are installed, so the frame is the only line.
     expect($sale->items)->toHaveCount(1)

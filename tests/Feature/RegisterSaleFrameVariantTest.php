@@ -71,6 +71,8 @@ it('sells a frame variant and decrements its own stock, not the base or a siblin
 });
 
 it('sells a frame variant as a standalone loose product and adds a free funda', function () {
+    $seller = User::factory()->seller()->create();
+    $this->actingAs($seller);
     $frameCategory = ProductCategory::factory()->create(['key' => 'frame']);
     $base = Product::factory()->create(['product_category_id' => $frameCategory->id, 'is_stockable' => false, 'stock' => null]);
 
@@ -93,7 +95,6 @@ it('sells a frame variant as a standalone loose product and adds a free funda', 
     $funda = Product::factory()->create(['product_category_id' => $accessoryCategory->id, 'sku' => 'ACC-FUNDA', 'price' => 3000]);
 
     $customer = Customer::factory()->create();
-    $seller = User::factory()->seller()->create();
     KitSlot::factory()->create([
         'company_id' => $seller->company_id, 'trigger' => KitTrigger::Category, 'trigger_category_id' => $frameCategory->id,
         'slot_category_id' => $accessoryCategory->id, 'default_product_id' => $funda->id,

@@ -300,6 +300,14 @@ return [
         'nit' => 'NIT',
     ],
 
+    'stock_movement_type' => [
+        'initial' => 'Conteo inicial',
+        'sale' => 'Venta',
+        'sale_return' => 'Devolución',
+        'purchase' => 'Compra',
+        'adjustment' => 'Ajuste',
+    ],
+
     'purchase_order_status' => [
         'draft' => 'Borrador',
         'sent' => 'Enviada',

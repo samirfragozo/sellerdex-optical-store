@@ -2,8 +2,10 @@
 
 namespace App\Models;
 
+use App\Enums\StockMovementType;
 use App\Enums\TaxTreatment;
 use App\Enums\VatRegime;
+use App\Support\StockLedger;
 use App\Traits\BelongsToCompany;
 use Database\Factories\SaleItemFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -49,7 +51,7 @@ class SaleItem extends Model
 
         static::created(function (SaleItem $item): void {
             if ($item->movesStock()) {
-                $item->product->decrement('stock', $item->quantity);
+                StockLedger::record($item->product, StockMovementType::Sale, -$item->quantity, $item);
             }
         });
 
@@ -58,16 +60,14 @@ class SaleItem extends Model
                 return;
             }
             $delta = (int) $item->quantity - (int) $item->getOriginal('quantity');
-            if ($delta > 0) {
-                $item->product->decrement('stock', $delta);
-            } elseif ($delta < 0) {
-                $item->product->increment('stock', -$delta);
+            if ($delta !== 0) {
+                StockLedger::record($item->product, StockMovementType::Sale, -$delta, $item);
             }
         });
 
         static::deleted(function (SaleItem $item): void {
             if ($item->movesStock()) {
-                $item->product->increment('stock', $item->quantity);
+                StockLedger::record($item->product, StockMovementType::Sale, $item->quantity, $item);
             }
         });
     }

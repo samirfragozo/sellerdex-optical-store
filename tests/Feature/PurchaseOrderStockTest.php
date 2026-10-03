@@ -4,9 +4,13 @@ use App\Enums\PurchaseOrderStatus;
 use App\Models\Product;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderItem;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
+
+// Stock is only tracked for a company, so the data needs a signed-in company user.
+beforeEach(fn () => test()->actingAs(User::factory()->create()));
 
 function poStockableProduct(int $stock = 5): Product
 {

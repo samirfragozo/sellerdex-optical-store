@@ -19,12 +19,19 @@ class CompanyFactory extends Factory
             'is_active' => true,
             'plan' => 'free',
             'onboarded_at' => now(),
+            'tracks_inventory' => true,
+            'inventory_counted_at' => now(),
         ];
     }
 
     public function inactive(): static
     {
         return $this->state(['is_active' => false]);
+    }
+
+    public function withoutInventory(): static
+    {
+        return $this->state(['tracks_inventory' => false]);
     }
 
     public function notOnboarded(): static
