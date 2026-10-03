@@ -692,8 +692,7 @@ return [
 
     'cash_report' => [
         'title' => 'Cierre de caja',
-        'sales' => 'Ventas',
-        'sales_count' => ':count ventas',
+        'sales_count' => ':count ventas con pago',
         'methods' => 'Medios de pago',
         'movements' => 'Movimientos de caja',
         'returns_none' => 'Devoluciones: ninguna',

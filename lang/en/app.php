@@ -692,8 +692,7 @@ return [
 
     'cash_report' => [
         'title' => 'Cash session close',
-        'sales' => 'Sales',
-        'sales_count' => ':count sales',
+        'sales_count' => ':count sales with a payment',
         'methods' => 'Payment methods',
         'movements' => 'Cash movements',
         'returns_none' => 'Returns: none',

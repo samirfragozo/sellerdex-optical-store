@@ -102,6 +102,8 @@ it('prints the close report with methods, movements, expected, counted and diffe
         ->assertSee($this->cash->name)
         ->assertSee('50.000')
         ->assertSee(__('app.pos.cash_session.deposit'))
+        ->assertSee(__('app.cash_session_admin.payments_count'))
+        ->assertSee(__('app.cash_report.sales_count', ['count' => 1]))
         ->assertSee(__('app.cash_report.returns_none'));
 });
 

@@ -18,7 +18,7 @@
         <tr><td colspan="2"><strong>{{ __('app.pos.cash_session.opening_cash') }}:</strong> {{ $fmt($session->opening_cash) }}</td></tr>
     </table>
 
-    <h4 style="margin:8px 0 2px">{{ __('app.cash_report.sales') }}</h4>
+    <h4 style="margin:8px 0 2px">{{ __('app.cash_session_admin.payments_count') }}</h4>
     <table>
         <tr>
             <td>{{ __('app.cash_report.sales_count', ['count' => $salesCount]) }}</td>
