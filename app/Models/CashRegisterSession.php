@@ -157,6 +157,18 @@ class CashRegisterSession extends Model
         return $this->closed_at === null && $this->opened_at->lt(today());
     }
 
+    /** Closed with a difference above the shop's threshold and no explanation yet (blind closes ask for it afterwards). */
+    public function needsNote(): bool
+    {
+        if ($this->closed_at === null || filled($this->notes)) {
+            return false;
+        }
+
+        $threshold = (int) Company::withoutGlobalScopes()->whereKey($this->company_id)->value('cash_difference_note_threshold');
+
+        return $this->counts()->withoutGlobalScopes()->get()->contains(fn (CashRegisterSessionCount $count): bool => abs($count->difference) > $threshold);
+    }
+
     /** One drawer per shop: tomorrow's float is what the last close left in it. */
     public static function suggestedOpeningCash(Company $company): int
     {
@@ -179,6 +191,7 @@ class CashRegisterSession extends Model
             'cash_left' => $this->cash_left,
             'closed_by_admin' => $this->closed_by_admin,
             'is_stale' => $this->isStale(),
+            'needs_note' => $this->needsNote(),
         ];
     }
 }

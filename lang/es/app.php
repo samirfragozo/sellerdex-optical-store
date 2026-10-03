@@ -585,6 +585,7 @@ return [
             'cash_left_too_high' => 'El efectivo que queda no puede ser mayor que el contado.',
             'deposit' => 'Retiro para consignar',
             'invalid_method' => 'Uno de los métodos de pago contados no existe.',
+            'note_not_needed' => 'Esta sesión no necesita una nota.',
         ],
 
         'catalog' => [

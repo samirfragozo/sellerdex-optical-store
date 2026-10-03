@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\CashRegisterSession\CloseController;
 use App\Http\Controllers\CashRegisterSession\MovementController;
+use App\Http\Controllers\CashRegisterSession\NoteController;
 use App\Http\Controllers\CashRegisterSession\PreviewController;
 use App\Http\Controllers\CashRegisterSessionController;
 use App\Http\Controllers\Customer\PrescriptionsController as CustomerPrescriptionsController;
@@ -45,6 +46,8 @@ Route::middleware(['auth', 'verified', EnsureCompanyIsOnboarded::class])->group(
         ->name('pos.cash-sessions.close');
     Route::post('pos/cash-sessions/{cashRegisterSession}/movements', MovementController::class)
         ->name('pos.cash-sessions.movements.store');
+    Route::post('pos/cash-sessions/{cashRegisterSession}/note', NoteController::class)
+        ->name('pos.cash-sessions.note');
 });
 
 Route::middleware('auth')->group(function () {

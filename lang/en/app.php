@@ -585,6 +585,7 @@ return [
             'cash_left_too_high' => "The cash left can't be more than the cash counted.",
             'deposit' => 'Withdrawal to deposit',
             'invalid_method' => "One of the counted payment methods doesn't exist.",
+            'note_not_needed' => "This session doesn't need a note.",
         ],
 
         'catalog' => [

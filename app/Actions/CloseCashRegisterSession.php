@@ -33,10 +33,13 @@ class CloseCashRegisterSession
             }
 
             // The session's shop, not the closer's: an admin may close another shop's drawer.
-            $threshold = (int) Company::withoutGlobalScopes()->findOrFail($locked->company_id)->cash_difference_note_threshold;
+            $company = Company::withoutGlobalScopes()->findOrFail($locked->company_id);
+            $threshold = (int) $company->cash_difference_note_threshold;
             $overThreshold = $methodIds->contains(fn (int $id): bool => abs($counted[$id] - ($expected[$id] ?? 0)) > $threshold);
 
-            if ($overThreshold && blank($notes)) {
+            // Blind: never reject on the note before the counts are frozen, or retries would reveal the expected
+            // amounts. The missing note is asked for afterwards (see CashRegisterSession::needsNote()).
+            if ($overThreshold && blank($notes) && ! $company->blind_cash_count) {
                 throw ValidationException::withMessages(['notes' => __('app.pos.cash_session.notes_required')]);
             }
 

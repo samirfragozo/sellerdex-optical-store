@@ -1,5 +1,6 @@
 <?php
 
+use App\Actions\CloseCashRegisterSession;
 use App\Enums\CashMovementType;
 use App\Models\CashMovement;
 use App\Models\CashRegisterSessionCount;
@@ -9,6 +10,7 @@ use App\Models\Sale;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
+use Illuminate\Validation\ValidationException;
 
 uses(RefreshDatabase::class);
 
@@ -124,4 +126,88 @@ it('shares the suggested float from the last close', function () {
     closeSessionRequest([$this->cash->id => 80_000, $this->card->id => 80_000], 40_000)->assertOk();
 
     $this->get(route('pos.index'))->assertInertia(fn ($page) => $page->where('suggestedOpeningCash', 40_000));
+});
+
+it('closes a blind count on the first submission even when a note is missing, then takes the note afterwards', function () {
+    $this->cashier->company->update(['blind_cash_count' => true]);
+    $counts = [$this->cash->id => 79_000, $this->card->id => 80_000];
+
+    closeSessionRequest($counts, 0)
+        ->assertOk()
+        ->assertJsonPath('requires_note', true)
+        ->assertJsonPath('needs_note', true)
+        ->assertJsonPath('counts.0.expected', 80_000);
+
+    expect($this->session->fresh()->closed_at)->not->toBeNull()
+        ->and(CashRegisterSessionCount::count())->toBe(2);
+
+    closeSessionRequest($counts, 0)->assertStatus(422);
+    expect(CashRegisterSessionCount::count())->toBe(2);
+
+    $this->postJson(route('pos.cash-sessions.note', $this->session), ['notes' => ''])->assertStatus(422)->assertJsonValidationErrors('notes');
+    $this->postJson(route('pos.cash-sessions.note', $this->session), ['notes' => 'Faltó un billete'])
+        ->assertOk()->assertJsonPath('needs_note', false);
+
+    expect($this->session->fresh()->notes)->toBe('Faltó un billete');
+    $this->postJson(route('pos.cash-sessions.note', $this->session), ['notes' => 'otra'])->assertStatus(422);
+});
+
+it('does not ask for a note after a blind close that matched', function () {
+    $this->cashier->company->update(['blind_cash_count' => true]);
+
+    closeSessionRequest([$this->cash->id => 80_000, $this->card->id => 80_000], 0)
+        ->assertOk()->assertJsonPath('requires_note', false);
+});
+
+it('keeps rejecting a missing note before closing when the count is not blind', function () {
+    closeSessionRequest([$this->cash->id => 79_000, $this->card->id => 80_000], 0)->assertStatus(422);
+
+    expect($this->session->fresh()->closed_at)->toBeNull();
+});
+
+it('still rejects a cash left above the counted cash before closing a blind count', function () {
+    $this->cashier->company->update(['blind_cash_count' => true]);
+
+    closeSessionRequest([$this->cash->id => 79_000, $this->card->id => 80_000], 90_000)->assertStatus(422)->assertJsonValidationErrors('cash_left');
+    expect($this->session->fresh()->closed_at)->toBeNull();
+});
+
+it('only lets the owner add the note, and only when one is needed', function () {
+    $this->cashier->company->update(['blind_cash_count' => true]);
+    closeSessionRequest([$this->cash->id => 79_000, $this->card->id => 80_000], 0)->assertOk();
+
+    $this->actingAs(User::factory()->seller()->create(['company_id' => $this->cashier->company_id]));
+    $this->postJson(route('pos.cash-sessions.note', $this->session), ['notes' => 'x'])->assertForbidden();
+});
+
+it('rejects a note on an open session', function () {
+    $this->postJson(route('pos.cash-sessions.note', $this->session), ['notes' => 'x'])->assertStatus(422);
+});
+
+it('rejects count keys that are not plain method ids', function (string $key) {
+    $this->postJson(route('pos.cash-sessions.close', $this->session), ['counts' => [$key => 5, $this->cash->id => 80_000], 'cash_left' => 0])
+        ->assertStatus(422)->assertJsonValidationErrors('counts');
+    expect($this->session->fresh()->closed_at)->toBeNull();
+})->with(['5abc', '05', '0', '-1']);
+
+it('records an admin closing the session of a cashier of the same company', function () {
+    $admin = User::factory()->admin()->create(['company_id' => $this->cashier->company_id]);
+
+    $closed = app(CloseCashRegisterSession::class)->handle($this->session, [$this->cash->id => 80_000, $this->card->id => 80_000], 0, null, $admin);
+
+    expect($closed->closed_by)->toBe($admin->id)
+        ->and($closed->closed_by_admin)->toBeTrue();
+});
+
+it('throws on a second direct close of the same session', function () {
+    $counts = [$this->cash->id => 80_000, $this->card->id => 80_000];
+    $action = app(CloseCashRegisterSession::class);
+    $action->handle($this->session, $counts, 0, null, $this->cashier);
+
+    try {
+        $action->handle($this->session, $counts, 0, null, $this->cashier);
+        $this->fail('Expected a ValidationException');
+    } catch (ValidationException $exception) {
+        expect($exception->errors())->toHaveKey('session');
+    }
 });

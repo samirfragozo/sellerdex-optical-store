@@ -37,7 +37,10 @@ class CloseController extends Controller
             ->pluck('id')
             ->all();
 
-        if (array_diff(array_map('intval', array_keys($data['counts'])), $allowed) !== []) {
+        // Keys must be canonical positive ids ("5abc" or "05" would silently count as another method).
+        $canonical = collect($data['counts'])->keys()->every(fn ($key): bool => (string) (int) $key === (string) $key && (int) $key > 0);
+
+        if (! $canonical || array_diff(array_map('intval', array_keys($data['counts'])), $allowed) !== []) {
             throw ValidationException::withMessages(['counts' => __('app.pos.cash_session.invalid_method')]);
         }
 
@@ -54,6 +57,7 @@ class CloseController extends Controller
 
         return response()->json([
             ...$session->toSummary(),
+            'requires_note' => $session->needsNote(),
             'counts' => $session->counts->map(fn (CashRegisterSessionCount $count): array => [
                 'payment_method_id' => $count->payment_method_id,
                 'name' => $count->paymentMethod?->name,
