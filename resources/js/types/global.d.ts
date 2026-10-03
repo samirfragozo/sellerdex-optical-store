@@ -30,6 +30,9 @@ export interface CashRegisterSession {
     closed_cash: number | null;
     expected_cash: number | null;
     difference: number | null;
+    cash_left: number | null;
+    closed_by_admin: boolean;
+    is_stale: boolean;
 }
 
 export interface ReadinessIssue {
@@ -49,6 +52,7 @@ declare module '@inertiajs/core' {
             auth: Auth;
             sidebarOpen: boolean;
             cashRegisterSession: CashRegisterSession | null;
+            suggestedOpeningCash: number;
             readiness: ReadinessIssue[];
             flash: {
                 success: string | null;

@@ -55,6 +55,7 @@ const businessName = computed(() => page.props.business?.name);
                                 variant="ghost"
                                 size="icon"
                                 class="relative rounded-full"
+                                data-test="user-menu-trigger"
                             >
                                 <Avatar
                                     class="size-8 overflow-hidden rounded-full"

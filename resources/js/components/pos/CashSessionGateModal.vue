@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { usePage } from '@inertiajs/vue3';
 import { ref } from 'vue';
 import InputError from '@/components/InputError.vue';
 import { Button } from '@/components/ui/button';
@@ -26,7 +27,8 @@ const emit = defineEmits<{
     opened: [CashRegisterSession];
 }>();
 
-const openingCash = ref(0);
+const suggested = usePage().props.suggestedOpeningCash ?? 0;
+const openingCash = ref(suggested);
 const error = ref<string | null>(null);
 const submitting = ref(false);
 
@@ -83,6 +85,12 @@ async function submit(): Promise<void> {
                     min="0"
                     class="mt-1 w-full text-right"
                 />
+                <p
+                    v-if="suggested > 0"
+                    class="mt-1 text-xs text-muted-foreground"
+                >
+                    {{ trans('app.pos.cash_session.suggested_hint') }}
+                </p>
                 <InputError class="mt-1" :message="error ?? undefined" />
             </div>
 

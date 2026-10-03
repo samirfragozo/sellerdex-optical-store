@@ -13,6 +13,14 @@ import ReadinessBlockingDialog from '@/components/pos/ReadinessBlockingDialog.vu
 import SaleCreatedPanel from '@/components/pos/SaleCreatedPanel.vue';
 import StepCustomer from '@/components/pos/StepCustomer.vue';
 import { Button } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { useCashRegisterSession } from '@/composables/useCashRegisterSession';
 import type {
@@ -60,7 +68,8 @@ const minExamDate = (() => {
 })();
 
 // --- Cash register session gate ---
-const { session, onSessionOpened } = useCashRegisterSession();
+const { session, onSessionOpened, isStale, closeModalOpen, openCloseModal } =
+    useCashRegisterSession();
 
 // --- Sale readiness (banner for warnings, modals for blockers) ---
 const page = usePage();
@@ -328,6 +337,29 @@ async function confirmCheckout(): Promise<void> {
     <Head :title="trans('app.pos.title')" />
 
     <CashSessionGateModal :open="session === null" @opened="onSessionOpened" />
+
+    <Dialog :open="isStale && !closeModalOpen">
+        <DialogContent
+            class="sm:max-w-sm"
+            :show-close-button="false"
+            @escape-key-down.prevent
+            @pointer-down-outside.prevent
+        >
+            <DialogHeader>
+                <DialogTitle>{{
+                    trans('app.pos.cash_session.stale_title')
+                }}</DialogTitle>
+                <DialogDescription>{{
+                    trans('app.pos.cash_session.stale')
+                }}</DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+                <Button type="button" @click="openCloseModal">
+                    {{ trans('app.pos.cash_session.close_now') }}
+                </Button>
+            </DialogFooter>
+        </DialogContent>
+    </Dialog>
 
     <ReadinessBanner :issues="readiness" />
     <ReadinessBlockingDialog

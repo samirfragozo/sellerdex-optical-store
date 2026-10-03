@@ -2,6 +2,7 @@
 import { Link, router, usePage } from '@inertiajs/vue3';
 import {
     Banknote,
+    ArrowLeftRight,
     LogOut,
     Settings,
     ShieldCheck,
@@ -29,7 +30,7 @@ type Props = {
 const page = usePage();
 const isAdmin = computed(() => page.props.auth?.is_admin === true);
 const { trans } = useTranslations();
-const { session, openCloseModal } = useCashRegisterSession();
+const { session, openCloseModal, openMovementModal } = useCashRegisterSession();
 
 const handleLogout = () => {
     router.flushAll();
@@ -63,6 +64,14 @@ defineProps<Props>();
                 <ShieldCheck class="mr-2 h-4 w-4" />
                 {{ trans('app.nav.admin') }}
             </a>
+        </DropdownMenuItem>
+        <DropdownMenuItem
+            v-if="session !== null"
+            class="cursor-pointer"
+            @select="openMovementModal"
+        >
+            <ArrowLeftRight class="mr-2 h-4 w-4" />
+            {{ trans('app.pos.cash_session.movement') }}
         </DropdownMenuItem>
         <DropdownMenuItem
             v-if="session !== null"

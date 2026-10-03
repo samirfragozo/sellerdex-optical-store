@@ -1,5 +1,5 @@
 import { usePage } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import type { CashRegisterSession } from '@/types/global';
 
 // Module-level state: a singleton shared by every component that imports this
@@ -7,6 +7,8 @@ import type { CashRegisterSession } from '@/types/global';
 // see the same open/closed session).
 const session = ref<CashRegisterSession | null>(null);
 const closeModalOpen = ref(false);
+const movementModalOpen = ref(false);
+const isStale = computed(() => session.value?.is_stale === true);
 let initialized = false;
 
 export function useCashRegisterSession() {
@@ -28,7 +30,14 @@ export function useCashRegisterSession() {
         closeModalOpen.value = true;
     }
 
+    function openMovementModal(): void {
+        movementModalOpen.value = true;
+    }
+
     return {
+        movementModalOpen,
+        openMovementModal,
+        isStale,
         session,
         closeModalOpen,
         onSessionOpened,

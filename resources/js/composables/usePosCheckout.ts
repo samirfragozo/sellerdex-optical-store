@@ -85,7 +85,7 @@ export function usePosCheckout(total: Ref<number>) {
                 return null;
             }
 
-            if (response.status === 403) {
+            if (response.status === 403 || response.status === 423) {
                 const body = (await response.json()) as { message: string };
                 errors.value = { cash_session: body.message };
 
