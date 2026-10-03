@@ -59,14 +59,23 @@ defineEmits<{
                 {{ trans('app.documents.download_invoice') }}
             </a>
             <a
-                v-if="sale.formula_url"
-                :href="sale.formula_url"
+                v-for="formula in sale.formulas"
+                :key="formula.url"
+                :href="formula.url"
                 target="_blank"
                 rel="noopener noreferrer"
                 class="inline-flex items-center gap-2 rounded-md border border-input bg-background px-3 py-1.5 text-sm font-medium shadow-xs transition-colors hover:bg-accent hover:text-accent-foreground"
             >
                 <FileText class="size-4" />
-                {{ trans('app.documents.print_formula') }}
+                <!-- Names only disambiguate when several patients have one. -->
+                {{
+                    sale.formulas.length > 1
+                        ? trans('app.documents.print_formula_for').replace(
+                              ':name',
+                              formula.patient_name,
+                          )
+                        : trans('app.documents.print_formula')
+                }}
             </a>
         </div>
     </div>

@@ -53,6 +53,11 @@ export interface ArmadoSlot {
 
 export interface Armado {
     id: number;
+    /** The customer the armado is for; the sale's customer only pays. */
+    patient_id: number | null;
+    /** Display label of the patient, for the cart row only. */
+    patient_name: string;
+    prescription_id: number | null;
     lens: ArmadoLensLine | null;
     frame: ArmadoLine | null;
     own_frame: boolean;
@@ -228,6 +233,8 @@ export function usePosCart(kit: KitProp) {
             armados: armados.value
                 .filter((a) => a.lens !== null)
                 .map((a) => ({
+                    patient_id: a.patient_id,
+                    prescription_id: a.prescription_id,
                     // `price`/`cost` stay client-side: the backend resolves
                     // the real amounts from the lens catalog itself.
                     lens: {

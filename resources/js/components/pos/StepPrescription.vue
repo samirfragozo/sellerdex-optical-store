@@ -3,7 +3,6 @@ import { TriangleAlert } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import DiopterInput from '@/components/DiopterInput.vue';
 import InputError from '@/components/InputError.vue';
-import StepCustomer from '@/components/pos/StepCustomer.vue';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -38,8 +37,8 @@ interface PrescriptionForm {
 const eyes = ['od', 'os'] as const;
 
 const props = defineProps<{
+    customerId: number | null;
     customerPrescriptions: PrescriptionOption[];
-    lensNeedsCustomer?: boolean;
     errors?: { prescription_id?: string };
     today?: string;
     minExamDate?: string;
@@ -53,9 +52,6 @@ const prescriptionMode = defineModel<'existing' | 'new'>('prescriptionMode', {
     required: true,
 });
 const prescriptionId = defineModel<number | null>('prescriptionId', {
-    required: true,
-});
-const customerId = defineModel<number | null>('customerId', {
     required: true,
 });
 
@@ -111,13 +107,13 @@ function onFileChange(event: Event): void {
 }
 
 async function save(): Promise<void> {
-    if (customerId.value === null) {
+    if (props.customerId === null) {
         return;
     }
 
     savedNotice.value = false;
     const created = await submit({
-        customer_id: customerId.value,
+        customer_id: props.customerId,
         exam_date: form.value.exam_date,
         prescriber_name: form.value.prescriber_name,
         prescriber_license: form.value.prescriber_license,
@@ -162,21 +158,6 @@ async function save(): Promise<void> {
             {{ trans('app.pos.prescription_form.required_notice') }}
         </p>
 
-        <!-- A lens sale requires a customer -->
-        <div v-if="props.lensNeedsCustomer">
-            <div
-                class="mb-3 rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-700 dark:bg-amber-900/20 dark:text-amber-400"
-            >
-                {{ trans('app.pos.prescription_form.needs_customer') }}
-            </div>
-            <StepCustomer
-                v-model:customer-id="customerId"
-                :today="props.today"
-                :optional="false"
-            />
-        </div>
-
-        <template v-else>
             <!-- Mode toggle -->
             <div class="mb-4 flex flex-wrap gap-2">
                 <button
@@ -500,7 +481,6 @@ async function save(): Promise<void> {
                 <InputError :message="saveErrors.customer_id" />
                 <InputError :message="saveErrors.general" />
             </div>
-        </template>
 
         <Alert
             v-if="selectedPrescription?.is_expired"

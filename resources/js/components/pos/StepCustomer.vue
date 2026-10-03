@@ -27,13 +27,17 @@ const props = withDefaults(
         errors?: { customer_id?: string };
         today?: string;
         optional?: boolean;
+        inputId?: string;
+        label?: string;
     }>(),
-    { optional: true },
+    { optional: true, inputId: 'customer_id' },
 );
 
 const customerId = defineModel<number | null>('customerId', { required: true });
 
-const selectedCustomer = ref<Customer | null>(null);
+// The chosen customer's display label — a model so the parent can show it
+// (the armado's patient) and a remounted picker can restore it.
+const selectedLabel = defineModel<string>('selectedLabel', { default: '' });
 const results = ref<Customer[]>([]);
 const isSearching = ref(false);
 const showCreateModal = ref(false);
@@ -71,11 +75,14 @@ const debouncedSearch = useDebounceFn(runSearch, 400);
 
 function onSelect(id: number | null): void {
     customerId.value = id;
-    selectedCustomer.value =
-        id === null
-            ? null
-            : (results.value.find((c) => c.id === id) ??
-              selectedCustomer.value);
+
+    const found = results.value.find((c) => c.id === id);
+
+    if (id === null) {
+        selectedLabel.value = '';
+    } else if (found) {
+        selectedLabel.value = customerLabel(found);
+    }
 }
 
 // The parent resets customerId to null after a sale completes — clear the
@@ -83,14 +90,14 @@ function onSelect(id: number | null): void {
 // showing the previous customer's name.
 watch(customerId, (id) => {
     if (id === null) {
-        selectedCustomer.value = null;
+        selectedLabel.value = '';
         results.value = [];
     }
 });
 
 function onCustomerCreated(customer: CreatedCustomer): void {
     customerId.value = customer.id;
-    selectedCustomer.value = customer;
+    selectedLabel.value = customerLabel(customer);
     results.value = [customer];
     showCreateModal.value = false;
 }
@@ -98,18 +105,16 @@ function onCustomerCreated(customer: CreatedCustomer): void {
 
 <template>
     <div>
-        <Label for="customer_id" class="sr-only">{{
-            trans('app.pos.customer_form.select_customer')
+        <Label :for="props.inputId" class="sr-only">{{
+            props.label ?? trans('app.pos.customer_form.select_customer')
         }}</Label>
         <div class="flex items-center">
             <Combobox
-                id="customer_id"
+                :id="props.inputId"
                 class="flex-1 rounded-r-none"
                 :items="items"
                 :model-value="customerId"
-                :model-label="
-                    selectedCustomer ? customerLabel(selectedCustomer) : ''
-                "
+                :model-label="selectedLabel"
                 :loading="isSearching"
                 :placeholder="trans('app.pos.customer_form.search_placeholder')"
                 :empty-text="trans('app.pos.customer_form.no_results')"

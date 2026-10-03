@@ -13,7 +13,6 @@ export interface PaymentEntry {
 export interface CheckoutBasePayload {
     customer_id: number | null;
     customer: Record<string, unknown> | null;
-    prescription_id: number | null;
     armados: unknown[];
     products: unknown[];
     discount_percent: number;

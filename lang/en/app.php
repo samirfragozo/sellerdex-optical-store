@@ -334,7 +334,7 @@ return [
 
         'steps' => [
             'customer' => 'Customer',
-            'prescription' => 'Prescription',
+            'prescription' => 'Patient and prescription',
             'lens' => 'Lens',
             'frame' => 'Frame',
             'combo' => 'Combo',
@@ -366,6 +366,15 @@ return [
             'own_frame_toggle' => 'Customer brings their own frame',
             'select_frame' => 'Select the frame',
         ],
+
+        'patient_form' => [
+            'for_whom' => 'Who is this armado for?',
+            'payer' => ':name (payer)',
+            'other' => 'Another patient',
+            'select_patient' => 'Search patient',
+        ],
+
+        'armado_patient' => 'Patient: :name',
 
         'customer_form' => [
             'select_customer' => 'Select customer',
@@ -479,6 +488,7 @@ return [
         'print_invoice' => 'Print receipt',
         'download_invoice' => 'Download PDF',
         'print_formula' => 'Print formula',
+        'print_formula_for' => 'Print prescription for :name',
         'download_formula' => 'Download PDF',
 
         'default_title' => 'Document',

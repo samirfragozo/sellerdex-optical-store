@@ -334,7 +334,7 @@ return [
 
         'steps' => [
             'customer' => 'Cliente',
-            'prescription' => 'Prescripción',
+            'prescription' => 'Paciente y fórmula',
             'lens' => 'Lente',
             'frame' => 'Montura',
             'combo' => 'Combo',
@@ -366,6 +366,15 @@ return [
             'own_frame_toggle' => 'El cliente trae su montura',
             'select_frame' => 'Selecciona la montura',
         ],
+
+        'patient_form' => [
+            'for_whom' => '¿Para quién es este armado?',
+            'payer' => ':name (paga)',
+            'other' => 'Otro paciente',
+            'select_patient' => 'Buscar paciente',
+        ],
+
+        'armado_patient' => 'Paciente: :name',
 
         'customer_form' => [
             'select_customer' => 'Seleccionar cliente',
@@ -479,6 +488,7 @@ return [
         'print_invoice' => 'Imprimir comprobante',
         'download_invoice' => 'Descargar PDF',
         'print_formula' => 'Imprimir fórmula',
+        'print_formula_for' => 'Imprimir fórmula de :name',
         'download_formula' => 'Descargar PDF',
 
         'default_title' => 'Documento',

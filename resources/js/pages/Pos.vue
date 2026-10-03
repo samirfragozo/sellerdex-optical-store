@@ -82,31 +82,11 @@ const cart = usePosCart(props.kit);
 
 // --- Customer (fixed panel, no longer a collapsible step) ---
 const customerId = ref<number | null>(null);
+const customerLabel = ref('');
 
 // Seeded from the page prop, then grown locally as prescriptions are
 // created on the fly during checkout — no full page reload needed.
 const prescriptions = ref<PrescriptionOption[]>([...props.prescriptions]);
-
-// --- Prescription mode (used inside the armado modal) ---
-const prescriptionMode = ref<'existing' | 'new'>('new');
-const prescriptionId = ref<number | null>(null);
-
-const customerPrescriptions = computed<PrescriptionOption[]>(() =>
-    customerId.value === null
-        ? []
-        : prescriptions.value.filter((p) => p.customer_id === customerId.value),
-);
-
-const lensNeedsCustomer = computed(() => customerId.value === null);
-
-watch(customerPrescriptions, () => {
-    if (
-        prescriptionMode.value === 'existing' &&
-        customerPrescriptions.value.length === 0
-    ) {
-        prescriptionMode.value = 'new';
-    }
-});
 
 // --- Document types ---
 const documentTypes = [
@@ -151,7 +131,7 @@ function openArmadoModal(id: number | null): void {
 }
 
 // A prescription saved from the wizard's "new" form is already selected
-// (StepPrescription sets prescriptionId itself) — just grow the shared list
+// (the modal sets the armado's prescription itself) — just grow the shared list
 // so it shows up as an "existing" option without a page reload.
 function onPrescriptionSaved(prescription: PrescriptionOption): void {
     prescriptions.value = [prescription, ...prescriptions.value];
@@ -159,6 +139,9 @@ function onPrescriptionSaved(prescription: PrescriptionOption): void {
 
 function onArmadoSave(armado: Armado): void {
     const data = {
+        patient_id: armado.patient_id,
+        patient_name: armado.patient_name,
+        prescription_id: armado.prescription_id,
         lens: armado.lens,
         frame: armado.frame,
         own_frame: armado.own_frame,
@@ -258,8 +241,6 @@ async function confirmCheckout(): Promise<void> {
     const result = await checkout.submit({
         customer_id: customerId.value,
         customer: null,
-        prescription_id:
-            cart.armados.value.length > 0 ? prescriptionId.value : null,
         armados: cartPayload.armados,
         products: cartPayload.products,
         discount_percent: cart.discountPercent.value,
@@ -278,8 +259,7 @@ async function confirmCheckout(): Promise<void> {
     cart.discountPercent.value = 0;
     cart.surchargePercent.value = 0;
     customerId.value = null;
-    prescriptionMode.value = 'new';
-    prescriptionId.value = null;
+    customerLabel.value = '';
 }
 </script>
 
@@ -345,7 +325,11 @@ async function confirmCheckout(): Promise<void> {
                     @dismiss="createdSale = null"
                 />
 
-                <StepCustomer v-model:customer-id="customerId" :today="today" />
+                <StepCustomer
+                    v-model:customer-id="customerId"
+                    v-model:selected-label="customerLabel"
+                    :today="today"
+                />
 
                 <div
                     v-if="
@@ -379,6 +363,17 @@ async function confirmCheckout(): Promise<void> {
                                         ? trans('app.pos.summary.own_frame')
                                         : (armado.frame?.description ??
                                           trans('app.pos.none_option'))
+                                }}
+                            </p>
+                            <p
+                                v-if="armado.patient_name"
+                                class="truncate text-xs text-muted-foreground"
+                            >
+                                {{
+                                    trans('app.pos.armado_patient').replace(
+                                        ':name',
+                                        armado.patient_name,
+                                    )
                                 }}
                             </p>
                         </div>
@@ -421,12 +416,10 @@ async function confirmCheckout(): Promise<void> {
                     :lens-catalog="lensCatalog"
                     :kit="kit"
                     :frame-products="frameProducts"
-                    :customer-prescriptions="customerPrescriptions"
-                    :lens-needs-customer="lensNeedsCustomer"
+                    :prescriptions="prescriptions"
                     :today="today"
                     :min-exam-date="minExamDate"
-                    v-model:prescription-mode="prescriptionMode"
-                    v-model:prescription-id="prescriptionId"
+                    v-model:customer-label="customerLabel"
                     v-model:customer-id="customerId"
                     @update:open="armadoModalOpen = $event"
                     @save="onArmadoSave"

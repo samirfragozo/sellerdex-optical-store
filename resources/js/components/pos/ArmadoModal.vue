@@ -3,6 +3,7 @@ import { computed, ref, watch } from 'vue';
 import StepCombo from '@/components/pos/StepCombo.vue';
 import StepFrame from '@/components/pos/StepFrame.vue';
 import StepLens from '@/components/pos/StepLens.vue';
+import StepPatient from '@/components/pos/StepPatient.vue';
 import StepPrescription from '@/components/pos/StepPrescription.vue';
 import { Button } from '@/components/ui/button';
 import {
@@ -28,8 +29,7 @@ const props = defineProps<{
     lensCatalog: LensCatalogProp;
     kit: KitProp;
     frameProducts: ProductProp[];
-    customerPrescriptions: PrescriptionOption[];
-    lensNeedsCustomer: boolean;
+    prescriptions: PrescriptionOption[];
     errors?: Record<string, string>;
     today?: string;
     minExamDate?: string;
@@ -41,18 +41,16 @@ const emit = defineEmits<{
     saved: [PrescriptionOption];
 }>();
 
-const prescriptionMode = defineModel<'existing' | 'new'>('prescriptionMode', {
-    required: true,
-});
-const prescriptionId = defineModel<number | null>('prescriptionId', {
-    required: true,
-});
 const customerId = defineModel<number | null>('customerId', {
     required: true,
 });
+const customerLabel = defineModel<string>('customerLabel', { required: true });
 
 const emptyArmado = (): Armado => ({
     id: 0,
+    patient_id: null,
+    patient_name: '',
+    prescription_id: null,
     lens: null,
     frame: null,
     own_frame: false,
@@ -88,6 +86,35 @@ const plainCopy = (armado: Armado): Armado =>
     JSON.parse(JSON.stringify(armado));
 
 const draft = ref<Armado>(emptyArmado());
+
+const patientMode = ref<'payer' | 'other'>('payer');
+const otherPatientId = ref<number | null>(null);
+const otherPatientLabel = ref('');
+const prescriptionMode = ref<'existing' | 'new'>('new');
+
+const patientId = computed(() =>
+    patientMode.value === 'payer' ? customerId.value : otherPatientId.value,
+);
+
+const patientPrescriptions = computed<PrescriptionOption[]>(() =>
+    patientId.value === null
+        ? []
+        : props.prescriptions.filter((p) => p.customer_id === patientId.value),
+);
+
+// A prescription only counts while it belongs to the armado's current
+// patient — switching patient invalidates a stale pick instead of carrying
+// it over to someone else.
+const hasPatientPrescription = computed(() =>
+    patientPrescriptions.value.some((p) => p.id === draft.value.prescription_id),
+);
+
+watch(patientPrescriptions, (list) => {
+    if (prescriptionMode.value === 'existing' && list.length === 0) {
+        prescriptionMode.value = 'new';
+    }
+});
+
 // The modal works on a local draft so cancelling never touches the cart —
 // props seed it fresh each time the dialog opens.
 watch(
@@ -99,10 +126,23 @@ watch(
 
         step.value = 'prescription';
         draft.value = props.armado ? plainCopy(props.armado) : emptyArmado();
+
+        // An armado whose patient isn't the current payer reopens on "another
+        // patient" — including one whose payer changed after it was added.
+        const forOther =
+            draft.value.patient_id !== null &&
+            draft.value.patient_id !== customerId.value;
+        patientMode.value = forOther ? 'other' : 'payer';
+        otherPatientId.value = forOther ? draft.value.patient_id : null;
+        otherPatientLabel.value = forOther ? draft.value.patient_name : '';
+        prescriptionMode.value =
+            draft.value.prescription_id !== null ? 'existing' : 'new';
     },
 );
 
-const canSave = computed(() => draft.value.lens !== null);
+const canSave = computed(
+    () => draft.value.lens !== null && hasPatientPrescription.value,
+);
 
 // Each step must be fully filled before the wizard lets the user move on —
 // otherwise incomplete armados (no lens resolved, no frame chosen, ...)
@@ -110,11 +150,7 @@ const canSave = computed(() => draft.value.lens !== null);
 const currentStepValid = computed(() => {
     switch (step.value) {
         case 'prescription':
-            if (props.lensNeedsCustomer) {
-                return customerId.value !== null;
-            }
-
-            return prescriptionId.value !== null;
+            return hasPatientPrescription.value;
         case 'lens':
             return draft.value.lens !== null;
         case 'frame':
@@ -137,7 +173,14 @@ function goBack(): void {
 }
 
 function save(): void {
-    emit('save', plainCopy(draft.value));
+    emit('save', {
+        ...plainCopy(draft.value),
+        patient_id: patientId.value,
+        patient_name:
+            patientMode.value === 'payer'
+                ? customerLabel.value
+                : otherPatientLabel.value,
+    });
 }
 </script>
 
@@ -148,18 +191,30 @@ function save(): void {
                 <DialogTitle>{{ stepTitle }}</DialogTitle>
             </DialogHeader>
 
-            <StepPrescription
-                v-if="step === 'prescription'"
-                v-model:prescription-mode="prescriptionMode"
-                v-model:prescription-id="prescriptionId"
-                v-model:customer-id="customerId"
-                :customer-prescriptions="customerPrescriptions"
-                :lens-needs-customer="lensNeedsCustomer"
-                :errors="errors"
-                :today="today"
-                :min-exam-date="minExamDate"
-                @saved="emit('saved', $event)"
-            />
+            <div v-if="step === 'prescription'" class="flex flex-col gap-4">
+                <StepPatient
+                    v-model:payer-id="customerId"
+                    v-model:payer-label="customerLabel"
+                    v-model:mode="patientMode"
+                    v-model:patient-id="otherPatientId"
+                    v-model:patient-label="otherPatientLabel"
+                    :today="today"
+                />
+                <!-- Keyed by patient so a half-typed new prescription never
+                     carries over to a different person. -->
+                <StepPrescription
+                    v-if="patientId !== null"
+                    :key="patientId"
+                    v-model:prescription-mode="prescriptionMode"
+                    v-model:prescription-id="draft.prescription_id"
+                    :customer-id="patientId"
+                    :customer-prescriptions="patientPrescriptions"
+                    :errors="errors"
+                    :today="today"
+                    :min-exam-date="minExamDate"
+                    @saved="emit('saved', $event)"
+                />
+            </div>
 
             <StepLens
                 v-else-if="step === 'lens'"

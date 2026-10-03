@@ -16,10 +16,9 @@ declare module 'vite/client' {
 export interface CreatedSale {
     id: number;
     number: string;
-    prescription_id: number | null;
     invoice_url: string;
     invoice_pdf_url: string;
-    formula_url: string | null;
+    formulas: { url: string; patient_name: string }[];
     has_pending_lab_order: boolean;
 }
 
