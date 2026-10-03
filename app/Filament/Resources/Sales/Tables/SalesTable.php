@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Sales\Tables;
 
 use App\Enums\SaleDocumentType;
 use App\Enums\SaleStatus;
+use App\Filament\Resources\Sales\Actions\SaleReturnActions;
 use App\Models\Customer;
 use App\Models\Sale;
 use Filament\Actions\Action;
@@ -118,6 +119,7 @@ class SalesTable
 
                             Notification::make()->success()->title(__('app.sale_actions.converted'))->send();
                         }),
+                    ...SaleReturnActions::make(),
                     Action::make('printInvoice')
                         ->label(__('app.documents.print_invoice'))
                         ->icon('heroicon-o-printer')

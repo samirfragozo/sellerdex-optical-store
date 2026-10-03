@@ -161,6 +161,18 @@ class Sale extends Model
         return (int) $this->payments()->sum('amount');
     }
 
+    /** What a layaway keeps out of what was paid when cancelled (the sale's company fee percent); 0 for any other sale. */
+    public function cancellationFee(): int
+    {
+        if ($this->document_type !== SaleDocumentType::Layaway) {
+            return 0;
+        }
+
+        $percent = (float) Company::withoutGlobalScopes()->whereKey($this->company_id)->value('layaway_cancellation_fee_percent');
+
+        return (int) round(max(0, $this->totalPaid()) * $percent / 100);
+    }
+
     /** Outstanding balance (net value minus payments); a voided sale owes nothing. */
     protected function balance(): Attribute
     {

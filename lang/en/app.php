@@ -77,9 +77,12 @@ return [
         'add_payment' => 'Add payment',
         'expenses' => 'Expenses',
         'sales' => 'Documents',
+        'sale_returns' => 'Returns and voids',
+        'customer_credits' => 'Store credit',
     ],
 
     'fields' => [
+        'credit_balance' => 'Saldo a favor',
         'remake_reason' => 'Reason',
         'remake_responsible' => 'Responsible',
         'remake_cost' => 'Remake cost',
@@ -386,6 +389,28 @@ return [
     'money_destination' => ['refund' => 'Refund', 'sale_balance' => 'Sale balance', 'store_credit' => 'Store credit', 'combined' => 'Combined'],
 
     'sale_return' => [
+        'actions' => [
+            'return' => 'Return items',
+            'adjust' => 'Value adjustment',
+            'void' => 'Void sale',
+            'cancel_layaway' => 'Cancel plan separe',
+        ],
+        'fields' => [
+            'reason' => 'Reason',
+            'refund_amount' => 'Refund',
+            'refund_method' => 'Refund method',
+            'store_credit_amount' => 'To store credit',
+            'restock' => 'Back to stock',
+            'retained_amount' => 'Retained',
+            'loss_amount' => 'Loss',
+            'user' => 'Registered by',
+            'source' => 'Source',
+        ],
+        'money_hint' => 'You can give back up to $:max; the rest stays on the sale balance.',
+        'void_hint' => '$:amount will be given back:fee.',
+        'fee_note' => ' ($:fee retained per settings)',
+        'registered' => 'Operation recorded.',
+        'items_locked' => 'The sale has returns or is voided: its items can no longer be changed.',
         'cash_needs_session' => 'Open your cash session to refund in cash.',
         'too_many_units' => 'Only :count units left to return.',
         'money_exceeds' => 'You can give back at most $:max as money or store credit.',
@@ -680,6 +705,8 @@ return [
         'blind_cash_count_help' => 'The cashier sees the expected amount only after submitting the count.',
         'cash_difference_note_threshold' => 'Difference that requires a note',
         'cash_difference_note_threshold_help' => 'If a count difference exceeds this amount, the cashier must explain it.',
+        'layaway_cancellation_fee_percent' => 'Plan separe cancellation fee (%)',
+        'layaway_cancellation_fee_percent_help' => "Applied under the shop's responsibility; by default everything is refunded.",
     ],
 
     'cash_session_admin' => [

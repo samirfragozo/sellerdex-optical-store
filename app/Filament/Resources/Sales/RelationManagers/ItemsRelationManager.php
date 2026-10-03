@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Sales\RelationManagers;
 
+use App\Enums\SaleStatus;
 use App\Models\Product;
 use App\Models\SaleItem;
 use Filament\Actions\BulkActionGroup;
@@ -60,6 +61,7 @@ class ItemsRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return $table
+            ->description(fn (): ?string => $this->isLocked() ? __('app.sale_return.items_locked') : null)
             ->columns([
                 TextColumn::make('description')
                     ->label(__('app.fields.description'))
@@ -93,20 +95,32 @@ class ItemsRelationManager extends RelationManager
             ])
             ->headerActions([
                 CreateAction::make()
+                    ->hidden(fn (): bool => $this->isLocked())
                     ->mutateDataUsing(fn (array $data): array => [...$data, ...$this->taxSnapshotFor($data)]),
             ])
             ->recordActions([
                 EditAction::make()
+                    ->hidden(fn (): bool => $this->isLocked())
                     ->mutateDataUsing(fn (array $data, SaleItem $record): array => (int) ($data['product_id'] ?? 0) === (int) $record->product_id
                         ? $data
                         : [...$data, ...$this->taxSnapshotFor($data)]),
-                DeleteAction::make(),
+                DeleteAction::make()
+                    ->hidden(fn (): bool => $this->isLocked()),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
-                    DeleteBulkAction::make(),
+                    DeleteBulkAction::make()
+                        ->hidden(fn (): bool => $this->isLocked()),
                 ]),
             ]);
+    }
+
+    /** Editing lines after a return or a void could push the sale's value below what was already given back. */
+    private function isLocked(): bool
+    {
+        $sale = $this->getOwnerRecord();
+
+        return $sale->status === SaleStatus::Voided || $sale->returns()->exists();
     }
 
     /**

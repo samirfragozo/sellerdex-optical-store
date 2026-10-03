@@ -77,9 +77,12 @@ return [
         'add_payment' => 'Agregar abono',
         'expenses' => 'Gastos',
         'sales' => 'Documentos',
+        'sale_returns' => 'Devoluciones y anulaciones',
+        'customer_credits' => 'Saldo a favor',
     ],
 
     'fields' => [
+        'credit_balance' => 'Saldo a favor',
         'remake_reason' => 'Motivo',
         'remake_responsible' => 'Responsable',
         'remake_cost' => 'Costo de la rehechura',
@@ -384,6 +387,28 @@ return [
     'money_destination' => ['refund' => 'Reembolso', 'sale_balance' => 'Saldo de la venta', 'store_credit' => 'Saldo a favor', 'combined' => 'Combinado'],
 
     'sale_return' => [
+        'actions' => [
+            'return' => 'Devolver productos',
+            'adjust' => 'Ajuste de valor',
+            'void' => 'Anular venta',
+            'cancel_layaway' => 'Cancelar plan separe',
+        ],
+        'fields' => [
+            'reason' => 'Motivo',
+            'refund_amount' => 'Reembolso',
+            'refund_method' => 'Medio del reembolso',
+            'store_credit_amount' => 'A saldo a favor',
+            'restock' => 'Vuelve al inventario',
+            'retained_amount' => 'Retenido',
+            'loss_amount' => 'Pérdida',
+            'user' => 'Registrado por',
+            'source' => 'Origen',
+        ],
+        'money_hint' => 'Puedes devolver hasta $:max; el resto queda como saldo de la venta.',
+        'void_hint' => 'Se devuelven $:amount:fee.',
+        'fee_note' => ' (se retienen $:fee según la configuración)',
+        'registered' => 'Operación registrada.',
+        'items_locked' => 'La venta tiene devoluciones o está anulada: sus productos ya no se pueden modificar.',
         'cash_needs_session' => 'Abre tu caja para reembolsar en efectivo.',
         'too_many_units' => 'Solo quedan :count unidades por devolver.',
         'money_exceeds' => 'Puedes devolver como máximo $:max en dinero o saldo a favor.',
@@ -680,6 +705,8 @@ return [
         'blind_cash_count_help' => 'El cajero ve lo esperado solo después de registrar su conteo.',
         'cash_difference_note_threshold' => 'Diferencia que exige una nota',
         'cash_difference_note_threshold_help' => 'Si una diferencia del arqueo supera este valor, el cajero debe explicarla.',
+        'layaway_cancellation_fee_percent' => 'Retención al cancelar plan separe (%)',
+        'layaway_cancellation_fee_percent_help' => 'Se aplica bajo responsabilidad de la óptica; por defecto se devuelve todo.',
     ],
 
     'cash_session_admin' => [

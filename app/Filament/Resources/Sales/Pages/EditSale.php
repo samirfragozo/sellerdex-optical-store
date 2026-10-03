@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Sales\Pages;
 
 use App\Enums\SaleDocumentType;
 use App\Filament\Concerns\RedirectsToResourceIndex;
+use App\Filament\Resources\Sales\Actions\SaleReturnActions;
 use App\Filament\Resources\Sales\SaleResource;
 use App\Models\Sale;
 use Filament\Actions\Action;
@@ -37,6 +38,7 @@ class EditSale extends EditRecord
                         ->title(__('app.sale_actions.converted'))
                         ->send();
                 }),
+            ...SaleReturnActions::make(),
             DeleteAction::make(),
             ForceDeleteAction::make(),
             RestoreAction::make(),

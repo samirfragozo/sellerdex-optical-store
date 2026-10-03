@@ -65,6 +65,14 @@ class BusinessSettingResource extends Resource
                     ->minValue(0)
                     ->required()
                     ->prefix('$'),
+                TextInput::make('layaway_cancellation_fee_percent')
+                    ->label(__('app.business.layaway_cancellation_fee_percent'))
+                    ->helperText(__('app.business.layaway_cancellation_fee_percent_help'))
+                    ->numeric()
+                    ->minValue(0)
+                    ->maxValue(100)
+                    ->required()
+                    ->suffix('%'),
             ]);
     }
 

@@ -8,6 +8,7 @@ use App\Filament\Resources\Sales\Pages\EditSale;
 use App\Filament\Resources\Sales\Pages\ListSales;
 use App\Filament\Resources\Sales\RelationManagers\ItemsRelationManager;
 use App\Filament\Resources\Sales\RelationManagers\PaymentsRelationManager;
+use App\Filament\Resources\Sales\RelationManagers\ReturnsRelationManager;
 use App\Filament\Resources\Sales\Schemas\SaleForm;
 use App\Filament\Resources\Sales\Tables\SalesTable;
 use App\Models\Sale;
@@ -39,6 +40,7 @@ class SaleResource extends Resource
         return [
             ItemsRelationManager::class,
             PaymentsRelationManager::class,
+            ReturnsRelationManager::class,
         ];
     }
 

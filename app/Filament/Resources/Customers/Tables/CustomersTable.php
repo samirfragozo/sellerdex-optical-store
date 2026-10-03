@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Customers\Tables;
 
 use App\Enums\DocumentType;
+use App\Models\Customer;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -11,12 +12,14 @@ use Filament\Actions\RestoreBulkAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class CustomersTable
 {
     public static function configure(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(fn (Builder $query): Builder => $query->withSum('credits', 'amount'))
             ->columns([
                 TextColumn::make('name')
                     ->label(__('app.fields.first_name'))
@@ -44,6 +47,11 @@ class CustomersTable
                     ->label(__('app.fields.birth_date'))
                     ->date()
                     ->sortable(),
+                TextColumn::make('credit_balance')
+                    ->label(__('app.fields.credit_balance'))
+                    ->state(fn (Customer $record): int => (int) $record->credits_sum_amount)
+                    ->money('COP')
+                    ->sortable(query: fn (Builder $query, string $direction): Builder => $query->orderBy('credits_sum_amount', $direction)),
                 TextColumn::make('email')
                     ->label(__('app.fields.email'))
                     ->toggleable(isToggledHiddenByDefault: true),

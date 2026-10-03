@@ -4,12 +4,10 @@ namespace App\Actions;
 
 use App\Enums\LensOrderStatus;
 use App\Enums\MoneyDestination;
-use App\Enums\SaleDocumentType;
 use App\Enums\SaleReturnType;
 use App\Enums\SaleStatus;
 use App\Enums\StockMovementType;
 use App\Models\CashRegisterSession;
-use App\Models\Company;
 use App\Models\PaymentMethod;
 use App\Models\Sale;
 use App\Models\SaleItem;
@@ -176,17 +174,13 @@ class RegisterSaleReturn
             throw ValidationException::withMessages(['reason' => __('app.sale_return.cannot_void')]);
         }
 
-        $feePercent = $sale->document_type === SaleDocumentType::Layaway
-            ? (float) Company::withoutGlobalScopes()->whereKey($sale->company_id)->value('layaway_cancellation_fee_percent')
-            : 0;
-
         $lines = $sale->items()->with(['lensConfig', 'lensOrder'])->get()
             ->map(fn (SaleItem $item): array => [$item, $item->returnableQuantity()])
             ->filter(fn (array $line): bool => $line[1] > 0)
             ->all();
 
         $return->total = $sale->netTotal();
-        $return->retained_amount = (int) round(max(0, $sale->totalPaid()) * $feePercent / 100);
+        $return->retained_amount = $sale->cancellationFee();
         $return->loss_amount = $this->settleLenses($lines);
         $return->save();
     }
@@ -212,7 +206,7 @@ class RegisterSaleReturn
         return $loss;
     }
 
-    /** Runs after the return row is saved, so netTotal() is already the new value. */
+    /** Runs after the return row is saved, so netTotal() is already the new value; a net below zero (items edited after a return) never widens the cap. */
     private function moveMoney(Sale $sale, SaleReturn $return, User $actor): void
     {
         $out = $return->refund_amount + $return->store_credit_amount;
@@ -223,7 +217,7 @@ class RegisterSaleReturn
             if ($out !== $due) {
                 throw ValidationException::withMessages(['store_credit_amount' => __('app.sale_return.void_money_mismatch', ['amount' => $this->money($due)])]);
             }
-        } elseif ($out > ($max = max(0, $paid - $sale->netTotal()))) {
+        } elseif ($out > ($max = max(0, $paid - max(0, $sale->netTotal())))) {
             throw ValidationException::withMessages(['store_credit_amount' => __('app.sale_return.money_exceeds', ['max' => $this->money($max)])]);
         }
 
