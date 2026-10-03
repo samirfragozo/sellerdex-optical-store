@@ -137,7 +137,7 @@ class Sale extends Model
      */
     public function scopeOutstanding(Builder $query): void
     {
-        $query->whereRaw("sales.total - (select coalesce(sum(sale_returns.total), 0) from sale_returns where sale_returns.sale_id = sales.id and sale_returns.type <> 'void') > (select coalesce(sum(payments.amount), 0) from payments where payments.sale_id = sales.id and payments.deleted_at is null)");
+        $query->where('sales.status', '!=', SaleStatus::Voided->value)->whereRaw("sales.total - (select coalesce(sum(sale_returns.total), 0) from sale_returns where sale_returns.sale_id = sales.id and sale_returns.type <> 'void') > (select coalesce(sum(payments.amount), 0) from payments where payments.sale_id = sales.id and payments.deleted_at is null)");
     }
 
     /** What the customer was given back in value: returns and value adjustments (a void cancels the sale instead). */

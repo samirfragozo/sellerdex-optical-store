@@ -1,6 +1,8 @@
 <?php
 
 use App\Enums\LensOrderStatus;
+use App\Enums\RemakeReason;
+use App\Enums\RemakeResponsible;
 use App\Enums\SaleReturnType;
 use App\Enums\SaleStatus;
 use App\Models\LensOrder;
@@ -79,4 +81,21 @@ it('has no pending lens work for a cancelled order or a fully returned lens item
     $return = SaleReturn::factory()->create(['sale_id' => $sale->id]);
     SaleReturnItem::factory()->create(['sale_return_id' => $return->id, 'sale_item_id' => $item->id, 'quantity' => 1]);
     expect($sale->fresh()->hasPendingLensWork())->toBeFalse();
+});
+
+it('leaves a voided unpaid sale out of the outstanding sales', function () {
+    $sale = Sale::factory()->create(['discount_percent' => 0, 'surcharge_percent' => 0]);
+    SaleItem::factory()->create(['sale_id' => $sale->id, 'quantity' => 1, 'unit_price' => 50_000, 'tax_rate' => 0]);
+    expect(Sale::outstanding()->whereKey($sale->id)->exists())->toBeTrue();
+
+    $sale->update(['status' => SaleStatus::Voided]);
+
+    expect(Sale::outstanding()->whereKey($sale->id)->exists())->toBeFalse();
+});
+
+it('cannot remake a cancelled lens order', function () {
+    $item = SaleItem::factory()->create();
+    $order = LensOrder::factory()->create(['sale_item_id' => $item->id, 'lab_status' => LensOrderStatus::Cancelled]);
+
+    expect(fn () => $order->remake(RemakeReason::Measurements, RemakeResponsible::Store, 1_000))->toThrow(DomainException::class);
 });

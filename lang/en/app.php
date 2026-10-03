@@ -388,6 +388,8 @@ return [
     'store_credit' => [
         'needs_customer' => 'Store credit needs a customer on the sale.',
         'not_enough' => 'The customer only has $:balance in store credit.',
+        'immutable' => 'Store credit payments cannot be edited: delete the payment and add it again.',
+        'would_go_negative' => 'Not allowed: the customer would end up with negative store credit (has $:balance).',
     ],
 
     'sale_status' => [

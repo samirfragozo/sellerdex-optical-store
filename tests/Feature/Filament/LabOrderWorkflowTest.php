@@ -105,6 +105,13 @@ it('only offers each step from the status before it', function () {
         ->assertActionHidden('remake');
 });
 
+it('does not offer a remake for a cancelled order', function () {
+    $order = workflowOrder(overrides: ['lab_status' => LensOrderStatus::Cancelled]);
+
+    Livewire::test(EditLensOrder::class, ['record' => $order->getRouteKey()])
+        ->assertActionHidden('remake');
+});
+
 it('remakes a ready order as a new pending order copying the technical data', function () {
     $order = workflowOrder(overrides: ['lab_status' => LensOrderStatus::Ready, 'od_height' => 18, 'prescription_snapshot' => ['od_sphere' => '-1.00']]);
 

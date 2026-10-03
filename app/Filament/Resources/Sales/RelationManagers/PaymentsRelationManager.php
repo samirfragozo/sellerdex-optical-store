@@ -45,12 +45,12 @@ class PaymentsRelationManager extends RelationManager
                         $sale = $livewire->getOwnerRecord();
                         $paidByOthers = $sale->totalPaid() - (int) ($record?->amount ?? 0);
 
-                        return max(0, $sale->total - $paidByOthers);
+                        return max(0, $sale->netTotal() - $paidByOthers);
                     })
                     ->helperText(function (RelationManager $livewire, ?Payment $record): string {
                         $sale = $livewire->getOwnerRecord();
                         $paidByOthers = $sale->totalPaid() - (int) ($record?->amount ?? 0);
-                        $remaining = max(0, $sale->total - $paidByOthers);
+                        $remaining = max(0, $sale->netTotal() - $paidByOthers);
 
                         return __('app.fields.balance').': $'.number_format($remaining, 0, ',', '.');
                     }),
@@ -99,7 +99,8 @@ class PaymentsRelationManager extends RelationManager
                     }),
             ])
             ->recordActions([
-                EditAction::make(),
+                EditAction::make()
+                    ->hidden(fn (Payment $record): bool => $record->isStoreCredit()),
                 DeleteAction::make(),
             ])
             ->toolbarActions([

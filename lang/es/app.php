@@ -386,6 +386,8 @@ return [
     'store_credit' => [
         'needs_customer' => 'El saldo a favor necesita un cliente en la venta.',
         'not_enough' => 'El cliente solo tiene $:balance de saldo a favor.',
+        'immutable' => 'El saldo a favor no se puede modificar: elimina el pago y regístralo de nuevo.',
+        'would_go_negative' => 'No se puede: el cliente quedaría con saldo a favor negativo (tiene $:balance).',
     ],
 
     'sale_status' => [

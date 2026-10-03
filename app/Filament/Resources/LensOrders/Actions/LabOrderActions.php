@@ -73,7 +73,7 @@ class LabOrderActions
             ->label(__('app.lab_order.actions.remake'))
             ->icon('heroicon-o-arrow-path')
             ->color('warning')
-            ->visible(fn (LensOrder $record): bool => $record->lab_status !== LensOrderStatus::PendingAssignment && ! $record->remakes()->exists())
+            ->visible(fn (LensOrder $record): bool => ! in_array($record->lab_status, [LensOrderStatus::PendingAssignment, LensOrderStatus::Cancelled], true) && ! $record->remakes()->exists())
             ->schema([
                 Select::make('remake_reason')->label(__('app.fields.remake_reason'))->options(RemakeReason::options())->required(),
                 Select::make('remake_responsible')->label(__('app.fields.remake_responsible'))->options(RemakeResponsible::options())->required()->live(),

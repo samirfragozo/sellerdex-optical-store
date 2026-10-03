@@ -120,7 +120,7 @@ class LensOrder extends Model
      */
     public function remake(RemakeReason $reason, RemakeResponsible $responsible, int $cost, ?int $supplierId = null, ?string $notes = null): self
     {
-        if ($this->lab_status === LensOrderStatus::PendingAssignment || $this->remakes()->exists()) {
+        if (in_array($this->lab_status, [LensOrderStatus::PendingAssignment, LensOrderStatus::Cancelled], true) || $this->remakes()->exists()) {
             throw new DomainException(__('app.lab_order.cannot_remake'));
         }
 
