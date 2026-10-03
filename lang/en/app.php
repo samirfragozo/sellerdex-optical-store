@@ -408,6 +408,8 @@ return [
         ],
 
         'prescription_form' => [
+            'load_error' => 'Could not load this patient\'s prescriptions.',
+            'retry_load' => 'Retry',
             'required_notice' => 'Required to sell prescription lenses.',
             'needs_customer' => 'Selling prescription lenses requires selecting or registering a customer.',
             'use_existing' => 'Use existing',

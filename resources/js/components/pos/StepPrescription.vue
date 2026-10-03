@@ -42,10 +42,12 @@ const props = defineProps<{
     errors?: { prescription_id?: string };
     today?: string;
     minExamDate?: string;
+    loadFailed?: boolean;
 }>();
 
 const emit = defineEmits<{
     saved: [PrescriptionOption];
+    retryLoad: [];
 }>();
 
 const prescriptionMode = defineModel<'existing' | 'new'>('prescriptionMode', {
@@ -157,6 +159,26 @@ async function save(): Promise<void> {
         <p class="mb-4 text-xs text-muted-foreground">
             {{ trans('app.pos.prescription_form.required_notice') }}
         </p>
+
+        <Alert
+            v-if="loadFailed"
+            variant="destructive"
+            class="mb-4"
+            role="alert"
+        >
+            <TriangleAlert />
+            <AlertDescription class="flex flex-wrap items-center gap-2">
+                {{ trans('app.pos.prescription_form.load_error') }}
+                <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    @click="emit('retryLoad')"
+                >
+                    {{ trans('app.pos.prescription_form.retry_load') }}
+                </Button>
+            </AlertDescription>
+        </Alert>
 
         <!-- Mode toggle -->
         <div class="mb-4 flex flex-wrap gap-2">

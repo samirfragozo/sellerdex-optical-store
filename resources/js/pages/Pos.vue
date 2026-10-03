@@ -89,18 +89,53 @@ const customerLabel = ref('');
 // are created) — no page-wide list with a cap.
 const prescriptions = ref<PrescriptionOption[]>([]);
 
+// Customers whose last prescription fetch failed — the wizard shows a retry.
+const prescriptionLoadFailedFor = ref<number[]>([]);
+const latestLoadByCustomer = new Map<number, number>();
+let loadCounter = 0;
+
 async function loadPrescriptions(customerId: number): Promise<void> {
-    const response = await csrfFetch(customerPrescriptions.url(customerId));
+    const loadId = ++loadCounter;
+    latestLoadByCustomer.set(customerId, loadId);
+    const isStale = (): boolean =>
+        latestLoadByCustomer.get(customerId) !== loadId;
 
-    if (!response.ok) {
-        return;
+    try {
+        const response = await csrfFetch(customerPrescriptions.url(customerId));
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+
+        const loaded = (await response.json()) as PrescriptionOption[];
+
+        if (isStale()) {
+            return;
+        }
+
+        // Keep prescriptions saved locally while the request was in flight.
+        const loadedIds = new Set(loaded.map((p) => p.id));
+        const savedMeanwhile = prescriptions.value.filter(
+            (p) => p.customer_id === customerId && !loadedIds.has(p.id),
+        );
+        prescriptions.value = [
+            ...savedMeanwhile,
+            ...loaded,
+            ...prescriptions.value.filter((p) => p.customer_id !== customerId),
+        ];
+        prescriptionLoadFailedFor.value =
+            prescriptionLoadFailedFor.value.filter((id) => id !== customerId);
+    } catch {
+        if (
+            !isStale() &&
+            !prescriptionLoadFailedFor.value.includes(customerId)
+        ) {
+            prescriptionLoadFailedFor.value = [
+                ...prescriptionLoadFailedFor.value,
+                customerId,
+            ];
+        }
     }
-
-    const loaded = (await response.json()) as PrescriptionOption[];
-    prescriptions.value = [
-        ...loaded,
-        ...prescriptions.value.filter((p) => p.customer_id !== customerId),
-    ];
 }
 
 // --- Document types ---
@@ -440,6 +475,7 @@ async function confirmCheckout(): Promise<void> {
                     :kit="kit"
                     :frame-products="frameProducts"
                     :prescriptions="prescriptions"
+                    :prescription-load-failed-for="prescriptionLoadFailedFor"
                     :suggested-prescription-id="suggestedPrescriptionId"
                     :today="today"
                     :min-exam-date="minExamDate"

@@ -30,6 +30,8 @@ const props = defineProps<{
     kit: KitProp;
     frameProducts: ProductProp[];
     prescriptions: PrescriptionOption[];
+    /** Customers whose prescriptions failed to load, so a retry is offered. */
+    prescriptionLoadFailedFor?: number[];
     /** The previous armado's prescription, offered again to a new armado. */
     suggestedPrescriptionId?: number | null;
     errors?: Record<string, string>;
@@ -109,6 +111,12 @@ watch(
         }
     },
     { immediate: true },
+);
+
+const prescriptionLoadFailed = computed(
+    () =>
+        patientId.value !== null &&
+        (props.prescriptionLoadFailedFor ?? []).includes(patientId.value),
 );
 
 const patientPrescriptions = computed<PrescriptionOption[]>(() =>
@@ -244,7 +252,9 @@ function save(): void {
                     :errors="errors"
                     :today="today"
                     :min-exam-date="minExamDate"
+                    :load-failed="prescriptionLoadFailed"
                     @saved="emit('saved', $event)"
+                    @retry-load="emit('patientSelected', patientId)"
                 />
             </div>
 

@@ -408,6 +408,8 @@ return [
         ],
 
         'prescription_form' => [
+            'load_error' => 'No se pudieron cargar las fórmulas de este paciente.',
+            'retry_load' => 'Reintentar',
             'required_notice' => 'Obligatoria para vender lentes formulados.',
             'needs_customer' => 'Para vender lentes formulados debes seleccionar o registrar un cliente.',
             'use_existing' => 'Usar existente',

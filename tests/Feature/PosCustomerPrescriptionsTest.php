@@ -4,6 +4,8 @@ use App\Models\Company;
 use App\Models\Customer;
 use App\Models\Prescription;
 use App\Models\User;
+use App\Support\PermissionsTeam;
+use Spatie\Permission\Models\Role;
 
 beforeEach(function () {
     $this->seller = User::factory()->seller()->create();
@@ -39,4 +41,12 @@ it('does not list prescriptions of another company customer', function () {
     $foreign = Customer::factory()->for(Company::factory()->create())->create();
 
     $this->getJson(route('pos.customers.prescriptions', $foreign->id))->assertNotFound();
+});
+
+it('forbids a user who cannot view prescriptions', function () {
+    $customer = Customer::factory()->create();
+    $role = Role::where('company_id', $this->seller->company_id)->where('name', 'seller')->firstOrFail();
+    PermissionsTeam::runAs($this->seller->company, fn () => $role->revokePermissionTo('ViewAny:Prescription'));
+
+    $this->getJson(route('pos.customers.prescriptions', $customer))->assertForbidden();
 });
