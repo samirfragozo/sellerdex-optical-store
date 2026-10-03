@@ -97,7 +97,7 @@ const suggestedFloat = computed(() => page.props.suggestedOpeningCash ?? 0);
 const countComplete = computed(
     () =>
         methods.value.length > 0 &&
-        (byDenomination.value || cashTotal.value !== '') &&
+        (!cashMethod.value || byDenomination.value || cashTotal.value !== '') &&
         otherMethods.value.every(
             (m) => (otherAmounts.value[m.payment_method_id] ?? '') !== '',
         ),
@@ -198,7 +198,7 @@ async function submitCount(): Promise<void> {
     const counts: Record<number, number> = Object.fromEntries(
         otherMethods.value.map((m) => [
             m.payment_method_id,
-            toAmount(otherAmounts.value[m.payment_method_id] ?? 0),
+            toAmount(otherAmounts.value[m.payment_method_id]),
         ]),
     );
 
@@ -397,12 +397,16 @@ async function submitCount(): Promise<void> {
                     <Button
                         type="submit"
                         :disabled="submitting || !countComplete"
+                        :aria-describedby="
+                            countComplete ? undefined : 'count_incomplete_hint'
+                        "
                     >
                         {{ trans('app.pos.cash_session.close_action') }}
                     </Button>
                 </DialogFooter>
                 <p
                     v-if="methods.length > 0 && !countComplete"
+                    id="count_incomplete_hint"
                     class="text-right text-xs text-muted-foreground"
                 >
                     {{ trans('app.pos.cash_session.count_incomplete') }}
