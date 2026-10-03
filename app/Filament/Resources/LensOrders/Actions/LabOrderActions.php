@@ -19,6 +19,7 @@ class LabOrderActions
     public static function send(): Action
     {
         return Action::make('send')
+            ->authorize('update')
             ->label(__('app.lab_order.actions.send'))
             ->icon('heroicon-o-paper-airplane')
             ->visible(fn (LensOrder $record): bool => $record->lab_status === LensOrderStatus::PendingAssignment)
@@ -43,6 +44,7 @@ class LabOrderActions
     public static function receive(): Action
     {
         return Action::make('receive')
+            ->authorize('update')
             ->label(__('app.lab_order.actions.receive'))
             ->icon('heroicon-o-inbox-arrow-down')
             ->visible(fn (LensOrder $record): bool => $record->lab_status === LensOrderStatus::Sent)
@@ -55,6 +57,7 @@ class LabOrderActions
     public static function ready(): Action
     {
         return Action::make('markReady')
+            ->authorize('update')
             ->label(__('app.lab_order.actions.ready'))
             ->icon('heroicon-o-check-badge')
             ->visible(fn (LensOrder $record): bool => $record->lab_status === LensOrderStatus::Received)
@@ -64,6 +67,7 @@ class LabOrderActions
     public static function remake(): Action
     {
         return Action::make('remake')
+            ->authorize('update')
             ->label(__('app.lab_order.actions.remake'))
             ->icon('heroicon-o-arrow-path')
             ->color('warning')

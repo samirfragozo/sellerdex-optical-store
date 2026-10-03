@@ -5,6 +5,7 @@ use App\Enums\LensKind;
 use App\Enums\LensOrderStatus;
 use App\Enums\RemakeReason;
 use App\Enums\RemakeResponsible;
+use App\Filament\Resources\LensOrders\Pages\CreateLensOrder;
 use App\Filament\Resources\LensOrders\Pages\EditLensOrder;
 use App\Filament\Resources\LensOrders\Pages\ListLensOrders;
 use App\Models\LensCombination;
@@ -16,6 +17,7 @@ use App\Models\Supplier;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Filament\Actions\Testing\TestAction;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Livewire\Livewire;
@@ -184,4 +186,68 @@ it('moves an order along from the list rows', function () {
         ->callAction(TestAction::make('receive')->table($order));
 
     expect($order->fresh()->lab_status)->toBe(LensOrderStatus::Received);
+});
+
+it('never lets a created order start past pending, even with a tampered status', function () {
+    $item = SaleItem::factory()->create();
+
+    Livewire::test(CreateLensOrder::class)
+        ->fillForm(['sale_item_id' => $item->id, 'supplier_id' => $this->lab->id])
+        ->set('data.lab_status', LensOrderStatus::Ready->value)
+        ->call('create')
+        ->assertHasNoFormErrors();
+
+    expect(LensOrder::sole()->lab_status)->toBe(LensOrderStatus::PendingAssignment);
+});
+
+it('sends the measurements on screen, saving unsaved edits first', function () {
+    $order = workflowOrder(overrides: ['od_pd' => null]);
+
+    Livewire::test(EditLensOrder::class, ['record' => $order->getRouteKey()])
+        ->fillForm(['od_pd' => 33])
+        ->callAction(TestAction::make('send'));
+
+    expect($order->fresh())->lab_status->toBe(LensOrderStatus::Sent)
+        ->and($order->fresh()->od_pd)->toBe('33.0');
+});
+
+it('does not send when the unsaved edits are invalid', function () {
+    $order = workflowOrder();
+
+    Livewire::test(EditLensOrder::class, ['record' => $order->getRouteKey()])
+        ->fillForm(['od_pd' => 99])
+        ->callAction(TestAction::make('send'));
+
+    expect($order->fresh()->lab_status)->toBe(LensOrderStatus::PendingAssignment);
+});
+
+it('still saves the order after the lab returns it before the expected date', function () {
+    $order = workflowOrder(overrides: ['lab_status' => LensOrderStatus::Sent, 'expected_date' => now()->addDays(5)->toDateString()]);
+
+    Livewire::test(EditLensOrder::class, ['record' => $order->getRouteKey()])
+        ->callAction(TestAction::make('receive'))
+        ->fillForm(['notes' => 'Llegó antes'])
+        ->call('save')
+        ->assertHasNoFormErrors();
+
+    expect($order->fresh()->notes)->toBe('Llegó antes');
+});
+
+it('hides the workflow actions from a user who cannot update lens orders', function () {
+    $order = workflowOrder(overrides: ['lab_status' => LensOrderStatus::Sent]);
+    $viewer = User::factory()->create(['company_id' => auth()->user()->company_id]);
+    $viewer->givePermissionTo(['ViewAny:LensOrder', 'View:LensOrder']);
+
+    $this->actingAs($viewer);
+
+    Livewire::test(ListLensOrders::class)
+        ->assertTableActionHidden('receive', $order);
+});
+
+it('allows only one remake per order at the database level', function () {
+    $order = workflowOrder(overrides: ['lab_status' => LensOrderStatus::Ready]);
+    $order->remake(RemakeReason::Other, RemakeResponsible::Lab, 0);
+
+    expect(fn () => LensOrder::factory()->create(['sale_item_id' => $order->sale_item_id, 'remake_of_id' => $order->id]))
+        ->toThrow(QueryException::class);
 });

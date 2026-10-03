@@ -31,6 +31,11 @@ class LensOrder extends Model
     /** @use HasFactory<LensOrderFactory> */
     use BelongsToCompany, HasFactory;
 
+    /** A new order always starts pending; it moves on only through the workflow. */
+    protected $attributes = [
+        'lab_status' => 'pending_assignment',
+    ];
+
     protected function casts(): array
     {
         return [

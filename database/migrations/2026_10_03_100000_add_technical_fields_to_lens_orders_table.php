@@ -36,7 +36,7 @@ return new class extends Migration
             $table->json('prescription_snapshot')->nullable();
             $table->timestamp('sent_at')->nullable();
             $table->timestamp('customer_notified_at')->nullable();
-            $table->foreignId('remake_of_id')->nullable()->constrained('lens_orders')->nullOnDelete();
+            $table->foreignId('remake_of_id')->nullable()->unique()->constrained('lens_orders')->nullOnDelete();
             $table->string('remake_reason')->nullable();
             $table->string('remake_responsible')->nullable();
             $table->bigInteger('remake_cost')->default(0);
@@ -50,7 +50,9 @@ return new class extends Migration
     {
         // Rolling back fails once an item has a remake (duplicate sale_item_id) — acceptable.
         Schema::table('lens_orders', function (Blueprint $table) {
-            $table->dropConstrainedForeignId('remake_of_id');
+            $table->dropForeign(['remake_of_id']);
+            $table->dropUnique(['remake_of_id']);
+            $table->dropColumn('remake_of_id');
             $table->dropColumn([
                 'od_pd', 'os_pd', 'od_height', 'os_height', 'frame_a', 'frame_b', 'frame_dbl',
                 'frame_type', 'frame_source', 'customer_frame_description', 'customer_frame_condition',

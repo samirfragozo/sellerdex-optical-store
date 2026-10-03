@@ -44,18 +44,17 @@ class LensOrderForm
                     )
                     ->searchable()
                     ->disabled($locked),
-                // The status moves only through the workflow actions; a new order starts pending.
+                // The status moves only through the workflow actions; the model starts new orders pending.
                 Select::make('lab_status')
                     ->label(__('app.fields.lab_status'))
                     ->options(LensOrderStatus::options())
                     ->default(LensOrderStatus::PendingAssignment->value)
                     ->disabled()
-                    ->dehydrated(fn (?LensOrder $record): bool => $record === null),
+                    ->dehydrated(false),
                 DatePicker::make('expected_date')
                     ->label(__('app.fields.expected_date')),
                 DatePicker::make('received_date')
-                    ->label(__('app.fields.received_date'))
-                    ->afterOrEqual('expected_date'),
+                    ->label(__('app.fields.received_date')),
                 Section::make(__('app.lab_order.sections.measurements'))
                     ->columns(4)
                     ->columnSpanFull()
