@@ -4,6 +4,8 @@ namespace App\Http\Controllers\CashRegisterSession;
 
 use App\Http\Controllers\Controller;
 use App\Models\CashRegisterSession;
+use App\Models\Company;
+use App\Models\PaymentMethod;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -19,9 +21,20 @@ class PreviewController extends Controller
             ], 422);
         }
 
+        $blind = (bool) Company::withoutGlobalScopes()->findOrFail($cashRegisterSession->company_id)->blind_cash_count;
+        $expected = $cashRegisterSession->expectedByMethod();
+        $cashMethodId = $cashRegisterSession->cashMethodId();
+        $names = PaymentMethod::withoutGlobalScopes()->whereIn('id', array_keys($expected))->pluck('name', 'id');
+
         return response()->json([
             'opening_cash' => $cashRegisterSession->opening_cash,
-            'expected_cash' => $cashRegisterSession->expectedCash(),
+            'blind' => $blind,
+            'methods' => collect($expected)->map(fn (int $amount, int $id): array => [
+                'payment_method_id' => $id,
+                'name' => $names[$id] ?? null,
+                'is_cash' => $id === $cashMethodId,
+                'expected' => $blind ? null : $amount,
+            ])->values(),
         ]);
     }
 }

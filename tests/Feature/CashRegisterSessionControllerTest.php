@@ -54,7 +54,11 @@ it('closes a session and computes expected cash from the cash payments received 
         'amount' => 40_000,
     ]);
 
-    $this->postJson("/pos/cash-sessions/{$session->id}/close", ['closed_cash' => 135_000])
+    $this->postJson("/pos/cash-sessions/{$session->id}/close", [
+        'counts' => [$cashMethod->id => 135_000, $cardMethod->id => 40_000],
+        'cash_left' => 0,
+        'notes' => 'Sobrante',
+    ])
         ->assertOk()
         ->assertJson(['expected_cash' => 130_000, 'difference' => 5_000]);
 
@@ -78,7 +82,9 @@ it('previews the expected cash without closing the session', function () {
 
     $this->getJson("/pos/cash-sessions/{$session->id}/preview")
         ->assertOk()
-        ->assertJson(['opening_cash' => 50_000, 'expected_cash' => 130_000]);
+        ->assertJson(['opening_cash' => 50_000, 'blind' => false])
+        ->assertJsonPath('methods.0.is_cash', true)
+        ->assertJsonPath('methods.0.expected', 130_000);
 
     expect($session->fresh()->closed_at)->toBeNull();
 });
@@ -109,7 +115,7 @@ it('forbids closing another user session', function () {
     $session = openCashRegisterSession($owner);
 
     $this->actingAs($intruder)
-        ->postJson("/pos/cash-sessions/{$session->id}/close", ['closed_cash' => 0])
+        ->postJson("/pos/cash-sessions/{$session->id}/close", ['counts' => [], 'cash_left' => 0])
         ->assertForbidden();
 });
 
@@ -119,6 +125,6 @@ it('rejects closing an already closed session', function () {
     $session->update(['closed_at' => now(), 'closed_cash' => 0, 'expected_cash' => 0]);
 
     $this->actingAs($seller)
-        ->postJson("/pos/cash-sessions/{$session->id}/close", ['closed_cash' => 0])
+        ->postJson("/pos/cash-sessions/{$session->id}/close", ['counts' => [], 'cash_left' => 0])
         ->assertStatus(422);
 });

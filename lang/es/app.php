@@ -581,6 +581,10 @@ return [
             'notes_required' => 'Explica el motivo de la diferencia.',
             'confirm_close_action' => 'Confirmar cierre',
             'closed_notice' => 'Caja cerrada correctamente.',
+            'stale' => 'Tu caja sigue abierta desde un día anterior. Ciérrala antes de vender.',
+            'cash_left_too_high' => 'El efectivo que queda no puede ser mayor que el contado.',
+            'deposit' => 'Retiro para consignar',
+            'invalid_method' => 'Uno de los métodos de pago contados no existe.',
         ],
 
         'catalog' => [

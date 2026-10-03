@@ -15,10 +15,16 @@ class SaleController extends Controller
 {
     public function store(StoreSaleRequest $request, RegisterSale $registerSale): JsonResponse
     {
-        if (CashRegisterSession::openFor($request->user()) === null) {
+        $session = CashRegisterSession::openFor($request->user());
+
+        if ($session === null) {
             return response()->json([
                 'message' => __('app.pos.cash_session.required_notice'),
             ], 403);
+        }
+
+        if ($session->isStale()) {
+            return response()->json(['message' => __('app.pos.cash_session.stale')], 423);
         }
 
         $lensBlockers = collect($request->user()->company->saleReadiness())

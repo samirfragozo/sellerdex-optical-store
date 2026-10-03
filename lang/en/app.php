@@ -581,6 +581,10 @@ return [
             'notes_required' => 'Explain the reason for the difference.',
             'confirm_close_action' => 'Confirm close',
             'closed_notice' => 'Register closed successfully.',
+            'stale' => 'Your cash session is still open from a previous day. Close it before selling.',
+            'cash_left_too_high' => "The cash left can't be more than the cash counted.",
+            'deposit' => 'Withdrawal to deposit',
+            'invalid_method' => "One of the counted payment methods doesn't exist.",
         ],
 
         'catalog' => [

@@ -50,9 +50,15 @@ class HandleInertiaRequests extends Middleware
                 'is_admin' => (bool) $request->user()?->isAdmin(),
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
-            'cashRegisterSession' => fn () => CashRegisterSession::openFor($request->user())?->only([
-                'id', 'opened_at', 'opening_cash', 'closed_at', 'closed_cash', 'expected_cash', 'difference',
-            ]),
+            'cashRegisterSession' => function () use ($request): ?array {
+                $session = CashRegisterSession::openFor($request->user());
+
+                return $session === null ? null : [
+                    ...$session->only(['id', 'opened_at', 'opening_cash', 'closed_at', 'closed_cash', 'expected_cash', 'difference']),
+                    'is_stale' => $session->isStale(),
+                ];
+            },
+            'suggestedOpeningCash' => fn (): int => $request->user()?->company === null ? 0 : CashRegisterSession::suggestedOpeningCash($request->user()->company),
             'readiness' => fn (): array => $request->user()?->company_id === null
                 ? []
                 : array_map(fn (ReadinessIssue $issue): array => $issue->forViewer($request->user())->toArray(), Company::current()->saleReadiness()),

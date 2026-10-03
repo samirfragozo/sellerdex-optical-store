@@ -1,0 +1,127 @@
+<?php
+
+use App\Enums\CashMovementType;
+use App\Models\CashMovement;
+use App\Models\CashRegisterSessionCount;
+use App\Models\Payment;
+use App\Models\PaymentMethod;
+use App\Models\Sale;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
+
+uses(RefreshDatabase::class);
+
+beforeEach(function () {
+    $this->cashier = User::factory()->seller()->create();
+    $this->actingAs($this->cashier);
+    $this->cash = PaymentMethod::where('is_default', true)->first()
+        ?? PaymentMethod::factory()->create(['is_default' => true, 'name' => 'Efectivo']);
+    $this->card = PaymentMethod::factory()->create(['name' => 'Tarjeta']);
+    $this->session = openCashRegisterSession($this->cashier, 50_000);
+    Payment::factory()->create(['sale_id' => Sale::factory(), 'payment_method_id' => $this->cash->id, 'amount' => 30_000, 'received_by' => $this->cashier->id]);
+    Payment::factory()->create(['sale_id' => Sale::factory(), 'payment_method_id' => $this->card->id, 'amount' => 80_000, 'received_by' => $this->cashier->id]);
+});
+
+/** Close the test session through the endpoint. */
+function closeSessionRequest(array $counts, int $cashLeft, ?string $notes = null)
+{
+    return test()->postJson(route('pos.cash-sessions.close', test()->session), array_filter([
+        'counts' => $counts, 'cash_left' => $cashLeft, 'notes' => $notes,
+    ], fn ($v) => $v !== null));
+}
+
+it('closes with a count per method, keeps the float and withdraws the rest for deposit', function () {
+    closeSessionRequest([$this->cash->id => 80_000, $this->card->id => 80_000], 40_000)
+        ->assertOk()
+        ->assertJsonPath('cash_left', 40_000)
+        ->assertJsonPath('counts.0.expected', 80_000);
+
+    $session = $this->session->fresh();
+    expect($session->closed_at)->not->toBeNull()
+        ->and($session->closed_cash)->toBe(80_000)
+        ->and($session->closed_by)->toBe($this->cashier->id)
+        ->and($session->closed_by_admin)->toBeFalse()
+        ->and(CashRegisterSessionCount::where('cash_register_session_id', $session->id)->count())->toBe(2)
+        ->and(CashMovement::where('type', CashMovementType::Withdrawal)->sole()->amount)->toBe(40_000);
+});
+
+it('requires a note when a difference exceeds the threshold', function () {
+    closeSessionRequest([$this->cash->id => 79_000, $this->card->id => 80_000], 0)
+        ->assertStatus(422)->assertJsonValidationErrors('notes');
+
+    $this->cashier->company->update(['cash_difference_note_threshold' => 2_000]);
+    closeSessionRequest([$this->cash->id => 79_000, $this->card->id => 80_000], 0)->assertOk();
+});
+
+it('rejects leaving more cash than was counted, and a second close', function () {
+    closeSessionRequest([$this->cash->id => 80_000, $this->card->id => 80_000], 90_000)
+        ->assertStatus(422)->assertJsonValidationErrors('cash_left');
+    expect($this->session->fresh()->closed_at)->toBeNull();
+
+    closeSessionRequest([$this->cash->id => 80_000, $this->card->id => 80_000], 0)->assertOk();
+    closeSessionRequest([$this->cash->id => 80_000, $this->card->id => 80_000], 0)->assertStatus(422);
+
+    expect(CashRegisterSessionCount::count())->toBe(2)
+        ->and(CashMovement::where('type', CashMovementType::Withdrawal)->count())->toBe(1);
+});
+
+it('rejects counting a payment method that is not the shop\'s', function () {
+    $foreign = PaymentMethod::withoutGlobalScopes()->create(['company_id' => User::factory()->seller()->create()->company_id, 'name' => 'Otra', 'is_active' => true]);
+
+    closeSessionRequest([$this->cash->id => 80_000, $this->card->id => 80_000, $foreign->id => 1], 0)
+        ->assertStatus(422)->assertJsonValidationErrors('counts');
+    expect($this->session->fresh()->closed_at)->toBeNull();
+});
+
+it('hides expected amounts in the preview when the count is blind, and shows them after closing', function () {
+    $this->cashier->company->update(['blind_cash_count' => true]);
+
+    $this->getJson(route('pos.cash-sessions.preview', $this->session))
+        ->assertOk()
+        ->assertJsonPath('blind', true)
+        ->assertJsonPath('methods.0.expected', null);
+
+    closeSessionRequest([$this->cash->id => 80_000, $this->card->id => 80_000], 0)
+        ->assertOk()->assertJsonPath('counts.0.expected', 80_000);
+});
+
+it('records cash in and cash out during the session', function () {
+    $this->postJson(route('pos.cash-sessions.movements.store', $this->session), ['type' => 'withdrawal', 'amount' => 20_000, 'reason' => 'Pago domicilio'])
+        ->assertCreated();
+
+    expect($this->session->fresh()->expectedCash())->toBe(60_000);
+
+    $this->postJson(route('pos.cash-sessions.movements.store', $this->session), ['type' => 'income', 'amount' => 0, 'reason' => ''])
+        ->assertStatus(422)->assertJsonValidationErrors(['amount', 'reason']);
+});
+
+it('rejects a cash movement on a closed session', function () {
+    closeSessionRequest([$this->cash->id => 80_000, $this->card->id => 80_000], 0)->assertOk();
+
+    $this->postJson(route('pos.cash-sessions.movements.store', $this->session), ['type' => 'income', 'amount' => 1, 'reason' => 'x'])
+        ->assertStatus(422);
+});
+
+it('blocks selling from a session left open on a previous day', function () {
+    Carbon::setTestNow(now()->addDay()->startOfDay()->addHour());
+
+    $this->postJson(route('pos.store'), [
+        'document_type' => 'order',
+        'products' => [['description' => 'Estuche', 'quantity' => 1, 'unit_price' => 10_000]],
+    ])->assertStatus(423)->assertJsonPath('message', __('app.pos.cash_session.stale'));
+});
+
+it('does not let a cashier close or move cash in another cashier session', function () {
+    $other = User::factory()->seller()->create(['company_id' => $this->cashier->company_id]);
+    $this->actingAs($other);
+
+    closeSessionRequest([$this->cash->id => 0], 0)->assertForbidden();
+    $this->postJson(route('pos.cash-sessions.movements.store', $this->session), ['type' => 'income', 'amount' => 1, 'reason' => 'x'])->assertForbidden();
+});
+
+it('shares the suggested float from the last close', function () {
+    closeSessionRequest([$this->cash->id => 80_000, $this->card->id => 80_000], 40_000)->assertOk();
+
+    $this->get(route('pos.index'))->assertInertia(fn ($page) => $page->where('suggestedOpeningCash', 40_000));
+});
