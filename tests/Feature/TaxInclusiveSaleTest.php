@@ -70,7 +70,7 @@ it('never taxes lines for a company that is not VAT responsible', function () {
 });
 
 it('taxes an armado lens with its combination tax, falling back to the lens category tax', function () {
-    $combination = LensCombination::factory()->create(['price' => 119_000, 'cost' => 1, 'installation_price' => 0, 'tax_id' => $this->iva19->id]);
+    $combination = LensCombination::factory()->priced(119_000, 1)->create(['installation_price' => 0, 'tax_id' => $this->iva19->id]);
     $customer = Customer::factory()->create();
 
     $sale = app(RegisterSale::class)->handle([
@@ -90,7 +90,7 @@ it('taxes an armado lens with its combination tax, falling back to the lens cate
 
 it('falls back to the lens category default tax when the combination has none', function () {
     ProductCategory::factory()->create(['key' => 'lens', 'default_tax_id' => $this->iva19->id]);
-    $combination = LensCombination::factory()->create(['price' => 119_000, 'cost' => 1, 'installation_price' => 0, 'tax_id' => null]);
+    $combination = LensCombination::factory()->priced(119_000, 1)->create(['installation_price' => 0, 'tax_id' => null]);
 
     $sale = app(RegisterSale::class)->handle([
         'customer_id' => Customer::factory()->create()->id,

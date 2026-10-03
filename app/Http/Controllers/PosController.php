@@ -81,7 +81,8 @@ class PosController extends Controller
                 'materials' => LensMaterial::query()->where('is_active', true)->orderBy('sort_order')->get(['id', 'name']),
                 'treatments' => LensTreatment::query()->where('is_active', true)->orderBy('sort_order')->get(['id', 'name', 'price', 'cost']),
                 'combinations' => LensCombination::query()->where('is_active', true)
-                    ->get(['id', 'lens_type_id', 'lens_technology_id', 'lens_material_id', 'cost', 'price', 'installation_price']),
+                    ->whereHas('prices', fn ($query) => $query->where('is_active', true))
+                    ->get(['id', 'lens_type_id', 'lens_technology_id', 'lens_material_id', 'installation_price']),
             ],
             'categories' => ProductCategory::query()->where('is_active', true)
                 ->orderBy('name')->get(['id', 'name', 'key']),

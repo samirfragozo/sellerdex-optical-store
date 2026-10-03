@@ -123,6 +123,7 @@ return [
         'brand' => 'Brand',
         'sku' => 'SKU',
         'price' => 'Price',
+        'price_from' => 'From',
         'cost' => 'Cost',
         'installation_price' => 'Installation price',
         'stock' => 'Stock',
@@ -391,6 +392,8 @@ return [
         ],
 
         'lens_form' => [
+            'out_of_range' => 'The prescription is out of range for :combination at :lab.',
+            'out_of_range_any' => 'The prescription is out of range for :combination at every laboratory.',
             'pick_type' => 'Lens type',
             'pick_technology' => 'Manufacturing technology',
             'pick_material' => 'Material',

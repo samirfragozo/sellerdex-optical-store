@@ -5,9 +5,12 @@ namespace App\Http\Requests;
 use App\Enums\DocumentType;
 use App\Enums\LensKind;
 use App\Enums\SaleDocumentType;
+use App\Models\LensCombination;
+use App\Models\LensCombinationPrice;
 use App\Models\LensType;
 use App\Models\Prescription;
 use App\Models\Sale;
+use App\Models\Supplier;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Exists;
@@ -56,9 +59,15 @@ class StoreSaleRequest extends FormRequest
             'armados.*.lens.description' => ['required', 'string', 'max:255'],
             'armados.*.lens.quantity' => ['nullable', 'integer', 'min:1', 'max:100'],
             'armados.*.lens.price_override' => ['nullable', 'integer', 'min:0', 'max:100000000'],
-            'armados.*.lens.lens_type_id' => ['required', 'exists:lens_types,id'],
-            'armados.*.lens.lens_technology_id' => ['required', 'exists:lens_technologies,id'],
-            'armados.*.lens.lens_material_id' => ['required', 'exists:lens_materials,id'],
+            'armados.*.lens.lens_type_id' => ['required', 'integer', 'exists:lens_types,id'],
+            'armados.*.lens.lens_technology_id' => ['required', 'integer', 'exists:lens_technologies,id'],
+            'armados.*.lens.lens_material_id' => ['required', 'integer', 'exists:lens_materials,id'],
+            'armados.*.lens.supplier_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('suppliers', 'id')->where('company_id', $this->user()->company_id)
+                    ->where('is_laboratory', true)->where('is_active', true)->withoutTrashed(),
+            ],
             'armados.*.lens.treatment_ids' => ['nullable', 'array'],
             'armados.*.lens.treatment_ids.*' => ['integer', 'exists:lens_treatments,id'],
             'armados.*.frame' => ['nullable', 'array'],
@@ -136,11 +145,11 @@ class StoreSaleRequest extends FormRequest
 
         $prescriptions = Prescription::query()
             ->whereKey(collect($armados)->pluck('prescription_id')->filter(fn (mixed $id): bool => is_numeric($id))->all())
-            ->get(['id', 'customer_id', 'od_add', 'os_add'])
+            ->get()
             ->keyBy('id');
 
         $kinds = LensType::query()
-            ->whereKey(collect($armados)->pluck('lens.lens_type_id')->filter()->all())
+            ->whereKey(collect($armados)->pluck('lens.lens_type_id')->filter(fn (mixed $id): bool => is_numeric($id))->all())
             ->pluck('kind', 'id');
 
         foreach ($armados as $index => $armado) {
@@ -160,19 +169,55 @@ class StoreSaleRequest extends FormRequest
                 continue;
             }
 
-            $kind = $kinds->get($armado['lens']['lens_type_id'] ?? 0);
+            $lensTypeId = $armado['lens']['lens_type_id'] ?? null;
+            $kind = is_numeric($lensTypeId) ? $kinds->get((int) $lensTypeId) : null;
 
-            if ($kind === null) {
-                continue;
+            if ($kind !== null) {
+                $kind = $kind instanceof LensKind ? $kind : LensKind::from($kind);
+                $hasAddition = (float) ($prescription->od_add ?? 0) > 0 || (float) ($prescription->os_add ?? 0) > 0;
+
+                if ($kind->requiresAddition() && ! $hasAddition) {
+                    $validator->errors()->add("armados.{$index}.lens.lens_type_id", __('app.pos.lens_form.requires_addition'));
+                }
             }
 
-            $kind = $kind instanceof LensKind ? $kind : LensKind::from($kind);
-            $hasAddition = (float) ($prescription->od_add ?? 0) > 0 || (float) ($prescription->os_add ?? 0) > 0;
-
-            if ($kind->requiresAddition() && ! $hasAddition) {
-                $validator->errors()->add("armados.{$index}.lens.lens_type_id", __('app.pos.lens_form.requires_addition'));
-            }
+            $this->validateLensRange($validator, $index, (array) ($armado['lens'] ?? []), $prescription);
         }
+    }
+
+    /**
+     * The chosen lab (or, when none is chosen, some lab) must price this
+     * combination for the prescription's governing eye.
+     *
+     * @param  array<string, mixed>  $lens
+     */
+    protected function validateLensRange(Validator $validator, int|string $index, array $lens, Prescription $prescription): void
+    {
+        $ids = [$lens['lens_type_id'] ?? null, $lens['lens_technology_id'] ?? null, $lens['lens_material_id'] ?? null];
+        $supplierId = $lens['supplier_id'] ?? null;
+
+        // Malformed ids and foreign or inactive labs were already reported by their rules.
+        if (in_array(false, array_map('is_numeric', $ids), true) || ($supplierId !== null && ! is_numeric($supplierId))
+            || $validator->errors()->has("armados.{$index}.lens.supplier_id")) {
+            return;
+        }
+
+        $combination = LensCombination::forSelection(...array_map('intval', $ids));
+
+        if ($combination === null || LensCombinationPrice::resolve($combination, $prescription, $supplierId !== null ? (int) $supplierId : null) !== null) {
+            return;
+        }
+
+        // With no priced lens at any active lab, SaleController answers with that readiness blocker instead.
+        if (collect($this->user()->company->saleReadiness())->contains('key', 'lens_price')) {
+            return;
+        }
+
+        $combination->load(['lensType', 'lensTechnology', 'lensMaterial']);
+        $validator->errors()->add("armados.{$index}.lens", LensCombinationPrice::outOfRangeMessage(
+            $combination,
+            $supplierId !== null ? Supplier::find((int) $supplierId) : null,
+        ));
     }
 
     /** A lens sale is any sale that carries at least one armado. */

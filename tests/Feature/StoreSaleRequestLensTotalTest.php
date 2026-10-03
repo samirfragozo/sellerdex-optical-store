@@ -23,9 +23,7 @@ beforeEach(function () {
     $this->prescription = Prescription::factory()->create(['customer_id' => $this->customer->id]);
     $this->method = PaymentMethod::factory()->create();
 
-    $this->combination = LensCombination::factory()->create([
-        'cost' => 10_000,
-        'price' => 20_000,
+    $this->combination = LensCombination::factory()->priced(20_000, 10_000)->create([
         'installation_price' => 5_000,
     ]);
     $this->treatment = LensTreatment::factory()->create(['price' => 70_000, 'cost' => 20_000]);

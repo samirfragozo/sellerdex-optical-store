@@ -4,6 +4,7 @@ namespace App\Actions;
 
 use App\Enums\LensOrderStatus;
 use App\Models\PaymentMethod;
+use App\Models\Prescription;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\Sale;
@@ -124,6 +125,8 @@ class RegisterSale
                 (int) $lens['lens_technology_id'],
                 (int) $lens['lens_material_id'],
                 $lens['treatment_ids'] ?? [],
+                isset($armado['prescription_id']) ? Prescription::find($armado['prescription_id']) : null,
+                isset($lens['supplier_id']) ? (int) $lens['supplier_id'] : null,
             );
 
             $unitPrice = $resolved['price'];
@@ -155,8 +158,8 @@ class RegisterSale
                 'type_name' => $combination->lensType->name,
                 'technology_name' => $combination->lensTechnology->name,
                 'material_name' => $combination->lensMaterial->name,
-                'combination_cost' => $combination->cost,
-                'combination_price' => $combination->price,
+                'combination_cost' => $resolved['price_row']->cost,
+                'combination_price' => $resolved['price_row']->price,
                 'installation_price' => $combination->installation_price,
             ]);
 
@@ -170,8 +173,9 @@ class RegisterSale
             }
 
             // Every lens in this business is made-to-order and needs a lab order.
+            // The lab that priced the lens makes it; M7 sends the order.
             $lensItem->lensOrder()->create([
-                'supplier_id' => null,
+                'supplier_id' => $resolved['price_row']->supplier_id,
                 'lab_status' => LensOrderStatus::PendingAssignment,
             ]);
 

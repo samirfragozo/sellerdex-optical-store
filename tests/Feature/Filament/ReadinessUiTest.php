@@ -12,7 +12,7 @@ function readyAdmin(): User
 
     PaymentMethod::factory()->create(['company_id' => $admin->company_id, 'is_active' => true]);
     Supplier::factory()->create(['company_id' => $admin->company_id, 'is_laboratory' => true, 'is_active' => true, 'lead_time_days' => 3]);
-    LensCombination::factory()->create(['company_id' => $admin->company_id, 'price' => 100000, 'is_active' => true]);
+    LensCombination::factory()->priced(100000)->create(['company_id' => $admin->company_id, 'is_active' => true]);
 
     return $admin;
 }

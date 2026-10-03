@@ -105,6 +105,7 @@ return [
         'brand' => 'Marca',
         'sku' => 'Referencia',
         'price' => 'Precio',
+        'price_from' => 'Desde',
         'cost' => 'Costo',
         'installation_price' => 'Precio de instalación',
         'stock' => 'Stock',
@@ -391,6 +392,8 @@ return [
         ],
 
         'lens_form' => [
+            'out_of_range' => 'La fórmula está fuera del rango de precios de :combination en :lab.',
+            'out_of_range_any' => 'La fórmula está fuera del rango de precios de :combination en todos los laboratorios.',
             'pick_type' => 'Tipo de lente',
             'pick_technology' => 'Tecnología de fabricación',
             'pick_material' => 'Material',

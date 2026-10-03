@@ -59,7 +59,7 @@ it('rejects a customer from another company', function () {
 it('requires a prescription of the same customer to sell lenses', function () {
     $other = Prescription::factory()->create(); // another customer
     Supplier::factory()->laboratory()->create();
-    $combination = LensCombination::factory()->create(['price' => 100_000]);
+    $combination = LensCombination::factory()->priced(100_000)->create();
 
     $this->postJson(route('pos.store'), [
         'document_type' => 'order',

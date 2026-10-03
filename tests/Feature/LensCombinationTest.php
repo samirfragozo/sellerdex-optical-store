@@ -59,3 +59,17 @@ it('no permite dos combinaciones para la misma terna en la misma empresa', funct
         'lens_material_id' => $material->id,
     ]))->toThrow(QueryException::class);
 });
+
+it('se nombra por tipo, tecnología y material, y nace con un precio vendible', function () {
+    $this->actingAs(User::factory()->admin()->create());
+
+    $combination = LensCombination::factory()->create([
+        'lens_type_id' => LensType::factory()->create(['name' => 'Progresivo'])->id,
+        'lens_technology_id' => LensTechnology::factory()->create(['name' => 'Digital'])->id,
+        'lens_material_id' => LensMaterial::factory()->create(['name' => 'Policarbonato'])->id,
+    ]);
+
+    expect($combination->label())->toBe('Progresivo Digital Policarbonato')
+        ->and($combination->prices()->sole()->supplier->is_laboratory)->toBeTrue()
+        ->and(LensCombination::factory()->unpriced()->create()->prices()->exists())->toBeFalse();
+});

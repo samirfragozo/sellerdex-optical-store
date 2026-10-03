@@ -15,7 +15,7 @@ beforeEach(function () {
     openCashRegisterSession($this->seller);
     PaymentMethod::factory()->create(['company_id' => $this->seller->company_id, 'is_active' => true]);
     $this->lab = Supplier::factory()->create(['company_id' => $this->seller->company_id, 'is_laboratory' => true, 'is_active' => true, 'lead_time_days' => 3]);
-    $this->combination = LensCombination::factory()->create(['company_id' => $this->seller->company_id, 'price' => 100000, 'is_active' => true]);
+    $this->combination = LensCombination::factory()->priced(100000)->create(['company_id' => $this->seller->company_id, 'is_active' => true]);
 });
 
 it('shares readiness issues with the POS', function () {

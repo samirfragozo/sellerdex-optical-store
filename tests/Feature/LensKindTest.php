@@ -38,7 +38,7 @@ function kindSalePayload(LensCombination $combination, Prescription $rx): array
 
 it('rejects a progressive lens on a prescription without addition', function () {
     $type = LensType::factory()->create(['kind' => LensKind::Progressive]);
-    $combination = LensCombination::factory()->create(['lens_type_id' => $type->id, 'price' => 300_000]);
+    $combination = LensCombination::factory()->priced(300_000)->create(['lens_type_id' => $type->id]);
     $rx = Prescription::factory()->create(['od_add' => null, 'os_add' => null]);
 
     $this->postJson(route('pos.store'), kindSalePayload($combination, $rx))
@@ -48,7 +48,7 @@ it('rejects a progressive lens on a prescription without addition', function () 
 
 it('accepts a progressive lens when either eye has addition', function () {
     $type = LensType::factory()->create(['kind' => LensKind::Progressive]);
-    $combination = LensCombination::factory()->create(['lens_type_id' => $type->id, 'price' => 300_000]);
+    $combination = LensCombination::factory()->priced(300_000)->create(['lens_type_id' => $type->id]);
     $rx = Prescription::factory()->create(['od_add' => null, 'os_add' => '2.00']);
 
     $this->postJson(route('pos.store'), kindSalePayload($combination, $rx))->assertOk();
@@ -56,7 +56,7 @@ it('accepts a progressive lens when either eye has addition', function () {
 
 it('does not require addition for a single-vision lens', function () {
     $type = LensType::factory()->create(['kind' => LensKind::SingleVision]);
-    $combination = LensCombination::factory()->create(['lens_type_id' => $type->id, 'price' => 100_000]);
+    $combination = LensCombination::factory()->priced(100_000)->create(['lens_type_id' => $type->id]);
     $rx = Prescription::factory()->create(['od_add' => null, 'os_add' => null]);
 
     $this->postJson(route('pos.store'), kindSalePayload($combination, $rx))->assertOk();

@@ -43,16 +43,6 @@ class LensCombinationForm
                     ignoreRecord: true,
                 )
                 ->validationMessages(['unique' => __('app.resources.lens_combination.duplicate')]),
-            TextInput::make('cost')
-                ->label(__('app.fields.cost'))
-                ->required()
-                ->numeric()
-                ->prefix('$'),
-            TextInput::make('price')
-                ->label(__('app.fields.price'))
-                ->required()
-                ->numeric()
-                ->prefix('$'),
             TextInput::make('installation_price')
                 ->label(__('app.fields.installation_price'))
                 ->required()

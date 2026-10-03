@@ -1,17 +1,20 @@
 <?php
 
 use App\Filament\Resources\LensCombinations\LensCombinationResource;
+use App\Filament\Resources\LensCombinations\Pages\ListLensCombinations;
 use App\Models\LensCombination;
+use App\Models\LensCombinationPrice;
 use App\Models\LensMaterial;
 use App\Models\LensTechnology;
 use App\Models\LensType;
 use App\Models\User;
+use Filament\Tables\Columns\TextColumn;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 
 uses(RefreshDatabase::class);
 
-it('crea una combinación de lente con costo, precio e instalación', function () {
+it('crea una combinación de lente con su instalación', function () {
     $admin = User::factory()->admin()->create();
     $this->actingAs($admin);
 
@@ -24,8 +27,6 @@ it('crea una combinación de lente con costo, precio e instalación', function (
             'lens_type_id' => $type->id,
             'lens_technology_id' => $technology->id,
             'lens_material_id' => $material->id,
-            'cost' => 60000,
-            'price' => 180000,
             'installation_price' => 3000,
             'is_active' => true,
         ])
@@ -50,8 +51,6 @@ it('rechaza con error de validación una terna tipo/tecnología/material duplica
             'lens_type_id' => $existing->lens_type_id,
             'lens_technology_id' => $existing->lens_technology_id,
             'lens_material_id' => $existing->lens_material_id,
-            'cost' => 1000,
-            'price' => 2000,
             'installation_price' => 0,
             'is_active' => true,
         ])
@@ -68,9 +67,23 @@ it('permite editar una combinación existente sin chocar consigo misma', functio
     $combination = LensCombination::factory()->create();
 
     Livewire::test(LensCombinationResource::getPages()['edit']->getPage(), ['record' => $combination->getKey()])
-        ->fillForm(['price' => 999000])
+        ->fillForm(['installation_price' => 9000])
         ->call('save')
         ->assertHasNoFormErrors();
 
-    expect($combination->refresh()->price)->toBe(999000);
+    expect($combination->refresh()->installation_price)->toBe(9000);
+});
+
+it('lists each combination from its lowest price', function () {
+    $this->actingAs(User::factory()->admin()->create());
+    $combination = LensCombination::factory()->priced(180000)->create();
+    $combination->prices()->create([
+        'supplier_id' => $combination->prices()->value('supplier_id'),
+        ...LensCombinationPrice::ALL_PRESCRIPTIONS,
+        'sphere_min' => -20, 'sphere_max' => -6.25, 'price' => 260000,
+    ]);
+
+    Livewire::test(ListLensCombinations::class)
+        ->assertTableColumnExists('prices_min_price', fn (TextColumn $column): bool => $column->getLabel() === __('app.fields.price_from'))
+        ->assertTableColumnStateSet('prices_min_price', 180000, $combination);
 });

@@ -15,9 +15,7 @@ beforeEach(function () {
     $this->actingAs($this->seller);
     $this->customer = Customer::factory()->create();
 
-    $this->combination = LensCombination::factory()->create([
-        'cost' => 10000,
-        'price' => 20000,
+    $this->combination = LensCombination::factory()->priced(20000, 10000)->create([
         'installation_price' => 5000,
     ]);
     $this->treatment = LensTreatment::factory()->create(['price' => 70000, 'cost' => 20000]);
@@ -82,7 +80,7 @@ it('auto-creates a pending-assignment lens order for every lens line', function 
     $lensItem = $sale->items->first(fn ($i) => $i->isLens());
 
     expect($lensItem->lensOrder)->not->toBeNull()
-        ->and($lensItem->lensOrder->supplier_id)->toBeNull()
+        ->and($lensItem->lensOrder->supplier_id)->toBe($this->combination->prices()->value('supplier_id'))
         ->and($lensItem->lensOrder->lab_status)->toBe(LensOrderStatus::PendingAssignment);
 });
 

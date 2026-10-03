@@ -33,14 +33,15 @@ function seedCatalog(): void
 
 /**
  * A valid `armados.*.lens` payload backed by a freshly created catalog combination,
- * and treatment. `$prices` overrides the combination's own price/cost.
+ * and treatment. `$prices` sets the combination's attributes; its price/cost go on its price row.
  *
  * @param  array<string,int>  $prices
  * @return array<string,mixed>
  */
 function lensPayload(array $prices = [], array $extra = []): array
 {
-    $combination = LensCombination::factory()->create($prices);
+    $factory = isset($prices['price']) ? LensCombination::factory()->priced($prices['price'], $prices['cost'] ?? 0) : LensCombination::factory();
+    $combination = $factory->create(array_diff_key($prices, array_flip(['price', 'cost'])));
 
     return array_merge([
         'description' => 'Lente formulado',
@@ -69,7 +70,7 @@ it('persists group_key on a sale item', function () {
 });
 
 it('registra un lente con su configuración y tratamientos resueltos', function () {
-    $combination = LensCombination::factory()->create(['cost' => 60000, 'price' => 180000, 'installation_price' => 3000]);
+    $combination = LensCombination::factory()->priced(180000, 60000)->create(['installation_price' => 3000]);
     $treatment = LensTreatment::factory()->create(['price' => 50000, 'cost' => 20000]);
 
     $sale = (new RegisterSale)->handle([

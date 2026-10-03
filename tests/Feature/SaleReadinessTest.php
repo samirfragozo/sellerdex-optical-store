@@ -22,9 +22,8 @@ function readyCompany(): Company
     // Lens catalog rows are company-scoped and only auto-fill company_id from an
     // authenticated user (BelongsToCompany); these tests run unauthenticated, so
     // the nested type/technology/material rows need company_id passed explicitly.
-    LensCombination::factory()->create([
+    LensCombination::factory()->priced(100000)->create([
         'company_id' => $company->id,
-        'price' => 100000,
         'is_active' => true,
         'lens_type_id' => LensType::factory()->create(['company_id' => $company->id])->id,
         'lens_technology_id' => LensTechnology::factory()->create(['company_id' => $company->id])->id,

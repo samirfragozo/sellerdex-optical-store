@@ -11,6 +11,7 @@ use App\Filament\Pages\Onboarding\Steps\SummaryStep;
 use App\Filament\Pages\Onboarding\Steps\TreatmentsStep;
 use App\Models\Company;
 use App\Models\LensCombination;
+use App\Models\LensCombinationPrice;
 use App\Models\LensType;
 use App\Models\PaymentMethod;
 use App\Models\Supplier;
@@ -168,7 +169,9 @@ it('requires at least one laboratory and stores its lead time', function () {
 });
 
 it('creates the lens combinations the user keeps, with the prices they typed', function () {
-    onboardingAt(LensesStep::key());
+    $admin = onboardingAt(LensesStep::key());
+    $labs = Supplier::factory()->laboratory()->count(2)->create(['company_id' => $admin->company_id]);
+    Supplier::factory()->laboratory()->create(['company_id' => $admin->company_id, 'is_active' => false]);
 
     Livewire::test(Onboarding::class)
         ->assertSet('step', LensesStep::key())
@@ -180,9 +183,15 @@ it('creates the lens combinations the user keeps, with the prices they typed', f
         ->assertHasNoErrors();
 
     $combination = LensCombination::sole();
-    expect($combination->price)->toBe(120000)
-        ->and($combination->cost)->toBe(40000)
+    $prices = $combination->prices()->orderBy('id')->get();
+    expect($prices->pluck('supplier_id')->all())->toBe($labs->pluck('id')->all())
+        ->and($prices->pluck('price')->unique()->all())->toBe([120000])
+        ->and($prices->pluck('cost')->unique()->all())->toBe([40000])
+        ->and($prices->pluck('is_preferred')->all())->toBe([true, false])
+        ->and($prices->every(fn (LensCombinationPrice $row): bool => (float) $row->sphere_min === -20.0 && (float) $row->sphere_max === 20.0
+            && (float) $row->cylinder_min === -10.0 && (float) $row->cylinder_max === 10.0 && $row->add_min === null && $row->add_max === null))->toBeTrue()
         ->and($combination->installation_price)->toBe(20000)
+        ->and(app(LensesStep::class)->isComplete($admin->company))->toBeTrue()
         ->and(LensType::where('name', 'Progresivo')->exists())->toBeFalse();
 });
 
@@ -204,7 +213,7 @@ it('requires at least one lens combination when none exists yet', function () {
 
 it('lets the user continue past lenses when combinations already exist', function () {
     $admin = onboardingAt(LensesStep::key());
-    LensCombination::factory()->create(['company_id' => $admin->company_id, 'price' => 100000]);
+    LensCombination::factory()->priced(100000)->create(['company_id' => $admin->company_id]);
 
     Livewire::test(Onboarding::class)
         ->set('data.selected_combo_keys', [])
@@ -233,9 +242,9 @@ it('keeps the first onboarding timestamp when finishing twice', function () {
     expect($admin->company->fresh()->onboarded_at->equalTo($firstFinishedAt))->toBeTrue();
 });
 
-it('still requires a lens combination when the existing ones cannot be sold', function (array $unsellable) {
+it('still requires a lens combination when the existing ones cannot be sold', function (array $unsellable, int $price) {
     $admin = onboardingAt(LensesStep::key());
-    LensCombination::factory()->create(['company_id' => $admin->company_id, 'price' => 100000, 'is_active' => true, ...$unsellable]);
+    LensCombination::factory()->priced($price)->create(['company_id' => $admin->company_id, 'is_active' => true, ...$unsellable]);
 
     Livewire::test(Onboarding::class)
         ->assertSet('data.selected_combo_keys', array_keys(ReferenceLensCatalog::combinations()))
@@ -243,8 +252,8 @@ it('still requires a lens combination when the existing ones cannot be sold', fu
         ->call('next')
         ->assertHasErrors(['data.selected_combo_keys' => 'required']);
 })->with([
-    'inactive' => [['is_active' => false]],
-    'zero price' => [['price' => 0]],
+    'inactive' => [['is_active' => false], 100000],
+    'zero price' => [[], 0],
 ]);
 
 it('lists lens-only blockers on the summary under their own heading', function () {

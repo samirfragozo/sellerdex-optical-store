@@ -20,13 +20,11 @@ it('registra una venta de lente completa desde el POS y genera su orden de labor
     Supplier::factory()->laboratory()->create(['company_id' => $seller->company_id]);
     $this->actingAs($seller);
 
-    $combination = LensCombination::factory()->create([
+    $combination = LensCombination::factory()->priced(180000, 60000)->create([
         'company_id' => $seller->company_id,
         'lens_type_id' => LensType::factory()->create(['company_id' => $seller->company_id])->id,
         'lens_technology_id' => LensTechnology::factory()->create(['company_id' => $seller->company_id])->id,
         'lens_material_id' => LensMaterial::factory()->create(['company_id' => $seller->company_id])->id,
-        'cost' => 60000,
-        'price' => 180000,
         'installation_price' => 3000,
     ]);
     $treatment = LensTreatment::factory()->create(['company_id' => $seller->company_id, 'price' => 50000, 'cost' => 20000]);

@@ -17,7 +17,7 @@ beforeEach(function () {
     openCashRegisterSession($this->seller);
     PaymentMethod::factory()->create(['is_active' => true]);
     Supplier::factory()->laboratory()->create();
-    $this->combination = LensCombination::factory()->create(['price' => 200_000]);
+    $this->combination = LensCombination::factory()->priced(200_000)->create();
     $this->payer = Customer::factory()->create();
 });
 
@@ -138,7 +138,7 @@ it('requires a prescription on every armado', function () {
 
 it('checks the addition against each armado own prescription', function () {
     $progressive = LensType::factory()->create(['kind' => LensKind::Progressive]);
-    $combination = LensCombination::factory()->create(['lens_type_id' => $progressive->id, 'price' => 300_000]);
+    $combination = LensCombination::factory()->priced(300_000)->create(['lens_type_id' => $progressive->id]);
     $son = Customer::factory()->create();
     $payerRx = Prescription::factory()->create(['customer_id' => $this->payer->id, 'od_add' => '2.00']);
     $sonRx = Prescription::factory()->create(['customer_id' => $son->id, 'od_add' => null, 'os_add' => null]);

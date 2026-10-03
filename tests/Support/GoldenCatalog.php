@@ -33,7 +33,7 @@ function goldenCatalog(User $seller): array
     $exam = $product('service', 'SRV-EXAMEN', 'Examen visual', 35_000, 0);
 
     return [
-        'lens' => LensCombination::factory()->create(['price' => 180_000, 'cost' => 60_000, 'installation_price' => 0]),
+        'lens' => LensCombination::factory()->priced(180_000, 60_000)->create(['installation_price' => 0]),
         'frame' => $product('frame', 'FRAME', 'Montura Golden', 150_000, 60_000),
         'sunglasses' => $product('sunglasses', 'SUNGLASSES', 'Gafas de sol Golden', 250_000, 100_000),
         'exam' => $exam,

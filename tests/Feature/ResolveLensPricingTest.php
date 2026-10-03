@@ -2,6 +2,7 @@
 
 use App\Actions\ResolveLensPricing;
 use App\Models\LensCombination;
+use App\Models\LensCombinationPrice;
 use App\Models\LensTreatment;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -13,7 +14,7 @@ it('suma el precio y costo de la combinación y los tratamientos elegidos', func
     $user = User::factory()->admin()->create();
     $this->actingAs($user);
 
-    $combination = LensCombination::factory()->create(['cost' => 60000, 'price' => 180000, 'installation_price' => 3000]);
+    $combination = LensCombination::factory()->priced(180000, 60000)->create(['installation_price' => 3000]);
     $t1 = LensTreatment::factory()->create(['price' => 50000, 'cost' => 20000]);
     $t2 = LensTreatment::factory()->create(['price' => 30000, 'cost' => 10000]);
 
@@ -27,6 +28,7 @@ it('suma el precio y costo de la combinación y los tratamientos elegidos', func
     expect($result['price'])->toBe(180000 + 3000 + 50000 + 30000)
         ->and($result['cost'])->toBe(60000 + 20000 + 10000)
         ->and($result['combination']->is($combination))->toBeTrue()
+        ->and($result['price_row']->is($combination->prices()->sole()))->toBeTrue()
         ->and($result)->not->toHaveKey('package')
         ->and($result['treatments']->pluck('id')->sort()->values()->all())->toBe(collect([$t1->id, $t2->id])->sort()->values()->all());
 });
@@ -79,4 +81,16 @@ it('rechaza cuando hay tratamientos duplicados en la entrada', function () {
         $combination->lens_material_id,
         [$treatment->id, $treatment->id],
     ))->toThrow(ValidationException::class);
+});
+
+it('rechaza una combinación sin precio para la fórmula, nombrándola', function () {
+    $this->actingAs(User::factory()->admin()->create());
+    $combination = LensCombination::factory()->unpriced()->create();
+
+    try {
+        (new ResolveLensPricing)->handle($combination->lens_type_id, $combination->lens_technology_id, $combination->lens_material_id, []);
+        $this->fail('Expected a ValidationException.');
+    } catch (ValidationException $exception) {
+        expect($exception->errors()['lens'])->toBe([LensCombinationPrice::outOfRangeMessage($combination->load(['lensType', 'lensTechnology', 'lensMaterial']), null)]);
+    }
 });

@@ -34,7 +34,7 @@ it('renders a combo invoice with free exam, included lines and the surcharged to
     ReferenceKit::installFor($company);
     $examSlot = KitSlot::where('trigger', KitTrigger::Armado)->get()->firstWhere(fn ($s) => $s->slotCategory->key === 'service');
 
-    $combination = LensCombination::factory()->create(['price' => 295000, 'cost' => 6000, 'installation_price' => 0]);
+    $combination = LensCombination::factory()->priced(295000, 6000)->create(['installation_price' => 0]);
     $addi = PaymentMethod::where('name', 'Addi')->first(); // 7%
 
     $sale = app(RegisterSale::class)->handle([

@@ -6,6 +6,7 @@ use App\Actions\CreateReferenceLensCombinations;
 use App\Filament\Pages\Onboarding\OnboardingStep;
 use App\Models\Company;
 use App\Models\LensCombination;
+use App\Models\LensCombinationPrice;
 use App\Support\ReferenceLensCatalog;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\TextInput;
@@ -88,7 +89,9 @@ class LensesStep extends OnboardingStep
 
     public function isComplete(Company $company): bool
     {
-        return LensCombination::query()->where('is_active', true)->where('price', '>', 0)->exists();
+        return LensCombinationPrice::query()->where('is_active', true)->where('price', '>', 0)
+            ->whereHas('lensCombination', fn ($query) => $query->where('is_active', true))
+            ->exists();
     }
 
     public function summary(Company $company): string
