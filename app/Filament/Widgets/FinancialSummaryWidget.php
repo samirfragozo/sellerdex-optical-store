@@ -9,6 +9,7 @@ use App\Support\ReportPeriod;
 use Filament\Widgets\Concerns\InteractsWithPageFilters;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
+use Illuminate\Support\Facades\DB;
 
 class FinancialSummaryWidget extends BaseWidget
 {
@@ -23,8 +24,8 @@ class FinancialSummaryWidget extends BaseWidget
     {
         [$start, $end] = ReportPeriod::fromFilters($this->pageFilters);
 
-        $sales = Sale::whereBetween('sold_at', [$start, $end])->sum('total');
-        $collected = Payment::whereBetween('paid_at', [$start, $end])->sum('amount');
+        $sales = Sale::notVoided()->whereBetween('sold_at', [$start, $end])->sum(DB::raw(Sale::NET_VALUE_SQL));
+        $collected = Payment::realMoney()->whereBetween('paid_at', [$start, $end])->sum('amount');
         $expenses = Expense::whereBetween('spent_at', [$start, $end])->sum('amount');
         $profit = $collected - $expenses;
 

@@ -8,6 +8,7 @@ use App\Models\Payment;
 use App\Models\Sale;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
+use Illuminate\Support\Facades\DB;
 
 class TodaySummaryWidget extends BaseWidget
 {
@@ -24,18 +25,15 @@ class TodaySummaryWidget extends BaseWidget
             ->where('document_type', '!=', SaleDocumentType::Quote->value)
             ->where('status', '!=', SaleStatus::Voided->value);
 
-        $salesToday = Sale::query()
+        $salesToday = (int) Sale::query()
             ->tap($countsForSale)
             ->whereDate('sold_at', $today)
-            ->sum('total');
+            ->sum(DB::raw(Sale::NET_VALUE_SQL));
 
-        $collectedToday = Payment::query()->whereDate('paid_at', $today)->sum('amount');
+        $collectedToday = Payment::query()->realMoney()->whereDate('paid_at', $today)->sum('amount');
 
-        $salesTotal = Sale::query()->tap($countsForSale)->sum('total');
-        $paidTotal = Payment::query()
-            ->whereHas('sale', fn ($q) => $countsForSale($q))
-            ->sum('amount');
-        $receivable = max(0, (int) $salesTotal - (int) $paidTotal);
+        // ponytail: loads every open sale to sum balances, SQL aggregate if this ever gets slow
+        $receivable = (int) Sale::query()->tap($countsForSale)->get()->sum('balance');
 
         $pendingDeliveries = Sale::query()
             ->tap($countsForSale)
@@ -43,7 +41,7 @@ class TodaySummaryWidget extends BaseWidget
             ->count();
 
         return [
-            Stat::make(__('app.reports.sales_today'), '$'.number_format((int) $salesToday)),
+            Stat::make(__('app.reports.sales_today'), '$'.number_format($salesToday)),
             Stat::make(__('app.reports.collected_today'), '$'.number_format((int) $collectedToday)),
             Stat::make(__('app.reports.receivable_total'), '$'.number_format($receivable)),
             Stat::make(__('app.reports.pending_deliveries'), (string) $pendingDeliveries),

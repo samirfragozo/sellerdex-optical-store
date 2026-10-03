@@ -8,6 +8,7 @@ use App\Models\Expense;
 use App\Models\Payment;
 use App\Models\Sale;
 use Carbon\CarbonInterface;
+use Illuminate\Support\Facades\DB;
 
 class CashCloseService
 {
@@ -20,10 +21,11 @@ class CashCloseService
     {
         [$start, $end] = $this->period($type, $date);
 
-        $totalSales = (int) Sale::whereBetween('sold_at', [$start, $end])->sum('total');
+        $totalSales = (int) Sale::notVoided()->whereBetween('sold_at', [$start, $end])->sum(DB::raw(Sale::NET_VALUE_SQL));
 
         $payments = Payment::whereBetween('paid_at', [$start, $end])->get();
-        $totalCollected = (int) $payments->sum('amount');
+        // Store credit is a balance, not money taken in; it still shows by method.
+        $totalCollected = (int) Payment::realMoney()->whereBetween('paid_at', [$start, $end])->sum('amount');
         $collectedByMethod = $payments->groupBy('payment_method_id')
             ->map(fn ($group) => (int) $group->sum('amount'))->all();
 

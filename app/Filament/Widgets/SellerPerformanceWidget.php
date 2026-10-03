@@ -2,6 +2,7 @@
 
 namespace App\Filament\Widgets;
 
+use App\Models\Sale;
 use App\Models\User;
 use App\Support\ReportPeriod;
 use Filament\Tables\Columns\TextColumn;
@@ -31,8 +32,12 @@ class SellerPerformanceWidget extends BaseWidget
                 User::query()
                     ->where('company_id', Auth::user()->company_id)
                     ->whereHas('sales')
-                    ->withCount(['sales as sales_count' => fn ($q) => $q->whereBetween('sold_at', [$start, $end])])
-                    ->withSum(['sales as sales_total' => fn ($q) => $q->whereBetween('sold_at', [$start, $end])], 'total')
+                    ->withCount(['sales as sales_count' => fn ($q) => $q->notVoided()->whereBetween('sold_at', [$start, $end])])
+                    ->addSelect(['sales_total' => Sale::query()
+                        ->selectRaw('coalesce(sum('.Sale::NET_VALUE_SQL.'), 0)')
+                        ->whereColumn('sales.seller_id', 'users.id')
+                        ->notVoided()
+                        ->whereBetween('sold_at', [$start, $end])])
             )
             ->columns([
                 TextColumn::make('name')

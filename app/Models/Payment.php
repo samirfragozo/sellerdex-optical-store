@@ -98,6 +98,12 @@ class Payment extends Model
         static::deleted(fn (Payment $payment) => $payment->sale?->recalculateStatus());
     }
 
+    /** Real money only: store credit is a balance the shop owes, not cash taken in. */
+    public function scopeRealMoney(Builder $query): void
+    {
+        $query->whereNotIn('payments.payment_method_id', PaymentMethod::withoutGlobalScopes()->where('is_store_credit', true)->select('id'));
+    }
+
     public function isStoreCredit(): bool
     {
         return (bool) PaymentMethod::withoutGlobalScopes()->whereKey($this->payment_method_id)->value('is_store_credit');

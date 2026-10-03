@@ -30,6 +30,9 @@ class Sale extends Model
     /** @use HasFactory<SaleFactory> */
     use BelongsToCompany, HasFactory, SoftDeletes;
 
+    /** SQL for a sale's net value (total minus returns and value adjustments); sum it over non-voided sales for reports. */
+    public const NET_VALUE_SQL = "sales.total - (select coalesce(sum(sale_returns.total), 0) from sale_returns where sale_returns.sale_id = sales.id and sale_returns.type <> 'void')";
+
     protected function casts(): array
     {
         return [
@@ -140,6 +143,12 @@ class Sale extends Model
     public function scopeOutstanding(Builder $query): void
     {
         $query->where('sales.status', '!=', SaleStatus::Voided->value)->whereRaw("sales.total - (select coalesce(sum(sale_returns.total), 0) from sale_returns where sale_returns.sale_id = sales.id and sale_returns.type <> 'void') > (select coalesce(sum(payments.amount), 0) from payments where payments.sale_id = sales.id and payments.deleted_at is null)");
+    }
+
+    /** Sales that still count in reports: everything but voided ones. */
+    public function scopeNotVoided(Builder $query): void
+    {
+        $query->where('sales.status', '!=', SaleStatus::Voided->value);
     }
 
     /** What the customer was given back in value: returns and value adjustments (a void cancels the sale instead). */
