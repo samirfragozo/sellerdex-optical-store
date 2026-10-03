@@ -192,3 +192,34 @@ it('never lets the money cap grow past what was paid when the net value is negat
     expect(fn () => $handle(['reason' => 'x', 'items' => [['sale_item_id' => $this->line->id, 'quantity' => 1]], 'store_credit_amount' => 110_000]))
         ->toThrow(ValidationException::class);
 });
+
+it('shows the money limit under the refund on a walk-in sale', function () {
+    $walkIn = Sale::factory()->create(['customer_id' => null, 'discount_percent' => 0, 'surcharge_percent' => 0]);
+    $line = SaleItem::factory()->create(['sale_id' => $walkIn->id, 'quantity' => 2, 'unit_price' => 50_000, 'tax_rate' => 0]);
+    Payment::factory()->create(['sale_id' => $walkIn->id, 'payment_method_id' => $this->cash->id, 'amount' => 60_000]);
+
+    Livewire::test(EditSale::class, ['record' => $walkIn->getRouteKey()])
+        ->callAction(TestAction::make('returnItems'), [
+            'lines' => [['sale_item_id' => $line->id, 'quantity' => 1, 'restock' => false]],
+            'reason' => 'x', 'refund_amount' => 50_000, 'refund_payment_method_id' => $this->cash->id,
+        ])
+        ->assertHasActionErrors(['refund_amount' => __('app.sale_return.money_exceeds', ['max' => '10.000'])]);
+});
+
+it('hides return items when nothing is left to return', function () {
+    app(RegisterSaleReturn::class)->handle($this->sale, SaleReturnType::Return, ['reason' => 'x', 'items' => [['sale_item_id' => $this->line->id, 'quantity' => 2]]], $this->admin);
+
+    Livewire::test(EditSale::class, ['record' => $this->sale->getRouteKey()])
+        ->assertActionHidden('returnItems')
+        ->assertActionVisible('valueAdjustment');
+});
+
+it('hides every post-sale action on a quote', function () {
+    $quote = Sale::factory()->create(['customer_id' => $this->customer->id, 'document_type' => SaleDocumentType::Quote]);
+    SaleItem::factory()->create(['sale_id' => $quote->id, 'quantity' => 1, 'unit_price' => 50_000, 'tax_rate' => 0]);
+
+    Livewire::test(EditSale::class, ['record' => $quote->getRouteKey()])
+        ->assertActionHidden('returnItems')
+        ->assertActionHidden('valueAdjustment')
+        ->assertActionHidden('voidSale');
+});

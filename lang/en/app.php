@@ -82,7 +82,7 @@ return [
     ],
 
     'fields' => [
-        'credit_balance' => 'Saldo a favor',
+        'credit_balance' => 'Store credit',
         'remake_reason' => 'Reason',
         'remake_responsible' => 'Responsible',
         'remake_cost' => 'Remake cost',

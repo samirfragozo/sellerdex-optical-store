@@ -37,7 +37,7 @@ class SaleReturnActions
             ->label(__('app.sale_return.actions.return'))
             ->icon(Heroicon::OutlinedArrowUturnLeft)
             ->color('warning')
-            ->visible(fn (Sale $record): bool => self::canAct($record))
+            ->visible(fn (Sale $record): bool => self::canAct($record) && self::returnableLines($record) !== [])
             ->fillForm(fn (Sale $record): array => ['lines' => self::returnableLines($record)])
             ->schema(fn (Sale $record): array => [
                 Repeater::make('lines')
@@ -150,10 +150,12 @@ class SaleReturnActions
             ->action(fn (Sale $record, array $data, $livewire) => self::register($record, SaleReturnType::Void, self::moneyPayload($data), [], $livewire));
     }
 
-    /** Only admins act on a sale after the fact, and a voided sale takes nothing more. */
+    /** Only admins act on a sale after the fact; a voided sale takes nothing more and a quote has nothing to give back. */
     private static function canAct(Sale $sale): bool
     {
-        return auth()->user()?->isAdmin() === true && $sale->status !== SaleStatus::Voided;
+        return auth()->user()?->isAdmin() === true
+            && $sale->status !== SaleStatus::Voided
+            && $sale->document_type !== SaleDocumentType::Quote;
     }
 
     /**
@@ -226,7 +228,7 @@ class SaleReturnActions
             app(RegisterSaleReturn::class)->handle($sale, $type, $payload, auth()->user());
         } catch (ValidationException $exception) {
             throw ValidationException::withMessages(collect($exception->errors())
-                ->mapWithKeys(fn (array $messages, string $key): array => ['mountedActions.0.data.'.self::formKey($key, $lineKeys) => $messages])
+                ->mapWithKeys(fn (array $messages, string $key): array => ['mountedActions.0.data.'.self::formKey($key, $lineKeys, $sale) => $messages])
                 ->all());
         }
 
@@ -254,10 +256,15 @@ class SaleReturnActions
     }
 
     /** @param  list<int|string>  $lineKeys */
-    private static function formKey(string $key, array $lineKeys): string
+    private static function formKey(string $key, array $lineKeys, Sale $sale): string
     {
         if ($key === 'items') {
             return 'lines';
+        }
+
+        // Walk-in sales have no store-credit field, so the money-limit errors go under the refund.
+        if ($key === 'store_credit_amount' && $sale->customer_id === null) {
+            return 'refund_amount';
         }
 
         return preg_replace_callback('/^items\.(\d+)\./', fn (array $match): string => 'lines.'.($lineKeys[(int) $match[1]] ?? $match[1]).'.', $key);
