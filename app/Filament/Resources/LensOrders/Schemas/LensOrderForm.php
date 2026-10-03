@@ -9,6 +9,7 @@ use App\Enums\RemakeReason;
 use App\Enums\RemakeResponsible;
 use App\Models\LensOrder;
 use App\Models\Prescription;
+use Closure;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -34,7 +35,14 @@ class LensOrderForm
                     ->relationship(name: 'saleItem')
                     ->getOptionLabelFromRecordUsing(fn (Model $record) => __('app.resources.sale.label').' '.$record->sale?->number.' — '.$record->description)
                     ->searchable()
-                    ->required(),
+                    ->required()
+                    ->disabledOn('edit')
+                    // Remakes share the sale item, so this is checked on create only (no plain unique).
+                    ->rules([fn (): Closure => function (string $attribute, mixed $value, Closure $fail): void {
+                        if (LensOrder::where('sale_item_id', $value)->exists()) {
+                            $fail(__('app.lab_order.item_has_order'));
+                        }
+                    }], fn (string $operation): bool => $operation === 'create'),
                 Select::make('supplier_id')
                     ->label(__('app.fields.laboratory'))
                     ->relationship(

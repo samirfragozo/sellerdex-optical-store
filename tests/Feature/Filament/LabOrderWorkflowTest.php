@@ -252,9 +252,18 @@ it('allows only one remake per order at the database level', function () {
         ->toThrow(QueryException::class);
 });
 
-it('offers print, PDF, WhatsApp and e-mail on the lab order page, hiding links the lab cannot use', function () {
+it('offers print, PDF, WhatsApp and e-mail only once the order is sent, hiding links the lab cannot use', function () {
+    $this->lab->update(['phone' => '3001234567', 'email' => 'lab@test.test']);
+    $pending = workflowOrder();
+
+    Livewire::test(EditLensOrder::class, ['record' => $pending->getRouteKey()])
+        ->assertActionHidden('printLabOrder')
+        ->assertActionHidden('downloadLabOrder')
+        ->assertActionHidden('whatsappLab')
+        ->assertActionHidden('emailLab');
+
     $this->lab->update(['phone' => null, 'email' => null]);
-    $order = workflowOrder();
+    $order = workflowOrder(overrides: ['lab_status' => LensOrderStatus::Sent]);
 
     Livewire::test(EditLensOrder::class, ['record' => $order->getRouteKey()])
         ->assertActionVisible('printLabOrder')
@@ -267,4 +276,43 @@ it('offers print, PDF, WhatsApp and e-mail on the lab order page, hiding links t
     Livewire::test(EditLensOrder::class, ['record' => $order->getRouteKey()])
         ->assertActionVisible('whatsappLab')
         ->assertActionVisible('emailLab');
+});
+
+it('hides receive and ready on an order that was already remade', function () {
+    $received = workflowOrder(overrides: ['lab_status' => LensOrderStatus::Received]);
+    $received->remake(RemakeReason::Other, RemakeResponsible::Lab, 0);
+    $sent = workflowOrder(overrides: ['lab_status' => LensOrderStatus::Sent]);
+    $sent->remake(RemakeReason::Other, RemakeResponsible::Lab, 0);
+
+    Livewire::test(EditLensOrder::class, ['record' => $received->getRouteKey()])->assertActionHidden('markReady');
+    Livewire::test(EditLensOrder::class, ['record' => $sent->getRouteKey()])->assertActionHidden('receive');
+});
+
+it('asks for confirmation before marking an order received or ready', function () {
+    $order = workflowOrder(overrides: ['lab_status' => LensOrderStatus::Sent]);
+
+    Livewire::test(EditLensOrder::class, ['record' => $order->getRouteKey()])
+        ->mountAction(TestAction::make('receive'))
+        ->assertActionMounted(TestAction::make('receive'));
+    expect($order->fresh()->lab_status)->toBe(LensOrderStatus::Sent);
+
+    $order->update(['lab_status' => LensOrderStatus::Received]);
+    Livewire::test(EditLensOrder::class, ['record' => $order->getRouteKey()])
+        ->mountAction(TestAction::make('markReady'))
+        ->assertActionMounted(TestAction::make('markReady'));
+    expect($order->fresh()->lab_status)->toBe(LensOrderStatus::Received);
+});
+
+it('refuses a second order for a sale item that already has one and locks the item on edit', function () {
+    $order = workflowOrder();
+
+    Livewire::test(CreateLensOrder::class)
+        ->fillForm(['sale_item_id' => $order->sale_item_id, 'supplier_id' => $this->lab->id])
+        ->call('create')
+        ->assertHasFormErrors(['sale_item_id']);
+
+    expect(LensOrder::count())->toBe(1);
+
+    Livewire::test(EditLensOrder::class, ['record' => $order->getRouteKey()])
+        ->assertFormFieldDisabled('sale_item_id');
 });

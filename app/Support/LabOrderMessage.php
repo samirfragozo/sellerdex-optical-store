@@ -18,7 +18,7 @@ class LabOrderMessage
             'cylinder' => Prescription::formatDiopter($rx["{$side}_cylinder"] ?? null) ?: '—',
             'axis' => $rx["{$side}_axis"] ?? '—',
             'add' => Prescription::formatDiopter($rx["{$side}_add"] ?? null) ?: '—',
-            'prism' => filled($rx["{$side}_prism"] ?? null) ? $rx["{$side}_prism"].' '.($rx["{$side}_prism_base"] ?? '') : '—',
+            'prism' => filled($rx["{$side}_prism"] ?? null) ? trim($rx["{$side}_prism"].' '.(filled($rx["{$side}_prism_base"] ?? null) ? __('app.prism_base.'.$rx["{$side}_prism_base"]) : '')) : '—',
         ]);
 
         $lines = [

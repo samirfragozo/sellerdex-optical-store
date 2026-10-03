@@ -96,3 +96,15 @@ it('describes a sold frame with the frame line of the same armado, not the lens'
 
     expect($this->order->fresh()->frameDescription())->toBe('Ray-Ban negro');
 });
+
+it('writes the prism base translated in the message', function () {
+    $this->order->update(['prescription_snapshot' => ['od_prism' => '2.00', 'od_prism_base' => 'up']]);
+
+    $message = LabOrderMessage::for($this->order->fresh());
+
+    expect($message)->toContain('2.00 '.__('app.prism_base.up'))->not->toContain('2.00 up');
+
+    $this->order->update(['prescription_snapshot' => ['od_prism' => '2.00']]);
+
+    expect(LabOrderMessage::for($this->order->fresh()))->toContain('2.00')->not->toContain('2.00 ');
+});

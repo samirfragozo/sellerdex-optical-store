@@ -47,7 +47,8 @@ class LabOrderActions
             ->authorize('update')
             ->label(__('app.lab_order.actions.receive'))
             ->icon('heroicon-o-inbox-arrow-down')
-            ->visible(fn (LensOrder $record): bool => $record->lab_status === LensOrderStatus::Sent)
+            ->visible(fn (LensOrder $record): bool => $record->lab_status === LensOrderStatus::Sent && ! $record->remakes()->exists())
+            ->requiresConfirmation()
             ->action(fn (LensOrder $record) => $record->update([
                 'lab_status' => LensOrderStatus::Received,
                 'received_date' => now()->toDateString(),
@@ -60,7 +61,8 @@ class LabOrderActions
             ->authorize('update')
             ->label(__('app.lab_order.actions.ready'))
             ->icon('heroicon-o-check-badge')
-            ->visible(fn (LensOrder $record): bool => $record->lab_status === LensOrderStatus::Received)
+            ->visible(fn (LensOrder $record): bool => $record->lab_status === LensOrderStatus::Received && ! $record->remakes()->exists())
+            ->requiresConfirmation()
             ->action(fn (LensOrder $record) => $record->update(['lab_status' => LensOrderStatus::Ready]));
     }
 

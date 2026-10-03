@@ -233,6 +233,7 @@ return [
     ],
 
     'lab_order' => [
+        'item_has_order' => 'This lens already has a lab order; use “Remake” to order it again.',
         'actions' => [
             'print' => 'Print order',
             'download' => 'Download PDF',
@@ -366,7 +367,7 @@ return [
         'converted' => 'Quote converted to sale.',
         'mark_delivered' => 'Mark as delivered',
         'delivered' => 'Sale delivered.',
-        'cannot_deliver_pending_lens' => 'Cannot deliver: some lenses are still pending from the laboratory.',
+        'cannot_deliver_pending_lens' => 'Some lenses are not ready for pickup yet. Mark them ready on the lab order.',
     ],
 
     'product_actions' => [

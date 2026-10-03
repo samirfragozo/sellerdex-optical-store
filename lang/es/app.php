@@ -227,6 +227,7 @@ return [
     ],
 
     'lab_order' => [
+        'item_has_order' => 'Este lente ya tiene una orden de laboratorio; usa «Rehacer» para pedirlo de nuevo.',
         'actions' => [
             'print' => 'Imprimir orden',
             'download' => 'Descargar PDF',
@@ -366,7 +367,7 @@ return [
         'converted' => 'Cotización convertida a venta.',
         'mark_delivered' => 'Marcar como entregada',
         'delivered' => 'Venta entregada.',
-        'cannot_deliver_pending_lens' => 'No se puede entregar: hay lentes pendientes por recibir del laboratorio.',
+        'cannot_deliver_pending_lens' => 'Hay lentes que aún no están listos para entregar. Márcalos como listos en la orden de laboratorio.',
     ],
 
     'product_actions' => [
