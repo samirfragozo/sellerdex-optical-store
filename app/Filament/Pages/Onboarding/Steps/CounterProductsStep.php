@@ -135,6 +135,7 @@ class CounterProductsStep extends OnboardingStep
                         'company_id' => $company->id,
                         'is_active' => true,
                         'is_pos_selectable' => true,
+                        'is_stockable' => $category->key !== 'service',
                         'tax_id' => $category->default_tax_id,
                         'sku' => null,
                     ]);

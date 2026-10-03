@@ -19,20 +19,21 @@ class StockLedger
 {
     public static function record(Product $product, StockMovementType $type, int $quantity, ?Model $source = null, ?string $reason = null): ?StockMovement
     {
-        return self::write($product, $type, fn (int $current): int => $quantity, $source, $reason);
+        return self::write($product, $type, fn (?int $current): int => $quantity, $source, $reason);
     }
 
     /**
      * Set the stock to an absolute count. The delta comes from the locked balance, so a sale
      * landing meanwhile can't leave the result off; nothing is written when it is already that.
+     * A null stock means "never counted", so counting 0 still writes a (zero-quantity) movement.
      */
     public static function setBalance(Product $product, int $counted, StockMovementType $type, ?Model $source = null, ?string $reason = null): ?StockMovement
     {
-        return self::write($product, $type, fn (int $current): ?int => $counted === $current ? null : $counted - $current, $source, $reason);
+        return self::write($product, $type, fn (?int $current): ?int => $counted === $current ? null : $counted - (int) $current, $source, $reason);
     }
 
     /**
-     * @param  Closure(int): ?int  $quantityFor  Receives the locked balance, returns the signed quantity to write (null: write nothing).
+     * @param  Closure(?int): ?int  $quantityFor  Receives the locked balance (null: never counted), returns the signed quantity to write (null: write nothing).
      */
     private static function write(Product $product, StockMovementType $type, Closure $quantityFor, ?Model $source, ?string $reason): ?StockMovement
     {
@@ -43,7 +44,7 @@ class StockLedger
         return DB::transaction(function () use ($product, $type, $quantityFor, $source, $reason): ?StockMovement {
             // Lock the row so concurrent sales of the same product never lose a unit.
             $locked = Product::withoutGlobalScopes()->whereKey($product->getKey())->lockForUpdate()->firstOrFail();
-            $quantity = $quantityFor((int) $locked->stock);
+            $quantity = $quantityFor($locked->stock);
 
             if ($quantity === null) {
                 return null;

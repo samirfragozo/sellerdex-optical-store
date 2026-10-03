@@ -157,3 +157,15 @@ it('shows the stock column only when the shop tracks inventory', function () {
 
     Livewire::test(ListProducts::class)->assertTableColumnHidden('stock');
 });
+
+it('keeps a new product stockable by default, so the typed initial stock is recorded', function () {
+    Livewire::test(CreateProduct::class)
+        ->fillForm(['name' => 'Paño', 'price' => 2000, 'cost' => 500, 'product_category_id' => $this->product->product_category_id, 'is_active' => true, 'stock' => 12])
+        ->call('create')
+        ->assertHasNoFormErrors();
+
+    $created = Product::where('name', 'Paño')->sole();
+    expect($created->is_stockable)->toBeTrue()
+        ->and($created->stock)->toBe(12)
+        ->and($created->stockMovements()->sole()->type)->toBe(StockMovementType::Initial);
+});

@@ -41,6 +41,15 @@ it('suggests the reference counter catalog and creates it', function () {
         ->and(ProductCategory::keyed('case')->is_system)->toBeFalse();
 });
 
+it('creates the service as not stockable and the physical products as stockable', function () {
+    counterAdmin();
+
+    Livewire::test(Onboarding::class)->call('next')->assertHasNoErrors();
+
+    expect(Product::where('name', 'Examen visual')->sole()->is_stockable)->toBeFalse()
+        ->and(Product::where('name', 'Estuche pequeño')->sole()->is_stockable)->toBeTrue();
+});
+
 it('renames and removes products when coming back instead of duplicating them', function () {
     counterAdmin();
     $page = Livewire::test(Onboarding::class)->call('next')->call('previous');

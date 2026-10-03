@@ -33,6 +33,18 @@ it('asks for an initial count after the shop turns inventory on, and keeps the h
         ->and(collect($this->company->fresh()->saleReadiness())->pluck('key'))->toContain('inventory_initial_count');
 });
 
+it('does not ask for a count when the shop has no active stockable product to count', function () {
+    $this->company->update(['inventory_counted_at' => null]);
+    Product::factory()->create(['is_stockable' => false]);
+    Product::factory()->create(['is_stockable' => true, 'is_active' => false]);
+
+    expect(collect($this->company->fresh()->saleReadiness())->pluck('key'))->not->toContain('inventory_initial_count');
+
+    Product::factory()->create(['is_stockable' => true]);
+
+    expect(collect($this->company->fresh()->saleReadiness())->pluck('key'))->toContain('inventory_initial_count');
+});
+
 it('writes initial movements for the counted differences only', function () {
     $this->company->update(['inventory_counted_at' => null]);
     $counted = Product::factory()->create(['is_stockable' => true, 'stock' => 2]);

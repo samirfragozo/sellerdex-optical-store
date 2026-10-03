@@ -75,7 +75,7 @@ class ProductForm
                     ->visible(fn (): bool => Company::current()->vat_regime === VatRegime::Responsible),
                 TextInput::make('stock')
                     ->label(fn (string $operation): string => $operation === 'create' ? __('app.inventory.initial_stock') : __('app.fields.stock'))
-                    ->numeric()
+                    ->integer()
                     ->minValue(0)
                     ->default(0)
                     ->disabled(fn (string $operation): bool => $operation === 'edit')
@@ -89,6 +89,7 @@ class ProductForm
                     ->schema([
                         Toggle::make('is_stockable')
                             ->label(__('app.fields.is_stockable'))
+                            ->default(true)
                             ->required()
                             ->visible(fn (): bool => Company::current()->tracksInventory()),
                         Toggle::make('is_active')

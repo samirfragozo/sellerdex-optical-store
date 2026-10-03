@@ -130,3 +130,13 @@ it('writes nothing when the counted balance already equals the stock', function 
         ->and(StockMovement::count())->toBe(0)
         ->and($this->product->fresh()->stock)->toBe(10);
 });
+
+it('records a zero count on a product whose stock was unknown, so it shows 0 instead of staying blank', function () {
+    $product = Product::factory()->create(['is_stockable' => true, 'stock' => null]);
+
+    $movement = StockLedger::setBalance($product, 0, StockMovementType::Initial);
+
+    expect($movement->quantity)->toBe(0)
+        ->and($movement->balance_after)->toBe(0)
+        ->and($product->fresh()->stock)->toBe(0);
+});

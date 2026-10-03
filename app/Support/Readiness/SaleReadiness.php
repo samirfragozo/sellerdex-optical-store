@@ -76,7 +76,11 @@ class SaleReadiness
             );
         }
 
-        if ($company->tracks_inventory === true && $company->inventory_counted_at === null) {
+        // Without a stockable product the count page has nothing to offer, so the warning could never clear.
+        $needsInitialCount = $company->tracks_inventory === true && $company->inventory_counted_at === null
+            && Product::withoutGlobalScopes()->where('company_id', $company->id)
+                ->where('is_active', true)->where('is_stockable', true)->whereNull('deleted_at')->exists();
+        if ($needsInitialCount) {
             $issues[] = new ReadinessIssue(
                 'inventory_initial_count', ReadinessSeverity::Warning,
                 __('app.readiness.inventory_initial_count'), InventoryCount::getUrl(panel: 'admin'),
