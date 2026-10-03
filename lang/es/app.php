@@ -564,6 +564,7 @@ return [
 
         'cash_session' => [
             'already_open' => 'Ya tienes una sesión de caja abierta.',
+            'note_pending' => 'Explica la diferencia de tu último cierre antes de abrir una nueva caja.',
             'already_closed' => 'Esta sesión ya fue cerrada.',
             'required_notice' => 'Debes abrir una sesión de caja antes de vender.',
             'open_title' => 'Abrir caja',

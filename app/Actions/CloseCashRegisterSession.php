@@ -39,7 +39,9 @@ class CloseCashRegisterSession
 
             // Blind: never reject on the note before the counts are frozen, or retries would reveal the expected
             // amounts. The missing note is asked for afterwards (see CashRegisterSession::needsNote()).
-            if ($overThreshold && blank($notes) && ! $company->blind_cash_count) {
+            // Whoever isn't the cashier already sees the expected amounts, so blind mode doesn't apply to them.
+            $isCloserTheCashier = $closedBy->id === $locked->user_id;
+            if ($overThreshold && blank($notes) && (! $company->blind_cash_count || ! $isCloserTheCashier)) {
                 throw ValidationException::withMessages(['notes' => __('app.pos.cash_session.notes_required')]);
             }
 
@@ -59,7 +61,7 @@ class CloseCashRegisterSession
                 'expected_cash' => $expected[$cashMethodId] ?? $locked->opening_cash,
                 'cash_left' => $cashLeft,
                 'closed_by' => $closedBy->id,
-                'closed_by_admin' => $closedBy->id !== $locked->user_id,
+                'closed_by_admin' => ! $isCloserTheCashier,
                 'notes' => $notes,
             ]);
 

@@ -25,6 +25,18 @@ class CashRegisterSessionController extends Controller
             ], 422);
         }
 
+        $lastClosed = CashRegisterSession::query()
+            ->where('user_id', $request->user()->id)
+            ->whereNotNull('closed_at')
+            ->latest('closed_at')
+            ->first();
+
+        if ($lastClosed?->needsNote()) {
+            return response()->json([
+                'message' => __('app.pos.cash_session.note_pending'),
+            ], 422);
+        }
+
         $session = CashRegisterSession::create([
             'user_id' => $request->user()->id,
             'opened_at' => now(),

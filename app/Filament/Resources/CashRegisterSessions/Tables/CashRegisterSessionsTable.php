@@ -55,7 +55,8 @@ class CashRegisterSessionsTable
                     })
                     ->sortable(),
                 IconColumn::make('closed_by_admin')->label(__('app.cash_session_admin.closed_by_admin'))->boolean(),
-                IconColumn::make('reviewed_at')->label(__('app.cash_session_admin.reviewed'))->boolean(),
+                IconColumn::make('reviewed_at')->label(__('app.cash_session_admin.reviewed'))->boolean()
+                    ->state(fn (CashRegisterSession $record): ?bool => $record->closed_at ? $record->reviewed_at !== null : null),
                 TextColumn::make('needs_note')
                     ->label(__('app.cash_session_admin.needs_note'))
                     ->state(fn (CashRegisterSession $record): ?string => $record->needsNote() ? __('app.cash_session_admin.needs_note') : null)
@@ -104,6 +105,7 @@ class CashRegisterSessionsTable
             ->label(__('app.cash_session_admin.report'))
             ->icon(Heroicon::OutlinedPrinter)
             ->color('gray')
+            ->visible(fn (CashRegisterSession $record): bool => $record->closed_at !== null)
             ->url(fn (CashRegisterSession $record): string => route('documents.cash-session', $record))
             ->openUrlInNewTab();
     }
@@ -139,6 +141,13 @@ class CashRegisterSessionsTable
                 try {
                     app(CloseCashRegisterSession::class)->handle($record, $data['counts'], (int) $data['cash_left'], $data['notes'] ?? null, auth()->user());
                 } catch (ValidationException $exception) {
+                    // Lost the race against the cashier: there is no field to blame.
+                    if (isset($exception->errors()['session'])) {
+                        Notification::make()->danger()->title(__('app.pos.cash_session.already_closed'))->send();
+
+                        return;
+                    }
+
                     // Show the action's own error keys under the modal fields.
                     throw ValidationException::withMessages(collect($exception->errors())
                         ->mapWithKeys(fn (array $messages, string $key): array => ["mountedActions.0.data.{$key}" => $messages])->all());

@@ -28,7 +28,8 @@ class PaymentMethod extends Model
 
     public function hasChildren(): bool
     {
-        return Payment::withTrashed()->where('payment_method_id', $this->id)->exists();
+        return Payment::withTrashed()->where('payment_method_id', $this->id)->exists()
+            || CashRegisterSessionCount::withoutGlobalScopes()->where('payment_method_id', $this->id)->exists();
     }
 
     protected function casts(): array

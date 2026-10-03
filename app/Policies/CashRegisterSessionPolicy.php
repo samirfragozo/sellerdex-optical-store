@@ -29,6 +29,7 @@ class CashRegisterSessionPolicy
 
     public function update(AuthUser $authUser, CashRegisterSession $cashRegisterSession): bool
     {
-        return $authUser->can('Update:CashRegisterSession');
+        return $cashRegisterSession->company_id === $authUser->company_id
+            && $authUser->can('Update:CashRegisterSession');
     }
 }

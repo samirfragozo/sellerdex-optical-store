@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\CashRegisterSessionCount;
 use App\Models\Expense;
 use App\Models\ExpenseCategory;
 use App\Models\Payment;
@@ -8,6 +9,7 @@ use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\Sale;
 use App\Models\SaleItem;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
@@ -42,6 +44,19 @@ it('blocks deleting a payment method that has payments', function () {
     $sale = Sale::factory()->create();
     SaleItem::factory()->create(['sale_id' => $sale->id, 'quantity' => 1, 'unit_price' => 100000]);
     Payment::factory()->create(['sale_id' => $sale->id, 'payment_method_id' => $method->id, 'amount' => 1000]);
+
+    expect($method->hasChildren())->toBeTrue()
+        ->and($method->delete())->toBeFalse()
+        ->and(PaymentMethod::whereKey($method->id)->exists())->toBeTrue();
+});
+
+it('blocks deleting a payment method that only a cash session count references', function () {
+    $this->actingAs($user = User::factory()->seller()->create());
+    $method = PaymentMethod::factory()->create(['is_default' => false]);
+    CashRegisterSessionCount::factory()->create([
+        'cash_register_session_id' => openCashRegisterSession($user)->id,
+        'payment_method_id' => $method->id,
+    ]);
 
     expect($method->hasChildren())->toBeTrue()
         ->and($method->delete())->toBeFalse()

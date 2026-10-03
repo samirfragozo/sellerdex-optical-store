@@ -4,13 +4,19 @@ use App\Actions\CloseCashRegisterSession;
 use App\Filament\Resources\CashRegisterSessions\CashRegisterSessionResource;
 use App\Filament\Resources\CashRegisterSessions\Pages\ListCashRegisterSessions;
 use App\Filament\Resources\CashRegisterSessions\Pages\ViewCashRegisterSession;
+use App\Filament\Resources\CashRegisterSessions\Tables\CashRegisterSessionsTable;
+use App\Models\CashRegisterSession;
+use App\Models\Company;
 use App\Models\Payment;
 use App\Models\PaymentMethod;
 use App\Models\Sale;
 use App\Models\User;
+use App\Policies\CashRegisterSessionPolicy;
+use App\Support\PermissionsTeam;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Filament\Actions\Testing\TestAction;
 use Illuminate\Support\Carbon;
+use Illuminate\Validation\ValidationException;
 use Livewire\Livewire;
 
 beforeEach(function () {
@@ -108,6 +114,8 @@ it('prints the close report with methods, movements, expected, counted and diffe
 });
 
 it('lets the owner print their own report', function () {
+    app(CloseCashRegisterSession::class)->handle($this->session, [$this->cash->id => 20_000], 0, null, $this->cashier);
+
     $this->actingAs($this->cashier)->get(route('documents.cash-session', $this->session))->assertOk();
 });
 
@@ -122,4 +130,61 @@ it('does not let an admin of another company see the report', function () {
     $this->actingAs(User::factory()->admin()->create());
 
     $this->get(route('documents.cash-session', $this->session))->assertForbidden();
+});
+
+it('does not let the owner print the running report of a session that is still open', function () {
+    $this->actingAs($this->cashier)->get(route('documents.cash-session', $this->session))->assertNotFound();
+
+    $this->actingAs($this->admin)->get(route('documents.cash-session', $this->session))->assertOk();
+});
+
+it('hides the report action while the session is open and shows it once closed', function () {
+    Livewire::test(ViewCashRegisterSession::class, ['record' => $this->session->getRouteKey()])->assertActionHidden('report');
+    Livewire::test(ListCashRegisterSessions::class)->assertActionHidden(TestAction::make('report')->table($this->session));
+
+    app(CloseCashRegisterSession::class)->handle($this->session, [$this->cash->id => 20_000], 0, null, $this->cashier);
+
+    Livewire::test(ViewCashRegisterSession::class, ['record' => $this->session->getRouteKey()])->assertActionVisible('report');
+});
+
+it('only lets an admin of the same shop update a session', function () {
+    $foreignAdmin = User::factory()->admin()->create(['company_id' => Company::factory()->create()->id]);
+
+    // Worst case: the foreign admin holds this shop's admin role as well.
+    PermissionsTeam::runAs($this->admin->company, fn () => $foreignAdmin->assignRole(User::ROLE_ADMIN));
+    $policy = new CashRegisterSessionPolicy;
+
+    expect($policy->update($this->admin, $this->session))->toBeTrue()
+        ->and($policy->update($foreignAdmin, $this->session))->toBeFalse();
+});
+
+it('rejects an admin close in a blind shop without the note on the server, whatever the form says', function () {
+    $this->admin->company->update(['blind_cash_count' => true, 'cash_difference_note_threshold' => 1_000]);
+
+    expect(fn () => app(CloseCashRegisterSession::class)->handle($this->session, [$this->cash->id => 25_000], 0, null, $this->admin))
+        ->toThrow(ValidationException::class);
+
+    expect($this->session->fresh()->closed_at)->toBeNull();
+});
+
+it('tells the admin when someone else already closed the session', function () {
+    // The race window sits between the action's visibility check and the lock, so run the action on a stale model.
+    $stale = CashRegisterSession::find($this->session->id);
+    app(CloseCashRegisterSession::class)->handle($this->session, [$this->cash->id => 20_000], 0, null, $this->cashier);
+
+    CashRegisterSessionsTable::adminCloseAction()->record($stale)->call([
+        'data' => ['counts' => [$this->cash->id => 20_000], 'cash_left' => 0, 'notes' => null],
+    ]);
+
+    expect(collect(session('filament.notifications'))->pluck('title'))->toContain(__('app.pos.cash_session.already_closed'));
+});
+
+it('shows an unreviewed closed session with a negative icon and an open one with none', function () {
+    $open = openCashRegisterSession($this->cashier, 0);
+    app(CloseCashRegisterSession::class)->handle($this->session, [$this->cash->id => 20_000], 0, null, $this->cashier);
+
+    $column = Livewire::test(ListCashRegisterSessions::class)->instance()->getTable()->getColumn('reviewed_at');
+
+    expect($column->record($this->session->fresh())->getState())->toBeFalse()
+        ->and($column->record($open)->getState())->toBeNull();
 });

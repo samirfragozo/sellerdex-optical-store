@@ -564,6 +564,7 @@ return [
 
         'cash_session' => [
             'already_open' => 'You already have an open cash session.',
+            'note_pending' => 'Explain the difference in your last close before opening a new register.',
             'already_closed' => 'This session is already closed.',
             'required_notice' => 'You must open a cash session before selling.',
             'open_title' => 'Open cash register',

@@ -1,5 +1,6 @@
 <?php
 
+use App\Actions\CloseCashRegisterSession;
 use App\Models\CashRegisterSession;
 use App\Models\Payment;
 use App\Models\PaymentMethod;
@@ -127,4 +128,22 @@ it('rejects closing an already closed session', function () {
     $this->actingAs($seller)
         ->postJson("/pos/cash-sessions/{$session->id}/close", ['counts' => [], 'cash_left' => 0])
         ->assertStatus(422);
+});
+
+it('refuses to open a new session while the last close still owes its note', function () {
+    $seller = User::factory()->seller()->create();
+    $seller->company->update(['blind_cash_count' => true, 'cash_difference_note_threshold' => 1_000]);
+    $cash = PaymentMethod::factory()->create(['is_default' => true]);
+    $session = openCashRegisterSession($seller, 0);
+    app(CloseCashRegisterSession::class)->handle($session, [$cash->id => 50_000], 0, null, $seller);
+
+    $this->actingAs($seller)
+        ->postJson('/pos/cash-sessions', ['opening_cash' => 0])
+        ->assertStatus(422)
+        ->assertJsonPath('message', __('app.pos.cash_session.note_pending'));
+
+    expect(CashRegisterSession::where('user_id', $seller->id)->whereNull('closed_at')->exists())->toBeFalse();
+
+    $session->update(['notes' => 'Sobrante']);
+    $this->actingAs($seller)->postJson('/pos/cash-sessions', ['opening_cash' => 0])->assertOk();
 });

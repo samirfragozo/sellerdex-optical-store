@@ -14,6 +14,9 @@ class ReportController extends Controller
     {
         Gate::authorize('view', $cashRegisterSession);
 
+        // An open session's report carries running totals, which a blind count keeps from the cashier.
+        abort_if($cashRegisterSession->closed_at === null && ! auth()->user()->can('View:CashRegisterSession'), 404);
+
         return $renderer->cashSession($cashRegisterSession);
     }
 }
