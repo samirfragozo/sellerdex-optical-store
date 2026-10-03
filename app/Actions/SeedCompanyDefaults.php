@@ -32,6 +32,16 @@ class SeedCompanyDefaults
             'sort_order' => 0,
         ]);
 
+        PaymentMethod::create([
+            'company_id' => $company->id,
+            'name' => 'Saldo a favor',
+            'is_active' => true,
+            'is_default' => false,
+            'is_store_credit' => true,
+            'surcharge_percent' => 0,
+            'sort_order' => 99,
+        ]);
+
         foreach (ProductCategory::SYSTEM_CATEGORIES as $category) {
             ProductCategory::create([
                 'company_id' => $company->id,

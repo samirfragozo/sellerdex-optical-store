@@ -332,6 +332,7 @@ return [
         'sent' => 'Sent',
         'received' => 'Received',
         'ready' => 'Ready for pickup',
+        'cancelled' => 'Cancelled',
     ],
 
     'inventory' => [
@@ -379,6 +380,15 @@ return [
     ],
 
     'purchase_order_actions' => ['receive' => 'Receive', 'cancel' => 'Cancel'],
+
+    'sale_return_type' => ['return' => 'Return', 'value_adjustment' => 'Value adjustment', 'void' => 'Void'],
+
+    'money_destination' => ['refund' => 'Refund', 'sale_balance' => 'Sale balance', 'store_credit' => 'Store credit', 'combined' => 'Combined'],
+
+    'store_credit' => [
+        'needs_customer' => 'Store credit needs a customer on the sale.',
+        'not_enough' => 'The customer only has $:balance in store credit.',
+    ],
 
     'sale_status' => [
         'draft' => 'Unpaid',

@@ -63,8 +63,8 @@ class LensOrder extends Model
     /** @param  Builder<LensOrder>  $query */
     public function scopePending(Builder $query): void
     {
-        // An order superseded by a remake is closed: its remake carries the work on.
-        $query->where('lab_status', '!=', LensOrderStatus::Ready->value)->whereDoesntHave('remakes');
+        // An order superseded by a remake is closed: its remake carries the work on. Cancelled ones have no work left.
+        $query->whereNotIn('lab_status', [LensOrderStatus::Ready->value, LensOrderStatus::Cancelled->value])->whereDoesntHave('remakes');
     }
 
     public function isReady(): bool

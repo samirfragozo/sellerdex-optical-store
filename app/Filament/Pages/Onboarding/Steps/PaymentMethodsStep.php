@@ -33,10 +33,10 @@ class PaymentMethodsStep extends OnboardingStep
             TextEntry::make('cash_notice')
                 ->hiddenLabel()
                 ->state(__('app.onboarding.payment_methods.cash_notice')),
-            // Cash (is_default) is fixed and never shown here, so it cannot be removed.
+            // Cash (is_default) and store credit are fixed and never shown here, so they cannot be removed.
             Repeater::make('paymentMethods')
                 ->label(__('app.onboarding.payment_methods.others'))
-                ->relationship('paymentMethods', fn (Builder $query) => $query->where('is_default', false))
+                ->relationship('paymentMethods', fn (Builder $query) => $query->where('is_default', false)->where('is_store_credit', false))
                 ->schema([
                     TextInput::make('name')->label(__('app.fields.name'))->required()->maxLength(255),
                     TextInput::make('surcharge_percent')->label(__('app.fields.surcharge_percent'))

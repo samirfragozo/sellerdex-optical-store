@@ -54,6 +54,17 @@ class Customer extends Model
         return $this->hasMany(Sale::class);
     }
 
+    public function credits(): HasMany
+    {
+        return $this->hasMany(CustomerCredit::class);
+    }
+
+    /** Store credit the customer can still spend: the sum of the ledger. */
+    public function creditBalance(): int
+    {
+        return (int) CustomerCredit::withoutGlobalScopes()->where('customer_id', $this->id)->sum('amount');
+    }
+
     public function prescriptions(): HasMany
     {
         return $this->hasMany(Prescription::class);

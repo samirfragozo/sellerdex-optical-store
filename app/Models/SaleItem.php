@@ -135,6 +135,17 @@ class SaleItem extends Model
         return $this->hasMany(SaleItemOption::class);
     }
 
+    /** Units of this line already given back. */
+    public function returnedQuantity(): int
+    {
+        return (int) SaleReturnItem::query()->where('sale_item_id', $this->id)->sum('quantity');
+    }
+
+    public function returnableQuantity(): int
+    {
+        return $this->quantity - $this->returnedQuantity();
+    }
+
     /** True when this line is a made-to-order lens (carries a resolved lens configuration). */
     public function isLens(): bool
     {

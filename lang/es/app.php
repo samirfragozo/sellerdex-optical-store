@@ -376,6 +376,16 @@ return [
         'sent' => 'Enviado',
         'received' => 'Recibido',
         'ready' => 'Listo para entregar',
+        'cancelled' => 'Cancelada',
+    ],
+
+    'sale_return_type' => ['return' => 'Devolución', 'value_adjustment' => 'Ajuste de valor', 'void' => 'Anulación'],
+
+    'money_destination' => ['refund' => 'Reembolso', 'sale_balance' => 'Saldo de la venta', 'store_credit' => 'Saldo a favor', 'combined' => 'Combinado'],
+
+    'store_credit' => [
+        'needs_customer' => 'El saldo a favor necesita un cliente en la venta.',
+        'not_enough' => 'El cliente solo tiene $:balance de saldo a favor.',
     ],
 
     'sale_status' => [

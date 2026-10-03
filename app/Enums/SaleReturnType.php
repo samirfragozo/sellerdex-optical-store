@@ -5,17 +5,15 @@ namespace App\Enums;
 use Filament\Support\Contracts\HasColor;
 use Filament\Support\Contracts\HasLabel;
 
-enum LensOrderStatus: string implements HasColor, HasLabel
+enum SaleReturnType: string implements HasColor, HasLabel
 {
-    case PendingAssignment = 'pending_assignment';
-    case Sent = 'sent';
-    case Received = 'received';
-    case Ready = 'ready';
-    case Cancelled = 'cancelled';
+    case Return = 'return';
+    case ValueAdjustment = 'value_adjustment';
+    case Void = 'void';
 
     public function label(): string
     {
-        return __('app.lens_order_status.'.$this->value);
+        return __('app.sale_return_type.'.$this->value);
     }
 
     public function getLabel(): string
@@ -26,11 +24,9 @@ enum LensOrderStatus: string implements HasColor, HasLabel
     public function getColor(): string
     {
         return match ($this) {
-            self::PendingAssignment => 'danger',
-            self::Sent => 'gray',
-            self::Received => 'info',
-            self::Ready => 'success',
-            self::Cancelled => 'gray',
+            self::Return => 'warning',
+            self::ValueAdjustment => 'info',
+            self::Void => 'danger',
         };
     }
 

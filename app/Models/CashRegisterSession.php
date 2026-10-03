@@ -111,10 +111,13 @@ class CashRegisterSession extends Model
     public function expectedByMethod(): array
     {
         $cashMethodId = $this->cashMethodId();
+        $storeCreditId = PaymentMethod::storeCreditFor($this->company_id)?->id;
 
         // The session's own rows, whoever is logged in: skip CompanyScope, keep soft deletes.
+        // Store credit never touches the drawer, so it is left out.
         $byMethod = $this->payments()
             ->withoutGlobalScope(CompanyScope::class)
+            ->when($storeCreditId !== null, fn ($query) => $query->whereNot('payment_method_id', $storeCreditId))
             ->selectRaw('payment_method_id, sum(amount) as total')
             ->groupBy('payment_method_id')
             ->pluck('total', 'payment_method_id')

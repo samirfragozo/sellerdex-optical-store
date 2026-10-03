@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\LensOrderStatus;
 use App\Enums\RemakeResponsible;
 use App\Enums\SaleDocumentType;
+use App\Enums\SaleReturnType;
 use App\Enums\SaleStatus;
 use App\Enums\StockMovementType;
 use App\Exceptions\PendingLensOrderException;
@@ -131,12 +132,26 @@ class Sale extends Model
     }
 
     /**
-     * Sales with an outstanding balance (total greater than the sum of payments).
-     * Uses a correlated subquery — SQLite rejects HAVING without GROUP BY.
+     * Sales with an outstanding balance (net value greater than the sum of payments).
+     * Uses correlated subqueries — SQLite rejects HAVING without GROUP BY.
      */
     public function scopeOutstanding(Builder $query): void
     {
-        $query->whereRaw('sales.total > (select coalesce(sum(payments.amount), 0) from payments where payments.sale_id = sales.id and payments.deleted_at is null)');
+        $query->whereRaw("sales.total - (select coalesce(sum(sale_returns.total), 0) from sale_returns where sale_returns.sale_id = sales.id and sale_returns.type <> 'void') > (select coalesce(sum(payments.amount), 0) from payments where payments.sale_id = sales.id and payments.deleted_at is null)");
+    }
+
+    /** What the customer was given back in value: returns and value adjustments (a void cancels the sale instead). */
+    public function returnedTotal(): int
+    {
+        return (int) $this->returns()
+            ->whereIn('type', [SaleReturnType::Return->value, SaleReturnType::ValueAdjustment->value])
+            ->sum('total');
+    }
+
+    /** The sale's value once returns are taken out. */
+    public function netTotal(): int
+    {
+        return $this->total - $this->returnedTotal();
     }
 
     public function totalPaid(): int
@@ -144,10 +159,12 @@ class Sale extends Model
         return (int) $this->payments()->sum('amount');
     }
 
-    /** Outstanding balance (total minus payments). */
+    /** Outstanding balance (net value minus payments); a voided sale owes nothing. */
     protected function balance(): Attribute
     {
-        return Attribute::get(fn (): int => max(0, $this->total - $this->totalPaid()));
+        return Attribute::get(fn (): int => $this->status === SaleStatus::Voided
+            ? 0
+            : max(0, $this->netTotal() - $this->totalPaid()));
     }
 
     public function recalculateTotals(): void
@@ -180,10 +197,11 @@ class Sale extends Model
         }
 
         $paid = $this->totalPaid();
+        $netTotal = $this->netTotal();
 
         $status = match (true) {
             $this->is_delivered => SaleStatus::Delivered,
-            $this->total > 0 && $paid >= $this->total => SaleStatus::Paid,
+            $netTotal > 0 && $paid >= $netTotal => SaleStatus::Paid,
             $paid > 0 => SaleStatus::Partial,
             default => SaleStatus::Draft,
         };
@@ -201,11 +219,15 @@ class Sale extends Model
             ->filter(fn (SaleItem $item): bool => $item->isLens());
     }
 
-    /** True if any lens item lacks a ready lab order (missing order counts as pending). */
+    /**
+     * True if any lens item lacks a ready lab order (missing order counts as pending).
+     * A cancelled order or a fully returned item has no work left.
+     */
     public function hasPendingLensWork(): bool
     {
         return $this->lensItems()->contains(
-            fn (SaleItem $item): bool => $item->lensOrder?->lab_status !== LensOrderStatus::Ready
+            fn (SaleItem $item): bool => ! in_array($item->lensOrder?->lab_status, [LensOrderStatus::Ready, LensOrderStatus::Cancelled], true)
+                && $item->returnableQuantity() > 0
         );
     }
 
@@ -255,5 +277,10 @@ class Sale extends Model
     public function payments(): HasMany
     {
         return $this->hasMany(Payment::class);
+    }
+
+    public function returns(): HasMany
+    {
+        return $this->hasMany(SaleReturn::class);
     }
 }

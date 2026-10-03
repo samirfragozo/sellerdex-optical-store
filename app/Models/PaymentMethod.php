@@ -9,20 +9,20 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['company_id', 'name', 'is_active', 'is_default', 'sort_order', 'surcharge_percent'])]
+#[Fillable(['company_id', 'name', 'is_active', 'is_default', 'is_store_credit', 'sort_order', 'surcharge_percent'])]
 class PaymentMethod extends Model
 {
     /** @use HasFactory<PaymentMethodFactory> */
     use BelongsToCompany, HasFactory;
 
     /**
-     * The default method (Cash) can NEVER be deleted, and a method with payments
+     * A protected method (Cash, store credit) can NEVER be deleted, and a method with payments
      * cannot be deleted either — enforced at the model level (super admin bypasses policies).
      */
     protected static function booted(): void
     {
         static::deleting(function (PaymentMethod $method): bool {
-            return ! $method->is_default && ! $method->hasChildren();
+            return ! $method->isProtected() && ! $method->hasChildren();
         });
     }
 
@@ -37,14 +37,24 @@ class PaymentMethod extends Model
         return [
             'is_active' => 'boolean',
             'is_default' => 'boolean',
+            'is_store_credit' => 'boolean',
             'surcharge_percent' => 'decimal:2',
         ];
     }
 
-    /** The default method (Cash) cannot be deleted nor deactivated. */
+    /** The default method (Cash) and the store-credit method cannot be deleted nor deactivated. */
     public function isProtected(): bool
     {
-        return $this->is_default;
+        return $this->is_default || $this->is_store_credit;
+    }
+
+    /** A company's store-credit method, independent of who is logged in. */
+    public static function storeCreditFor(int $companyId): ?self
+    {
+        return static::withoutGlobalScopes()
+            ->where('company_id', $companyId)
+            ->where('is_store_credit', true)
+            ->first();
     }
 
     public function payments(): HasMany
