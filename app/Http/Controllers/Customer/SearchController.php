@@ -18,9 +18,14 @@ class SearchController extends Controller
                 ->where('name', 'like', "%{$search}%")
                 ->orWhere('last_name', 'like', "%{$search}%")
                 ->orWhere('id_number', 'like', "%{$search}%")))
+            ->withSum('credits', 'amount')
             ->orderBy('name')
             ->limit(20)
-            ->get(['id', 'name', 'last_name', 'id_number']);
+            ->get(['id', 'name', 'last_name', 'id_number'])
+            ->map(fn (Customer $customer) => [
+                ...$customer->only(['id', 'name', 'last_name', 'id_number']),
+                'credit_balance' => (int) $customer->credits_sum_amount,
+            ]);
 
         return response()->json($customers);
     }

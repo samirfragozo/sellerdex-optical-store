@@ -468,6 +468,8 @@ return [
         'prism_base_required_with_prism' => 'Indica la base del prisma cuando hay prisma.',
         'lens_requires_prescription' => 'La venta de lentes formulados requiere una prescripción.',
         'prescription_not_owned' => 'La fórmula no pertenece al paciente de este armado.',
+        'store_credit_needs_customer' => 'El saldo a favor solo se puede usar con un cliente existente.',
+        'store_credit_exceeds_balance' => 'El saldo a favor del cliente (:balance) no alcanza para este pago.',
         'diopter' => [
             'invalid' => 'El valor de :attribute no es válido.',
             'invalid_format' => 'El valor de :attribute no es válido. Usa solo números, por ejemplo 1.25.',
@@ -567,6 +569,7 @@ return [
             'new_customer_title' => 'Nuevo cliente',
             'save_customer' => 'Guardar cliente',
             'clear_customer' => 'Quitar cliente',
+            'credit_balance' => 'Saldo a favor: :amount',
         ],
 
         'lens_form' => [
@@ -684,6 +687,8 @@ return [
             'amount_to_pay' => 'Monto a pagar',
             'no_payments' => 'Aún no se ha agregado ningún pago.',
             'remove_payment' => 'Quitar pago',
+            'store_credit' => 'Saldo a favor (:amount)',
+            'store_credit_name' => 'Saldo a favor',
             'change' => 'Cambio',
             'keypad_clear' => 'Borrar todo',
             'keypad_backspace' => 'Borrar último dígito',

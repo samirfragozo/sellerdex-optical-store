@@ -20,6 +20,7 @@ interface Customer {
     name: string;
     last_name: string;
     id_number: string | null;
+    credit_balance?: number;
 }
 
 const props = withDefaults(
@@ -38,6 +39,9 @@ const customerId = defineModel<number | null>('customerId', { required: true });
 // The chosen customer's display label — a model so the parent can show it
 // (the armado's patient) and a remounted picker can restore it.
 const selectedLabel = defineModel<string>('selectedLabel', { default: '' });
+
+// The chosen customer's spendable store credit, for the checkout.
+const creditBalance = defineModel<number>('creditBalance', { default: 0 });
 const results = ref<Customer[]>([]);
 const isSearching = ref(false);
 const showCreateModal = ref(false);
@@ -78,11 +82,17 @@ function onSelect(id: number | null): void {
 
     const found = results.value.find((c) => c.id === id);
 
+    creditBalance.value = found?.credit_balance ?? 0;
+
     if (id === null) {
         selectedLabel.value = '';
     } else if (found) {
         selectedLabel.value = customerLabel(found);
     }
+}
+
+function formatCOP(value: number): string {
+    return '$' + new Intl.NumberFormat('es-CO').format(value);
 }
 
 // The parent resets customerId to null after a sale completes — clear the
@@ -91,6 +101,7 @@ function onSelect(id: number | null): void {
 watch(customerId, (id) => {
     if (id === null) {
         selectedLabel.value = '';
+        creditBalance.value = 0;
         results.value = [];
     }
 });
@@ -98,6 +109,7 @@ watch(customerId, (id) => {
 function onCustomerCreated(customer: CreatedCustomer): void {
     customerId.value = customer.id;
     selectedLabel.value = customerLabel(customer);
+    creditBalance.value = 0;
     results.value = [customer];
     showCreateModal.value = false;
 }
@@ -133,6 +145,17 @@ function onCustomerCreated(customer: CreatedCustomer): void {
             </Button>
         </div>
         <InputError class="mt-1" :message="props.errors?.customer_id" />
+        <p
+            v-if="creditBalance > 0"
+            class="mt-1 text-sm font-medium text-primary"
+        >
+            {{
+                trans('app.pos.customer_form.credit_balance').replace(
+                    ':amount',
+                    formatCOP(creditBalance),
+                )
+            }}
+        </p>
         <p
             v-if="customerId === null && props.optional"
             class="mt-1 text-sm text-muted-foreground"

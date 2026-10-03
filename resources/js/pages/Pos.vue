@@ -58,6 +58,7 @@ const props = defineProps<{
     kit: KitProp;
     categories: { id: number; name: string; key: string }[];
     paymentMethods: PaymentMethod[];
+    storeCreditMethodId: number | null;
 }>();
 
 const today = new Date().toISOString().slice(0, 10);
@@ -95,6 +96,7 @@ const cart = usePosCart(props.kit);
 // --- Customer (fixed panel, no longer a collapsible step) ---
 const customerId = ref<number | null>(null);
 const customerLabel = ref('');
+const customerCreditBalance = ref(0);
 
 // Grown per patient as the armado wizard picks one (and as prescriptions
 // are created) — no page-wide list with a cap.
@@ -432,6 +434,7 @@ async function confirmCheckout(): Promise<void> {
                 <StepCustomer
                     v-model:customer-id="customerId"
                     v-model:selected-label="customerLabel"
+                    v-model:credit-balance="customerCreditBalance"
                     :today="today"
                 />
 
@@ -598,6 +601,8 @@ async function confirmCheckout(): Promise<void> {
     <CheckoutModal
         :open="checkoutModalOpen"
         :payment-methods="paymentMethods"
+        :store-credit-method-id="storeCreditMethodId"
+        :credit-balance="customerCreditBalance"
         :document-types="documentTypes"
         :total="cart.total.value"
         :checkout="checkout"

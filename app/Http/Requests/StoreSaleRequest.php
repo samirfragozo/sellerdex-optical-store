@@ -6,9 +6,11 @@ use App\Enums\DocumentType;
 use App\Enums\FrameType;
 use App\Enums\LensKind;
 use App\Enums\SaleDocumentType;
+use App\Models\Customer;
 use App\Models\LensCombination;
 use App\Models\LensCombinationPrice;
 use App\Models\LensType;
+use App\Models\PaymentMethod;
 use App\Models\Prescription;
 use App\Models\Sale;
 use App\Models\Supplier;
@@ -126,6 +128,8 @@ class StoreSaleRequest extends FormRequest
                 }
             }
 
+            $this->validateStoreCreditPayments($validator);
+
             if (! $this->cartHasLens()) {
                 return;
             }
@@ -136,6 +140,30 @@ class StoreSaleRequest extends FormRequest
 
             $this->validateArmadoPrescriptions($validator);
         });
+    }
+
+    /** Store credit needs an existing customer whose balance covers the sum of those payments. */
+    private function validateStoreCreditPayments(Validator $validator): void
+    {
+        $method = PaymentMethod::storeCreditFor($this->user()->company_id);
+
+        $spent = $method === null ? 0 : collect((array) $this->input('payments', []))
+            ->where('payment_method_id', $method->id)
+            ->sum(fn (array $payment): int => (int) ($payment['amount'] ?? 0));
+
+        if ($spent === 0 || $validator->errors()->has('customer_id')) {
+            return;
+        }
+
+        $customer = is_numeric($this->input('customer_id')) ? Customer::find((int) $this->input('customer_id')) : null;
+
+        if ($customer === null) {
+            $validator->errors()->add('payments', __('app.validation.store_credit_needs_customer'));
+        } elseif ($spent > $customer->creditBalance()) {
+            $validator->errors()->add('payments', __('app.validation.store_credit_exceeds_balance', [
+                'balance' => '$'.number_format($customer->creditBalance(), 0, ',', '.'),
+            ]));
+        }
     }
 
     /** A live customer of the seller's company — the payer or an armado's patient. */

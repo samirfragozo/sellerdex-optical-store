@@ -468,6 +468,8 @@ return [
         'prism_base_required_with_prism' => 'Enter the prism base when there is a prism.',
         'lens_requires_prescription' => 'Selling a prescription lens requires a prescription.',
         'prescription_not_owned' => 'The prescription does not belong to this armado\'s patient.',
+        'store_credit_needs_customer' => 'Store credit can only be used with an existing customer.',
+        'store_credit_exceeds_balance' => 'The customer\'s store credit (:balance) does not cover this payment.',
         'diopter' => [
             'invalid' => 'The value of :attribute is not valid.',
             'invalid_format' => 'The value of :attribute is not valid. Use only numbers, e.g. 1.25.',
@@ -567,6 +569,7 @@ return [
             'new_customer_title' => 'New customer',
             'save_customer' => 'Save customer',
             'clear_customer' => 'Remove customer',
+            'credit_balance' => 'Store credit: :amount',
         ],
 
         'lens_form' => [
@@ -684,6 +687,8 @@ return [
             'amount_to_pay' => 'Amount to pay',
             'no_payments' => 'No payments added yet.',
             'remove_payment' => 'Remove payment',
+            'store_credit' => 'Store credit (:amount)',
+            'store_credit_name' => 'Store credit',
             'change' => 'Change',
             'keypad_clear' => 'Clear all',
             'keypad_backspace' => 'Delete last digit',

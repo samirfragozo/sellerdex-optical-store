@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Trash2 } from '@lucide/vue';
-import { watch } from 'vue';
+import { computed, watch } from 'vue';
 import InputError from '@/components/InputError.vue';
 import NumericKeypad from '@/components/pos/NumericKeypad.vue';
 import { Button } from '@/components/ui/button';
@@ -23,6 +23,8 @@ const QUICK_BILLS = [2000, 5000, 10000, 20000, 50000, 100000];
 const props = defineProps<{
     open: boolean;
     paymentMethods: { id: number; name: string; surcharge_percent: number }[];
+    storeCreditMethodId: number | null;
+    creditBalance: number;
     documentTypes: { value: string; label: string }[];
     total: number;
     checkout: ReturnType<typeof usePosCheckout>;
@@ -37,7 +39,25 @@ function formatCOP(value: number): string {
     return '$' + new Intl.NumberFormat('es-CO').format(value);
 }
 
+// What the customer can still spend: their balance minus store credit
+// already added to this checkout.
+const availableCredit = computed(() =>
+    Math.max(
+        props.creditBalance -
+            props.checkout.payments.value
+                .filter(
+                    (p) => p.payment_method_id === props.storeCreditMethodId,
+                )
+                .reduce((sum, p) => sum + p.amount, 0),
+        0,
+    ),
+);
+
 function paymentMethodName(id: number | null): string {
+    if (id !== null && id === props.storeCreditMethodId) {
+        return trans('app.pos.checkout.store_credit_name');
+    }
+
     return (
         props.paymentMethods.find((pm) => pm.id === id)?.name ??
         trans('app.pos.select_option')
@@ -50,6 +70,19 @@ function selectPaymentMethod(paymentMethodId: number): void {
     }
 
     props.checkout.addPayment(paymentMethodId, props.checkout.amount.value);
+    // eslint-disable-next-line vue/no-mutating-props
+    props.checkout.amount.value = Math.max(props.checkout.remaining.value, 0);
+}
+
+function selectStoreCredit(): void {
+    if (props.storeCreditMethodId === null) {
+        return;
+    }
+
+    props.checkout.addPayment(
+        props.storeCreditMethodId,
+        Math.min(props.checkout.amount.value, availableCredit.value),
+    );
     // eslint-disable-next-line vue/no-mutating-props
     props.checkout.amount.value = Math.max(props.checkout.remaining.value, 0);
 }
@@ -134,6 +167,22 @@ watch(
                         @click="selectPaymentMethod(pm.id)"
                     >
                         {{ pm.name }}
+                    </button>
+                    <button
+                        v-if="
+                            storeCreditMethodId !== null && availableCredit > 0
+                        "
+                        type="button"
+                        class="rounded-lg border border-input bg-transparent px-4 py-2.5 text-sm font-medium hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50"
+                        :disabled="checkout.amount.value <= 0"
+                        @click="selectStoreCredit"
+                    >
+                        {{
+                            trans('app.pos.checkout.store_credit').replace(
+                                ':amount',
+                                formatCOP(availableCredit),
+                            )
+                        }}
                     </button>
                 </div>
 

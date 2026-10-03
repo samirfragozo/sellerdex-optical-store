@@ -29,6 +29,7 @@ class PosController extends Controller
             'variants.variantOptions',
         ];
         $tracksInventory = Company::current()->tracksInventory();
+        $storeCreditMethod = PaymentMethod::storeCreditFor($request->user()->company_id);
         $catalogColumns = ['id', 'name', 'price', 'cost', 'is_stockable', 'stock', 'product_category_id', 'specs'];
 
         $products = Product::query()->where('is_active', true)
@@ -89,7 +90,9 @@ class PosController extends Controller
             'categories' => ProductCategory::query()->where('is_active', true)
                 ->orderBy('name')->get(['id', 'name', 'key']),
             'paymentMethods' => PaymentMethod::query()->where('is_active', true)
+                ->where('is_store_credit', false)
                 ->orderBy('sort_order')->get(['id', 'name', 'surcharge_percent']),
+            'storeCreditMethodId' => $storeCreditMethod?->is_active ? $storeCreditMethod->id : null,
             'kit' => $this->kit(),
         ]);
     }
