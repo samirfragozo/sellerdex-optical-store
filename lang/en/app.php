@@ -392,6 +392,8 @@ return [
         'void_money_mismatch' => 'A void must give back $:amount between refund and store credit.',
         'cannot_void' => 'Only undelivered, not yet voided sales can be voided.',
         'amount_exceeds' => "The adjustment can't exceed the sale value.",
+        'sale_voided' => 'The sale is voided: it no longer takes returns or adjustments.',
+        'no_store_credit_method' => 'The company has no store credit payment method; create it to give store credit.',
     ],
 
     'store_credit' => [

@@ -38,6 +38,7 @@ class RegisterSaleReturn
             $sale = Sale::withoutGlobalScopes()->whereKey($sale->getKey())->lockForUpdate()->firstOrFail();
             $refund = (int) ($data['refund_amount'] ?? 0);
             $credit = (int) ($data['store_credit_amount'] ?? 0);
+            $this->guard($sale, $type, $credit);
 
             $return = new SaleReturn([
                 'company_id' => $sale->company_id,
@@ -70,6 +71,22 @@ class RegisterSaleReturn
         });
     }
 
+    /** Checks that need the locked sale: nothing but a void on a voided sale, and store credit needs somewhere to go. */
+    private function guard(Sale $sale, SaleReturnType $type, int $credit): void
+    {
+        if ($type !== SaleReturnType::Void && $sale->status === SaleStatus::Voided) {
+            throw ValidationException::withMessages(['reason' => __('app.sale_return.sale_voided')]);
+        }
+
+        if ($credit > 0 && $sale->customer_id === null) {
+            throw ValidationException::withMessages(['store_credit_amount' => __('app.store_credit.needs_customer')]);
+        }
+
+        if ($credit > 0 && PaymentMethod::storeCreditFor($sale->company_id) === null) {
+            throw ValidationException::withMessages(['store_credit_amount' => __('app.sale_return.no_store_credit_method')]);
+        }
+    }
+
     /** @param  array<string, mixed>  $data */
     private function validate(Sale $sale, SaleReturnType $type, array $data): void
     {
@@ -84,20 +101,24 @@ class RegisterSaleReturn
             'refund_payment_method_id' => [
                 Rule::requiredIf((int) ($data['refund_amount'] ?? 0) > 0),
                 'nullable',
-                Rule::exists('payment_methods', 'id')->where(fn ($query) => $query->where('company_id', $sale->company_id)->where('is_store_credit', false)),
+                Rule::exists('payment_methods', 'id')->where(fn ($query) => $query->where('company_id', $sale->company_id)->where('is_store_credit', false)->where('is_active', true)),
             ],
             'store_credit_amount' => ['integer', 'min:0'],
         ])->validate();
     }
 
     /**
-     * Each line is worth its share of the line total after the sale discount (the payment surcharge stays).
+     * Each line is worth its share of the line total after the sale discount (the payment surcharge stays),
+     * taken cumulatively so unit-by-unit returns never round past the line. The return as a whole never
+     * exceeds what is left of the sale's value (e.g. goods coming back after a full value adjustment).
      *
      * @param  list<array{sale_item_id: int, quantity: int, restock?: bool}>  $lines
      */
     private function returnLines(Sale $sale, SaleReturn $return, array $lines): void
     {
         $items = $sale->items()->with(['product', 'lensConfig', 'lensOrder'])->get()->keyBy('id');
+        $factor = 1 - (float) $sale->discount_percent / 100;
+        $valueOf = fn (SaleItem $item, int $units): int => (int) round($item->line_total * $units / $item->quantity * $factor);
         $rows = [];
 
         foreach ($lines as $index => $line) {
@@ -112,10 +133,18 @@ class RegisterSaleReturn
             $rows[] = [
                 $item,
                 $quantity,
-                (int) round($item->line_total * $quantity / $item->quantity * (1 - (float) $sale->discount_percent / 100)),
+                $valueOf($item, $item->returnedQuantity() + $quantity) - $valueOf($item, $item->returnedQuantity()),
                 // Made-to-order lenses never go back to stock.
                 ($line['restock'] ?? false) && ! $item->isLens() && $item->movesStock(),
             ];
+        }
+
+        // Trim the excess off the last lines first.
+        $excess = array_sum(array_column($rows, 2)) - max(0, $sale->netTotal());
+        for ($i = count($rows) - 1; $i >= 0 && $excess > 0; $i--) {
+            $cut = min($excess, $rows[$i][2]);
+            $rows[$i][2] -= $cut;
+            $excess -= $cut;
         }
 
         $return->total = array_sum(array_column($rows, 2));
@@ -200,7 +229,7 @@ class RegisterSaleReturn
 
         if ($return->refund_amount > 0) {
             $cashMethodId = PaymentMethod::withoutGlobalScopes()->where('company_id', $sale->company_id)->where('is_default', true)->value('id');
-            if ($return->refund_payment_method_id === $cashMethodId && CashRegisterSession::openFor($actor) === null) {
+            if ((int) $return->refund_payment_method_id === (int) $cashMethodId && CashRegisterSession::openFor($actor) === null) {
                 throw ValidationException::withMessages(['refund_payment_method_id' => __('app.sale_return.cash_needs_session')]);
             }
             $this->payBack($sale, $return->refund_payment_method_id, $return->refund_amount, $return->reason, $actor);

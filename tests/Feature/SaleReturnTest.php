@@ -5,6 +5,7 @@ use App\Enums\LensOrderStatus;
 use App\Enums\SaleReturnType;
 use App\Enums\SaleStatus;
 use App\Enums\StockMovementType;
+use App\Models\Company;
 use App\Models\Customer;
 use App\Models\LensOrder;
 use App\Models\Payment;
@@ -205,4 +206,94 @@ it('never restocks a returned lens line', function () {
     expect($this->product->fresh()->stock)->toBe($stock)
         ->and($return->loss_amount)->toBe(80_000)
         ->and($return->items()->sole()->restock)->toBeFalse();
+});
+
+/** @return array<string, list<string>> The validation errors of a return, or [] when it goes through. */
+function saleReturnErrors(SaleReturnType $type, array $data): array
+{
+    try {
+        returnSale($type, $data);
+    } catch (ValidationException $exception) {
+        return $exception->errors();
+    }
+
+    return [];
+}
+
+it('never values a return above what is left of the sale after an adjustment', function () {
+    returnSale(SaleReturnType::ValueAdjustment, ['reason' => 'x', 'amount' => 100_000, 'refund_amount' => 0, 'store_credit_amount' => 100_000]);
+    $items = [['sale_item_id' => $this->line->id, 'quantity' => 2, 'restock' => true]];
+
+    expect(saleReturnErrors(SaleReturnType::Return, ['reason' => 'x', 'items' => $items, 'refund_amount' => 0, 'store_credit_amount' => 1]))
+        ->toHaveKey('store_credit_amount');
+
+    $return = returnSale(SaleReturnType::Return, ['reason' => 'x', 'items' => $items, 'refund_amount' => 0, 'store_credit_amount' => 0]);
+
+    expect($return->total)->toBe(0)
+        ->and($return->items()->sum('amount'))->toBe(0)
+        ->and($this->sale->fresh()->netTotal())->toBe(0)
+        ->and($this->customer->creditBalance())->toBe(100_000)
+        ->and($this->product->fresh()->stock)->toBe(5);
+});
+
+it('returns a line unit by unit without rounding past its value', function () {
+    $this->sale = Sale::factory()->create(['customer_id' => $this->customer->id, 'discount_percent' => 50, 'surcharge_percent' => 0]);
+    $line = SaleItem::factory()->create(['sale_id' => $this->sale->id, 'quantity' => 2, 'unit_price' => 50_001, 'tax_rate' => 0]);
+    expect($this->sale->fresh()->netTotal())->toBe(50_001);
+
+    foreach ([1, 2] as $ignored) {
+        returnSale(SaleReturnType::Return, ['reason' => 'x', 'items' => [['sale_item_id' => $line->id, 'quantity' => 1, 'restock' => false]],
+            'refund_amount' => 0, 'store_credit_amount' => 0]);
+    }
+
+    expect((int) SaleReturn::where('sale_id', $this->sale->id)->sum('total'))->toBe(50_001)
+        ->and($this->sale->fresh()->netTotal())->toBe(0);
+});
+
+it('refuses returns and adjustments on a cancelled plan separe, so the fee is never given back', function () {
+    $this->admin->company->update(['layaway_cancellation_fee_percent' => 10]);
+    $this->sale->forceFill(['document_type' => 'layaway'])->saveQuietly();
+    $lens = SaleItem::factory()->create(['sale_id' => $this->sale->id, 'quantity' => 1, 'unit_price' => 0, 'unit_cost' => 70_000, 'tax_rate' => 0]);
+    SaleItemLensConfig::factory()->create(['sale_item_id' => $lens->id]);
+    LensOrder::factory()->create(['sale_item_id' => $lens->id, 'lab_status' => LensOrderStatus::Sent]);
+    returnSale(SaleReturnType::Void, ['reason' => 'Desiste', 'refund_amount' => 0, 'store_credit_amount' => 90_000]);
+
+    expect(saleReturnErrors(SaleReturnType::Return, ['reason' => 'x', 'items' => [['sale_item_id' => $lens->id, 'quantity' => 1, 'restock' => false]],
+        'refund_amount' => 0, 'store_credit_amount' => 10_000]))->toBe(['reason' => [__('app.sale_return.sale_voided')]])
+        ->and(saleReturnErrors(SaleReturnType::ValueAdjustment, ['reason' => 'x', 'amount' => 10_000, 'refund_amount' => 0, 'store_credit_amount' => 0]))
+        ->toHaveKey('reason')
+        ->and($this->customer->creditBalance())->toBe(90_000)
+        ->and((int) SaleReturn::sum('loss_amount'))->toBe(70_000);
+});
+
+it('reports a missing store-credit method as a validation error', function () {
+    PaymentMethod::withoutGlobalScopes()->whereKey($this->credit->id)->delete();
+
+    expect(saleReturnErrors(SaleReturnType::ValueAdjustment, ['reason' => 'x', 'amount' => 10_000, 'refund_amount' => 0, 'store_credit_amount' => 10_000]))
+        ->toBe(['store_credit_amount' => [__('app.sale_return.no_store_credit_method')]]);
+});
+
+it('refuses store credit on a sale without customer', function () {
+    $this->sale->forceFill(['customer_id' => null])->saveQuietly();
+
+    expect(saleReturnErrors(SaleReturnType::ValueAdjustment, ['reason' => 'x', 'amount' => 10_000, 'refund_amount' => 0, 'store_credit_amount' => 10_000]))
+        ->toBe(['store_credit_amount' => [__('app.store_credit.needs_customer')]]);
+});
+
+it('only refunds through an active method of the sale company', function () {
+    $inactive = PaymentMethod::factory()->create(['is_active' => false]);
+    $foreign = PaymentMethod::factory()->create(['company_id' => Company::factory()->create()->id]);
+
+    foreach ([$inactive, $foreign] as $method) {
+        expect(saleReturnErrors(SaleReturnType::ValueAdjustment, ['reason' => 'x', 'amount' => 10_000,
+            'refund_amount' => 10_000, 'refund_payment_method_id' => $method->id, 'store_credit_amount' => 0]))
+            ->toHaveKey('refund_payment_method_id');
+    }
+});
+
+it('rejects a line of another sale', function () {
+    $other = SaleItem::factory()->create(['quantity' => 1, 'unit_price' => 10_000, 'tax_rate' => 0]);
+
+    expect(saleReturnErrors(SaleReturnType::Return, ['reason' => 'x', 'items' => [['sale_item_id' => $other->id, 'quantity' => 1, 'restock' => false]],
+        'refund_amount' => 0, 'store_credit_amount' => 0]))->toHaveKey('items.0.sale_item_id');
 });
