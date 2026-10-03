@@ -406,6 +406,7 @@ return [
             'pick_technology' => 'Manufacturing technology',
             'pick_lab' => 'Laboratory',
             'loading_price' => 'Calculating price…',
+            'retry_offers' => 'Retry',
             'offers_error' => 'Could not calculate the price. Try again.',
             'pick_material' => 'Material',
             'pick_treatments' => 'Functional treatments',

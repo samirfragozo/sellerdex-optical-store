@@ -23,13 +23,19 @@ const {
     offers,
     message: offersMessage,
     loading: offersLoading,
+    failed: offersFailed,
     load,
     clear,
 } = useLensOffers();
 // Re-editing keeps the armado's lab while it still offers the lens.
 const supplierId = ref<number | null>(props.initial?.supplier_id ?? null);
-const selectedOffer = computed<LensOffer | null>(
-    () => offers.value.find((o) => o.supplier_id === supplierId.value) ?? null,
+// While a new answer is in flight the old offers are stale: no offer means
+// no price, so the wizard can't advance with the previous combination's cost.
+const selectedOffer = computed<LensOffer | null>(() =>
+    offersLoading.value
+        ? null
+        : (offers.value.find((o) => o.supplier_id === supplierId.value) ??
+          null),
 );
 
 const {
@@ -114,24 +120,24 @@ if (props.initial) {
     props.initial.treatment_ids.forEach(toggleTreatment);
 }
 
-watch(
-    combination,
-    (value) => {
-        if (value === null || props.prescriptionId === null) {
-            clear();
+function loadOffers(): void {
+    const value = combination.value;
 
-            return;
-        }
+    if (value === null || props.prescriptionId === null) {
+        clear();
 
-        void load({
-            lens_type_id: value.lens_type_id,
-            lens_technology_id: value.lens_technology_id,
-            lens_material_id: value.lens_material_id,
-            prescription_id: props.prescriptionId,
-        });
-    },
-    { immediate: true },
-);
+        return;
+    }
+
+    void load({
+        lens_type_id: value.lens_type_id,
+        lens_technology_id: value.lens_technology_id,
+        lens_material_id: value.lens_material_id,
+        prescription_id: props.prescriptionId,
+    });
+}
+
+watch(combination, loadOffers, { immediate: true });
 
 // Preselect the preferred lab (offers come preferred first) unless the
 // current pick is still on offer.
@@ -232,12 +238,21 @@ const chip = (active: boolean) =>
             >
                 {{ trans('app.pos.lens_form.loading_price') }}
             </p>
-            <p
+            <div
                 v-else-if="offersMessage"
-                class="text-sm text-amber-700 dark:text-amber-400"
+                role="alert"
+                class="flex flex-wrap items-center gap-2 text-sm text-amber-700 dark:text-amber-400"
             >
-                {{ offersMessage }}
-            </p>
+                <span>{{ offersMessage }}</span>
+                <button
+                    v-if="offersFailed"
+                    type="button"
+                    class="rounded-md border border-input px-2 py-1 text-foreground transition-colors outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring/50"
+                    @click="loadOffers"
+                >
+                    {{ trans('app.pos.lens_form.retry_offers') }}
+                </button>
+            </div>
             <template v-else>
                 <span class="mb-1 block text-sm font-medium">{{
                     trans('app.pos.lens_form.pick_lab')

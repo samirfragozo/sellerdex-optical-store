@@ -406,6 +406,7 @@ return [
             'pick_technology' => 'Tecnología de fabricación',
             'pick_lab' => 'Laboratorio',
             'loading_price' => 'Calculando precio…',
+            'retry_offers' => 'Reintentar',
             'offers_error' => 'No se pudo calcular el precio. Inténtalo de nuevo.',
             'pick_material' => 'Material',
             'pick_treatments' => 'Tratamientos funcionales',

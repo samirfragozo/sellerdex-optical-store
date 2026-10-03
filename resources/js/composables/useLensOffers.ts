@@ -25,6 +25,8 @@ export function useLensOffers() {
     const offers = ref<LensOffer[]>([]);
     const message = ref<string | null>(null);
     const loading = ref(false);
+    /** The request itself failed (as opposed to a server answer of "no offers"), so retrying makes sense. */
+    const failed = ref(false);
     // Only the latest selection's answer counts — a slower, older request
     // must never overwrite it.
     let latest = 0;
@@ -33,6 +35,7 @@ export function useLensOffers() {
         const current = ++latest;
         loading.value = true;
         message.value = null;
+        failed.value = false;
 
         try {
             const response = await csrfFetch(
@@ -45,6 +48,7 @@ export function useLensOffers() {
 
             if (!response.ok) {
                 offers.value = [];
+                failed.value = true;
                 message.value = trans('app.pos.lens_form.offers_error');
 
                 return;
@@ -59,6 +63,7 @@ export function useLensOffers() {
         } catch {
             if (current === latest) {
                 offers.value = [];
+                failed.value = true;
                 message.value = trans('app.pos.lens_form.offers_error');
             }
         } finally {
@@ -72,8 +77,9 @@ export function useLensOffers() {
         latest++;
         offers.value = [];
         message.value = null;
+        failed.value = false;
         loading.value = false;
     }
 
-    return { offers, message, loading, load, clear };
+    return { offers, message, loading, failed, load, clear };
 }
