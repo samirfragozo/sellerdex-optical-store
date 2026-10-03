@@ -609,18 +609,16 @@ it('exposes the acting seller open cash session on the pos page', function () {
         );
 });
 
-it('exposes each prescription expiry on the pos page', function () {
+it('exposes each prescription expiry on the customer prescriptions endpoint', function () {
     $seller = User::factory()->seller()->create();
     $this->actingAs($seller);
     $expired = Prescription::factory()->create(['exam_date' => now()->subMonths(13)->toDateString(), 'od_sphere' => '1.5', 'os_sphere' => null]);
 
-    $this->get('/pos')
-        ->assertInertia(fn ($page) => $page
-            ->where('prescriptions.0.id', $expired->id)
-            ->where('prescriptions.0.expires_at', $expired->expires_at->toDateString())
-            ->where('prescriptions.0.is_expired', true)
-            ->where('prescriptions.0.summary', 'OD +1.50 / OS —')
-        );
+    $this->getJson(route('pos.customers.prescriptions', $expired->customer_id))
+        ->assertJsonPath('0.id', $expired->id)
+        ->assertJsonPath('0.expires_at', $expired->expires_at->toDateString())
+        ->assertJsonPath('0.is_expired', true)
+        ->assertJsonPath('0.summary', 'OD +1.50 / OS —');
 });
 
 it('keeps the pos page working after a sale with comma decimals in the prescription', function () {
@@ -637,9 +635,10 @@ it('keeps the pos page working after a sale with comma decimals in the prescript
         'armados' => [['prescription_id' => $prescription->id, 'lens' => $lens, 'own_frame' => true]],
     ])->assertOk();
 
-    $this->get('/pos')
+    $this->get('/pos')->assertOk();
+    $this->getJson(route('pos.customers.prescriptions', $customer))
         ->assertOk()
-        ->assertInertia(fn ($page) => $page->where('prescriptions.0.summary', 'OD +1.25 / OS —'));
+        ->assertJsonPath('0.summary', 'OD +1.25 / OS —');
 });
 
 it('exposes a null cash session when the seller has none open', function () {

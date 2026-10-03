@@ -24,7 +24,9 @@ import type { Armado, KitProp } from '@/composables/usePosCart';
 import { armadoTotal, usePosCart } from '@/composables/usePosCart';
 import { usePosCheckout } from '@/composables/usePosCheckout';
 import { useTranslations } from '@/composables/useTranslations';
+import { csrfFetch } from '@/lib/csrfFetch';
 import { index } from '@/routes/pos';
+import { prescriptions as customerPrescriptions } from '@/routes/pos/customers';
 import type { PrescriptionOption } from '@/types';
 import type { CreatedSale, ReadinessIssue } from '@/types/global';
 
@@ -47,7 +49,6 @@ const props = defineProps<{
     kit: KitProp;
     categories: { id: number; name: string; key: string }[];
     paymentMethods: PaymentMethod[];
-    prescriptions: PrescriptionOption[];
 }>();
 
 const today = new Date().toISOString().slice(0, 10);
@@ -84,9 +85,23 @@ const cart = usePosCart(props.kit);
 const customerId = ref<number | null>(null);
 const customerLabel = ref('');
 
-// Seeded from the page prop, then grown locally as prescriptions are
-// created on the fly during checkout — no full page reload needed.
-const prescriptions = ref<PrescriptionOption[]>([...props.prescriptions]);
+// Grown per patient as the armado wizard picks one (and as prescriptions
+// are created) — no page-wide list with a cap.
+const prescriptions = ref<PrescriptionOption[]>([]);
+
+async function loadPrescriptions(customerId: number): Promise<void> {
+    const response = await csrfFetch(customerPrescriptions.url(customerId));
+
+    if (!response.ok) {
+        return;
+    }
+
+    const loaded = (await response.json()) as PrescriptionOption[];
+    prescriptions.value = [
+        ...loaded,
+        ...prescriptions.value.filter((p) => p.customer_id !== customerId),
+    ];
+}
 
 // --- Document types ---
 const documentTypes = [
@@ -433,6 +448,7 @@ async function confirmCheckout(): Promise<void> {
                     @update:open="armadoModalOpen = $event"
                     @save="onArmadoSave"
                     @saved="onPrescriptionSaved"
+                    @patient-selected="loadPrescriptions"
                 />
 
                 <div

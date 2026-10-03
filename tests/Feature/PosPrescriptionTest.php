@@ -75,7 +75,7 @@ it('requires a prescription of the same customer to sell lenses', function () {
 it('lists expired prescriptions with a flag so the POS can warn', function () {
     Prescription::factory()->create(['customer_id' => $this->customer->id, 'exam_date' => now()->subMonths(14)->toDateString()]);
 
-    $this->get(route('pos.index'))->assertInertia(fn ($page) => $page->where('prescriptions.0.is_expired', true));
+    $this->getJson(route('pos.customers.prescriptions', $this->customer))->assertJsonPath('0.is_expired', true);
 });
 
 it('rejects an exam date older than two years', function () {

@@ -11,7 +11,6 @@ use App\Models\LensTechnology;
 use App\Models\LensTreatment;
 use App\Models\LensType as LensTypeModel;
 use App\Models\PaymentMethod;
-use App\Models\Prescription;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use Illuminate\Http\Request;
@@ -89,11 +88,6 @@ class PosController extends Controller
             'paymentMethods' => PaymentMethod::query()->where('is_active', true)
                 ->orderBy('sort_order')->get(['id', 'name', 'surcharge_percent']),
             'kit' => $this->kit(),
-            'prescriptions' => Prescription::query()
-                ->orderByDesc('exam_date')
-                ->limit(200)
-                ->get(['id', 'customer_id', 'exam_date', 'expires_at', 'od_sphere', 'os_sphere'])
-                ->map(fn (Prescription $p) => $p->toPosOption()),
         ]);
     }
 

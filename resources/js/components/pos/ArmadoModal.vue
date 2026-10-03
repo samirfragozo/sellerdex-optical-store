@@ -41,6 +41,7 @@ const emit = defineEmits<{
     'update:open': [boolean];
     save: [Armado];
     saved: [PrescriptionOption];
+    patientSelected: [number];
 }>();
 
 const customerId = defineModel<number | null>('customerId', {
@@ -96,6 +97,18 @@ const prescriptionMode = ref<'existing' | 'new'>('new');
 
 const patientId = computed(() =>
     patientMode.value === 'payer' ? customerId.value : otherPatientId.value,
+);
+
+// Ask the page for this patient's prescriptions: they are loaded per
+// patient, not up front, so older ones are always on offer.
+watch(
+    patientId,
+    (id) => {
+        if (id !== null) {
+            emit('patientSelected', id);
+        }
+    },
+    { immediate: true },
 );
 
 const patientPrescriptions = computed<PrescriptionOption[]>(() =>
