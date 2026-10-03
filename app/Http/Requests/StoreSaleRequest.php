@@ -31,7 +31,7 @@ class StoreSaleRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'customer_id' => ['nullable', $this->companyCustomer()],
+            'customer_id' => ['nullable', 'integer', $this->companyCustomer()],
             'customer' => ['nullable', 'array'],
             'customer.name' => ['required_with:customer', 'string', 'max:255'],
             'customer.last_name' => ['required_with:customer', 'string', 'max:255'],
@@ -47,9 +47,10 @@ class StoreSaleRequest extends FormRequest
             'discount_percent' => ['nullable', 'numeric', 'between:0,100'],
             'notes' => ['nullable', 'string', 'max:1000'],
             'armados' => ['nullable', 'array'],
-            'armados.*.patient_id' => ['nullable', $this->companyCustomer()],
+            'armados.*.patient_id' => ['nullable', 'integer', $this->companyCustomer()],
             'armados.*.prescription_id' => [
                 'required',
+                'integer',
                 Rule::exists('prescriptions', 'id')->where('company_id', $this->user()->company_id)->withoutTrashed(),
             ],
             'armados.*.lens.description' => ['required', 'string', 'max:255'],
@@ -134,7 +135,7 @@ class StoreSaleRequest extends FormRequest
         $armados = (array) $this->input('armados', []);
 
         $prescriptions = Prescription::query()
-            ->whereKey(collect($armados)->pluck('prescription_id')->filter()->all())
+            ->whereKey(collect($armados)->pluck('prescription_id')->filter(fn (mixed $id): bool => is_numeric($id))->all())
             ->get(['id', 'customer_id', 'od_add', 'os_add'])
             ->keyBy('id');
 
@@ -145,12 +146,12 @@ class StoreSaleRequest extends FormRequest
         foreach ($armados as $index => $armado) {
             $prescriptionId = $armado['prescription_id'] ?? null;
 
-            // A missing or foreign prescription was already reported by its rule.
-            if ($prescriptionId === null || ! $prescriptions->has($prescriptionId)) {
+            // Rules already reported a missing, foreign or malformed id; after-hooks still run.
+            if (! is_numeric($prescriptionId) || ! is_numeric($armado['patient_id'] ?? 0) || ! $prescriptions->has((int) $prescriptionId)) {
                 continue;
             }
 
-            $prescription = $prescriptions->get($prescriptionId);
+            $prescription = $prescriptions->get((int) $prescriptionId);
             $patientId = $armado['patient_id'] ?? $this->input('customer_id');
 
             if ((int) $prescription->customer_id !== (int) $patientId) {

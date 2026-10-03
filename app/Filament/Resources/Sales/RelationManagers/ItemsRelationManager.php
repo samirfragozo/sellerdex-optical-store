@@ -65,6 +65,15 @@ class ItemsRelationManager extends RelationManager
                     ->label(__('app.fields.description'))
                     ->wrap()
                     ->searchable(),
+                TextColumn::make('lensConfig.patient.full_name')
+                    ->label(__('app.fields.patient')),
+                TextColumn::make('lensConfig.prescription_id')
+                    ->label(__('app.fields.prescription'))
+                    ->formatStateUsing(fn (): string => __('app.documents.print_formula'))
+                    ->url(fn (SaleItem $record): ?string => $record->lensConfig?->prescription_id
+                        ? route('documents.formula', $record->lensConfig->prescription_id)
+                        : null)
+                    ->openUrlInNewTab(),
                 TextColumn::make('quantity')
                     ->label(__('app.fields.quantity'))
                     ->alignEnd(),

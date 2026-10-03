@@ -152,7 +152,6 @@ return [
         'paid_at' => 'Fecha de pago',
         'reference' => 'Referencia',
         'prescription' => 'Prescripción',
-        'prescription_option' => 'Examen :exam_date · Vence :expires_at',
         'items' => 'Ítems',
         'payments' => 'Pagos / Abonos',
         'opening_cash' => 'Caja inicial',

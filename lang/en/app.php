@@ -170,7 +170,6 @@ return [
         'paid_at' => 'Payment date',
         'reference' => 'Reference',
         'prescription' => 'Prescription',
-        'prescription_option' => 'Exam :exam_date · Expires :expires_at',
         'items' => 'Items',
         'payments' => 'Payments',
         'opening_cash' => 'Opening cash',

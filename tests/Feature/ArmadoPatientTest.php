@@ -175,3 +175,14 @@ it('keeps the sale when the patient is purged', function () {
     expect($config->patient_id)->toBeNull()
         ->and($config->prescription_id)->toBeNull();
 });
+
+it('rejects array ids with a validation error instead of a server error', function (string $field) {
+    $rx = Prescription::factory()->create(['customer_id' => $this->payer->id]);
+    $armado = patientArmado($this->combination, $this->payer->id, $rx->id);
+    // Existing ids wrapped in an array pass `exists` but must not reach the key lookups.
+    $armado[$field] = [$field === 'patient_id' ? $this->payer->id : $rx->id];
+
+    $this->postJson(route('pos.store'), patientSalePayload($this->payer->id, [$armado]))
+        ->assertStatus(422)
+        ->assertJsonValidationErrors("armados.0.{$field}");
+})->with(['prescription_id', 'patient_id']);

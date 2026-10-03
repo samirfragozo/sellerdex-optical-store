@@ -3,8 +3,10 @@
 use App\Enums\PrismBase;
 use App\Filament\Resources\Prescriptions\Pages\CreatePrescription;
 use App\Filament\Resources\Prescriptions\Pages\EditPrescription;
+use App\Filament\Resources\Prescriptions\RelationManagers\LensConfigsRelationManager;
 use App\Models\Customer;
 use App\Models\Prescription;
+use App\Models\SaleItem;
 use App\Models\SaleItemLensConfig;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -210,4 +212,21 @@ it('rejects an SVG attachment', function () {
         ->assertHasFormErrors(['attachment']);
 
     expect(Prescription::count())->toBe(0);
+});
+
+it('lists the sales and patient of the armados made on a prescription', function () {
+    $this->actingAs(User::factory()->admin()->create());
+    $patient = Customer::factory()->create(['name' => 'Luis', 'last_name' => 'Pérez']);
+    $prescription = Prescription::factory()->create(['customer_id' => $patient->id]);
+    $item = SaleItem::factory()->create();
+    $config = SaleItemLensConfig::factory()->create([
+        'sale_item_id' => $item->id,
+        'patient_id' => $patient->id,
+        'prescription_id' => $prescription->id,
+    ]);
+
+    Livewire::test(LensConfigsRelationManager::class, ['ownerRecord' => $prescription, 'pageClass' => EditPrescription::class])
+        ->assertCanSeeTableRecords([$config])
+        ->assertSee($item->sale->number)
+        ->assertSee('Luis Pérez');
 });

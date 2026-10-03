@@ -45,7 +45,7 @@ class SaleController extends Controller
             'invoice_url' => route('documents.invoice', $sale),
             'invoice_pdf_url' => route('documents.invoice.pdf', $sale),
             // One printable formula per distinct prescription, named after its patient.
-            'formulas' => $sale->lensConfigs()->with('patient')->whereNotNull('prescription_id')->get()
+            'formulas' => $sale->lensConfigs()->with('patient')->whereNotNull('prescription_id')->orderBy('sale_item_lens_configs.id')->get()
                 ->unique('prescription_id')
                 ->map(fn (SaleItemLensConfig $config): array => [
                     'url' => route('documents.formula', $config->prescription_id),

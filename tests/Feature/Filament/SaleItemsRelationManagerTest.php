@@ -4,8 +4,12 @@ use App\Enums\TaxTreatment;
 use App\Enums\VatRegime;
 use App\Filament\Resources\Sales\Pages\EditSale;
 use App\Filament\Resources\Sales\RelationManagers\ItemsRelationManager;
+use App\Models\Customer;
+use App\Models\Prescription;
 use App\Models\Product;
 use App\Models\Sale;
+use App\Models\SaleItem;
+use App\Models\SaleItemLensConfig;
 use App\Models\Tax;
 use App\Models\User;
 use Filament\Actions\CreateAction;
@@ -70,4 +74,19 @@ it('re-snapshots the tax when an admin changes the line product', function () {
 
     expect($line->fresh()->tax_name)->toBe('IVA 19%')
         ->and($line->fresh()->tax_amount)->toBe(19_000);
+});
+
+it('shows the armado patient and a formula link on lens lines', function () {
+    $patient = Customer::factory()->create(['name' => 'Luis', 'last_name' => 'Pérez']);
+    $prescription = Prescription::factory()->create(['customer_id' => $patient->id]);
+    $item = SaleItem::factory()->create(['sale_id' => $this->sale->id]);
+    SaleItemLensConfig::factory()->create([
+        'sale_item_id' => $item->id,
+        'patient_id' => $patient->id,
+        'prescription_id' => $prescription->id,
+    ]);
+
+    Livewire::test(ItemsRelationManager::class, ['ownerRecord' => $this->sale, 'pageClass' => EditSale::class])
+        ->assertSee('Luis Pérez')
+        ->assertSee(route('documents.formula', $prescription), false);
 });

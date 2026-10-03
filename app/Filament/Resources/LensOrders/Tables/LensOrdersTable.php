@@ -5,6 +5,7 @@ namespace App\Filament\Resources\LensOrders\Tables;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class LensOrdersTable
 {
@@ -19,7 +20,11 @@ class LensOrdersTable
                     ->label(__('app.fields.customer'))
                     ->searchable(),
                 TextColumn::make('saleItem.lensConfig.patient.full_name')
-                    ->label(__('app.fields.patient')),
+                    ->label(__('app.fields.patient'))
+                    ->searchable(query: fn (Builder $query, string $search): Builder => $query->whereHas(
+                        'saleItem.lensConfig.patient',
+                        fn (Builder $patient): Builder => $patient->where('name', 'like', "%{$search}%")->orWhere('last_name', 'like', "%{$search}%"),
+                    )),
                 TextColumn::make('saleItem.description')
                     ->label(__('app.fields.sale_item'))
                     ->searchable(),

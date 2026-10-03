@@ -41,3 +41,16 @@ it('shows the armado patient on the lens orders list', function () {
 
     $this->get(LensOrderResource::getUrl())->assertSee('Luis Pérez');
 });
+
+it('searches the lens orders by the armado patient last name', function () {
+    $this->actingAs(User::factory()->admin()->create());
+    $patient = Customer::factory()->create(['name' => 'Luis', 'last_name' => 'Zambrano']);
+    $config = SaleItemLensConfig::factory()->create(['patient_id' => $patient->id]);
+    $match = LensOrder::factory()->create(['sale_item_id' => $config->sale_item_id]);
+    $other = LensOrder::factory()->create();
+
+    Livewire::test(ListLensOrders::class)
+        ->searchTable('Zambrano')
+        ->assertCanSeeTableRecords([$match])
+        ->assertCanNotSeeTableRecords([$other]);
+});
