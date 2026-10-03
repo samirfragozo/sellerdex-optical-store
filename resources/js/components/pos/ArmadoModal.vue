@@ -262,6 +262,7 @@ function save(): void {
                 v-else-if="step === 'lens'"
                 :catalog="lensCatalog"
                 :initial="draft.lens"
+                :prescription-id="draft.prescription_id"
                 @change="draft.lens = $event"
             />
 

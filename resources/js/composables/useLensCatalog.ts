@@ -73,8 +73,6 @@ export interface LensCombinationProp {
     lens_type_id: number;
     lens_technology_id: number;
     lens_material_id: number;
-    cost: number;
-    price: number;
     installation_price: number;
 }
 
@@ -126,4 +124,3 @@ export function resolveVariantOptions(product: ProductProp): VariantOption[] {
         };
     });
 }
-

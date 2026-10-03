@@ -1,7 +1,9 @@
 <script setup lang="ts">
-import { computed, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import type { LensCatalogProp } from '@/composables/useLensCatalog';
 import { useLensConfigPricing } from '@/composables/useLensConfigPricing';
+import { useLensOffers } from '@/composables/useLensOffers';
+import type { LensOffer } from '@/composables/useLensOffers';
 import type { ArmadoLensLine } from '@/composables/usePosCart';
 import { useTranslations } from '@/composables/useTranslations';
 
@@ -11,9 +13,24 @@ const props = defineProps<{
     catalog: LensCatalogProp;
     /** Existing configuration when re-editing an armado. */
     initial?: ArmadoLensLine | null;
+    /** The armado's prescription; lens prices depend on its ranges. */
+    prescriptionId: number | null;
 }>();
 
 const emit = defineEmits<{ change: [ArmadoLensLine | null] }>();
+
+const {
+    offers,
+    message: offersMessage,
+    loading: offersLoading,
+    load,
+    clear,
+} = useLensOffers();
+// Re-editing keeps the armado's lab while it still offers the lens.
+const supplierId = ref<number | null>(props.initial?.supplier_id ?? null);
+const selectedOffer = computed<LensOffer | null>(
+    () => offers.value.find((o) => o.supplier_id === supplierId.value) ?? null,
+);
 
 const {
     typeId,
@@ -29,7 +46,10 @@ const {
     selectTechnology,
     selectMaterial,
     toggleTreatment,
-} = useLensConfigPricing(computed(() => props.catalog));
+} = useLensConfigPricing(
+    computed(() => props.catalog),
+    selectedOffer,
+);
 
 // --- Step chaining: each picker only offers values a combination exists for.
 const availableTechnologies = computed(() =>
@@ -80,6 +100,7 @@ const config = computed<ArmadoLensLine | null>(() =>
               treatment_ids: treatmentIds.value,
               price: resolvedPrice.value,
               cost: resolvedCost.value,
+              supplier_id: supplierId.value,
           }
         : null,
 );
@@ -92,6 +113,33 @@ if (props.initial) {
     selectMaterial(props.initial.lens_material_id);
     props.initial.treatment_ids.forEach(toggleTreatment);
 }
+
+watch(
+    combination,
+    (value) => {
+        if (value === null || props.prescriptionId === null) {
+            clear();
+
+            return;
+        }
+
+        void load({
+            lens_type_id: value.lens_type_id,
+            lens_technology_id: value.lens_technology_id,
+            lens_material_id: value.lens_material_id,
+            prescription_id: props.prescriptionId,
+        });
+    },
+    { immediate: true },
+);
+
+// Preselect the preferred lab (offers come preferred first) unless the
+// current pick is still on offer.
+watch(offers, (list) => {
+    if (!list.some((o) => o.supplier_id === supplierId.value)) {
+        supplierId.value = list[0]?.supplier_id ?? null;
+    }
+});
 
 // Immediate: re-opening an armado whose combination was since deleted or
 // deactivated must emit the resulting null instead of leaving the stale value.
@@ -173,6 +221,43 @@ const chip = (active: boolean) =>
             >
                 {{ trans('app.pos.lens_form.invalid_combination') }}
             </p>
+        </div>
+
+        <!-- Laboratorio -->
+        <div v-if="combination !== null">
+            <p
+                v-if="offersLoading"
+                role="status"
+                class="text-sm text-muted-foreground"
+            >
+                {{ trans('app.pos.lens_form.loading_price') }}
+            </p>
+            <p
+                v-else-if="offersMessage"
+                class="text-sm text-amber-700 dark:text-amber-400"
+            >
+                {{ offersMessage }}
+            </p>
+            <template v-else>
+                <span class="mb-1 block text-sm font-medium">{{
+                    trans('app.pos.lens_form.pick_lab')
+                }}</span>
+                <div class="flex flex-wrap gap-2">
+                    <button
+                        v-for="offer in offers"
+                        :key="offer.supplier_id"
+                        type="button"
+                        :aria-pressed="supplierId === offer.supplier_id"
+                        :class="chip(supplierId === offer.supplier_id)"
+                        @click="supplierId = offer.supplier_id"
+                    >
+                        {{ offer.supplier_name }}
+                        <span class="block text-xs font-normal tabular-nums">{{
+                            formatCOP(offer.price)
+                        }}</span>
+                    </button>
+                </div>
+            </template>
         </div>
 
         <!-- 4. Tratamientos -->

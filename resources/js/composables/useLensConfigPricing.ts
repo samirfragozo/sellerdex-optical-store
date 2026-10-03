@@ -1,16 +1,27 @@
 // resources/js/composables/useLensConfigPricing.ts
-import { computed, ref  } from 'vue';
-import type {Ref} from 'vue';
-import type { LensCatalogProp, LensCombinationProp } from '@/composables/useLensCatalog';
+import { computed, ref } from 'vue';
+import type { Ref } from 'vue';
+import type {
+    LensCatalogProp,
+    LensCombinationProp,
+} from '@/composables/useLensCatalog';
+import type { LensOffer } from '@/composables/useLensOffers';
 
-export function useLensConfigPricing(catalog: Ref<LensCatalogProp>) {
+export function useLensConfigPricing(
+    catalog: Ref<LensCatalogProp>,
+    offer: Ref<LensOffer | null>,
+) {
     const typeId = ref<number | null>(null);
     const technologyId = ref<number | null>(null);
     const materialId = ref<number | null>(null);
     const treatmentIds = ref<number[]>([]);
 
     const combination = computed<LensCombinationProp | null>(() => {
-        if (typeId.value === null || technologyId.value === null || materialId.value === null) {
+        if (
+            typeId.value === null ||
+            technologyId.value === null ||
+            materialId.value === null
+        ) {
             return null;
         }
 
@@ -25,10 +36,14 @@ export function useLensConfigPricing(catalog: Ref<LensCatalogProp>) {
     });
 
     const selectedTreatments = computed(() =>
-        catalog.value.treatments.filter((t) => treatmentIds.value.includes(t.id)),
+        catalog.value.treatments.filter((t) =>
+            treatmentIds.value.includes(t.id),
+        ),
     );
 
-    const isComplete = computed(() => combination.value !== null);
+    const isComplete = computed(
+        () => combination.value !== null && offer.value !== null,
+    );
 
     const resolvedPrice = computed<number>(() => {
         if (!isComplete.value) {
@@ -36,8 +51,7 @@ export function useLensConfigPricing(catalog: Ref<LensCatalogProp>) {
         }
 
         return (
-            (combination.value as LensCombinationProp).price +
-            (combination.value as LensCombinationProp).installation_price +
+            (offer.value as LensOffer).price +
             selectedTreatments.value.reduce((sum, t) => sum + t.price, 0)
         );
     });
@@ -48,7 +62,7 @@ export function useLensConfigPricing(catalog: Ref<LensCatalogProp>) {
         }
 
         return (
-            (combination.value as LensCombinationProp).cost +
+            (offer.value as LensOffer).cost +
             selectedTreatments.value.reduce((sum, t) => sum + t.cost, 0)
         );
     });
