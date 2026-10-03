@@ -1,10 +1,14 @@
 <?php
 
 use App\Filament\Resources\Sales\Pages\CreateSale;
+use App\Filament\Resources\Sales\Pages\EditSale;
 use App\Models\Customer;
+use App\Models\Payment;
 use App\Models\Sale;
 use App\Models\SaleItem;
+use App\Models\SaleReturn;
 use App\Models\User;
+use Filament\Actions\ForceDeleteAction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 
@@ -70,4 +74,18 @@ it('shows the real margin on the sale edit page to admins only', function () {
     $seller = User::factory()->seller()->create(['company_id' => $admin->company_id]);
     $this->actingAs($seller)->get("/admin/sales/{$sale->id}/edit")
         ->assertSuccessful()->assertDontSee('Margen real');
+});
+
+it('hides force delete on a trashed sale that has payments or returns', function () {
+    $this->actingAs(User::factory()->admin()->create());
+    $clean = Sale::factory()->create();
+    $paid = Sale::factory()->create();
+    Payment::factory()->create(['sale_id' => $paid->id]);
+    $returned = Sale::factory()->create();
+    SaleReturn::factory()->create(['sale_id' => $returned->id]);
+    collect([$clean, $paid, $returned])->each->delete();
+
+    Livewire::test(EditSale::class, ['record' => $clean->getRouteKey()])->assertActionVisible(ForceDeleteAction::class);
+    Livewire::test(EditSale::class, ['record' => $paid->getRouteKey()])->assertActionHidden(ForceDeleteAction::class);
+    Livewire::test(EditSale::class, ['record' => $returned->getRouteKey()])->assertActionHidden(ForceDeleteAction::class);
 });

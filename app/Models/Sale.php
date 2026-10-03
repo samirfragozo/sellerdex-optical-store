@@ -236,7 +236,7 @@ class Sale extends Model
 
         $status = match (true) {
             $this->is_delivered => SaleStatus::Delivered,
-            $netTotal > 0 && $paid >= $netTotal => SaleStatus::Paid,
+            $this->total > 0 && $paid >= $netTotal => SaleStatus::Paid,
             $paid > 0 => SaleStatus::Partial,
             default => SaleStatus::Draft,
         };

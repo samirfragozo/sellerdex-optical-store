@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Sales\RelationManagers;
 
+use App\Enums\SaleStatus;
 use App\Models\Payment;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\CreateAction;
@@ -92,6 +93,7 @@ class PaymentsRelationManager extends RelationManager
             ->headerActions([
                 CreateAction::make()
                     ->label(__('app.relations.add_payment'))
+                    ->hidden(fn (): bool => $this->getOwnerRecord()->status === SaleStatus::Voided)
                     ->mutateFormDataUsing(function (array $data): array {
                         $data['received_by'] ??= auth()->id();
 
@@ -100,9 +102,12 @@ class PaymentsRelationManager extends RelationManager
             ])
             ->recordActions([
                 EditAction::make()
-                    ->hidden(fn (Payment $record): bool => $record->isStoreCredit()),
-                DeleteAction::make(),
+                    ->hidden(fn (Payment $record): bool => $record->isStoreCredit() || $record->amount < 0),
+                // A refund already left the till: deleting it would let it be paid out twice.
+                DeleteAction::make()
+                    ->hidden(fn (Payment $record): bool => $record->amount < 0),
             ])
+            ->checkIfRecordIsSelectableUsing(fn (Payment $record): bool => $record->amount >= 0)
             ->toolbarActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),

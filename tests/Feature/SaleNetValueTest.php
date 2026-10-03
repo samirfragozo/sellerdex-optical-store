@@ -99,3 +99,15 @@ it('cannot remake a cancelled lens order', function () {
 
     expect(fn () => $order->remake(RemakeReason::Measurements, RemakeResponsible::Store, 1_000))->toThrow(DomainException::class);
 });
+
+it('marks a fully returned sale as paid when nothing is owed', function () {
+    $sale = Sale::factory()->create(['discount_percent' => 0, 'surcharge_percent' => 0]);
+    SaleItem::factory()->create(['sale_id' => $sale->id, 'quantity' => 1, 'unit_price' => 50_000, 'tax_rate' => 0]);
+    Payment::factory()->create(['sale_id' => $sale->id, 'payment_method_id' => PaymentMethod::factory()->create()->id, 'amount' => 50_000]);
+    SaleReturn::factory()->create(['sale_id' => $sale->id, 'type' => SaleReturnType::Return, 'total' => 50_000]);
+
+    $sale->fresh()->recalculateStatus();
+
+    expect($sale->fresh()->netTotal())->toBe(0)
+        ->and($sale->fresh()->status)->toBe(SaleStatus::Paid);
+});

@@ -78,6 +78,11 @@ class Payment extends Model
 
         // Deleting a grant must not leave the customer with negative credit; restoring a spend must still be covered.
         static::deleting(function (Payment $payment): void {
+            // A refund already left the till: deleting it would let it be paid out twice.
+            if ($payment->amount < 0 && ! $payment->isStoreCredit()) {
+                throw ValidationException::withMessages(['payments' => __('app.sale_return.refund_not_deletable')]);
+            }
+
             $payment->lockRow();
             $delta = $payment->ledgerDelta(active: false);
             if ($delta < 0) {

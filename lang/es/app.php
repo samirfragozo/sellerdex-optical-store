@@ -416,6 +416,7 @@ return [
         'cannot_void' => 'Solo se pueden anular ventas no entregadas ni anuladas.',
         'amount_exceeds' => 'El ajuste no puede superar el valor de la venta.',
         'sale_voided' => 'La venta está anulada: ya no admite devoluciones ni ajustes.',
+        'refund_not_deletable' => 'El reembolso ya se pagó, por eso no se puede eliminar.',
         'no_store_credit_method' => 'La empresa no tiene el método "Saldo a favor"; créalo para dar saldo a favor.',
     ],
 
