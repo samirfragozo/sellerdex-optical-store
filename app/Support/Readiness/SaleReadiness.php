@@ -5,9 +5,11 @@ namespace App\Support\Readiness;
 use App\Enums\ReadinessSeverity;
 use App\Filament\Pages\ComboSettings;
 use App\Filament\Pages\InventoryCount;
+use App\Filament\Resources\CashRegisterSessions\CashRegisterSessionResource;
 use App\Filament\Resources\LensCombinations\LensCombinationResource;
 use App\Filament\Resources\PaymentMethods\PaymentMethodResource;
 use App\Filament\Resources\Suppliers\SupplierResource;
+use App\Models\CashRegisterSession;
 use App\Models\Company;
 use App\Models\KitSlot;
 use App\Models\LensCombinationPrice;
@@ -84,6 +86,15 @@ class SaleReadiness
             $issues[] = new ReadinessIssue(
                 'inventory_initial_count', ReadinessSeverity::Warning,
                 __('app.readiness.inventory_initial_count'), InventoryCount::getUrl(panel: 'admin'),
+            );
+        }
+
+        $hasStaleSession = CashRegisterSession::withoutGlobalScopes()
+            ->where('company_id', $company->id)->whereNull('closed_at')->where('opened_at', '<', today())->exists();
+        if ($hasStaleSession) {
+            $issues[] = new ReadinessIssue(
+                'cash_session_stale', ReadinessSeverity::Warning,
+                __('app.readiness.cash_session_stale'), CashRegisterSessionResource::getUrl('index', panel: 'admin'),
             );
         }
 

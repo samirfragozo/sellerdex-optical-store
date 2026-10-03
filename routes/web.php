@@ -4,6 +4,7 @@ use App\Http\Controllers\CashRegisterSession\CloseController;
 use App\Http\Controllers\CashRegisterSession\MovementController;
 use App\Http\Controllers\CashRegisterSession\NoteController;
 use App\Http\Controllers\CashRegisterSession\PreviewController;
+use App\Http\Controllers\CashRegisterSession\ReportController as CashRegisterSessionReportController;
 use App\Http\Controllers\CashRegisterSessionController;
 use App\Http\Controllers\Customer\PrescriptionsController as CustomerPrescriptionsController;
 use App\Http\Controllers\Customer\SearchController as CustomerSearchController;
@@ -57,6 +58,7 @@ Route::middleware('auth')->group(function () {
     Route::get('prescriptions/{prescription}/formula/pdf', FormulaPdfController::class)->name('documents.formula.pdf');
     Route::get('lens-orders/{lensOrder}/document', LabOrderDocumentController::class)->name('documents.lab-order');
     Route::get('lens-orders/{lensOrder}/document/pdf', LabOrderDocumentPdfController::class)->name('documents.lab-order.pdf');
+    Route::get('cash-sessions/{cashRegisterSession}/report', CashRegisterSessionReportController::class)->name('documents.cash-session');
     Route::get('prescriptions/{prescription}/attachment', AttachmentController::class)->name('documents.prescription.attachment');
 });
 

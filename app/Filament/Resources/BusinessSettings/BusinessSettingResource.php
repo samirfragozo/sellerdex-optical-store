@@ -6,6 +6,7 @@ use App\Filament\Pages\Onboarding\Steps\CompanyStep;
 use App\Filament\Resources\BusinessSettings\Pages\ManageBusinessSetting;
 use App\Models\Company;
 use BackedEnum;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
@@ -54,6 +55,16 @@ class BusinessSettingResource extends Resource
                 Toggle::make('tracks_inventory')
                     ->label(__('app.business.tracks_inventory'))
                     ->helperText(__('app.business.tracks_inventory_help')),
+                Toggle::make('blind_cash_count')
+                    ->label(__('app.business.blind_cash_count'))
+                    ->helperText(__('app.business.blind_cash_count_help')),
+                TextInput::make('cash_difference_note_threshold')
+                    ->label(__('app.business.cash_difference_note_threshold'))
+                    ->helperText(__('app.business.cash_difference_note_threshold_help'))
+                    ->integer()
+                    ->minValue(0)
+                    ->required()
+                    ->prefix('$'),
             ]);
     }
 

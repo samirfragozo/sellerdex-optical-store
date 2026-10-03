@@ -20,7 +20,6 @@ class CreateCashClose extends CreateRecord
         $snapshot = app(CashCloseService::class)->compute(
             CashCloseType::from($data['type']),
             Carbon::parse($data['period_start'] ?? now()),
-            (int) ($data['opening_cash'] ?? 0),
         );
 
         return array_merge($data, $snapshot);

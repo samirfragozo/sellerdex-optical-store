@@ -74,3 +74,17 @@ it('falls back to 12 months when the prescription validity is cleared', function
 
     expect($admin->company->fresh()->prescription_validity_months)->toBe(12);
 });
+
+it('saves the blind cash count and the note threshold', function () {
+    $admin = User::factory()->admin()->create();
+    $this->actingAs($admin);
+
+    Livewire::test(ManageBusinessSetting::class)
+        ->fillForm(['blind_cash_count' => true, 'cash_difference_note_threshold' => 5_000])
+        ->call('save')
+        ->assertHasNoFormErrors();
+
+    expect($admin->company->fresh())
+        ->blind_cash_count->toBeTrue()
+        ->cash_difference_note_threshold->toBe(5_000);
+});

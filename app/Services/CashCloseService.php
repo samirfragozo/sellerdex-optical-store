@@ -3,9 +3,9 @@
 namespace App\Services;
 
 use App\Enums\CashCloseType;
+use App\Models\CashRegisterSession;
 use App\Models\Expense;
 use App\Models\Payment;
-use App\Models\PaymentMethod;
 use App\Models\Sale;
 use Carbon\CarbonInterface;
 
@@ -16,7 +16,7 @@ class CashCloseService
      *
      * @return array<string,mixed>
      */
-    public function compute(CashCloseType $type, CarbonInterface $date, int $openingCash = 0): array
+    public function compute(CashCloseType $type, CarbonInterface $date): array
     {
         [$start, $end] = $this->period($type, $date);
 
@@ -29,14 +29,11 @@ class CashCloseService
 
         $totalExpenses = (int) Expense::whereBetween('spent_at', [$start, $end])->sum('amount');
 
-        $cashMethodId = PaymentMethod::where('is_default', true)->value('id');
-        $cashPayments = $cashMethodId ? (int) ($collectedByMethod[$cashMethodId] ?? 0) : 0;
-        $cashExpenses = $cashMethodId
-            ? (int) Expense::whereBetween('spent_at', [$start, $end])
-                ->where('payment_method_id', $cashMethodId)->sum('amount')
-            : 0;
-
-        $expectedCash = $openingCash + $cashPayments - $cashExpenses;
+        // Drawer figures come from the cash sessions, not from dates: a session counts where it opened/closed.
+        $openingCash = (int) CashRegisterSession::whereBetween('opened_at', [$start, $end])->sum('opening_cash');
+        $closedSessions = CashRegisterSession::whereBetween('closed_at', [$start, $end]);
+        $expectedCash = (int) (clone $closedSessions)->sum('expected_cash');
+        $countedCash = (int) (clone $closedSessions)->sum('closed_cash');
 
         // Outstanding receivable across all non-voided sales (snapshot, not period-bound).
         $totalReceivable = Sale::query()->get()
@@ -53,6 +50,7 @@ class CashCloseService
             'total_expenses' => $totalExpenses,
             'total_receivable' => $totalReceivable,
             'expected_cash' => $expectedCash,
+            'counted_cash' => $countedCash,
         ];
     }
 

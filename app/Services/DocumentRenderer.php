@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\CashRegisterSession;
 use App\Models\Company;
 use App\Models\LensOrder;
 use App\Models\Prescription;
@@ -157,5 +158,18 @@ class DocumentRenderer
             'order' => $order,
             'frame' => $order->frameDescription(),
         ];
+    }
+
+    public function cashSession(CashRegisterSession $session): View
+    {
+        $session->loadMissing(['user', 'closedBy', 'reviewedBy', 'movements.user', 'counts.paymentMethod']);
+        $payments = $session->payments;
+
+        return view('documents.cash-session', [
+            ...$this->businessHeader(),
+            'session' => $session,
+            'salesCount' => $payments->pluck('sale_id')->unique()->count(),
+            'salesTotal' => (int) $payments->sum('amount'),
+        ]);
     }
 }

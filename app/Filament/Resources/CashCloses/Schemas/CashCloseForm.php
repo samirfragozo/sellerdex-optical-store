@@ -32,9 +32,9 @@ class CashCloseForm
                 TextInput::make('opening_cash')
                     ->label(__('app.fields.opening_cash'))
                     ->numeric()
-                    ->minValue(0)
-                    ->default(0)
-                    ->prefix('$'),
+                    ->prefix('$')
+                    ->disabled()
+                    ->dehydrated(false),
                 TextInput::make('total_sales')
                     ->label(__('app.fields.total_sales'))
                     ->numeric()
@@ -68,9 +68,9 @@ class CashCloseForm
                 TextInput::make('counted_cash')
                     ->label(__('app.fields.counted_cash'))
                     ->numeric()
-                    ->minValue(0)
-                    ->default(0)
-                    ->prefix('$'),
+                    ->prefix('$')
+                    ->disabled()
+                    ->dehydrated(false),
                 TextInput::make('difference')
                     ->label(__('app.fields.difference'))
                     ->numeric()
