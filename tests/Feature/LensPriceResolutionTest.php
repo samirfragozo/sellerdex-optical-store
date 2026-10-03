@@ -36,6 +36,10 @@ it('governs by the eye with the strongest meridian', function (array $rx, array 
         ['od_sphere' => '-2.00', 'od_cylinder' => '-3.00', 'od_add' => '2.00', 'os_sphere' => '-4.00', 'os_cylinder' => null, 'os_add' => '2.00'],
         ['sphere' => -2.0, 'cylinder' => -3.0, 'add' => 2.0],
     ],
+    'addition from either eye' => [
+        ['od_sphere' => '-4.00', 'od_cylinder' => null, 'od_add' => null, 'os_sphere' => '-1.00', 'os_cylinder' => null, 'os_add' => '2.50'],
+        ['sphere' => -4.0, 'cylinder' => 0.0, 'add' => 2.5],
+    ],
     'tie goes to OD' => [
         ['od_sphere' => '+2.00', 'od_cylinder' => null, 'od_add' => null, 'os_sphere' => '-2.00', 'os_cylinder' => null, 'os_add' => null],
         ['sphere' => 2.0, 'cylinder' => 0.0, 'add' => 0.0],
@@ -51,6 +55,14 @@ it('prices by the narrowest range that covers the governing eye', function () {
 
     expect(LensCombinationPrice::resolve($this->combination, $low)->is($base))->toBeTrue()
         ->and(LensCombinationPrice::resolve($this->combination, $strong)->is($high))->toBeTrue();
+});
+
+it('prefers the narrower addition range at the same lab', function () {
+    $wide = rangePriceRow($this->labA, ['add_min' => 0, 'add_max' => 4]);
+    $narrow = rangePriceRow($this->labA, ['add_min' => 1, 'add_max' => 2.5]);
+    $rx = Prescription::factory()->make(['od_sphere' => '-1.00', 'os_sphere' => null, 'od_cylinder' => null, 'os_cylinder' => null, 'od_add' => '2.00', 'os_add' => null]);
+
+    expect(LensCombinationPrice::resolve($this->combination, $rx)->is($narrow))->toBeTrue();
 });
 
 it('finds nothing for a prescription outside every range', function () {

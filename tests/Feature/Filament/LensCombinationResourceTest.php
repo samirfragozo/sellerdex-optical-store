@@ -33,11 +33,29 @@ it('crea una combinación de lente con su instalación', function () {
         ->call('create')
         ->assertHasNoFormErrors();
 
-    expect(LensCombination::where([
+    $created = LensCombination::where([
         'lens_type_id' => $type->id,
         'lens_technology_id' => $technology->id,
         'lens_material_id' => $material->id,
-    ])->exists())->toBeTrue();
+    ])->firstOrFail();
+
+    expect($created)->not->toBeNull();
+});
+
+it('lands on the edit page after creating, where the prices are managed', function () {
+    $this->actingAs(User::factory()->admin()->create());
+
+    $page = Livewire::test(LensCombinationResource::getPages()['create']->getPage())
+        ->fillForm([
+            'lens_type_id' => LensType::factory()->create()->id,
+            'lens_technology_id' => LensTechnology::factory()->create()->id,
+            'lens_material_id' => LensMaterial::factory()->create()->id,
+            'installation_price' => 0,
+            'is_active' => true,
+        ])
+        ->call('create');
+
+    $page->assertRedirect(LensCombinationResource::getUrl('edit', ['record' => LensCombination::query()->latest('id')->firstOrFail()]));
 });
 
 it('rechaza con error de validación una terna tipo/tecnología/material duplicada', function () {

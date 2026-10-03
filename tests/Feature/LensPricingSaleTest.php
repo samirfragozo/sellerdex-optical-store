@@ -134,6 +134,28 @@ it('offers only combinations with an active price in the POS catalog, without pr
             && ! array_key_exists('price', (array) collect($combinations)->first())));
 });
 
+it('does not offer a combination whose only active price is at an inactive lab', function () {
+    $lab = Supplier::factory()->laboratory()->create(['is_active' => false]);
+    $onlyAtInactiveLab = LensCombination::factory()->unpriced()->create();
+    LensCombinationPrice::factory()->create([
+        'lens_combination_id' => $onlyAtInactiveLab->id, 'supplier_id' => $lab->id,
+        ...LensCombinationPrice::ALL_PRESCRIPTIONS, 'is_active' => true,
+    ]);
+
+    $this->get(route('pos.index'))->assertInertia(fn ($page) => $page
+        ->where('lensCatalog.combinations', fn ($combinations) => ! collect($combinations)->pluck('id')->contains($onlyAtInactiveLab->id)
+            && collect($combinations)->pluck('id')->contains($this->combination->id)));
+});
+
+it('names the laboratory field in the validation error for a crafted supplier', function () {
+    $rx = Prescription::factory()->create(['customer_id' => $this->customer->id]);
+    $payload = rangeSalePayload($rx, 999_999);
+
+    $errors = $this->postJson(route('pos.store'), $payload)->assertStatus(422)->json('errors');
+
+    expect(collect($errors)->flatten()->implode(' '))->not->toContain('armados.0.lens.supplier_id');
+});
+
 it('keeps lens sales blocked until a combination has an active price at an active lab', function () {
     LensCombinationPrice::query()->update(['is_active' => false]);
 

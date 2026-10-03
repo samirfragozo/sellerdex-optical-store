@@ -266,6 +266,7 @@ class StoreSaleRequest extends FormRequest
             'armados.*.patient_id' => __('app.fields.patient'),
             'armados.*.prescription_id' => __('app.fields.prescription'),
             'armados.*.lens.product_id' => 'lente',
+            'armados.*.lens.supplier_id' => __('app.fields.laboratory'),
             'armados.*.lens.description' => 'descripción del lente',
             'armados.*.frame.description' => 'descripción de la montura',
             'armados.*.frame.unit_price' => 'precio de la montura',

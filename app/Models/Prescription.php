@@ -112,7 +112,8 @@ class Prescription extends Model
     /**
      * The eye with the highest power — its strongest meridian,
      * max(|sphere|, |sphere + cylinder|) — which decides the lab price
-     * range. Ties go to OD; blank values count as 0.
+     * range. Ties go to OD; blank values count as 0. The addition is the
+     * larger of both eyes, since it isn't tied to the governing meridian.
      *
      * @return array{sphere: float, cylinder: float, add: float}
      */
@@ -127,7 +128,10 @@ class Prescription extends Model
 
         [$od, $os] = [$eye('od'), $eye('os')];
 
-        return $power($os) > $power($od) ? $os : $od;
+        $governing = $power($os) > $power($od) ? $os : $od;
+        $governing['add'] = max($od['add'], $os['add']);
+
+        return $governing;
     }
 
     /**

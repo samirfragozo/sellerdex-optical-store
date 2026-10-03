@@ -17,7 +17,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('company_id')->constrained()->cascadeOnDelete();
             $table->foreignId('lens_combination_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('supplier_id')->constrained()->restrictOnDelete();
+            $table->foreignId('supplier_id')->constrained()->cascadeOnDelete();
             $table->decimal('sphere_min', 5, 2);
             $table->decimal('sphere_max', 5, 2);
             $table->decimal('cylinder_min', 5, 2);

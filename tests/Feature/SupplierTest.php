@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\LensCombinationPrice;
 use App\Models\Supplier;
 use App\Models\User;
 use App\Support\PermissionsTeam;
@@ -30,6 +31,17 @@ it('usa borrado suave', function () {
 
     expect(Supplier::count())->toBe(0)
         ->and(Supplier::withTrashed()->count())->toBe(1);
+});
+
+it('force-deletes a lab together with its lens price rows', function () {
+    $this->actingAs(User::factory()->admin()->create());
+    $lab = Supplier::factory()->laboratory()->create();
+    $price = LensCombinationPrice::factory()->create(['supplier_id' => $lab->id]);
+
+    $lab->forceDelete();
+
+    expect(Supplier::withTrashed()->find($lab->id))->toBeNull()
+        ->and(LensCombinationPrice::find($price->id))->toBeNull();
 });
 
 it('da acceso de proveedores solo al admin', function () {

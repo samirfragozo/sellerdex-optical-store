@@ -142,8 +142,12 @@ watch(combination, loadOffers, { immediate: true });
 // Preselect the preferred lab (offers come preferred first) unless the
 // current pick is still on offer.
 watch(offers, (list) => {
-    if (!list.some((o) => o.supplier_id === supplierId.value)) {
-        supplierId.value = list[0]?.supplier_id ?? null;
+    // An empty list is a failed/cleared load: keep the lab for the retry.
+    if (
+        list.length > 0 &&
+        !list.some((o) => o.supplier_id === supplierId.value)
+    ) {
+        supplierId.value = list[0].supplier_id;
     }
 });
 
