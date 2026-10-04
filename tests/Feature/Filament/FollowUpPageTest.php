@@ -1,11 +1,14 @@
 <?php
 
+use App\Enums\MessageTemplateKey;
 use App\Filament\Pages\FollowUp;
 use App\Filament\Widgets\FollowUp\ExpiringPrescriptionsWidget;
 use App\Models\Customer;
 use App\Models\FollowUpContact;
+use App\Models\MessageTemplate;
 use App\Models\Prescription;
 use App\Models\User;
+use App\Support\WhatsApp;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Filament\Actions\Testing\TestAction;
 use Livewire\Livewire;
@@ -66,8 +69,11 @@ it('links WhatsApp with the expiring message and hides the button without a phon
     $noPhone = Customer::factory()->create(['phone' => null]);
     $rx2 = followUpPrescription($noPhone, now()->subYear()->toDateString(), now()->addDays(5)->toDateString());
 
+    $expectedUrl = WhatsApp::url('3001234567', MessageTemplate::render($withPhone->company_id, MessageTemplateKey::PrescriptionExpiring, ['cliente' => $withPhone->name]));
+
     Livewire::test(ExpiringPrescriptionsWidget::class)
         ->assertActionVisible(TestAction::make('whatsApp')->table($rx))
+        ->assertActionHasUrl(TestAction::make('whatsApp')->table($rx), $expectedUrl)
         ->assertActionHidden(TestAction::make('whatsApp')->table($rx2));
 });
 
@@ -77,6 +83,14 @@ it('never lists another company prescriptions', function () {
     $rx = Prescription::withoutGlobalScopes()->create([...Prescription::factory()->raw(), 'company_id' => $foreign->company_id, 'customer_id' => $customer->id, 'exam_date' => now()->subYear()->toDateString()]);
     $rx->expires_at = now()->addDays(3)->toDateString();
     $rx->saveQuietly();
+
+    Livewire::test(ExpiringPrescriptionsWidget::class)->assertCanNotSeeTableRecords([$rx]);
+});
+
+it('does not list a prescription whose customer was deleted', function () {
+    $customer = Customer::factory()->create();
+    $rx = followUpPrescription($customer, now()->subYear()->toDateString(), now()->addDays(5)->toDateString());
+    $customer->delete();
 
     Livewire::test(ExpiringPrescriptionsWidget::class)->assertCanNotSeeTableRecords([$rx]);
 });
