@@ -1133,4 +1133,20 @@ return [
         'on_delivery' => 'Al entregar',
         'on_sale' => 'Al vender',
     ],
+    'message_templates' => [
+        'title' => 'Mensajes de WhatsApp',
+        'help' => 'Usa {cliente}, {orden}, {saldo} y {optica}; se reemplazan al enviar. Deja un mensaje vacío para volver al texto por defecto.',
+        'keys' => [
+            'order_ready' => 'Orden lista',
+            'prescription_expiring' => 'Fórmula por vencer',
+            'balance_due' => 'Saldo pendiente',
+            'birthday' => 'Cumpleaños',
+        ],
+        'defaults' => [
+            'order_ready' => 'Hola {cliente}, tus lentes de la orden {orden} ya están listos en {optica}. Saldo por pagar: {saldo}.',
+            'prescription_expiring' => 'Hola {cliente}, tu fórmula está por vencer o ya venció. Agenda tu examen en {optica}.',
+            'balance_due' => 'Hola {cliente}, te recordamos el saldo de {saldo} de la orden {orden} en {optica}.',
+            'birthday' => '¡Feliz cumpleaños, {cliente}! Te desea todo el equipo de {optica}.',
+        ],
+    ],
 ];

@@ -2,9 +2,11 @@
 
 use App\Enums\FiscalDocumentType;
 use App\Enums\InvoicingMode;
+use App\Enums\MessageTemplateKey;
 use App\Enums\VatRegime;
 use App\Filament\Resources\BusinessSettings\BusinessSettingResource;
 use App\Filament\Resources\BusinessSettings\Pages\ManageBusinessSetting;
+use App\Models\MessageTemplate;
 use App\Models\NumberingRange;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -128,4 +130,27 @@ it('switches the invoicing mode and keeps the receipt prefix on its numbering ra
 
     expect($admin->company->fresh()->invoicing_mode)->toBe(InvoicingMode::ExternalManual)
         ->and($range()->prefix)->toBe('R-');
+});
+
+it('edits the WhatsApp templates and drops blank ones back to the default', function () {
+    $admin = User::factory()->admin()->create();
+    $this->actingAs($admin);
+    $stored = fn () => MessageTemplate::withoutGlobalScopes()->where('company_id', $admin->company_id)
+        ->where('key', MessageTemplateKey::OrderReady->value)->value('body');
+
+    Livewire::test(ManageBusinessSetting::class)
+        ->assertFormSet(['templates.prescription_expiring' => MessageTemplateKey::PrescriptionExpiring->defaultBody()])
+        ->fillForm(['templates.order_ready' => 'Listo {cliente}'])
+        ->call('save')
+        ->assertHasNoFormErrors();
+
+    expect($stored())->toBe('Listo {cliente}');
+
+    Livewire::test(ManageBusinessSetting::class)
+        ->fillForm(['templates.order_ready' => ''])
+        ->call('save')
+        ->assertHasNoFormErrors();
+
+    expect($stored())->toBeNull()
+        ->and(MessageTemplate::bodyFor($admin->company_id, MessageTemplateKey::OrderReady))->toBe(MessageTemplateKey::OrderReady->defaultBody());
 });

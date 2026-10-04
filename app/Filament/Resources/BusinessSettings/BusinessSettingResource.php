@@ -2,14 +2,17 @@
 
 namespace App\Filament\Resources\BusinessSettings;
 
+use App\Enums\MessageTemplateKey;
 use App\Filament\Pages\Onboarding\Steps\CompanyStep;
 use App\Filament\Pages\Onboarding\Steps\InvoicingStep;
 use App\Filament\Resources\BusinessSettings\Pages\ManageBusinessSetting;
 use App\Models\Company;
 use BackedEnum;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 
@@ -87,6 +90,14 @@ class BusinessSettingResource extends Resource
                     ->helperText(__('app.business.adaptation_warranty_days_help'))
                     ->integer()->minValue(0)->maxValue(365)->required()->suffix(__('app.fields.days')),
                 ...InvoicingStep::fields(),
+                Section::make(__('app.message_templates.title'))
+                    ->description(__('app.message_templates.help'))
+                    ->collapsed()
+                    ->columnSpanFull()
+                    ->schema(collect(MessageTemplateKey::cases())->map(fn (MessageTemplateKey $key) => Textarea::make('templates.'.$key->value)
+                        ->label($key->label())
+                        ->rows(3)
+                        ->maxLength(1000))->all()),
             ]);
     }
 

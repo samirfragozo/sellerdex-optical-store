@@ -1133,4 +1133,20 @@ return [
         'on_delivery' => 'On delivery',
         'on_sale' => 'On sale',
     ],
+    'message_templates' => [
+        'title' => 'WhatsApp messages',
+        'help' => 'Use {cliente}, {orden}, {saldo} and {optica}; they are filled in when sending. Leave a message empty to go back to the default text.',
+        'keys' => [
+            'order_ready' => 'Order ready',
+            'prescription_expiring' => 'Prescription expiring',
+            'balance_due' => 'Balance due',
+            'birthday' => 'Birthday',
+        ],
+        'defaults' => [
+            'order_ready' => 'Hi {cliente}, the glasses of order {orden} are ready at {optica}. Balance due: {saldo}.',
+            'prescription_expiring' => 'Hi {cliente}, your prescription is about to expire or has expired. Book your eye exam at {optica}.',
+            'balance_due' => 'Hi {cliente}, a reminder of the {saldo} balance on order {orden} at {optica}.',
+            'birthday' => 'Happy birthday, {cliente}! From the whole team at {optica}.',
+        ],
+    ],
 ];
