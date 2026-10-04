@@ -1158,6 +1158,8 @@ return [
         'mark_contacted' => 'Mark contacted',
         'contacted' => 'Customer marked as contacted',
         'expiring_prescriptions' => 'Prescriptions expiring or expired',
+        'balances_due' => 'Balances due',
+        'birthdays' => 'Today\'s birthdays',
         'reasons' => [
             'prescription_expiring' => 'Prescription expiring',
             'balance_due' => 'Balance due',

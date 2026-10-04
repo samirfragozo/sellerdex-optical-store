@@ -2,6 +2,8 @@
 
 namespace App\Filament\Pages;
 
+use App\Filament\Widgets\FollowUp\BalancesDueWidget;
+use App\Filament\Widgets\FollowUp\BirthdaysWidget;
 use App\Filament\Widgets\FollowUp\ExpiringPrescriptionsWidget;
 use BackedEnum;
 use Filament\Pages\Page;
@@ -35,7 +37,7 @@ class FollowUp extends Page
 
     protected function getHeaderWidgets(): array
     {
-        return [ExpiringPrescriptionsWidget::class];
+        return [ExpiringPrescriptionsWidget::class, BalancesDueWidget::class, BirthdaysWidget::class];
     }
 
     public function getHeaderWidgetsColumns(): int|array

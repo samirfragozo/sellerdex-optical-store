@@ -1,12 +1,18 @@
 <?php
 
 use App\Enums\MessageTemplateKey;
+use App\Enums\SaleDocumentType;
 use App\Filament\Pages\FollowUp;
+use App\Filament\Widgets\FollowUp\BalancesDueWidget;
+use App\Filament\Widgets\FollowUp\BirthdaysWidget;
 use App\Filament\Widgets\FollowUp\ExpiringPrescriptionsWidget;
 use App\Models\Customer;
 use App\Models\FollowUpContact;
 use App\Models\MessageTemplate;
+use App\Models\Payment;
 use App\Models\Prescription;
+use App\Models\Sale;
+use App\Models\SaleItem;
 use App\Models\User;
 use App\Support\WhatsApp;
 use Database\Seeders\RolesAndPermissionsSeeder;
@@ -93,4 +99,42 @@ it('does not list a prescription whose customer was deleted', function () {
     $customer->delete();
 
     Livewire::test(ExpiringPrescriptionsWidget::class)->assertCanNotSeeTableRecords([$rx]);
+});
+
+it('lists sales with a balance due and hides them for 7 days once contacted', function () {
+    $customer = Customer::factory()->create(['phone' => '3001234567']);
+    $due = Sale::factory()->create(['customer_id' => $customer->id]);
+    SaleItem::factory()->create(['sale_id' => $due->id, 'quantity' => 1, 'unit_price' => 100_000]);
+    $paid = Sale::factory()->create(['customer_id' => $customer->id]);
+    SaleItem::factory()->create(['sale_id' => $paid->id, 'quantity' => 1, 'unit_price' => 50_000]);
+    Payment::factory()->create(['sale_id' => $paid->id, 'amount' => 50_000]);
+    $walkIn = Sale::factory()->create(['customer_id' => null]);
+    SaleItem::factory()->create(['sale_id' => $walkIn->id, 'quantity' => 1, 'unit_price' => 30_000]);
+    $quote = Sale::factory()->create(['customer_id' => $customer->id, 'document_type' => SaleDocumentType::Quote->value]);
+    SaleItem::factory()->create(['sale_id' => $quote->id, 'quantity' => 1, 'unit_price' => 20_000]);
+    $goneCustomer = Customer::factory()->create();
+    $orphan = Sale::factory()->create(['customer_id' => $goneCustomer->id]);
+    SaleItem::factory()->create(['sale_id' => $orphan->id, 'quantity' => 1, 'unit_price' => 40_000]);
+    $goneCustomer->delete();
+
+    Livewire::test(BalancesDueWidget::class)
+        ->assertCanSeeTableRecords([$due->fresh()])
+        ->assertCanNotSeeTableRecords([$paid->fresh(), $walkIn->fresh(), $quote->fresh(), $orphan->fresh()])
+        ->callAction(TestAction::make('markContacted')->table($due->fresh()))
+        ->assertCanNotSeeTableRecords([$due->fresh()]);
+
+    $this->travel(8)->days();
+    Livewire::test(BalancesDueWidget::class)->assertCanSeeTableRecords([$due->fresh()]);
+});
+
+it('lists today\'s birthdays until contacted this year', function () {
+    $this->travelTo(now()->setDate(2026, 6, 15));
+    $birthday = Customer::factory()->create(['birth_date' => '1996-06-15', 'phone' => '3001234567']);
+    $other = Customer::factory()->create(['birth_date' => '1996-06-16']);
+
+    Livewire::test(BirthdaysWidget::class)
+        ->assertCanSeeTableRecords([$birthday])
+        ->assertCanNotSeeTableRecords([$other])
+        ->callAction(TestAction::make('markContacted')->table($birthday))
+        ->assertCanNotSeeTableRecords([$birthday]);
 });

@@ -1158,6 +1158,8 @@ return [
         'mark_contacted' => 'Marcar contactado',
         'contacted' => 'Cliente marcado como contactado',
         'expiring_prescriptions' => 'Fórmulas por vencer o vencidas',
+        'balances_due' => 'Saldos pendientes',
+        'birthdays' => 'Cumpleaños de hoy',
         'reasons' => [
             'prescription_expiring' => 'Fórmula por vencer',
             'balance_due' => 'Saldo pendiente',
