@@ -52,6 +52,9 @@ class Sale extends Model
 
     protected static function booted(): void
     {
+        // Money and returns are accounting records: the DB cascades would silently wipe refunds and store credit.
+        static::forceDeleting(fn (Sale $sale): bool => ! $sale->payments()->withTrashed()->exists() && ! $sale->returns()->exists());
+
         static::creating(function (Sale $sale): void {
             $sale->number ??= $sale->company_id !== null
                 ? Company::takeNextSaleNumber($sale->company_id)

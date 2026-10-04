@@ -2,6 +2,7 @@
 
 use App\Filament\Resources\Sales\Pages\CreateSale;
 use App\Filament\Resources\Sales\Pages\EditSale;
+use App\Filament\Resources\Sales\Pages\ListSales;
 use App\Models\Customer;
 use App\Models\Payment;
 use App\Models\Sale;
@@ -88,4 +89,37 @@ it('hides force delete on a trashed sale that has payments or returns', function
     Livewire::test(EditSale::class, ['record' => $clean->getRouteKey()])->assertActionVisible(ForceDeleteAction::class);
     Livewire::test(EditSale::class, ['record' => $paid->getRouteKey()])->assertActionHidden(ForceDeleteAction::class);
     Livewire::test(EditSale::class, ['record' => $returned->getRouteKey()])->assertActionHidden(ForceDeleteAction::class);
+});
+
+it('refuses to force delete a sale that has payments or returns, but not a clean one', function () {
+    $this->actingAs(User::factory()->admin()->create());
+    $clean = Sale::factory()->create();
+    $paid = Sale::factory()->create();
+    $payment = Payment::factory()->create(['sale_id' => $paid->id]);
+    $returned = Sale::factory()->create();
+    SaleReturn::factory()->create(['sale_id' => $returned->id]);
+    collect([$clean, $paid, $returned])->each->delete();
+
+    expect($paid->forceDelete())->toBeFalse()
+        ->and($returned->forceDelete())->toBeFalse()
+        ->and(Sale::withTrashed()->find($paid->id))->not->toBeNull()
+        ->and(Payment::withTrashed()->find($payment->id))->not->toBeNull()
+        ->and(Sale::withTrashed()->find($returned->id))->not->toBeNull()
+        ->and($clean->forceDelete())->toBeTrue()
+        ->and(Sale::withTrashed()->find($clean->id))->toBeNull();
+});
+
+it('keeps sales with payments when force deleting in bulk from the list', function () {
+    $this->actingAs(User::factory()->admin()->create());
+    $clean = Sale::factory()->create();
+    $paid = Sale::factory()->create();
+    Payment::factory()->create(['sale_id' => $paid->id]);
+    collect([$clean, $paid])->each->delete();
+
+    Livewire::test(ListSales::class)
+        ->filterTable('trashed', true)
+        ->callTableBulkAction('forceDelete', [$clean->id, $paid->id]);
+
+    expect(Sale::withTrashed()->find($paid->id))->not->toBeNull()
+        ->and(Sale::withTrashed()->find($clean->id))->toBeNull();
 });
