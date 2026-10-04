@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\DocumentType;
+use App\Enums\PersonType;
 use App\Traits\BelongsToCompany;
 use Database\Factories\CustomerFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -12,17 +13,22 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-#[Fillable(['company_id', 'name', 'last_name', 'document_type', 'id_number', 'phone', 'address', 'city', 'birth_date', 'email', 'notes'])]
+#[Fillable(['company_id', 'name', 'last_name', 'document_type', 'id_number', 'phone', 'address', 'city', 'birth_date', 'email', 'notes', 'person_type', 'dane_municipality_code', 'fiscal_responsibilities'])]
 class Customer extends Model
 {
     /** @use HasFactory<CustomerFactory> */
     use BelongsToCompany, HasFactory, SoftDeletes;
+
+    /** What a factura electrónica needs from an identified buyer (the e-mail is the customer's own). */
+    public const FISCAL_FIELDS = ['person_type', 'email', 'dane_municipality_code', 'fiscal_responsibilities'];
 
     protected function casts(): array
     {
         return [
             'document_type' => DocumentType::class,
             'birth_date' => 'date',
+            'person_type' => PersonType::class,
+            'fiscal_responsibilities' => 'array',
         ];
     }
 
@@ -42,6 +48,17 @@ class Customer extends Model
 
             return null;
         });
+    }
+
+    /**
+     * The fiscal fields still blank once $incoming (what the checkout sends) is laid over the stored values.
+     *
+     * @param  array<string, mixed>  $incoming
+     * @return list<string>
+     */
+    public function missingFiscalData(array $incoming = []): array
+    {
+        return array_values(array_filter(self::FISCAL_FIELDS, fn (string $field): bool => blank($incoming[$field] ?? null) && blank($this->{$field})));
     }
 
     /** Whether any of the customer's sales (even trashed) holds a fiscal document. */

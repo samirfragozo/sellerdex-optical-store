@@ -3,10 +3,14 @@
 namespace App\Filament\Resources\Customers\Schemas;
 
 use App\Enums\DocumentType;
+use App\Enums\FiscalResponsibility;
+use App\Enums\PersonType;
+use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 
 class CustomerForm
@@ -54,6 +58,23 @@ class CustomerForm
                     ->label(__('app.fields.notes'))
                     ->maxLength(1000)
                     ->columnSpanFull(),
+                Section::make(__('app.fields.fiscal_section'))
+                    ->description(__('app.fields.fiscal_section_help'))
+                    ->columns(2)
+                    ->collapsed()
+                    ->columnSpanFull()
+                    ->schema([
+                        Select::make('person_type')->label(__('app.fields.person_type'))->options(PersonType::options()),
+                        TextInput::make('dane_municipality_code')
+                            ->label(__('app.fields.dane_municipality_code'))
+                            ->helperText(__('app.fields.dane_municipality_code_help'))
+                            ->regex('/^\d{5}$/')
+                            ->maxLength(5),
+                        CheckboxList::make('fiscal_responsibilities')
+                            ->label(__('app.fields.fiscal_responsibilities'))
+                            ->options(FiscalResponsibility::options())
+                            ->columnSpanFull(),
+                    ]),
             ]);
     }
 }

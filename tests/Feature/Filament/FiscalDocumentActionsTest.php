@@ -129,3 +129,12 @@ it('hides the void action once the sale has its document', function () {
     Livewire::test(EditSale::class, ['record' => $this->sale->getRouteKey()])
         ->assertActionHidden('voidSale');
 });
+
+it('defaults the registered document to the one chosen at the sale', function () {
+    $this->seller->company->update(['default_fiscal_document' => FiscalDocumentType::PosElectronic]);
+    $this->sale->update(['fiscal_document_type' => FiscalDocumentType::ElectronicInvoice]);
+
+    Livewire::test(EditSale::class, ['record' => $this->sale->getRouteKey()])
+        ->mountAction(TestAction::make('registerFiscalDocument'))
+        ->assertSchemaStateSet(['document_type' => FiscalDocumentType::ElectronicInvoice->value]);
+});

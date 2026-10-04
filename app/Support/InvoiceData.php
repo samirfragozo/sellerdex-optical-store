@@ -15,7 +15,7 @@ final class InvoiceData
     /** DIAN's generic buyer for a sale to an unidentified customer. */
     public const FINAL_CONSUMER_ID = '222222222222';
 
-    /** @return array{buyer: array{document_type: ?string, id_number: string, name: string, phone: ?string, email: ?string, address: ?string}, lines: list<array{description: string, quantity: int, unit_price: int, base: int, tax: int, tax_rate: float, total: int}>, totals: array{base: int, tax: int, total: int}} */
+    /** @return array{buyer: array{document_type: ?string, id_number: string, name: string, phone: ?string, email: ?string, address: ?string, person_type: ?string, dane_municipality_code: ?string, fiscal_responsibilities: ?string}, lines: list<array{description: string, quantity: int, unit_price: int, base: int, tax: int, tax_rate: float, total: int}>, totals: array{base: int, tax: int, total: int}} */
     public static function for(Sale $sale): array
     {
         $sale->loadMissing('items');
@@ -47,6 +47,9 @@ final class InvoiceData
                 'phone' => $customer?->phone,
                 'email' => $customer?->email,
                 'address' => $customer?->address,
+                'person_type' => $customer?->person_type?->label(),
+                'dane_municipality_code' => $customer?->dane_municipality_code,
+                'fiscal_responsibilities' => filled($customer?->fiscal_responsibilities) ? implode(';', $customer->fiscal_responsibilities) : null,
             ],
             'lines' => $lines,
             'totals' => [

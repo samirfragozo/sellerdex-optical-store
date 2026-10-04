@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\PersonType;
 use App\Models\Customer;
 use App\Models\Sale;
 use App\Models\SaleItem;
@@ -75,4 +76,18 @@ it('still bills a sale to a soft-deleted customer by name', function () {
     $customer->delete();
 
     expect(InvoiceData::for($sale->fresh())['buyer'])->toMatchArray(['name' => 'Luis Paz', 'id_number' => '555']);
+});
+
+it('shows the buyer fiscal data', function () {
+    $customer = Customer::factory()->create(['person_type' => PersonType::Legal, 'dane_municipality_code' => '11001', 'fiscal_responsibilities' => ['O-13', 'O-23']]);
+    $buyer = InvoiceData::for(Sale::factory()->create(['customer_id' => $customer->id]))['buyer'];
+
+    expect($buyer['person_type'])->toBe(PersonType::Legal->label())
+        ->and($buyer['dane_municipality_code'])->toBe('11001')
+        ->and($buyer['fiscal_responsibilities'])->toBe('O-13;O-23');
+
+    $walkIn = InvoiceData::for(Sale::factory()->create(['customer_id' => null]))['buyer'];
+    expect($walkIn['person_type'])->toBeNull()
+        ->and($walkIn['dane_municipality_code'])->toBeNull()
+        ->and($walkIn['fiscal_responsibilities'])->toBeNull();
 });

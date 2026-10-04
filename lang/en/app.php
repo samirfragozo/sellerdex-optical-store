@@ -138,6 +138,12 @@ return [
         'city' => 'City',
         'age' => 'Age',
         'email' => 'Email',
+        'person_type' => 'Person type',
+        'dane_municipality_code' => 'DANE municipality code',
+        'dane_municipality_code_help' => '5 digits, for example 11001 for Bogotá.',
+        'fiscal_responsibilities' => 'Fiscal responsibilities',
+        'fiscal_section' => 'Invoicing data',
+        'fiscal_section_help' => 'Asked when the customer requests an electronic invoice.',
         'notes' => 'Notes',
         'active' => 'Active',
         'active_f' => 'Active',
@@ -393,6 +399,16 @@ return [
     ],
 
     'purchase_order_actions' => ['receive' => 'Receive', 'cancel' => 'Cancel'],
+
+    'person_type' => ['natural' => 'Natural person', 'legal' => 'Legal entity'],
+
+    'fiscal_responsibility' => [
+        'O-13' => 'O-13 Large taxpayer',
+        'O-15' => 'O-15 Self-withholder',
+        'O-23' => 'O-23 VAT withholding agent',
+        'O-47' => 'O-47 Simple tax regime',
+        'R-99-PN' => 'R-99-PN Not responsible',
+    ],
 
     'sale_return_type' => ['return' => 'Return', 'value_adjustment' => 'Value adjustment', 'void' => 'Void'],
 

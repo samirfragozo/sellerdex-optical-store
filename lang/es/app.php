@@ -120,6 +120,12 @@ return [
         'city' => 'Ciudad',
         'age' => 'Edad',
         'email' => 'Correo',
+        'person_type' => 'Tipo de persona',
+        'dane_municipality_code' => 'Código DANE del municipio',
+        'dane_municipality_code_help' => '5 dígitos, por ejemplo 11001 para Bogotá.',
+        'fiscal_responsibilities' => 'Responsabilidades fiscales',
+        'fiscal_section' => 'Datos de facturación',
+        'fiscal_section_help' => 'Se piden cuando el cliente solicita factura electrónica.',
         'notes' => 'Notas',
         'active' => 'Activo',
         'active_f' => 'Activa',
@@ -390,6 +396,16 @@ return [
         'received' => 'Recibido',
         'ready' => 'Listo para entregar',
         'cancelled' => 'Cancelada',
+    ],
+
+    'person_type' => ['natural' => 'Persona natural', 'legal' => 'Persona jurídica'],
+
+    'fiscal_responsibility' => [
+        'O-13' => 'O-13 Gran contribuyente',
+        'O-15' => 'O-15 Autorretenedor',
+        'O-23' => 'O-23 Agente de retención IVA',
+        'O-47' => 'O-47 Régimen simple de tributación',
+        'R-99-PN' => 'R-99-PN No responsable',
     ],
 
     'sale_return_type' => ['return' => 'Devolución', 'value_adjustment' => 'Ajuste de valor', 'void' => 'Anulación'],

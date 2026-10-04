@@ -32,7 +32,7 @@ class FiscalDocumentActions
             ->color('primary')
             ->visible(fn (Sale $record): bool => self::externalMode($record) && $record->isInvoiceableNow() && $record->saleDocument() === null)
             ->fillForm(fn (Sale $record): array => [
-                'document_type' => Company::withoutGlobalScopes()->find($record->company_id)?->default_fiscal_document?->value,
+                'document_type' => ($record->fiscal_document_type ?? Company::withoutGlobalScopes()->find($record->company_id)?->default_fiscal_document)?->value,
                 'issued_at' => today()->toDateString(),
             ])
             ->schema(self::fields(withType: true))
@@ -86,6 +86,9 @@ class FiscalDocumentActions
                 $text('buyer_phone', __('app.fields.phone'), $buyer['phone']),
                 $text('buyer_email', __('app.fields.email'), $buyer['email']),
                 $text('buyer_address', __('app.fields.address'), $buyer['address']),
+                $text('buyer_person_type', __('app.fields.person_type'), $buyer['person_type']),
+                $text('buyer_dane_municipality_code', __('app.fields.dane_municipality_code'), $buyer['dane_municipality_code']),
+                $text('buyer_fiscal_responsibilities', __('app.fields.fiscal_responsibilities'), $buyer['fiscal_responsibilities']),
             ]),
         ];
 

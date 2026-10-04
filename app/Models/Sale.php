@@ -30,7 +30,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
-#[Fillable(['company_id', 'number', 'customer_id', 'seller_id', 'document_type', 'status', 'subtotal', 'discount', 'discount_percent', 'surcharge_percent', 'tax_amount', 'total', 'is_delivered', 'delivered_at', 'sold_at', 'notes', 'created_by', 'discount_approved_by', 'quote_valid_until'])]
+#[Fillable(['company_id', 'number', 'customer_id', 'seller_id', 'document_type', 'status', 'subtotal', 'discount', 'discount_percent', 'surcharge_percent', 'tax_amount', 'total', 'is_delivered', 'delivered_at', 'sold_at', 'notes', 'created_by', 'discount_approved_by', 'quote_valid_until', 'fiscal_document_type'])]
 class Sale extends Model
 {
     /** @use HasFactory<SaleFactory> */
@@ -44,6 +44,7 @@ class Sale extends Model
         return [
             'document_type' => SaleDocumentType::class,
             'status' => SaleStatus::class,
+            'fiscal_document_type' => FiscalDocumentType::class,
             'subtotal' => 'integer',
             'discount' => 'integer',
             'discount_percent' => 'decimal:2',
