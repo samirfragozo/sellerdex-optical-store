@@ -318,6 +318,11 @@ watch(customerId, () => {
 });
 
 async function confirmCheckout(): Promise<void> {
+    // Enter in the PIN field bypasses the confirm button's disabled state.
+    if (checkout.submitting.value) {
+        return;
+    }
+
     const cartPayload = cart.buildPayload();
 
     const result = await checkout.submit({
