@@ -6,10 +6,15 @@ use App\Enums\InvoicingMode;
 use App\Enums\LayawayInvoicing;
 use App\Enums\SaleDocumentType;
 use App\Enums\SaleStatus;
+use App\Filament\Resources\Customers\Pages\EditCustomer;
+use App\Filament\Resources\Customers\Pages\ListCustomers;
+use App\Models\Customer;
 use App\Models\FiscalDocument;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\User;
+use Filament\Actions\ForceDeleteAction;
+use Livewire\Livewire;
 
 beforeEach(function () {
     $this->admin = User::factory()->admin()->create();
@@ -92,4 +97,34 @@ it('consumes no receipt number when the sale is rolled back', function () {
 
     $this->postJson(route('pos.store'), $payload)->assertOk();
     expect(Sale::sole()->receipt()->number)->toBe('000001');
+});
+
+it('does not number an old sale on a later edit after the company switches to receipt-only', function () {
+    $this->company->update(['invoicing_mode' => InvoicingMode::ExternalManual]);
+    $old = Sale::factory()->create();
+    $this->company->update(['invoicing_mode' => InvoicingMode::ReceiptOnly]);
+
+    $old->update(['notes' => 'edited']);
+    expect($old->fresh()->receipt())->toBeNull();
+
+    $layaway = Sale::factory()->create(['document_type' => SaleDocumentType::Layaway]);
+    $layaway->update(['is_delivered' => true, 'delivered_at' => now()]);
+    expect($layaway->fresh()->receipt())->not->toBeNull();
+});
+
+it('refuses to force delete a customer whose sale has a receipt', function () {
+    $customer = Customer::factory()->create();
+    $sale = Sale::factory()->create(['customer_id' => $customer->id]);
+    $customer->delete();
+
+    expect($customer->forceDelete())->toBeFalse()
+        ->and(Customer::withTrashed()->find($customer->id))->not->toBeNull()
+        ->and($sale->fresh()->receipt())->not->toBeNull();
+
+    Livewire::test(EditCustomer::class, ['record' => $customer->getRouteKey()])->assertActionHidden(ForceDeleteAction::class);
+
+    Livewire::test(ListCustomers::class)
+        ->filterTable('trashed', true)
+        ->callTableBulkAction('forceDelete', [$customer->id]);
+    expect(Customer::withTrashed()->find($customer->id))->not->toBeNull();
 });

@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Customers\Pages;
 
 use App\Filament\Concerns\RedirectsToResourceIndex;
 use App\Filament\Resources\Customers\CustomerResource;
+use App\Models\Customer;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\ForceDeleteAction;
 use Filament\Actions\RestoreAction;
@@ -19,7 +20,8 @@ class EditCustomer extends EditRecord
     {
         return [
             DeleteAction::make(),
-            ForceDeleteAction::make(),
+            ForceDeleteAction::make()
+                ->hidden(fn (Customer $record): bool => ! $record->trashed() || $record->hasFiscalDocuments()),
             RestoreAction::make(),
         ];
     }

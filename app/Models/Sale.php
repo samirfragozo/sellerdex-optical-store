@@ -108,7 +108,9 @@ class Sale extends Model
                 $sale->recalculateStatus();
             }
 
-            $sale->issueReceiptIfDue();
+            if ($sale->wasChanged(['document_type', 'is_delivered'])) {
+                $sale->issueReceiptIfDue();
+            }
         });
     }
 
@@ -387,24 +389,39 @@ class Sale extends Model
         return $this->fiscalDocuments()->where('document_type', FiscalDocumentType::Receipt->value)->first();
     }
 
-    /** Receipt-only companies number every invoiced sale once; a voided sale keeps its number. */
+    /**
+     * Receipt-only companies number every invoiced sale once; a voided sale keeps its number.
+     * The sale row is locked so concurrent triggers cannot issue two receipts, and the number rolls back with a failed insert.
+     */
     public function issueReceiptIfDue(): void
     {
-        $mode = Company::withoutGlobalScopes()->whereKey($this->company_id)->value('invoicing_mode');
-
-        if ($mode !== InvoicingMode::ReceiptOnly || ! $this->isInvoiceableNow() || $this->receipt() !== null) {
+        if ($this->company_id === null) {
             return;
         }
 
-        FiscalDocument::create([
-            'company_id' => $this->company_id,
-            'sale_id' => $this->id,
-            'document_type' => FiscalDocumentType::Receipt,
-            'source' => FiscalDocumentSource::Internal,
-            'number' => NumberingRange::takeNext($this->company_id, FiscalDocumentType::Receipt),
-            'issued_at' => today(),
-            'status' => FiscalDocumentStatus::NotApplicable,
-            'registered_by' => auth()->id(),
-        ]);
+        $mode = Company::withoutGlobalScopes()->whereKey($this->company_id)->value('invoicing_mode');
+
+        if ($mode !== InvoicingMode::ReceiptOnly || ! $this->isInvoiceableNow()) {
+            return;
+        }
+
+        DB::transaction(function (): void {
+            static::withoutGlobalScopes()->whereKey($this->id)->lockForUpdate()->first();
+
+            if ($this->receipt() !== null) {
+                return;
+            }
+
+            FiscalDocument::create([
+                'company_id' => $this->company_id,
+                'sale_id' => $this->id,
+                'document_type' => FiscalDocumentType::Receipt,
+                'source' => FiscalDocumentSource::Internal,
+                'number' => NumberingRange::takeNext($this->company_id, FiscalDocumentType::Receipt),
+                'issued_at' => today(),
+                'status' => FiscalDocumentStatus::NotApplicable,
+                'registered_by' => auth()->id(),
+            ]);
+        });
     }
 }

@@ -32,9 +32,24 @@ class Customer extends Model
         // delete, but that bypasses Eloquent — Prescription::forceDeleted (which
         // purges the attachment from disk) would never fire. Force-delete each
         // prescription explicitly first so its own event still runs.
-        static::forceDeleting(function (Customer $customer): void {
+        static::forceDeleting(function (Customer $customer): ?bool {
+            // Fiscal documents are accounting records: the sales cascade would hit their restricting FK.
+            if ($customer->hasFiscalDocuments()) {
+                return false;
+            }
+
             $customer->prescriptions()->withTrashed()->get()->each->forceDelete();
+
+            return null;
         });
+    }
+
+    /** Whether any of the customer's sales (even trashed) holds a fiscal document. */
+    public function hasFiscalDocuments(): bool
+    {
+        return FiscalDocument::withoutGlobalScopes()
+            ->whereIn('sale_id', Sale::withoutGlobalScopes()->withTrashed()->where('customer_id', $this->id)->select('id'))
+            ->exists();
     }
 
     /** Full name (first name + last name). */
