@@ -1151,4 +1151,17 @@ return [
             'birthday' => '¡Feliz cumpleaños, {cliente}! Te desea todo el equipo de {optica}.',
         ],
     ],
+
+    'follow_up' => [
+        'title' => 'Seguimiento',
+        'whatsapp' => 'WhatsApp',
+        'mark_contacted' => 'Marcar contactado',
+        'contacted' => 'Cliente marcado como contactado',
+        'expiring_prescriptions' => 'Fórmulas por vencer o vencidas',
+        'reasons' => [
+            'prescription_expiring' => 'Fórmula por vencer',
+            'balance_due' => 'Saldo pendiente',
+            'birthday' => 'Cumpleaños',
+        ],
+    ],
 ];

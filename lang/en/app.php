@@ -1151,4 +1151,17 @@ return [
             'birthday' => 'Happy birthday, {cliente}! From the whole team at {optica}.',
         ],
     ],
+
+    'follow_up' => [
+        'title' => 'Follow-up',
+        'whatsapp' => 'WhatsApp',
+        'mark_contacted' => 'Mark contacted',
+        'contacted' => 'Customer marked as contacted',
+        'expiring_prescriptions' => 'Prescriptions expiring or expired',
+        'reasons' => [
+            'prescription_expiring' => 'Prescription expiring',
+            'balance_due' => 'Balance due',
+            'birthday' => 'Birthday',
+        ],
+    ],
 ];
