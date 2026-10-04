@@ -53,6 +53,14 @@ const availableCredit = computed(() =>
     ),
 );
 
+// The server asks for an admin PIN only when the sale needs approval;
+// keep the field once shown so a wrong PIN can be retyped.
+const showApprovalPin = computed(
+    () =>
+        props.checkout.errors.value.approval_pin !== undefined ||
+        props.checkout.approvalPin.value !== '',
+);
+
 function paymentMethodName(id: number | null): string {
     if (id !== null && id === props.storeCreditMethodId) {
         return trans('app.pos.checkout.store_credit_name');
@@ -293,6 +301,32 @@ watch(
                     <!-- eslint-enable vue/no-mutating-props -->
                 </div>
 
+                <div v-if="showApprovalPin" class="flex flex-col gap-2">
+                    <Label for="approval_pin">{{
+                        trans('app.approval.pin')
+                    }}</Label>
+                    <!-- eslint-disable vue/no-mutating-props -->
+                    <Input
+                        id="approval_pin"
+                        v-model="checkout.approvalPin.value"
+                        data-testid="approval-pin-input"
+                        type="password"
+                        inputmode="numeric"
+                        autocomplete="off"
+                        maxlength="6"
+                        :aria-describedby="
+                            checkout.errors.value.approval_pin
+                                ? 'approval_pin_error'
+                                : undefined
+                        "
+                        @keydown.enter.prevent="emit('confirm')"
+                    />
+                    <!-- eslint-enable vue/no-mutating-props -->
+                    <p class="text-sm text-muted-foreground">
+                        {{ trans('app.approval.pin_help') }}
+                    </p>
+                </div>
+
                 <InputError :message="checkout.errors.value.cash_session" />
                 <div
                     v-if="Object.keys(checkout.errors.value).length > 0"
@@ -305,6 +339,11 @@ watch(
                         <li
                             v-for="(message, key) in checkout.errors.value"
                             :key="key"
+                            :id="
+                                key === 'approval_pin'
+                                    ? 'approval_pin_error'
+                                    : undefined
+                            "
                         >
                             {{ message }}
                         </li>

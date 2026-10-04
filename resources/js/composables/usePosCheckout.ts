@@ -24,6 +24,7 @@ export function usePosCheckout(total: Ref<number>) {
     const notes = ref('');
     const payments = ref<PaymentEntry[]>([]);
     const amount = ref(0);
+    const approvalPin = ref('');
     const errors: Ref<Record<string, string>> = ref({});
     const submitting = ref(false);
     const { trans } = useTranslations();
@@ -66,6 +67,7 @@ export function usePosCheckout(total: Ref<number>) {
                     ...payload,
                     document_type: documentType.value,
                     notes: notes.value,
+                    approval_pin: approvalPin.value || null,
                     payments: payments.value.filter((p) => p.amount > 0),
                 }),
             });
@@ -117,6 +119,7 @@ export function usePosCheckout(total: Ref<number>) {
         notes.value = '';
         payments.value = [];
         amount.value = 0;
+        approvalPin.value = '';
         errors.value = {};
     }
 
@@ -125,6 +128,7 @@ export function usePosCheckout(total: Ref<number>) {
         notes,
         payments,
         amount,
+        approvalPin,
         errors,
         submitting,
         addPayment,
