@@ -4,10 +4,12 @@ namespace App\Filament\Resources\Sales\Tables;
 
 use App\Actions\ConvertQuoteToOrder;
 use App\Enums\FiscalDocumentType;
+use App\Enums\InvoicingMode;
 use App\Enums\SaleDocumentType;
 use App\Enums\SaleStatus;
 use App\Filament\Resources\Sales\Actions\FiscalDocumentActions;
 use App\Filament\Resources\Sales\Actions\SaleReturnActions;
+use App\Models\Company;
 use App\Models\Customer;
 use App\Models\FiscalDocument;
 use App\Models\Sale;
@@ -101,7 +103,8 @@ class SalesTable
                 Filter::make('missing_fiscal_document')
                     ->label(__('app.fiscal_document.missing_filter'))
                     ->query(fn (Builder $query): Builder => $query->missingFiscalDocument())
-                    ->toggle(),
+                    ->toggle()
+                    ->visible(fn (): bool => Company::current()->invoicing_mode === InvoicingMode::ExternalManual),
                 TrashedFilter::make(),
             ])
             ->recordActions([

@@ -55,8 +55,9 @@ it('refuses documents for quotes, receipt-only companies and non-sale types', fu
 
 it('streams the document PDF only to its own company', function () {
     Storage::fake('local');
-    Storage::disk('local')->put('fiscal-documents/x.pdf', 'pdf-bytes');
-    $document = app(RegisterFiscalDocument::class)->forSale($this->sale, FiscalDocumentType::PosElectronic, 'POS-1', today(), $this->admin, null, 'fiscal-documents/x.pdf');
+    $path = "fiscal-documents/{$this->admin->company_id}/x.pdf";
+    Storage::disk('local')->put($path, 'pdf-bytes');
+    $document = app(RegisterFiscalDocument::class)->forSale($this->sale, FiscalDocumentType::PosElectronic, 'POS-1', today(), $this->admin, null, $path);
 
     $response = $this->get(route('documents.fiscal-document.pdf', $document));
     $response->assertOk();
@@ -87,4 +88,30 @@ it('asks for the sale document before a note and refuses a second note', functio
     $note = app(RegisterFiscalDocument::class)->forReturn($return, 'NA-1', today(), $this->admin);
     expect($note->document_type)->toBe(FiscalDocumentType::AdjustmentNote)
         ->and(fn () => app(RegisterFiscalDocument::class)->forReturn($return, 'NA-2', today(), $this->admin))->toThrow(ValidationException::class);
+});
+
+it('refuses a PDF path outside the company folder or missing on the disk', function () {
+    Storage::fake('local');
+    Storage::disk('local')->put('prescriptions/x.pdf', 'secret');
+    Storage::disk('local')->put('fiscal-documents/'.($this->admin->company_id + 1).'/other.pdf', 'other company');
+
+    foreach (['prescriptions/x.pdf', 'fiscal-documents/'.($this->admin->company_id + 1).'/other.pdf', "fiscal-documents/{$this->admin->company_id}/missing.pdf"] as $path) {
+        try {
+            app(RegisterFiscalDocument::class)->forSale($this->sale, FiscalDocumentType::PosElectronic, 'POS-9', today(), $this->admin, null, $path);
+            $this->fail("{$path} was accepted");
+        } catch (ValidationException $exception) {
+            expect($exception->errors())->toHaveKey('pdf_path')
+                ->and($exception->errors()['pdf_path'][0])->toBe(__('app.fiscal_document.invalid_pdf'));
+        }
+    }
+
+    expect($this->sale->saleDocument())->toBeNull();
+});
+
+it('checks that the sale is still invoiceable on the locked row', function () {
+    $stale = Sale::find($this->sale->id);
+    Sale::whereKey($this->sale->id)->update(['status' => 'voided']);
+
+    expect(fn () => app(RegisterFiscalDocument::class)->forSale($stale, FiscalDocumentType::PosElectronic, 'POS-8', today(), $this->admin))
+        ->toThrow(ValidationException::class);
 });

@@ -1,5 +1,7 @@
 <?php
 
+use App\Actions\RegisterFiscalDocument;
+use App\Enums\FiscalDocumentType;
 use App\Enums\InvoicingMode;
 use App\Filament\Resources\Sales\Pages\CreateSale;
 use App\Filament\Resources\Sales\Pages\EditSale;
@@ -10,6 +12,7 @@ use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Models\SaleReturn;
 use App\Models\User;
+use Filament\Actions\DeleteAction;
 use Filament\Actions\ForceDeleteAction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
@@ -141,4 +144,47 @@ it('stops a seller from raising a sale discount above the company cap', function
         ->fillForm(['discount_percent' => 10])
         ->call('save')
         ->assertHasFormErrors(['discount_percent']);
+});
+
+it('freezes a sale with a registered POS document and refuses to delete it', function () {
+    $admin = User::factory()->admin()->create();
+    $this->actingAs($admin);
+    $admin->company->update(['invoicing_mode' => InvoicingMode::ExternalManual]);
+    $documented = Sale::factory()->create();
+    $plain = Sale::factory()->create();
+    app(RegisterFiscalDocument::class)->forSale($documented, FiscalDocumentType::PosElectronic, 'POS-LOCK-1', today(), $admin);
+
+    expect($documented->isLockedForEdits())->toBeTrue()
+        ->and($plain->isLockedForEdits())->toBeFalse()
+        ->and($documented->delete())->toBeFalse()
+        ->and($documented->fresh()->trashed())->toBeFalse()
+        ->and($plain->delete())->toBeTrue();
+
+    Livewire::test(EditSale::class, ['record' => $documented->getRouteKey()])
+        ->assertFormFieldDisabled('discount_percent')
+        ->assertActionHidden(DeleteAction::class);
+
+    $other = Sale::factory()->create();
+    Livewire::test(EditSale::class, ['record' => $other->getRouteKey()])
+        ->assertFormFieldEnabled('discount_percent')
+        ->assertActionVisible(DeleteAction::class);
+
+    $second = Sale::factory()->create();
+    Livewire::test(ListSales::class)
+        ->callTableBulkAction('delete', [$documented->id, $second->id])
+        ->assertHasNoErrors();
+
+    expect(Sale::find($documented->id))->not->toBeNull()
+        ->and(Sale::find($second->id))->toBeNull();
+});
+
+it('shows the missing-document filter only in external-manual mode', function () {
+    $admin = User::factory()->admin()->create();
+    $this->actingAs($admin);
+
+    $admin->company->update(['invoicing_mode' => InvoicingMode::ReceiptOnly]);
+    Livewire::test(ListSales::class)->assertTableFilterHidden('missing_fiscal_document');
+
+    $admin->company->update(['invoicing_mode' => InvoicingMode::ExternalManual]);
+    Livewire::test(ListSales::class)->assertTableFilterVisible('missing_fiscal_document');
 });

@@ -37,7 +37,8 @@ it('seeds a demo company that can sell with the reference combos', function () {
     $company = Company::firstOrFail();
     $this->actingAs(User::where('email', 'admin@optica.test')->firstOrFail());
 
-    expect(Product::where('sku', 'ACC-ESTUCHE-SMALL')->sole()->category->key)->toBe('case')
+    expect($company->isReadyToSell())->toBeTrue()
+        ->and(Product::where('sku', 'ACC-ESTUCHE-SMALL')->sole()->category->key)->toBe('case')
         ->and(Product::whereIn('sku', ['ACC-PANO', 'ACC-LIQUIDO', 'ACC-FUNDA', 'ACC-BOLSA-PAPEL'])->with('category')->get()->pluck('category.key')->sort()->values()->all())
         ->toBe(['bag', 'cleaning', 'cloth', 'pouch'])
         ->and(ProductCategory::keyed('case')->name)->toBe('Estuches')

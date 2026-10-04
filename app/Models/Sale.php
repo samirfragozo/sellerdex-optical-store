@@ -62,6 +62,9 @@ class Sale extends Model
         // Money and returns are accounting records: the DB cascades would silently wipe refunds and store credit.
         static::forceDeleting(fn (Sale $sale): bool => ! $sale->payments()->withTrashed()->exists() && ! $sale->returns()->exists() && ! $sale->fiscalDocuments()->exists());
 
+        // A registered factura / POS electrónico freezes the sale: the shop must void it with a credit note, not delete it.
+        static::deleting(fn (Sale $sale): bool => $sale->isForceDeleting() || $sale->saleDocument() === null);
+
         static::created(fn (Sale $sale) => $sale->issueReceiptIfDue());
 
         static::creating(function (Sale $sale): void {
@@ -194,10 +197,10 @@ class Sale extends Model
         return $this->subtotal > 0 ? 1 - $this->discount / $this->subtotal : 1;
     }
 
-    /** Returns, value adjustments and voids freeze the sale's value: totals, discount and lines can no longer change. */
+    /** Returns, value adjustments, voids and a registered sale document freeze the sale's value: totals, discount and lines can no longer change. */
     public function isLockedForEdits(): bool
     {
-        return $this->status === SaleStatus::Voided || $this->returns()->exists();
+        return $this->status === SaleStatus::Voided || $this->returns()->exists() || $this->saleDocument() !== null;
     }
 
     /** The sale's value once returns are taken out. */

@@ -54,7 +54,8 @@ class EditSale extends EditRecord
             FiscalDocumentActions::registerForSale(),
             FiscalDocumentActions::invoiceData(),
             ...SaleReturnActions::make(),
-            DeleteAction::make(),
+            DeleteAction::make()
+                ->hidden(fn (Sale $record): bool => $record->saleDocument() !== null),
             // Money and returns are accounting records: a sale holding any of them is never wiped.
             ForceDeleteAction::make()
                 ->hidden(fn (Sale $record): bool => ! $record->trashed() || $record->payments()->withTrashed()->exists() || $record->returns()->exists() || $record->fiscalDocuments()->exists()),

@@ -1087,6 +1087,7 @@ return [
         'invalid_type' => 'Ese tipo de documento no corresponde a una venta.',
         'not_invoiceable' => 'Esta venta todavía no se factura (cotización, anulada o plan separe sin entregar).',
         'already_registered' => 'Ya tiene un documento registrado: los documentos emitidos no se cambian.',
+        'invalid_pdf' => 'El archivo PDF no es válido.',
         'number_taken' => 'Ese número ya está registrado en otra venta.',
         'not_external_mode' => 'Solo se registran documentos cuando facturas en otro sistema.',
         'sale_document_first' => 'Primero registra la factura o el POS electrónico de la venta.',
@@ -1101,7 +1102,6 @@ return [
         'tax' => 'IVA',
         'unit_price' => 'Valor unitario (IVA incluido)',
         'surcharge' => 'Recargo por medio de pago',
-        'final_consumer' => 'Consumidor final :id',
         'final_consumer_name' => 'Consumidor final',
     ],
     'layaway_invoicing' => [

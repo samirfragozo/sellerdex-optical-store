@@ -126,7 +126,7 @@ class FiscalDocumentActions
             FileUpload::make('pdf_path')
                 ->label(__('app.fiscal_document.fields.pdf'))
                 ->disk('local')
-                ->directory('fiscal-documents')
+                ->directory(fn (): string => 'fiscal-documents/'.auth()->user()?->company_id)
                 ->visibility('private')
                 ->acceptedFileTypes(['application/pdf'])
                 ->maxSize(5120),

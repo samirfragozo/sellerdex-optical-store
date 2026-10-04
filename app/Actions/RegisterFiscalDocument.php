@@ -13,6 +13,7 @@ use App\Models\SaleReturn;
 use App\Models\User;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -29,18 +30,20 @@ class RegisterFiscalDocument
             throw ValidationException::withMessages(['document_type' => __('app.fiscal_document.invalid_type')]);
         }
 
-        if (! $sale->isInvoiceableNow()) {
-            throw ValidationException::withMessages(['number' => __('app.fiscal_document.not_invoiceable')]);
-        }
+        $this->ensurePdfIsOwn($sale->company_id, $pdfPath);
 
         return DB::transaction(function () use ($sale, $type, $number, $issuedAt, $actor, $cufe, $pdfPath): FiscalDocument {
-            Sale::withoutGlobalScopes()->whereKey($sale->id)->lockForUpdate()->firstOrFail();
+            $locked = Sale::withoutGlobalScopes()->whereKey($sale->id)->lockForUpdate()->firstOrFail();
 
-            if ($sale->saleDocument() !== null) {
+            if (! $locked->isInvoiceableNow()) {
+                throw ValidationException::withMessages(['number' => __('app.fiscal_document.not_invoiceable')]);
+            }
+
+            if ($locked->saleDocument() !== null) {
                 throw ValidationException::withMessages(['number' => __('app.fiscal_document.already_registered')]);
             }
 
-            return $this->create($sale->company_id, $sale->id, null, $type, $number, $issuedAt, $actor, $cufe, $pdfPath, null);
+            return $this->create($locked->company_id, $locked->id, null, $type, $number, $issuedAt, $actor, $cufe, $pdfPath, null);
         });
     }
 
@@ -48,6 +51,7 @@ class RegisterFiscalDocument
     public function forReturn(SaleReturn $return, string $number, CarbonInterface $issuedAt, User $actor, ?string $cufe = null, ?string $pdfPath = null): FiscalDocument
     {
         $this->ensureExternalMode($return->company_id);
+        $this->ensurePdfIsOwn($return->company_id, $pdfPath);
         $saleDocument = $return->sale->saleDocument();
 
         if ($saleDocument === null) {
@@ -63,6 +67,18 @@ class RegisterFiscalDocument
 
             return $this->create($return->company_id, $return->sale_id, $return->id, $saleDocument->document_type->noteFor(), $number, $issuedAt, $actor, $cufe, $pdfPath, $saleDocument->id);
         });
+    }
+
+    /** The path comes from client state: only an uploaded file of the company's own folder is accepted. */
+    private function ensurePdfIsOwn(int $companyId, ?string $pdfPath): void
+    {
+        if ($pdfPath === null) {
+            return;
+        }
+
+        if (! str_starts_with($pdfPath, "fiscal-documents/{$companyId}/") || str_contains($pdfPath, '..') || ! Storage::disk('local')->exists($pdfPath)) {
+            throw ValidationException::withMessages(['pdf_path' => __('app.fiscal_document.invalid_pdf')]);
+        }
     }
 
     private function ensureExternalMode(int $companyId): void

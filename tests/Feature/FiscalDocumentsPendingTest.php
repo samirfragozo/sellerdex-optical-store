@@ -7,6 +7,7 @@ use App\Enums\SaleDocumentType;
 use App\Filament\Resources\Sales\Pages\ListSales;
 use App\Models\Sale;
 use App\Models\User;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 
 beforeEach(function () {
@@ -49,12 +50,28 @@ it('counts a layaway delivered today as due', function () {
 it('filters the sales list to those without a document and links the document PDF', function () {
     $pending = Sale::factory()->create();
     $documented = Sale::factory()->create();
-    $document = app(RegisterFiscalDocument::class)->forSale($documented, FiscalDocumentType::PosElectronic, 'POS-3', today(), $this->admin, null, 'fiscal-documents/pos-3.pdf');
+    Storage::fake('local');
+    $path = "fiscal-documents/{$this->company->id}/pos-3.pdf";
+    Storage::disk('local')->put($path, 'pdf');
+    $document = app(RegisterFiscalDocument::class)->forSale($documented, FiscalDocumentType::PosElectronic, 'POS-3', today(), $this->admin, null, $path);
 
     Livewire::test(ListSales::class)
         ->assertSee('POS-3')
         ->assertSeeHtml('href="'.route('documents.fiscal-document.pdf', $document).'"')
         ->filterTable('missing_fiscal_document')
+        ->assertCanSeeTableRecords([$pending])
+        ->assertCanNotSeeTableRecords([$documented]);
+});
+
+it('links the warning to the sales list with the pending filter applied', function () {
+    $pending = Sale::factory()->create();
+    $documented = Sale::factory()->create();
+    app(RegisterFiscalDocument::class)->forSale($documented, FiscalDocumentType::PosElectronic, 'POS-4', today(), $this->admin);
+
+    $issue = collect($this->company->fresh()->saleReadiness())->firstWhere('key', 'fiscal_documents_pending');
+    parse_str((string) parse_url($issue->url, PHP_URL_QUERY), $query);
+
+    Livewire::withQueryParams($query)->test(ListSales::class)
         ->assertCanSeeTableRecords([$pending])
         ->assertCanNotSeeTableRecords([$documented]);
 });

@@ -140,7 +140,7 @@ class SaleReadiness
                 $issues[] = new ReadinessIssue(
                     'fiscal_documents_pending', ReadinessSeverity::Warning,
                     __('app.readiness.fiscal_documents_pending', ['count' => $pending]),
-                    SaleResource::getUrl('index', ['tableFilters' => ['missing_fiscal_document' => ['isActive' => true]]], panel: 'admin'),
+                    SaleResource::getUrl('index', ['filters' => ['missing_fiscal_document' => ['isActive' => true]]], panel: 'admin'),
                 );
             }
         }

@@ -1087,6 +1087,7 @@ return [
         'invalid_type' => 'That document type does not belong to a sale.',
         'not_invoiceable' => 'This sale is not invoiced yet (quote, voided, or undelivered layaway).',
         'already_registered' => 'It already has a registered document: issued documents never change.',
+        'invalid_pdf' => 'The PDF file is not valid.',
         'number_taken' => 'That number is already registered on another sale.',
         'not_external_mode' => 'Documents are only registered when you invoice in another system.',
         'sale_document_first' => "Register the sale's invoice or POS document first.",
@@ -1101,7 +1102,6 @@ return [
         'tax' => 'VAT',
         'unit_price' => 'Unit price (VAT included)',
         'surcharge' => 'Payment method surcharge',
-        'final_consumer' => 'Final consumer :id',
         'final_consumer_name' => 'Final consumer',
     ],
     'layaway_invoicing' => [
