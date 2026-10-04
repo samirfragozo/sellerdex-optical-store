@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Sales\Tables;
 
+use App\Actions\ConvertQuoteToOrder;
 use App\Enums\SaleDocumentType;
 use App\Enums\SaleStatus;
 use App\Filament\Resources\Sales\Actions\SaleReturnActions;
@@ -21,6 +22,7 @@ use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class SalesTable
 {
@@ -113,11 +115,22 @@ class SalesTable
                         ->icon('heroicon-o-arrow-path')
                         ->visible(fn (Sale $record): bool => $record->document_type === SaleDocumentType::Quote)
                         ->requiresConfirmation()
+                        ->modalDescription(fn (Sale $record): ?string => $record->isExpiredQuote() ? __('app.sale_actions.convert_expired_hint') : null)
                         ->action(function (Sale $record): void {
-                            $record->update(['document_type' => SaleDocumentType::Order]);
-                            $record->recalculateStatus();
+                            try {
+                                $repriced = app(ConvertQuoteToOrder::class)->handle($record);
+                            } catch (ValidationException $exception) {
+                                Notification::make()->danger()->title(__('app.sale_actions.reprice_failed'))
+                                    ->body(collect($exception->errors())->flatten()->first())->send();
 
-                            Notification::make()->success()->title(__('app.sale_actions.converted'))->send();
+                                return;
+                            }
+
+                            Notification::make()->success()
+                                ->title($repriced
+                                    ? __('app.sale_actions.converted_repriced', ['total' => '$'.number_format($record->fresh()->total, 0, ',', '.')])
+                                    : __('app.sale_actions.converted'))
+                                ->send();
                         }),
                     ...SaleReturnActions::make(),
                     Action::make('printInvoice')

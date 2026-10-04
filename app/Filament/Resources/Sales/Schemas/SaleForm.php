@@ -59,6 +59,10 @@ class SaleForm
                     ->label(__('app.fields.balance'))
                     ->visibleOn('edit')
                     ->content(fn (?Sale $record): string => $record ? '$'.number_format($record->balance, 0, ',', '.') : '—'),
+                Placeholder::make('quote_valid_until')
+                    ->label(__('app.fields.quote_valid_until'))
+                    ->visible(fn (?Sale $record): bool => $record?->document_type === SaleDocumentType::Quote)
+                    ->content(fn (?Sale $record): string => (string) $record?->quote_valid_until?->format('d/m/Y')),
                 Placeholder::make('discount_approved_by')
                     ->label(__('app.fields.discount_approved_by'))
                     ->visible(fn (?Sale $record): bool => $record?->discount_approved_by !== null)

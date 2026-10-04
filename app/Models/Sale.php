@@ -21,6 +21,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -62,6 +63,11 @@ class Sale extends Model
                 // ponytail: company-less sales only happen in unauthenticated test fixtures
                 : str_pad((string) (static::withoutGlobalScopes()->withTrashed()->whereNull('company_id')->count() + 1), 6, '0', STR_PAD_LEFT);
             $sale->sold_at ??= now()->toDateString();
+
+            if ($sale->document_type === SaleDocumentType::Quote || $sale->document_type === SaleDocumentType::Quote->value) {
+                $days = (int) (Company::withoutGlobalScopes()->whereKey($sale->company_id)->value('quote_validity_days') ?? 15);
+                $sale->quote_valid_until ??= Carbon::parse($sale->sold_at)->addDays($days)->toDateString();
+            }
         });
 
         static::updating(function (Sale $sale): void {
@@ -95,6 +101,14 @@ class Sale extends Model
                 $sale->recalculateStatus();
             }
         });
+    }
+
+    /** A quote past its validity date: converting it re-prices it. */
+    public function isExpiredQuote(): bool
+    {
+        return $this->document_type === SaleDocumentType::Quote
+            && $this->quote_valid_until !== null
+            && $this->quote_valid_until->lt(today());
     }
 
     /**
