@@ -10,6 +10,7 @@ use App\Models\User;
 use Filament\Actions\Testing\TestAction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Livewire\Livewire;
 
 uses(RefreshDatabase::class);
@@ -121,4 +122,34 @@ it('se puede eliminar un usuario sin actividad de negocio', function () {
 
     Livewire::test(EditUser::class, ['record' => $seller->getRouteKey()])
         ->assertActionVisible('delete');
+});
+
+it('un admin define su PIN de aprobación y un guardado en blanco lo conserva', function () {
+    $admin = User::factory()->admin()->create();
+    $this->actingAs($admin);
+
+    Livewire::test(EditUser::class, ['record' => $admin->getRouteKey()])
+        ->fillForm(['approval_pin' => '4321'])
+        ->call('save')
+        ->assertHasNoFormErrors();
+
+    $hash = $admin->fresh()->approval_pin;
+    expect(Hash::check('4321', $hash))->toBeTrue();
+
+    Livewire::test(EditUser::class, ['record' => $admin->getRouteKey()])
+        ->fillForm(['approval_pin' => ''])
+        ->call('save')
+        ->assertHasNoFormErrors();
+
+    expect($admin->fresh()->approval_pin)->toBe($hash);
+});
+
+it('el PIN de aprobación debe tener de 4 a 6 dígitos', function () {
+    $admin = User::factory()->admin()->create();
+    $this->actingAs($admin);
+
+    Livewire::test(EditUser::class, ['record' => $admin->getRouteKey()])
+        ->fillForm(['approval_pin' => 'abc'])
+        ->call('save')
+        ->assertHasFormErrors(['approval_pin']);
 });

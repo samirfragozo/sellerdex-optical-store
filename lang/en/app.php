@@ -916,7 +916,17 @@ return [
         ],
     ],
 
+    'approval' => [
+        'pin' => 'Admin PIN',
+        'pin_help' => 'An administrator must type their PIN to approve this operation.',
+        'pin_setup_help' => '4 to 6 digits. Use it to approve sellers\' discounts, returns and warranties. Leave it blank to keep it.',
+        'required' => 'This operation needs an administrator\'s approval: type their PIN.',
+        'invalid' => 'The PIN does not match any active administrator.',
+        'throttled' => 'Too many attempts. Try again in :seconds seconds.',
+    ],
+
     'readiness' => [
+        'approval_pin_missing' => 'No administrator has an approval PIN: sellers won\'t be able to apply discounts above the cap or register returns.',
         'cash_session_stale' => 'A cash session has been open since a previous day.',
         'inventory_initial_count' => 'Inventory is on: do the initial count of your products.',
         'payment_method' => 'There is no active payment method. Activate at least one to take payments.',

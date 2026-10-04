@@ -9,6 +9,7 @@ use App\Filament\Resources\CashRegisterSessions\CashRegisterSessionResource;
 use App\Filament\Resources\LensCombinations\LensCombinationResource;
 use App\Filament\Resources\PaymentMethods\PaymentMethodResource;
 use App\Filament\Resources\Suppliers\SupplierResource;
+use App\Filament\Resources\Users\UserResource;
 use App\Models\CashRegisterSession;
 use App\Models\Company;
 use App\Models\KitSlot;
@@ -16,6 +17,7 @@ use App\Models\LensCombinationPrice;
 use App\Models\PaymentMethod;
 use App\Models\Product;
 use App\Models\Supplier;
+use App\Models\User;
 use App\Scopes\CompanyScope;
 
 /**
@@ -95,6 +97,15 @@ class SaleReadiness
             $issues[] = new ReadinessIssue(
                 'cash_session_stale', ReadinessSeverity::Warning,
                 __('app.readiness.cash_session_stale'), CashRegisterSessionResource::getUrl('index', panel: 'admin'),
+            );
+        }
+
+        // Sellers need an admin PIN for discounts above the cap and for returns; a one-person shop approves itself.
+        $users = User::query()->where('company_id', $company->id)->where('is_active', true);
+        if ((clone $users)->count() > 1 && ! (clone $users)->whereNotNull('approval_pin')->exists()) {
+            $issues[] = new ReadinessIssue(
+                'approval_pin_missing', ReadinessSeverity::Warning,
+                __('app.readiness.approval_pin_missing'), UserResource::getUrl('index', panel: 'admin'),
             );
         }
 

@@ -916,7 +916,17 @@ return [
         ],
     ],
 
+    'approval' => [
+        'pin' => 'PIN del administrador',
+        'pin_help' => 'Un administrador debe escribir su PIN para aprobar esta operación.',
+        'pin_setup_help' => 'De 4 a 6 dígitos. Lo usas para aprobar descuentos, devoluciones y garantías de los vendedores. Déjalo vacío para no cambiarlo.',
+        'required' => 'Esta operación necesita la aprobación de un administrador: escribe su PIN.',
+        'invalid' => 'El PIN no corresponde a ningún administrador activo.',
+        'throttled' => 'Demasiados intentos. Intenta de nuevo en :seconds segundos.',
+    ],
+
     'readiness' => [
+        'approval_pin_missing' => 'Ningún administrador tiene PIN de aprobación: los vendedores no podrán aplicar descuentos mayores al tope ni registrar devoluciones.',
         'cash_session_stale' => 'Hay una caja abierta desde un día anterior.',
         'inventory_initial_count' => 'Activaste el inventario: haz el conteo inicial de tus productos.',
         'payment_method' => 'No hay ningún método de pago activo. Activa al menos uno para poder cobrar.',

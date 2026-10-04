@@ -12,6 +12,7 @@ use App\Models\PaymentMethod;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\Supplier;
+use App\Models\User;
 use App\Support\Readiness\ReadinessIssue;
 
 function readyCompany(): Company
@@ -118,4 +119,26 @@ it('ignores an inactive combo default on a paused slot', function () {
     KitSlot::factory()->create(['company_id' => $company->id, 'slot_category_id' => $category->id, 'default_product_id' => $product->id, 'is_active' => false]);
 
     expect($company->saleReadiness())->toBe([]);
+});
+
+it('warns when no user has an approval pin', function () {
+    $company = readyCompany();
+    User::factory()->admin()->create(['company_id' => $company->id]);
+    User::factory()->seller()->create(['company_id' => $company->id]);
+
+    $issue = collect($company->saleReadiness())->firstWhere('key', 'approval_pin_missing');
+
+    expect($issue->severity)->toBe(ReadinessSeverity::Warning);
+});
+
+it('does not warn about the approval pin for a single user or when an admin has one', function () {
+    $solo = readyCompany();
+    User::factory()->admin()->create(['company_id' => $solo->id]);
+
+    $withPin = readyCompany();
+    User::factory()->admin()->create(['company_id' => $withPin->id, 'approval_pin' => '4321']);
+    User::factory()->seller()->create(['company_id' => $withPin->id]);
+
+    expect(issueKeys($solo))->not->toContain('approval_pin_missing')
+        ->and(issueKeys($withPin))->not->toContain('approval_pin_missing');
 });
