@@ -711,6 +711,13 @@ return [
             'pagination_next' => 'Next',
         ],
 
+        'fiscal' => [
+            'title' => 'Document to issue',
+            'final_consumer_note' => 'Without a customer, the invoice goes to the final consumer (222222222222).',
+            'buyer_title' => 'Buyer data for the invoice',
+            'buyer_complete' => 'The customer already has their invoicing data.',
+        ],
+
         'checkout' => [
             'title' => 'Checkout',
             'payments' => 'Payments',

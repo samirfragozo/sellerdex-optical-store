@@ -2,6 +2,7 @@
 import { Trash2 } from '@lucide/vue';
 import { computed, watch } from 'vue';
 import InputError from '@/components/InputError.vue';
+import CheckoutFiscalDocument from '@/components/pos/CheckoutFiscalDocument.vue';
 import NumericKeypad from '@/components/pos/NumericKeypad.vue';
 import { Button } from '@/components/ui/button';
 import {
@@ -28,6 +29,8 @@ const props = defineProps<{
     documentTypes: { value: string; label: string }[];
     total: number;
     checkout: ReturnType<typeof usePosCheckout>;
+    invoicingMode: string;
+    customerId: number | null;
 }>();
 
 const emit = defineEmits<{
@@ -150,6 +153,12 @@ watch(
                         </label>
                     </div>
                 </div>
+
+                <CheckoutFiscalDocument
+                    v-if="invoicingMode === 'external_manual'"
+                    :checkout="checkout"
+                    :customer-id="customerId"
+                />
 
                 <!-- Amount to pay -->
                 <div>

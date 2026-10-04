@@ -711,6 +711,13 @@ return [
             'pagination_next' => 'Siguiente',
         ],
 
+        'fiscal' => [
+            'title' => 'Documento a emitir',
+            'final_consumer_note' => 'Sin cliente, la factura sale a consumidor final (222222222222).',
+            'buyer_title' => 'Datos del comprador para la factura',
+            'buyer_complete' => 'El cliente ya tiene sus datos de facturación.',
+        ],
+
         'checkout' => [
             'title' => 'Cobrar',
             'payments' => 'Pagos',

@@ -19,12 +19,26 @@ export interface CheckoutBasePayload {
     surcharge_percent: number;
 }
 
-export function usePosCheckout(total: Ref<number>) {
+export function emptyBuyer() {
+    return {
+        person_type: null as string | null,
+        email: null as string | null,
+        dane_municipality_code: null as string | null,
+        fiscal_responsibilities: [] as string[],
+    };
+}
+
+export function usePosCheckout(
+    total: Ref<number>,
+    defaultFiscalDocument: string | null = null,
+) {
     const documentType = ref('order');
     const notes = ref('');
     const payments = ref<PaymentEntry[]>([]);
     const amount = ref(0);
     const approvalPin = ref('');
+    const fiscalDocumentType = ref<string | null>(defaultFiscalDocument);
+    const buyer = ref(emptyBuyer());
     const errors: Ref<Record<string, string>> = ref({});
     const submitting = ref(false);
     const { trans } = useTranslations();
@@ -68,6 +82,11 @@ export function usePosCheckout(total: Ref<number>) {
                     document_type: documentType.value,
                     notes: notes.value,
                     approval_pin: approvalPin.value || null,
+                    fiscal_document_type: fiscalDocumentType.value,
+                    buyer:
+                        fiscalDocumentType.value === 'electronic_invoice'
+                            ? buyer.value
+                            : null,
                     payments: payments.value.filter((p) => p.amount > 0),
                 }),
             });
@@ -120,6 +139,8 @@ export function usePosCheckout(total: Ref<number>) {
         payments.value = [];
         amount.value = 0;
         approvalPin.value = '';
+        fiscalDocumentType.value = defaultFiscalDocument;
+        buyer.value = emptyBuyer();
         errors.value = {};
     }
 
@@ -129,6 +150,8 @@ export function usePosCheckout(total: Ref<number>) {
         payments,
         amount,
         approvalPin,
+        fiscalDocumentType,
+        buyer,
         errors,
         submitting,
         addPayment,

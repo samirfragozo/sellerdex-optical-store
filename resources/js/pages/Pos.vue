@@ -59,6 +59,7 @@ const props = defineProps<{
     categories: { id: number; name: string; key: string }[];
     paymentMethods: PaymentMethod[];
     storeCreditMethodId: number | null;
+    invoicing: { mode: string; default_document: string };
 }>();
 
 const today = new Date().toISOString().slice(0, 10);
@@ -275,7 +276,12 @@ function formatCOP(value: number): string {
 }
 
 // --- Checkout ---
-const checkout = usePosCheckout(cart.total);
+const checkout = usePosCheckout(
+    cart.total,
+    props.invoicing.mode === 'external_manual'
+        ? props.invoicing.default_document
+        : null,
+);
 const checkoutModalOpen = ref(false);
 
 // An admin's PIN approves the cart they saw, so closing the modal drops it.
@@ -628,6 +634,8 @@ async function confirmCheckout(): Promise<void> {
         :document-types="documentTypes"
         :total="cart.total.value"
         :checkout="checkout"
+        :invoicing-mode="invoicing.mode"
+        :customer-id="customerId"
         @update:open="checkoutModalOpen = $event"
         @confirm="confirmCheckout"
     />
