@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\InvoicingMode;
 use App\Models\Company;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -21,6 +22,7 @@ class CompanyFactory extends Factory
             'onboarded_at' => now(),
             'tracks_inventory' => true,
             'inventory_counted_at' => now(),
+            'invoicing_mode' => InvoicingMode::ReceiptOnly->value,
         ];
     }
 

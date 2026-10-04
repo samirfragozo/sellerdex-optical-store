@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\FiscalDocumentType;
 use App\Enums\LensOrderStatus;
 use App\Enums\RemakeResponsible;
 use App\Enums\SaleDocumentType;
@@ -340,5 +341,18 @@ class Sale extends Model
     public function returns(): HasMany
     {
         return $this->hasMany(SaleReturn::class);
+    }
+
+    public function fiscalDocuments(): HasMany
+    {
+        return $this->hasMany(FiscalDocument::class);
+    }
+
+    /** The factura or POS electrónico registered for the sale itself (not for one of its returns). */
+    public function saleDocument(): ?FiscalDocument
+    {
+        return $this->fiscalDocuments()->whereNull('sale_return_id')
+            ->whereIn('document_type', [FiscalDocumentType::PosElectronic->value, FiscalDocumentType::ElectronicInvoice->value])
+            ->first();
     }
 }

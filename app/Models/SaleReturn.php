@@ -62,4 +62,9 @@ class SaleReturn extends Model
     {
         return $this->belongsTo(User::class, 'approved_by');
     }
+
+    public function fiscalDocuments(): HasMany
+    {
+        return $this->hasMany(FiscalDocument::class);
+    }
 }

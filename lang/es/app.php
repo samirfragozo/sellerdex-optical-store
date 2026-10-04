@@ -1025,4 +1025,29 @@ return [
         'refund_must_be_full' => 'La devolución por garantía es por el valor completo pagado: :amount.',
         'resolved' => 'Reclamo resuelto',
     ],
+
+    'invoicing_mode' => [
+        'undecided' => 'Sin definir',
+        'receipt_only' => 'Solo comprobante interno',
+        'external_manual' => 'Facturo en otro sistema',
+    ],
+    'fiscal_document_type' => [
+        'receipt' => 'Comprobante de venta',
+        'pos_electronic' => 'POS electrónico',
+        'electronic_invoice' => 'Factura electrónica',
+        'credit_note' => 'Nota crédito',
+        'adjustment_note' => 'Nota de ajuste',
+    ],
+    'fiscal_document_source' => [
+        'internal' => 'Interno',
+        'external_manual' => 'Otro sistema',
+    ],
+    'fiscal_document_status' => [
+        'registered' => 'Registrado',
+        'not_applicable' => 'No aplica',
+    ],
+    'layaway_invoicing' => [
+        'on_delivery' => 'Al entregar',
+        'on_sale' => 'Al vender',
+    ],
 ];

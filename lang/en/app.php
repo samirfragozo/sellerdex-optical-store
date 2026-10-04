@@ -1025,4 +1025,29 @@ return [
         'refund_must_be_full' => 'A warranty refund is for the full amount paid: :amount.',
         'resolved' => 'Claim resolved',
     ],
+
+    'invoicing_mode' => [
+        'undecided' => 'Not decided',
+        'receipt_only' => 'Internal receipt only',
+        'external_manual' => 'I invoice in another system',
+    ],
+    'fiscal_document_type' => [
+        'receipt' => 'Sales receipt',
+        'pos_electronic' => 'Electronic POS document',
+        'electronic_invoice' => 'Electronic invoice',
+        'credit_note' => 'Credit note',
+        'adjustment_note' => 'Adjustment note',
+    ],
+    'fiscal_document_source' => [
+        'internal' => 'Internal',
+        'external_manual' => 'Another system',
+    ],
+    'fiscal_document_status' => [
+        'registered' => 'Registered',
+        'not_applicable' => 'Not applicable',
+    ],
+    'layaway_invoicing' => [
+        'on_delivery' => 'On delivery',
+        'on_sale' => 'On sale',
+    ],
 ];
