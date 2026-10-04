@@ -2,7 +2,11 @@
 
 namespace App\Models;
 
+use App\Enums\FiscalDocumentSource;
+use App\Enums\FiscalDocumentStatus;
 use App\Enums\FiscalDocumentType;
+use App\Enums\InvoicingMode;
+use App\Enums\LayawayInvoicing;
 use App\Enums\LensOrderStatus;
 use App\Enums\RemakeResponsible;
 use App\Enums\SaleDocumentType;
@@ -56,7 +60,9 @@ class Sale extends Model
     protected static function booted(): void
     {
         // Money and returns are accounting records: the DB cascades would silently wipe refunds and store credit.
-        static::forceDeleting(fn (Sale $sale): bool => ! $sale->payments()->withTrashed()->exists() && ! $sale->returns()->exists());
+        static::forceDeleting(fn (Sale $sale): bool => ! $sale->payments()->withTrashed()->exists() && ! $sale->returns()->exists() && ! $sale->fiscalDocuments()->exists());
+
+        static::created(fn (Sale $sale) => $sale->issueReceiptIfDue());
 
         static::creating(function (Sale $sale): void {
             $sale->number ??= $sale->company_id !== null
@@ -101,6 +107,8 @@ class Sale extends Model
             if ($sale->wasChanged('is_delivered')) {
                 $sale->recalculateStatus();
             }
+
+            $sale->issueReceiptIfDue();
         });
     }
 
@@ -354,5 +362,49 @@ class Sale extends Model
         return $this->fiscalDocuments()->whereNull('sale_return_id')
             ->whereIn('document_type', [FiscalDocumentType::PosElectronic->value, FiscalDocumentType::ElectronicInvoice->value])
             ->first();
+    }
+
+    /**
+     * Whether the sale counts as invoiced now: not a quote and not voided; a layaway only once delivered,
+     * unless its company invoices layaways at sale time.
+     */
+    public function isInvoiceableNow(): bool
+    {
+        if ($this->company_id === null || $this->status === SaleStatus::Voided || $this->document_type === SaleDocumentType::Quote) {
+            return false;
+        }
+
+        if ($this->document_type !== SaleDocumentType::Layaway) {
+            return true;
+        }
+
+        return $this->is_delivered
+            || Company::withoutGlobalScopes()->whereKey($this->company_id)->value('layaway_invoicing') === LayawayInvoicing::OnSale;
+    }
+
+    public function receipt(): ?FiscalDocument
+    {
+        return $this->fiscalDocuments()->where('document_type', FiscalDocumentType::Receipt->value)->first();
+    }
+
+    /** Receipt-only companies number every invoiced sale once; a voided sale keeps its number. */
+    public function issueReceiptIfDue(): void
+    {
+        $mode = Company::withoutGlobalScopes()->whereKey($this->company_id)->value('invoicing_mode');
+
+        if ($mode !== InvoicingMode::ReceiptOnly || ! $this->isInvoiceableNow() || $this->receipt() !== null) {
+            return;
+        }
+
+        FiscalDocument::create([
+            'company_id' => $this->company_id,
+            'sale_id' => $this->id,
+            'document_type' => FiscalDocumentType::Receipt,
+            'source' => FiscalDocumentSource::Internal,
+            'number' => NumberingRange::takeNext($this->company_id, FiscalDocumentType::Receipt),
+            'issued_at' => today(),
+            'status' => FiscalDocumentStatus::NotApplicable,
+            'registered_by' => auth()->id(),
+        ]);
     }
 }

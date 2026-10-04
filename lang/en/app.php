@@ -776,6 +776,7 @@ return [
     ],
 
     'documents' => [
+        'receipt_number' => 'Receipt No. :number',
         'warranty_term' => 'Warranty: :months months',
         'warranty_note' => 'The warranty runs from delivery and is suspended while the product is under claim (Law 1480 of 2011).',
         'print_invoice' => 'Print receipt',

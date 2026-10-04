@@ -17,6 +17,12 @@
         <p class="muted"><strong>{{ __('app.documents.quote_valid_until', ['date' => $sale->quote_valid_until->format('d/m/Y')]) }}</strong></p>
     @endif
     <p class="muted"><strong>{{ __('app.documents.not_an_invoice') }}</strong></p>
+    @php($fiscal = $sale->saleDocument() ?? $sale->receipt())
+    @if ($fiscal)
+        <p><strong>{{ $fiscal->document_type === \App\Enums\FiscalDocumentType::Receipt
+            ? __('app.documents.receipt_number', ['number' => $fiscal->number])
+            : $fiscal->document_type->label().' '.$fiscal->number }}</strong></p>
+    @endif
     @if ($sale->customer)
         <p>
             <strong>{{ __('app.fields.customer') }}:</strong> {{ $sale->customer->full_name }}<br>

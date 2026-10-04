@@ -776,6 +776,7 @@ return [
     ],
 
     'documents' => [
+        'receipt_number' => 'Comprobante N.º :number',
         'warranty_term' => 'Garantía: :months meses',
         'warranty_note' => 'La garantía cuenta desde la entrega y se suspende mientras el producto está en reclamo (Ley 1480 de 2011).',
         'print_invoice' => 'Imprimir comprobante',

@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\InvoicingMode;
 use App\Filament\Resources\Sales\Pages\CreateSale;
 use App\Filament\Resources\Sales\Pages\EditSale;
 use App\Filament\Resources\Sales\Pages\ListSales;
@@ -78,7 +79,9 @@ it('shows the real margin on the sale edit page to admins only', function () {
 });
 
 it('hides force delete on a trashed sale that has payments or returns', function () {
-    $this->actingAs(User::factory()->admin()->create());
+    $admin = User::factory()->admin()->create();
+    $this->actingAs($admin);
+    $admin->company->update(['invoicing_mode' => InvoicingMode::ExternalManual]); // no automatic receipt
     $clean = Sale::factory()->create();
     $paid = Sale::factory()->create();
     Payment::factory()->create(['sale_id' => $paid->id]);
@@ -92,7 +95,9 @@ it('hides force delete on a trashed sale that has payments or returns', function
 });
 
 it('refuses to force delete a sale that has payments or returns, but not a clean one', function () {
-    $this->actingAs(User::factory()->admin()->create());
+    $admin = User::factory()->admin()->create();
+    $this->actingAs($admin);
+    $admin->company->update(['invoicing_mode' => InvoicingMode::ExternalManual]); // no automatic receipt
     $clean = Sale::factory()->create();
     $paid = Sale::factory()->create();
     $payment = Payment::factory()->create(['sale_id' => $paid->id]);
@@ -110,7 +115,9 @@ it('refuses to force delete a sale that has payments or returns, but not a clean
 });
 
 it('keeps sales with payments when force deleting in bulk from the list', function () {
-    $this->actingAs(User::factory()->admin()->create());
+    $admin = User::factory()->admin()->create();
+    $this->actingAs($admin);
+    $admin->company->update(['invoicing_mode' => InvoicingMode::ExternalManual]); // no automatic receipt
     $clean = Sale::factory()->create();
     $paid = Sale::factory()->create();
     Payment::factory()->create(['sale_id' => $paid->id]);

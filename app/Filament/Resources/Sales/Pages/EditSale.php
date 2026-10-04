@@ -54,7 +54,7 @@ class EditSale extends EditRecord
             DeleteAction::make(),
             // Money and returns are accounting records: a sale holding any of them is never wiped.
             ForceDeleteAction::make()
-                ->hidden(fn (Sale $record): bool => ! $record->trashed() || $record->payments()->withTrashed()->exists() || $record->returns()->exists()),
+                ->hidden(fn (Sale $record): bool => ! $record->trashed() || $record->payments()->withTrashed()->exists() || $record->returns()->exists() || $record->fiscalDocuments()->exists()),
             RestoreAction::make(),
         ];
     }
