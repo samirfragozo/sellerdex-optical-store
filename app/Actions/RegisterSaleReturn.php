@@ -78,6 +78,11 @@ class RegisterSaleReturn
     /** Checks that need the locked sale: nothing but a void on a voided sale, and store credit needs somewhere to go. */
     private function guard(Sale $sale, SaleReturnType $type, int $credit): void
     {
+        // A factura or POS electrónico is never voided: it is reversed with a note on a return.
+        if ($type === SaleReturnType::Void && $sale->saleDocument() !== null) {
+            throw ValidationException::withMessages(['reason' => __('app.fiscal_document.void_after_document')]);
+        }
+
         if ($type !== SaleReturnType::Void && $sale->status === SaleStatus::Voided) {
             throw ValidationException::withMessages(['reason' => __('app.sale_return.sale_voided')]);
         }

@@ -7,6 +7,7 @@ use App\Enums\FiscalDocumentType;
 use App\Enums\InvoicingMode;
 use App\Enums\SaleDocumentType;
 use App\Models\Sale;
+use App\Models\SaleReturn;
 use App\Models\User;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
@@ -64,4 +65,26 @@ it('streams the document PDF only to its own company', function () {
     $this->actingAs(User::factory()->admin()->create())
         ->get(route('documents.fiscal-document.pdf', $document))
         ->assertNotFound();
+});
+
+it('registers the note of a return, typed after the sale document', function () {
+    $saleDocument = app(RegisterFiscalDocument::class)->forSale($this->sale, FiscalDocumentType::ElectronicInvoice, 'FE-77', today(), $this->admin);
+    $return = SaleReturn::factory()->create(['sale_id' => $this->sale->id, 'company_id' => $this->sale->company_id]);
+
+    $note = app(RegisterFiscalDocument::class)->forReturn($return, 'NC-1', today(), $this->admin);
+
+    expect($note)->document_type->toBe(FiscalDocumentType::CreditNote)
+        ->reference_fiscal_document_id->toBe($saleDocument->id)
+        ->sale_return_id->toBe($return->id);
+});
+
+it('asks for the sale document before a note and refuses a second note', function () {
+    $return = SaleReturn::factory()->create(['sale_id' => $this->sale->id, 'company_id' => $this->sale->company_id]);
+
+    expect(fn () => app(RegisterFiscalDocument::class)->forReturn($return, 'NA-1', today(), $this->admin))->toThrow(ValidationException::class);
+
+    app(RegisterFiscalDocument::class)->forSale($this->sale, FiscalDocumentType::PosElectronic, 'POS-9', today(), $this->admin);
+    $note = app(RegisterFiscalDocument::class)->forReturn($return, 'NA-1', today(), $this->admin);
+    expect($note->document_type)->toBe(FiscalDocumentType::AdjustmentNote)
+        ->and(fn () => app(RegisterFiscalDocument::class)->forReturn($return, 'NA-2', today(), $this->admin))->toThrow(ValidationException::class);
 });

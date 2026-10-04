@@ -1067,7 +1067,12 @@ return [
         'not_applicable' => 'No aplica',
     ],
     'fiscal_document' => [
-        'actions' => ['register' => 'Registrar documento'],
+        'actions' => [
+            'register' => 'Registrar documento',
+            'register_note' => 'Registrar nota',
+        ],
+        'column' => 'Documento',
+        'void_after_document' => 'Esta venta ya tiene factura o POS electrónico: no se anula. Registra una devolución y su nota crédito o de ajuste.',
         'fields' => [
             'document_type' => 'Documento',
             'number' => 'Número del documento',

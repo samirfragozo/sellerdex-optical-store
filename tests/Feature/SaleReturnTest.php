@@ -1,12 +1,17 @@
 <?php
 
+use App\Actions\RegisterFiscalDocument;
 use App\Actions\RegisterSaleReturn;
+use App\Enums\FiscalDocumentSource;
+use App\Enums\FiscalDocumentType;
+use App\Enums\InvoicingMode;
 use App\Enums\LensOrderStatus;
 use App\Enums\SaleReturnType;
 use App\Enums\SaleStatus;
 use App\Enums\StockMovementType;
 use App\Models\Company;
 use App\Models\Customer;
+use App\Models\FiscalDocument;
 use App\Models\LensOrder;
 use App\Models\Payment;
 use App\Models\PaymentMethod;
@@ -348,4 +353,25 @@ it('values a returned line with the discount actually charged, not the editable 
     ]);
 
     expect($return->total)->toBe(25_000);
+});
+
+it('refuses to void a sale that already has a registered fiscal document', function () {
+    $this->admin->company->update(['invoicing_mode' => InvoicingMode::ExternalManual]);
+    app(RegisterFiscalDocument::class)->forSale($this->sale, FiscalDocumentType::PosElectronic, 'POS-1', today(), $this->admin);
+
+    expect(fn () => returnSale(SaleReturnType::Void, ['reason' => 'x', 'refund_amount' => 0, 'store_credit_amount' => 100_000]))
+        ->toThrow(ValidationException::class)
+        ->and($this->sale->fresh()->status)->not->toBe(SaleStatus::Voided);
+});
+
+it('still voids a receipt-only sale that has an internal receipt', function () {
+    FiscalDocument::factory()->create([
+        'sale_id' => $this->sale->id,
+        'document_type' => FiscalDocumentType::Receipt,
+        'source' => FiscalDocumentSource::Internal,
+    ]);
+
+    returnSale(SaleReturnType::Void, ['reason' => 'x', 'refund_amount' => 0, 'store_credit_amount' => 100_000]);
+
+    expect($this->sale->fresh()->status)->toBe(SaleStatus::Voided);
 });

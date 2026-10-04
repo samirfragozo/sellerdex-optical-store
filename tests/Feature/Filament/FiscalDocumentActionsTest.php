@@ -3,10 +3,12 @@
 use App\Enums\FiscalDocumentType;
 use App\Enums\InvoicingMode;
 use App\Filament\Resources\Sales\Pages\EditSale;
+use App\Filament\Resources\Sales\RelationManagers\ReturnsRelationManager;
 use App\Models\Customer;
 use App\Models\FiscalDocument;
 use App\Models\Sale;
 use App\Models\SaleItem;
+use App\Models\SaleReturn;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Filament\Actions\Testing\TestAction;
@@ -94,4 +96,36 @@ it('hides the data to invoice in receipt-only mode', function () {
 
     Livewire::test(EditSale::class, ['record' => $this->sale->getRouteKey()])
         ->assertActionHidden('invoiceData');
+});
+
+it('registers the note of a return from the returns table and links its PDF', function () {
+    FiscalDocument::factory()->create(['sale_id' => $this->sale->id, 'document_type' => FiscalDocumentType::PosElectronic]);
+    $return = SaleReturn::factory()->create(['sale_id' => $this->sale->id, 'company_id' => $this->sale->company_id]);
+    $pdf = UploadedFile::fake()->create('nc.pdf', 50, 'application/pdf');
+    $manager = ['ownerRecord' => $this->sale, 'pageClass' => EditSale::class];
+
+    Livewire::test(ReturnsRelationManager::class, $manager)
+        ->assertTableActionVisible('registerNote', $return)
+        ->callTableAction('registerNote', $return, ['number' => 'NA-5', 'issued_at' => today()->toDateString(), 'pdf_path' => $pdf])
+        ->assertHasNoTableActionErrors();
+
+    $note = $return->fiscalDocuments()->first();
+    expect($note)->not->toBeNull()
+        ->number->toBe('NA-5')
+        ->document_type->toBe(FiscalDocumentType::AdjustmentNote);
+
+    Livewire::test(ReturnsRelationManager::class, $manager)
+        ->assertTableActionHidden('registerNote', $return)
+        ->assertTableColumnStateSet('fiscal_document', 'NA-5', $return)
+        ->assertSee(route('documents.fiscal-document.pdf', $note), false);
+});
+
+it('hides the void action once the sale has its document', function () {
+    Livewire::test(EditSale::class, ['record' => $this->sale->getRouteKey()])
+        ->assertActionVisible('voidSale');
+
+    FiscalDocument::factory()->create(['sale_id' => $this->sale->id, 'document_type' => FiscalDocumentType::PosElectronic]);
+
+    Livewire::test(EditSale::class, ['record' => $this->sale->getRouteKey()])
+        ->assertActionHidden('voidSale');
 });

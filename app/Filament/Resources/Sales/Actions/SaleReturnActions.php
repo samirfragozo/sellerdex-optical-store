@@ -129,7 +129,7 @@ class SaleReturnActions
             ->icon(Heroicon::OutlinedXCircle)
             ->color('danger')
             ->requiresConfirmation()
-            ->visible(fn (Sale $record): bool => self::canAct($record) && ! $record->is_delivered)
+            ->visible(fn (Sale $record): bool => self::canAct($record) && ! $record->is_delivered && $record->saleDocument() === null)
             ->fillForm(function (Sale $record): array {
                 $due = self::amountToGiveBack($record);
 

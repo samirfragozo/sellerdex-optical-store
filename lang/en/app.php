@@ -1067,7 +1067,12 @@ return [
         'not_applicable' => 'Not applicable',
     ],
     'fiscal_document' => [
-        'actions' => ['register' => 'Register document'],
+        'actions' => [
+            'register' => 'Register document',
+            'register_note' => 'Register note',
+        ],
+        'column' => 'Document',
+        'void_after_document' => 'This sale already has an invoice or POS document: it cannot be voided. Register a return and its credit or adjustment note.',
         'fields' => [
             'document_type' => 'Document',
             'number' => 'Document number',
