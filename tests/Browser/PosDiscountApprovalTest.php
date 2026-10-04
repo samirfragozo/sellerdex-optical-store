@@ -38,3 +38,36 @@ it('asks for the admin pin when the discount is above the seller cap', function 
 
     expect(Sale::sole()->discount_approved_by)->toBe($admin->id);
 });
+
+it('forgets a typed admin pin when the checkout is closed', function () {
+    test()->seed(RolesAndPermissionsSeeder::class);
+    $seller = User::factory()->seller()->create();
+    User::factory()->admin()->create(['company_id' => $seller->company_id, 'approval_pin' => '4321']);
+    $seller->company->update(['seller_max_discount_percent' => 5]);
+    CashRegisterSession::factory()->for($seller)->create(['company_id' => $seller->company_id]);
+    PaymentMethod::factory()->create(['company_id' => $seller->company_id, 'name' => 'Efectivo', 'is_active' => true, 'surcharge_percent' => 0]);
+    $category = ProductCategory::factory()->create(['key' => 'frame', 'company_id' => $seller->company_id]);
+    Product::factory()->create([
+        'name' => 'Estuche rígido', 'product_category_id' => $category->id, 'company_id' => $seller->company_id,
+        'is_active' => true, 'is_pos_selectable' => true, 'price' => 50_000,
+    ]);
+    $this->actingAs($seller);
+
+    visit('/pos')
+        ->click('.line-clamp-2')
+        ->fill('[data-testid="discount-percent-input"]', '10')
+        ->click('text=Cobrar')
+        ->click('button:has-text("Confirmar venta")')
+        ->assertSee(__('app.approval.required'))
+        ->fill('[data-testid="approval-pin-input"]', '4321')
+        ->keys('[data-testid="approval-pin-input"]', 'Escape')
+        ->assertMissing('[role="dialog"]')
+        ->click('button:has-text("Cobrar")')
+        ->assertMissing('[data-testid="approval-pin-input"]')
+        ->click('button:has-text("Confirmar venta")')
+        ->assertSee(__('app.approval.required'))
+        ->assertValue('[data-testid="approval-pin-input"]', '')
+        ->assertNoJavaScriptErrors();
+
+    expect(Sale::count())->toBe(0);
+});

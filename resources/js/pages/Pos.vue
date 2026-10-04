@@ -277,6 +277,14 @@ function formatCOP(value: number): string {
 // --- Checkout ---
 const checkout = usePosCheckout(cart.total);
 const checkoutModalOpen = ref(false);
+
+// An admin's PIN approves the cart they saw, so closing the modal drops it.
+watch(checkoutModalOpen, (open) => {
+    if (!open) {
+        checkout.approvalPin.value = '';
+        delete checkout.errors.value.approval_pin;
+    }
+});
 const showMobileCart = ref(false);
 const createdSale = ref<CreatedSale | null>(null);
 
