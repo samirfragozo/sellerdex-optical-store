@@ -44,6 +44,11 @@ class LensOrdersTable
                     ->label(__('app.fields.sent_at'))
                     ->dateTime()
                     ->sortable(),
+                TextColumn::make('customer_notified_at')
+                    ->label(__('app.lab_order.customer_notified_at'))
+                    ->since()
+                    ->placeholder('—')
+                    ->toggleable(),
                 IconColumn::make('remake_of_id')
                     ->label(__('app.lab_order.is_remake'))
                     ->icon(fn ($state): ?string => $state === null ? null : 'heroicon-o-arrow-path')
@@ -54,6 +59,7 @@ class LensOrdersTable
                 LabOrderActions::send(),
                 LabOrderActions::receive(),
                 LabOrderActions::ready(),
+                LabOrderActions::notifyCustomer(),
             ]);
     }
 }

@@ -13,6 +13,7 @@ use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\FiscalDocument\PdfController as FiscalDocumentPdfController;
 use App\Http\Controllers\LensOrder\DocumentController as LabOrderDocumentController;
 use App\Http\Controllers\LensOrder\DocumentPdfController as LabOrderDocumentPdfController;
+use App\Http\Controllers\LensOrder\NotifyCustomerController;
 use App\Http\Controllers\Locale\UpdateController as LocaleUpdateController;
 use App\Http\Controllers\Pos\LensOffersController;
 use App\Http\Controllers\Pos\LensRecommendationController;
@@ -53,6 +54,7 @@ Route::middleware(['auth', 'verified', EnsureCompanyIsOnboarded::class])->group(
         ->name('pos.cash-sessions.movements.store');
     Route::post('pos/cash-sessions/{cashRegisterSession}/note', NoteController::class)
         ->name('pos.cash-sessions.note');
+    Route::get('lens-orders/{lensOrder}/notify-customer', NotifyCustomerController::class)->name('lens-orders.notify-customer');
 });
 
 Route::middleware('auth')->group(function () {

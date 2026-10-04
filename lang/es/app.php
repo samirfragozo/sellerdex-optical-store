@@ -256,7 +256,9 @@ return [
             'receive' => 'Marcar como recibida',
             'ready' => 'Lista para entregar',
             'remake' => 'Rehacer',
+            'notify_customer' => 'Avisar al cliente',
         ],
+        'customer_notified_at' => 'Cliente avisado',
         'height' => 'Altura',
         'lens' => 'Lente',
         'message' => [

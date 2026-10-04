@@ -66,6 +66,18 @@ class LabOrderActions
             ->action(fn (LensOrder $record) => $record->update(['lab_status' => LensOrderStatus::Ready]));
     }
 
+    public static function notifyCustomer(): Action
+    {
+        return Action::make('notifyCustomer')
+            ->authorize('update')
+            ->label(__('app.lab_order.actions.notify_customer'))
+            ->icon('heroicon-o-chat-bubble-left-right')
+            ->color('success')
+            ->visible(fn (LensOrder $record): bool => $record->lab_status === LensOrderStatus::Ready && $record->customerNoticeUrl() !== null)
+            ->url(fn (LensOrder $record): string => route('lens-orders.notify-customer', $record))
+            ->openUrlInNewTab();
+    }
+
     public static function remake(): Action
     {
         return Action::make('remake')

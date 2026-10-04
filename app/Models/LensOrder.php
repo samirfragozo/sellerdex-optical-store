@@ -6,8 +6,10 @@ use App\Enums\FrameSource;
 use App\Enums\FrameType;
 use App\Enums\LensKind;
 use App\Enums\LensOrderStatus;
+use App\Enums\MessageTemplateKey;
 use App\Enums\RemakeReason;
 use App\Enums\RemakeResponsible;
+use App\Support\WhatsApp;
 use App\Traits\BelongsToCompany;
 use Carbon\CarbonInterface;
 use Database\Factories\LensOrderFactory;
@@ -170,6 +172,31 @@ class LensOrder extends Model
             ->whereKeyNot($lensItem->id)
             ->whereHas('product.category', fn ($query) => $query->where('key', 'frame'))
             ->value('description');
+    }
+
+    /** Who hears that the glasses are ready: the sale's customer (the payer), else the armado's patient. */
+    public function customerToNotify(): ?Customer
+    {
+        $this->loadMissing(['saleItem.sale.customer', 'saleItem.lensConfig.patient']);
+
+        return $this->saleItem?->sale?->customer ?? $this->saleItem?->lensConfig?->patient;
+    }
+
+    /** The wa.me link with the order-ready message, or null without a usable phone. */
+    public function customerNoticeUrl(): ?string
+    {
+        $customer = $this->customerToNotify();
+        $sale = $this->saleItem?->sale;
+
+        if ($customer === null || $sale === null) {
+            return null;
+        }
+
+        return WhatsApp::url($customer->phone, MessageTemplate::render($this->company_id, MessageTemplateKey::OrderReady, [
+            'cliente' => $customer->name,
+            'orden' => $sale->number,
+            'saldo' => $sale->balance,
+        ]));
     }
 
     public function saleItem(): BelongsTo

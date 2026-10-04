@@ -49,6 +49,7 @@ class EditLensOrder extends EditRecord
                 ->after($refresh),
             LabOrderActions::receive()->after($refresh),
             LabOrderActions::ready()->after($refresh),
+            LabOrderActions::notifyCustomer(),
             LabOrderActions::remake()->after($refresh),
             DeleteAction::make(),
         ];

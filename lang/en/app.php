@@ -262,7 +262,9 @@ return [
             'receive' => 'Mark as received',
             'ready' => 'Ready for pickup',
             'remake' => 'Remake',
+            'notify_customer' => 'Notify customer',
         ],
+        'customer_notified_at' => 'Customer notified',
         'height' => 'Height',
         'lens' => 'Lens',
         'message' => [
