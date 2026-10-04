@@ -32,7 +32,7 @@ class RegisterSaleReturn
     {
         $approver ??= $actor;
         // Defense in depth: the Filament form already asked for the PIN.
-        if (! $approver->isAdmin()) {
+        if (! $approver->isAdmin() || $approver->company_id !== $sale->company_id) {
             throw ValidationException::withMessages(['approval_pin' => __('app.approval.required')]);
         }
 

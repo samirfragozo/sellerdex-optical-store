@@ -85,6 +85,10 @@ class ResolveWarrantyClaim
                 StockLedger::record($product, StockMovementType::WarrantyReplacement, -1, $claim);
                 $changes['replacement_product_id'] = $product->id;
             } elseif ($resolution === WarrantyResolution::Refund) {
+                if ($item->returnableQuantity() <= 0) {
+                    throw ValidationException::withMessages(['resolution' => __('app.warranty.fully_returned')]);
+                }
+
                 $due = self::refundDue($item);
                 if ((int) ($data['refund_amount'] ?? 0) + (int) ($data['store_credit_amount'] ?? 0) !== $due) {
                     throw ValidationException::withMessages(['refund_amount' => __('app.warranty.refund_must_be_full', ['amount' => '$'.number_format($due, 0, ',', '.')])]);

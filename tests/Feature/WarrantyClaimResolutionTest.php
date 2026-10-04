@@ -15,6 +15,7 @@ use App\Models\Product;
 use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Models\SaleItemLensConfig;
+use App\Models\SaleReturnItem;
 use App\Models\StockMovement;
 use App\Models\User;
 use App\Models\WarrantyClaim;
@@ -134,6 +135,21 @@ it('refuses a refund that is not the full amount paid', function (int $amount) {
         ->and(warrantyErrorKeys(fn () => resolveClaim($this->claim, WarrantyResolution::Refund, ['refund_amount' => $amount, 'refund_payment_method_id' => $cash->id])))->toBe(['refund_amount'])
         ->and($this->claim->fresh()->status)->toBe(WarrantyClaimStatus::InReview);
 })->with([0, 60_000]);
+
+it('refuses a refund on a line that was already fully returned', function () {
+    SaleReturnItem::factory()->create(['sale_item_id' => $this->item->id, 'quantity' => 1]);
+
+    try {
+        resolveClaim($this->claim, WarrantyResolution::Refund, ['refund_amount' => 0]);
+    } catch (ValidationException $exception) {
+        expect($exception->errors())->toBe(['resolution' => [__('app.warranty.fully_returned')]])
+            ->and($this->claim->fresh()->status)->toBe(WarrantyClaimStatus::InReview);
+
+        return;
+    }
+
+    $this->fail('Expected a ValidationException.');
+});
 
 it('refuses to resolve a claim that was not reviewed', function () {
     $this->claim->update(['status' => WarrantyClaimStatus::Received]);

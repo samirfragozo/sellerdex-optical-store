@@ -19,6 +19,7 @@ use App\Models\Product;
 use App\Models\Supplier;
 use App\Models\User;
 use App\Scopes\CompanyScope;
+use App\Support\PermissionsTeam;
 
 /**
  * The single place that decides whether a company can sell. Queries bypass the
@@ -102,7 +103,9 @@ class SaleReadiness
 
         // Sellers need an admin PIN for discounts above the cap and for returns; a one-person shop approves itself.
         $users = User::query()->where('company_id', $company->id)->where('is_active', true);
-        if ((clone $users)->count() > 1 && ! (clone $users)->whereNotNull('approval_pin')->exists()) {
+        // A demoted admin keeps a stale hash, so only PINs held by admins count (roles are team-scoped per company).
+        $hasAdminPin = fn (): bool => PermissionsTeam::runAs($company, fn (): bool => (clone $users)->whereNotNull('approval_pin')->role(User::ROLE_ADMIN)->exists());
+        if ((clone $users)->count() > 1 && ! $hasAdminPin()) {
             $issues[] = new ReadinessIssue(
                 'approval_pin_missing', ReadinessSeverity::Warning,
                 __('app.readiness.approval_pin_missing'), UserResource::getUrl('index', panel: 'admin'),

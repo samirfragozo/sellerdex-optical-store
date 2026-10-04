@@ -55,8 +55,10 @@ class WarrantyClaimsTable
                     ->action(fn (WarrantyClaim $record) => $record->advance(WarrantyClaimStatus::AtSupplier)),
                 Action::make('resolve')
                     ->label(__('app.warranty.actions.resolve'))
-                    ->visible(fn (WarrantyClaim $record): bool => in_array($record->status, [WarrantyClaimStatus::InReview, WarrantyClaimStatus::AtSupplier], true))
-                    ->schema(fn (WarrantyClaim $record): array => self::resolveFields($record))
+                    ->visible(fn (WarrantyClaim $record): bool => in_array($record->status, [WarrantyClaimStatus::InReview, WarrantyClaimStatus::AtSupplier], true)
+                        && $record->saleItem?->sale !== null)
+                    // The schema is resolved even while the action is hidden, so a claim whose sale was deleted gets none.
+                    ->schema(fn (WarrantyClaim $record): array => $record->saleItem?->sale === null ? [] : self::resolveFields($record))
                     ->action(function (WarrantyClaim $record, array $data): void {
                         try {
                             $approver = AdminApproval::ensure(AdminApproval::approver(auth()->user(), $data['approval_pin'] ?? null));

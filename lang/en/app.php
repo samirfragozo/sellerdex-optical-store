@@ -1016,6 +1016,7 @@ return [
         'fully_returned' => 'This item was already returned.',
         'already_open' => 'This item already has an open claim.',
         'adaptation_not_addition' => 'The adaptation warranty applies only to progressive or bifocal lenses.',
+        'received_before_delivery' => 'The received date cannot be before delivery (:date).',
         'out_of_term' => 'The warranty expired on :date.',
         'invalid_transition' => 'The claim cannot move to that status.',
         'rejection_reason_required' => 'Say why the claim is rejected.',

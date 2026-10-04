@@ -1016,6 +1016,7 @@ return [
         'fully_returned' => 'Este producto ya fue devuelto.',
         'already_open' => 'Este producto ya tiene un reclamo abierto.',
         'adaptation_not_addition' => 'La garantía de adaptación aplica solo a lentes progresivos o bifocales.',
+        'received_before_delivery' => 'La fecha de recibido no puede ser anterior a la entrega (:date).',
         'out_of_term' => 'La garantía venció el :date.',
         'invalid_transition' => 'El reclamo no puede pasar a ese estado.',
         'rejection_reason_required' => 'Indica por qué se rechaza el reclamo.',

@@ -79,6 +79,15 @@ it('refuses a wrong PIN when resolving', function () {
     expect($claim->fresh()->status)->toBe(WarrantyClaimStatus::InReview);
 });
 
+it('hides the resolve action and still lists a claim whose sale was deleted', function () {
+    $claim = WarrantyClaim::factory()->create(['sale_item_id' => $this->item->id, 'status' => WarrantyClaimStatus::InReview]);
+    $this->sale->delete();
+
+    Livewire::test(ListWarrantyClaims::class)
+        ->assertSuccessful()
+        ->assertTableActionHidden('resolve', $claim);
+});
+
 it('delivers a resolved claim', function () {
     $claim = WarrantyClaim::factory()->create(['sale_item_id' => $this->item->id, 'status' => WarrantyClaimStatus::Resolved]);
 

@@ -142,3 +142,11 @@ it('does not warn about the approval pin for a single user or when an admin has 
     expect(issueKeys($solo))->not->toContain('approval_pin_missing')
         ->and(issueKeys($withPin))->not->toContain('approval_pin_missing');
 });
+
+it('ignores an approval pin left on a user who is not an admin', function () {
+    $company = readyCompany();
+    User::factory()->admin()->create(['company_id' => $company->id]);
+    User::factory()->seller()->create(['company_id' => $company->id, 'approval_pin' => '4321']);
+
+    expect(issueKeys($company))->toContain('approval_pin_missing');
+});

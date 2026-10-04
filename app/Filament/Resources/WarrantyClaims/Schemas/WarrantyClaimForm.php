@@ -5,6 +5,7 @@ namespace App\Filament\Resources\WarrantyClaims\Schemas;
 use App\Enums\WarrantyClaimType;
 use App\Models\Sale;
 use App\Models\SaleItem;
+use Carbon\CarbonInterface;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -46,6 +47,7 @@ class WarrantyClaimForm
                 DatePicker::make('received_at')
                     ->label(__('app.fields.received_at'))
                     ->default(now())
+                    ->minDate(fn (Get $get): ?CarbonInterface => $get('sale_id') ? Sale::query()->find($get('sale_id'))?->delivered_at : null)
                     ->maxDate(now())
                     ->required(),
                 Textarea::make('customer_description')

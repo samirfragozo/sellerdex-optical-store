@@ -38,6 +38,18 @@ it('refuses a claim after the term', function () {
     app(OpenWarrantyClaim::class)->handle($this->item, WarrantyClaimType::Warranty, 'Bisagra rota', $this->admin, Carbon::parse('2026-07-11'));
 })->throws(ValidationException::class);
 
+it('refuses a received date before the sale was delivered', function () {
+    try {
+        app(OpenWarrantyClaim::class)->handle($this->item, WarrantyClaimType::Warranty, 'x', $this->admin, Carbon::parse('2026-01-09'));
+    } catch (ValidationException $exception) {
+        expect($exception->errors())->toBe(['sale_item_id' => [__('app.warranty.received_before_delivery', ['date' => '10/01/2026'])]]);
+
+        return;
+    }
+
+    $this->fail('Expected a ValidationException.');
+});
+
 it('extends the term by the days earlier claims were open', function () {
     WarrantyClaim::factory()->create([
         'sale_item_id' => $this->item->id, 'status' => WarrantyClaimStatus::Delivered,

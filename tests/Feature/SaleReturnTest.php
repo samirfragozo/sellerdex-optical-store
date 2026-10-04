@@ -65,6 +65,23 @@ it('refuses a return approved by a non-admin', function () {
     ], $seller);
 })->throws(ValidationException::class);
 
+it('refuses an approver from another company', function () {
+    $outsider = User::factory()->admin()->create();
+    $this->actingAs($outsider); // an admin in their own company's team, so only the company check can refuse them
+
+    try {
+        app(RegisterSaleReturn::class)->handle($this->sale->fresh(), SaleReturnType::ValueAdjustment, [
+            'reason' => 'Ajuste', 'amount' => 1_000, 'refund_amount' => 0, 'store_credit_amount' => 0,
+        ], $outsider, $outsider);
+    } catch (ValidationException $exception) {
+        expect($exception->errors())->toBe(['approval_pin' => [__('app.approval.required')]]);
+
+        return;
+    }
+
+    $this->fail('Expected a ValidationException.');
+});
+
 it('returns one unit, restocks it and gives store credit', function () {
     $return = returnSale(SaleReturnType::Return, [
         'reason' => 'No le gustó', 'items' => [['sale_item_id' => $this->line->id, 'quantity' => 1, 'restock' => true]],
