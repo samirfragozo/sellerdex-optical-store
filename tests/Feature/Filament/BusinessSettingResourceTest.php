@@ -1,8 +1,11 @@
 <?php
 
+use App\Enums\FiscalDocumentType;
+use App\Enums\InvoicingMode;
 use App\Enums\VatRegime;
 use App\Filament\Resources\BusinessSettings\BusinessSettingResource;
 use App\Filament\Resources\BusinessSettings\Pages\ManageBusinessSetting;
+use App\Models\NumberingRange;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
@@ -102,4 +105,27 @@ it('saves the seller discount limit, the quote validity and the adaptation warra
         ->seller_max_discount_percent->toBe('10.00')
         ->quote_validity_days->toBe(30)
         ->adaptation_warranty_days->toBe(45);
+});
+
+it('switches the invoicing mode and keeps the receipt prefix on its numbering range', function () {
+    $admin = User::factory()->admin()->create();
+    $this->actingAs($admin);
+
+    Livewire::test(ManageBusinessSetting::class)
+        ->fillForm(['invoicing_mode' => InvoicingMode::ReceiptOnly->value, 'receipt_prefix' => 'R-'])
+        ->call('save')
+        ->assertHasNoFormErrors();
+
+    $range = fn () => NumberingRange::withoutGlobalScopes()->where('company_id', $admin->company_id)
+        ->where('document_type', FiscalDocumentType::Receipt->value)->sole();
+    expect($range()->prefix)->toBe('R-');
+
+    Livewire::test(ManageBusinessSetting::class)
+        ->assertFormSet(['receipt_prefix' => 'R-'])
+        ->fillForm(['invoicing_mode' => InvoicingMode::ExternalManual->value, 'default_fiscal_document' => FiscalDocumentType::PosElectronic->value])
+        ->call('save')
+        ->assertHasNoFormErrors();
+
+    expect($admin->company->fresh()->invoicing_mode)->toBe(InvoicingMode::ExternalManual)
+        ->and($range()->prefix)->toBe('R-');
 });

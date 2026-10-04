@@ -2,9 +2,11 @@
 
 namespace App\Support\Readiness;
 
+use App\Enums\InvoicingMode;
 use App\Enums\ReadinessSeverity;
 use App\Filament\Pages\ComboSettings;
 use App\Filament\Pages\InventoryCount;
+use App\Filament\Resources\BusinessSettings\BusinessSettingResource;
 use App\Filament\Resources\CashRegisterSessions\CashRegisterSessionResource;
 use App\Filament\Resources\LensCombinations\LensCombinationResource;
 use App\Filament\Resources\PaymentMethods\PaymentMethodResource;
@@ -110,6 +112,22 @@ class SaleReadiness
                 'approval_pin_missing', ReadinessSeverity::Warning,
                 __('app.readiness.approval_pin_missing'), UserResource::getUrl('index', panel: 'admin'),
             );
+        }
+
+        if ($company->invoicing_mode === InvoicingMode::Undecided) {
+            $issues[] = new ReadinessIssue(
+                'invoicing_mode', ReadinessSeverity::Blocking,
+                __('app.readiness.invoicing_mode'), BusinessSettingResource::getUrl('index', panel: 'admin'),
+            );
+        }
+
+        if ($company->invoicing_mode === InvoicingMode::ExternalManual) {
+            $dates = collect([$company->pos_resolution_expires_at, $company->invoice_resolution_expires_at])->filter();
+            if ($dates->contains(fn ($date): bool => $date->lt(today()))) {
+                $issues[] = new ReadinessIssue('resolution_expired', ReadinessSeverity::Warning, __('app.readiness.resolution_expired'), BusinessSettingResource::getUrl('index', panel: 'admin'));
+            } elseif ($dates->contains(fn ($date): bool => $date->lte(today()->addDays(30)))) {
+                $issues[] = new ReadinessIssue('resolution_expiring', ReadinessSeverity::Warning, __('app.readiness.resolution_expiring'), BusinessSettingResource::getUrl('index', panel: 'admin'));
+            }
         }
 
         return $issues;

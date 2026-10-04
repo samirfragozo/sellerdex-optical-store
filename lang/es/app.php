@@ -845,6 +845,22 @@ return [
     ],
 
     'onboarding' => [
+        'invoicing' => [
+            'label' => 'Facturación',
+            'description' => 'Cuéntanos cómo facturas hoy. La app se adapta: no reemplaza tu sistema de facturación.',
+            'mode' => '¿Cómo facturas?',
+            'receipt_only_help' => 'Solo entregas el comprobante interno de la app, que dice "no válido como factura". Para ópticas no obligadas a facturar electrónicamente; lo eliges bajo tu responsabilidad.',
+            'external_manual_help' => 'Facturas en otro sistema (por ejemplo la herramienta gratuita de la DIAN). La app te muestra los datos para copiar y tú registras el número del documento el mismo día.',
+            'receipt_prefix' => 'Prefijo del comprobante',
+            'receipt_prefix_help' => 'Opcional. Se antepone al consecutivo del comprobante (ej. R-000001).',
+            'default_fiscal_document' => 'Documento por defecto',
+            'default_fiscal_document_help' => 'Normalmente el POS electrónico; cambia a factura electrónica cuando el cliente la pida.',
+            'pos_resolution_expires_at' => 'Vencimiento de la resolución del POS electrónico',
+            'invoice_resolution_expires_at' => 'Vencimiento de la resolución de facturación',
+            'resolution_expires_help' => 'Opcional. Te avisamos 30 días antes de que venza.',
+            'layaway_invoicing' => '¿Cuándo se factura un plan separe?',
+            'layaway_invoicing_help' => 'Por defecto al entregar; un pago anticipado de una venta acordada se factura al vender.',
+        ],
         'title' => 'Configura tu óptica',
         'steps_nav' => 'Pasos de la configuración',
         'progress' => 'Paso :current de :total',
@@ -940,6 +956,9 @@ return [
     ],
 
     'readiness' => [
+        'invoicing_mode' => 'Elige cómo facturas antes de vender.',
+        'resolution_expiring' => 'Tu resolución de numeración vence en menos de 30 días: solicita la renovación ante la DIAN.',
+        'resolution_expired' => 'Tu resolución de numeración está vencida: no emitas documentos con ella.',
         'approval_pin_missing' => 'Ningún administrador tiene PIN de aprobación: los vendedores no podrán aplicar descuentos mayores al tope ni registrar devoluciones.',
         'cash_session_stale' => 'Hay una caja abierta desde un día anterior.',
         'inventory_initial_count' => 'Activaste el inventario: haz el conteo inicial de tus productos.',

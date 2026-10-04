@@ -845,6 +845,22 @@ return [
     ],
 
     'onboarding' => [
+        'invoicing' => [
+            'label' => 'Invoicing',
+            'description' => 'Tell us how you invoice today. The app adapts: it does not replace your invoicing system.',
+            'mode' => 'How do you invoice?',
+            'receipt_only_help' => 'You only hand out the app\'s internal receipt, marked "not valid as an invoice". For shops not required to invoice electronically; you choose it under your own responsibility.',
+            'external_manual_help' => 'You invoice in another system (for example the DIAN free tool). The app shows you the data to copy and you register the document number the same day.',
+            'receipt_prefix' => 'Receipt prefix',
+            'receipt_prefix_help' => 'Optional. Goes before the receipt number (e.g. R-000001).',
+            'default_fiscal_document' => 'Default document',
+            'default_fiscal_document_help' => 'Usually the electronic POS document; switch to an electronic invoice when the customer asks.',
+            'pos_resolution_expires_at' => 'Electronic POS resolution expiry',
+            'invoice_resolution_expires_at' => 'Invoice resolution expiry',
+            'resolution_expires_help' => 'Optional. We warn you 30 days before it expires.',
+            'layaway_invoicing' => 'When is a layaway invoiced?',
+            'layaway_invoicing_help' => 'By default on delivery; an advance payment on an agreed sale is invoiced on sale.',
+        ],
         'title' => 'Set up your optical shop',
         'steps_nav' => 'Setup steps',
         'progress' => 'Step :current of :total',
@@ -940,6 +956,9 @@ return [
     ],
 
     'readiness' => [
+        'invoicing_mode' => 'Choose how you invoice before selling.',
+        'resolution_expiring' => 'Your numbering resolution expires in less than 30 days: request its renewal from the DIAN.',
+        'resolution_expired' => 'Your numbering resolution has expired: do not issue documents with it.',
         'approval_pin_missing' => 'No administrator has an approval PIN: sellers won\'t be able to apply discounts above the cap or register returns.',
         'cash_session_stale' => 'A cash session has been open since a previous day.',
         'inventory_initial_count' => 'Inventory is on: do the initial count of your products.',

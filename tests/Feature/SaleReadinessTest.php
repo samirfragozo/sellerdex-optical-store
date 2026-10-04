@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\InvoicingMode;
 use App\Enums\ReadinessSeverity;
 use App\Filament\Pages\ComboSettings;
 use App\Models\Company;
@@ -149,4 +150,29 @@ it('ignores an approval pin left on a user who is not an admin', function () {
     User::factory()->seller()->create(['company_id' => $company->id, 'approval_pin' => '4321']);
 
     expect(issueKeys($company))->toContain('approval_pin_missing');
+});
+
+it('blocks every sale until the invoicing mode is decided', function () {
+    $company = readyCompany();
+    $company->update(['invoicing_mode' => InvoicingMode::Undecided->value]);
+
+    $issue = collect($company->saleReadiness())->firstWhere('key', 'invoicing_mode');
+    expect($issue->severity)->toBe(ReadinessSeverity::Blocking)
+        ->and($company->isReadyToSell())->toBeFalse();
+});
+
+it('warns when an external-manual resolution is about to expire or has expired', function () {
+    $company = readyCompany();
+    $company->update(['invoicing_mode' => InvoicingMode::ExternalManual->value, 'pos_resolution_expires_at' => today()->addDays(10)]);
+    expect(issueKeys($company))->toContain('resolution_expiring')->not->toContain('resolution_expired');
+
+    $company->update(['pos_resolution_expires_at' => today()->subDay()]);
+    expect(issueKeys($company))->toContain('resolution_expired')->not->toContain('resolution_expiring');
+});
+
+it('ignores resolution dates in receipt-only mode', function () {
+    $company = readyCompany();
+    $company->update(['invoicing_mode' => InvoicingMode::ReceiptOnly->value, 'pos_resolution_expires_at' => today()->subDay(), 'invoice_resolution_expires_at' => today()->addDay()]);
+
+    expect(issueKeys($company))->not->toContain('resolution_expired')->not->toContain('resolution_expiring');
 });

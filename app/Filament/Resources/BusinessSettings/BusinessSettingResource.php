@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\BusinessSettings;
 
 use App\Filament\Pages\Onboarding\Steps\CompanyStep;
+use App\Filament\Pages\Onboarding\Steps\InvoicingStep;
 use App\Filament\Resources\BusinessSettings\Pages\ManageBusinessSetting;
 use App\Models\Company;
 use BackedEnum;
@@ -85,6 +86,7 @@ class BusinessSettingResource extends Resource
                     ->label(__('app.business.adaptation_warranty_days'))
                     ->helperText(__('app.business.adaptation_warranty_days_help'))
                     ->integer()->minValue(0)->maxValue(365)->required()->suffix(__('app.fields.days')),
+                ...InvoicingStep::fields(),
             ]);
     }
 

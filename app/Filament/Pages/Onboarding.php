@@ -6,6 +6,7 @@ use App\Filament\Pages\Onboarding\OnboardingStep;
 use App\Filament\Pages\Onboarding\Steps\CombosStep;
 use App\Filament\Pages\Onboarding\Steps\CompanyStep;
 use App\Filament\Pages\Onboarding\Steps\CounterProductsStep;
+use App\Filament\Pages\Onboarding\Steps\InvoicingStep;
 use App\Filament\Pages\Onboarding\Steps\LaboratoriesStep;
 use App\Filament\Pages\Onboarding\Steps\LensesStep;
 use App\Filament\Pages\Onboarding\Steps\PaymentMethodsStep;
@@ -46,6 +47,7 @@ class Onboarding extends Page
             LensesStep::class,
             TreatmentsStep::class,
             CombosStep::class,
+            InvoicingStep::class,
             SummaryStep::class,
         ];
     }

@@ -48,6 +48,8 @@ function registerAndOnboard(string $email, VatRegime $regime): User
         ->call('next')->assertHasNoErrors()            // lenses
         ->call('next')->assertHasNoErrors()            // treatments (none)
         ->call('next')->assertHasNoErrors()            // combos (reference kit)
+        ->set('data.invoicing_mode', 'receipt_only')
+        ->call('next')->assertHasNoErrors()            // invoicing
         ->assertSet('step', 'summary')
         ->call('finish')
         ->assertRedirect(route('pos.index'));
