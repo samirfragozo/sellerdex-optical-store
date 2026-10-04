@@ -72,9 +72,27 @@ it('needs the customer id number for a POS document', function () {
 it('ignores the document choice outside external-manual mode', function () {
     $this->company->update(['invoicing_mode' => InvoicingMode::ReceiptOnly]);
 
+    $this->postJson(route('pos.store'), posFiscalPayload([
+        'customer_id' => $this->customer->id,
+        'fiscal_document_type' => 'electronic_invoice',
+        'buyer' => ['person_type' => 'natural', 'dane_municipality_code' => '11001', 'fiscal_responsibilities' => ['R-99-PN']],
+    ]))->assertOk();
+
+    expect(Sale::sole()->fiscal_document_type)->toBeNull()
+        ->and($this->customer->fresh())
+        ->person_type->toBeNull()
+        ->dane_municipality_code->toBeNull()
+        ->fiscal_responsibilities->toBeNull();
+});
+
+it('accepts a factura with no buyer data when the customer already has it all', function () {
+    $this->customer->update([
+        'email' => 'ana@example.com', 'person_type' => 'natural', 'dane_municipality_code' => '11001', 'fiscal_responsibilities' => ['R-99-PN'],
+    ]);
+
     $this->postJson(route('pos.store'), posFiscalPayload(['customer_id' => $this->customer->id, 'fiscal_document_type' => 'electronic_invoice']))->assertOk();
 
-    expect(Sale::sole()->fiscal_document_type)->toBeNull();
+    expect(Sale::sole()->fiscal_document_type)->toBe(FiscalDocumentType::ElectronicInvoice);
 });
 
 it('rejects a malformed municipality code', function () {
