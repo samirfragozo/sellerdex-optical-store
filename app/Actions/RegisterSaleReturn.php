@@ -24,15 +24,21 @@ class RegisterSaleReturn
     /**
      * Give value back on a sale: return lines, lower its value, or void it (a layaway void is a plan separe
      * cancellation). The money goes out as a refund, store credit, or both; whatever the customer hadn't paid
-     * simply stops being owed.
+     * simply stops being owed. `$approver` (an admin; defaults to the actor) signs it off when a seller acts.
      *
      * @param  array{reason: string, items?: list<array{sale_item_id: int, quantity: int, restock?: bool}>, amount?: int, refund_amount?: int, refund_payment_method_id?: int|null, store_credit_amount?: int}  $data
      */
-    public function handle(Sale $sale, SaleReturnType $type, array $data, User $actor): SaleReturn
+    public function handle(Sale $sale, SaleReturnType $type, array $data, User $actor, ?User $approver = null): SaleReturn
     {
+        $approver ??= $actor;
+        // Defense in depth: the Filament form already asked for the PIN.
+        if (! $approver->isAdmin()) {
+            throw ValidationException::withMessages(['approval_pin' => __('app.approval.required')]);
+        }
+
         $this->validate($sale, $type, $data);
 
-        return DB::transaction(function () use ($sale, $type, $data, $actor): SaleReturn {
+        return DB::transaction(function () use ($sale, $type, $data, $actor, $approver): SaleReturn {
             $sale = Sale::withoutGlobalScopes()->whereKey($sale->getKey())->lockForUpdate()->firstOrFail();
             $refund = (int) ($data['refund_amount'] ?? 0);
             $credit = (int) ($data['store_credit_amount'] ?? 0);
@@ -48,7 +54,7 @@ class RegisterSaleReturn
                 'refund_payment_method_id' => $refund > 0 ? (int) $data['refund_payment_method_id'] : null,
                 'store_credit_amount' => $credit,
                 'user_id' => $actor->id,
-                'approved_by' => $actor->id,
+                'approved_by' => $approver->id,
             ]);
 
             match ($type) {

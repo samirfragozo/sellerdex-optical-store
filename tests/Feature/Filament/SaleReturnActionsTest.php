@@ -132,13 +132,44 @@ it('hides void on a delivered sale', function () {
     Livewire::test(EditSale::class, ['record' => $this->sale->getRouteKey()])->assertActionHidden('voidSale');
 });
 
-it('keeps the post-sale actions away from sellers', function () {
+it('shows the post-sale actions to sellers behind the admin pin', function () {
+    $this->admin->update(['approval_pin' => '4321']);
     $this->actingAs(User::factory()->seller()->create(['company_id' => $this->admin->company_id]));
 
     Livewire::test(EditSale::class, ['record' => $this->sale->getRouteKey()])
-        ->assertActionHidden('returnItems')
-        ->assertActionHidden('valueAdjustment')
-        ->assertActionHidden('voidSale');
+        ->assertActionVisible(TestAction::make('valueAdjustment'))
+        ->callAction(TestAction::make('valueAdjustment'), [
+            'amount' => 1_000, 'reason' => 'Ajuste', 'refund_amount' => 0, 'store_credit_amount' => 1_000, 'approval_pin' => '4321',
+        ])
+        ->assertHasNoActionErrors();
+
+    expect($this->sale->returns()->sole()->approved_by)->toBe($this->admin->id);
+});
+
+it('refuses a seller return without a valid admin pin', function () {
+    $this->admin->update(['approval_pin' => '4321']);
+    $this->actingAs(User::factory()->seller()->create(['company_id' => $this->admin->company_id]));
+
+    Livewire::test(EditSale::class, ['record' => $this->sale->getRouteKey()])
+        ->callAction(TestAction::make('valueAdjustment'), [
+            'amount' => 1_000, 'reason' => 'Ajuste', 'refund_amount' => 0, 'store_credit_amount' => 1_000, 'approval_pin' => '0000',
+        ])
+        ->assertHasActionErrors(['approval_pin']);
+
+    expect($this->sale->returns()->count())->toBe(0);
+});
+
+it('keeps the post-sale actions hidden from sellers on quotes and voided sales', function () {
+    $this->actingAs(User::factory()->seller()->create(['company_id' => $this->admin->company_id]));
+    $quote = Sale::factory()->create(['customer_id' => $this->customer->id, 'document_type' => SaleDocumentType::Quote]);
+    $voided = Sale::factory()->create(['status' => SaleStatus::Voided]);
+
+    foreach ([$quote, $voided] as $sale) {
+        Livewire::test(EditSale::class, ['record' => $sale->getRouteKey()])
+            ->assertActionHidden('returnItems')
+            ->assertActionHidden('valueAdjustment')
+            ->assertActionHidden('voidSale');
+    }
 });
 
 it('shows each customer credit balance in the customers list', function () {

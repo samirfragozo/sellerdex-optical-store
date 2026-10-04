@@ -46,6 +46,25 @@ it('starts from a paid sale of 100 000 holding two units', function () {
         ->and($this->product->fresh()->stock)->toBe(3);
 });
 
+it('records the seller as actor and the admin as approver', function () {
+    $seller = User::factory()->seller()->create(['company_id' => $this->sale->company_id]);
+    $admin = User::factory()->admin()->create(['company_id' => $this->sale->company_id]);
+
+    $return = app(RegisterSaleReturn::class)->handle($this->sale->fresh(), SaleReturnType::ValueAdjustment, [
+        'reason' => 'Ajuste', 'amount' => 1_000, 'refund_amount' => 0, 'store_credit_amount' => 0,
+    ], $seller, $admin);
+
+    expect($return->user_id)->toBe($seller->id)->and($return->approved_by)->toBe($admin->id);
+});
+
+it('refuses a return approved by a non-admin', function () {
+    $seller = User::factory()->seller()->create(['company_id' => $this->sale->company_id]);
+
+    app(RegisterSaleReturn::class)->handle($this->sale->fresh(), SaleReturnType::ValueAdjustment, [
+        'reason' => 'Ajuste', 'amount' => 1_000, 'refund_amount' => 0, 'store_credit_amount' => 0,
+    ], $seller);
+})->throws(ValidationException::class);
+
 it('returns one unit, restocks it and gives store credit', function () {
     $return = returnSale(SaleReturnType::Return, [
         'reason' => 'No le gustó', 'items' => [['sale_item_id' => $this->line->id, 'quantity' => 1, 'restock' => true]],

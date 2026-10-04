@@ -6,9 +6,11 @@ use App\Actions\RegisterSaleReturn;
 use App\Enums\SaleDocumentType;
 use App\Enums\SaleReturnType;
 use App\Enums\SaleStatus;
+use App\Filament\Forms\ApprovalPinInput;
 use App\Models\PaymentMethod;
 use App\Models\Sale;
 use App\Models\SaleItem;
+use App\Support\AdminApproval;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Placeholder;
@@ -22,7 +24,7 @@ use Filament\Schemas\Components\Utilities\Get;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Validation\ValidationException;
 
-/** Admin-only post-sale actions: return items, adjust the value, void (or cancel a plan separe). */
+/** Post-sale actions: return items, adjust the value, void (or cancel a plan separe). Admins act directly; others need an admin PIN. */
 class SaleReturnActions
 {
     /** @return list<Action> */
@@ -71,6 +73,7 @@ class SaleReturnActions
                     ->required()
                     ->maxLength(255),
                 ...self::moneyFields($record, fn (Get $get): int => self::maxMoneyForLines($record, (array) $get('lines'))),
+                ApprovalPinInput::make(),
             ])
             ->action(function (Sale $record, array $data, $livewire): void {
                 $lines = collect($data['lines'] ?? [])->filter(fn (array $line): bool => (int) ($line['quantity'] ?? 0) > 0);
@@ -106,6 +109,7 @@ class SaleReturnActions
                     ->required()
                     ->maxLength(255),
                 ...self::moneyFields($record, fn (Get $get): int => self::maxMoney($record, (int) $get('amount'))),
+                ApprovalPinInput::make(),
             ])
             ->action(fn (Sale $record, array $data, $livewire) => self::register(
                 $record,
@@ -146,14 +150,15 @@ class SaleReturnActions
                         'fee' => $fee > 0 ? __('app.sale_return.fee_note', ['fee' => self::money($fee)]) : '',
                     ]);
                 }, isVoid: true),
+                ApprovalPinInput::make(),
             ])
             ->action(fn (Sale $record, array $data, $livewire) => self::register($record, SaleReturnType::Void, self::moneyPayload($data), [], $livewire));
     }
 
-    /** Only admins act on a sale after the fact; a voided sale takes nothing more and a quote has nothing to give back. */
+    /** Admins act directly; anyone else who can edit the sale needs an admin PIN. A voided sale takes nothing more and a quote has nothing to give back. */
     private static function canAct(Sale $sale): bool
     {
-        return auth()->user()?->isAdmin() === true
+        return auth()->user()?->can('update', $sale) === true
             && $sale->status !== SaleStatus::Voided
             && $sale->document_type !== SaleDocumentType::Quote;
     }
@@ -203,7 +208,7 @@ class SaleReturnActions
 
     /**
      * @param  array<string, mixed>  $data
-     * @return array{reason: string, refund_amount: int, refund_payment_method_id: int|null, store_credit_amount: int}
+     * @return array{reason: string, refund_amount: int, refund_payment_method_id: int|null, store_credit_amount: int, approval_pin: string|null}
      */
     private static function moneyPayload(array $data): array
     {
@@ -212,6 +217,7 @@ class SaleReturnActions
             'refund_amount' => (int) ($data['refund_amount'] ?? 0),
             'refund_payment_method_id' => filled($data['refund_payment_method_id'] ?? null) ? (int) $data['refund_payment_method_id'] : null,
             'store_credit_amount' => (int) ($data['store_credit_amount'] ?? 0),
+            'approval_pin' => $data['approval_pin'] ?? null,
         ];
     }
 
@@ -225,7 +231,8 @@ class SaleReturnActions
     private static function register(Sale $sale, SaleReturnType $type, array $payload, array $lineKeys, mixed $livewire): void
     {
         try {
-            app(RegisterSaleReturn::class)->handle($sale, $type, $payload, auth()->user());
+            $approver = AdminApproval::ensure(AdminApproval::approver(auth()->user(), $payload['approval_pin'] ?? null));
+            app(RegisterSaleReturn::class)->handle($sale, $type, $payload, auth()->user(), $approver);
         } catch (ValidationException $exception) {
             throw ValidationException::withMessages(collect($exception->errors())
                 ->mapWithKeys(fn (array $messages, string $key): array => ['mountedActions.0.data.'.self::formKey($key, $lineKeys, $sale) => $messages])
