@@ -7,6 +7,7 @@ use App\Enums\FiscalDocumentType;
 use App\Enums\InvoicingMode;
 use App\Models\Company;
 use App\Models\Sale;
+use App\Support\InvoiceData;
 use Carbon\CarbonImmutable;
 use Filament\Actions\Action;
 use Filament\Forms\Components\DatePicker;
@@ -14,7 +15,9 @@ use Filament\Forms\Components\Field;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Filament\Infolists\Components\TextEntry;
 use Filament\Notifications\Notification;
+use Filament\Schemas\Components\Section;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Validation\ValidationException;
 
@@ -46,6 +49,63 @@ class FiscalDocumentActions
 
                 Notification::make()->success()->title(__('app.fiscal_document.registered'))->send();
             });
+    }
+
+    public static function invoiceData(): Action
+    {
+        return Action::make('invoiceData')
+            ->label(__('app.invoice_data.title'))
+            ->icon(Heroicon::OutlinedClipboardDocumentList)
+            ->color('gray')
+            ->visible(fn (Sale $record): bool => self::externalMode($record) && $record->isInvoiceableNow())
+            ->modalHeading(__('app.invoice_data.title'))
+            ->modalSubmitAction(false)
+            ->modalCancelActionLabel(__('app.invoice_data.close'))
+            ->schema(fn (Sale $record): array => self::invoiceDataEntries(InvoiceData::for($record)));
+    }
+
+    /**
+     * Read-only, click-to-copy entries: money shows formatted but copies the raw integer.
+     *
+     * @param  array{buyer: array<string, ?string>, lines: list<array<string, mixed>>, totals: array<string, int>}  $data
+     * @return list<Section>
+     */
+    private static function invoiceDataEntries(array $data): array
+    {
+        $text = fn (string $name, string $label, ?string $value): TextEntry => TextEntry::make($name)
+            ->label($label)->state($value)->placeholder('-')->copyable();
+        $money = fn (string $name, string $label, int $value): TextEntry => TextEntry::make($name)
+            ->label($label)->state('$'.number_format($value, 0, ',', '.'))->copyable()->copyableState((string) $value);
+
+        $buyer = $data['buyer'];
+        $sections = [
+            Section::make(__('app.invoice_data.buyer'))->columns(2)->schema([
+                $text('buyer_document', __('app.fields.id_number'), $buyer['document']),
+                $text('buyer_name', __('app.fields.full_name'), $buyer['name']),
+                $text('buyer_phone', __('app.fields.phone'), $buyer['phone']),
+                $text('buyer_email', __('app.fields.email'), $buyer['email']),
+                $text('buyer_address', __('app.fields.address'), $buyer['address']),
+            ]),
+        ];
+
+        foreach ($data['lines'] as $index => $line) {
+            $sections[] = Section::make($index === 0 ? __('app.invoice_data.lines') : null)->columns(3)->schema([
+                $text("line_{$index}_description", __('app.fields.description'), $line['description'])->columnSpanFull(),
+                $text("line_{$index}_quantity", __('app.fields.quantity'), (string) $line['quantity']),
+                $money("line_{$index}_unit_price", __('app.invoice_data.unit_price'), $line['unit_price']),
+                $money("line_{$index}_base", __('app.invoice_data.base'), $line['base']),
+                $money("line_{$index}_tax", __('app.invoice_data.tax'), $line['tax']),
+                $money("line_{$index}_total", __('app.fields.total'), $line['total']),
+            ]);
+        }
+
+        $sections[] = Section::make(__('app.invoice_data.totals'))->columns(3)->schema([
+            $money('totals_base', __('app.invoice_data.base'), $data['totals']['base']),
+            $money('totals_tax', __('app.invoice_data.tax'), $data['totals']['tax']),
+            $money('totals_total', __('app.fields.total'), $data['totals']['total']),
+        ]);
+
+        return $sections;
     }
 
     /** @return list<Field> */

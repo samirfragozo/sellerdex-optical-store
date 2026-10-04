@@ -3,11 +3,14 @@
 use App\Enums\FiscalDocumentType;
 use App\Enums\InvoicingMode;
 use App\Filament\Resources\Sales\Pages\EditSale;
+use App\Models\Customer;
 use App\Models\FiscalDocument;
 use App\Models\Sale;
+use App\Models\SaleItem;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Filament\Actions\Testing\TestAction;
+use Filament\Infolists\Components\TextEntry;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
@@ -71,4 +74,24 @@ it('hides the action on receipt-only companies and once the sale has its documen
     $other = Sale::factory()->create();
     Livewire::test(EditSale::class, ['record' => $other->getRouteKey()])
         ->assertActionHidden(TestAction::make('registerFiscalDocument'));
+});
+
+it('shows the data to invoice with copyable values in external-manual mode', function () {
+    $customer = Customer::factory()->create(['name' => 'Ana', 'last_name' => 'Gómez']);
+    $sale = Sale::factory()->create(['customer_id' => $customer->id, 'discount_percent' => 0, 'surcharge_percent' => 0]);
+    SaleItem::factory()->create(['sale_id' => $sale->id, 'description' => 'Montura Ray-Ban', 'quantity' => 1, 'unit_price' => 119_000, 'tax_rate' => 19]);
+
+    Livewire::test(EditSale::class, ['record' => $sale->getRouteKey()])
+        ->assertActionVisible('invoiceData')
+        ->mountAction('invoiceData')
+        ->assertSchemaComponentExists('buyer_name', checkComponentUsing: fn (TextEntry $entry): bool => $entry->getState() === 'Ana Gómez' && $entry->isCopyable($entry->getState()))
+        ->assertSchemaComponentExists('line_0_description', checkComponentUsing: fn (TextEntry $entry): bool => $entry->getState() === 'Montura Ray-Ban')
+        ->assertSchemaComponentExists('totals_total', checkComponentUsing: fn (TextEntry $entry): bool => $entry->getState() === '$119.000' && $entry->getCopyableState($entry->getState()) === '119000');
+});
+
+it('hides the data to invoice in receipt-only mode', function () {
+    $this->seller->company->update(['invoicing_mode' => InvoicingMode::ReceiptOnly]);
+
+    Livewire::test(EditSale::class, ['record' => $this->sale->getRouteKey()])
+        ->assertActionHidden('invoiceData');
 });

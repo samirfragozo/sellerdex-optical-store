@@ -52,6 +52,7 @@ class EditSale extends EditRecord
                         ->send();
                 }),
             FiscalDocumentActions::registerForSale(),
+            FiscalDocumentActions::invoiceData(),
             ...SaleReturnActions::make(),
             DeleteAction::make(),
             // Money and returns are accounting records: a sale holding any of them is never wiped.

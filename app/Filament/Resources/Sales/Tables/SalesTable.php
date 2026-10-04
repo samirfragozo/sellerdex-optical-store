@@ -134,6 +134,7 @@ class SalesTable
                                 ->send();
                         }),
                     FiscalDocumentActions::registerForSale(),
+                    FiscalDocumentActions::invoiceData(),
                     ...SaleReturnActions::make(),
                     Action::make('printInvoice')
                         ->label(__('app.documents.print_invoice'))
