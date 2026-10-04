@@ -80,6 +80,12 @@ return [
 
     'locale' => env('APP_LOCALE', 'en'),
 
+    /*
+    | Language of messages sent to customers. Unlike 'locale', it is never changed
+    | per request by app()->setLocale(), so staff's interface language doesn't leak in.
+    */
+    'customer_locale' => env('APP_LOCALE', 'en'),
+
     'fallback_locale' => env('APP_FALLBACK_LOCALE', 'en'),
 
     'faker_locale' => env('APP_FAKER_LOCALE', 'en_US'),

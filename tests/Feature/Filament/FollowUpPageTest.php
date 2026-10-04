@@ -58,6 +58,17 @@ it('lists the latest prescription expiring within 30 days or expired in the last
         ->assertCanNotSeeTableRecords([$oldRx, $farRx]);
 });
 
+it('includes the 30-day boundaries on both sides', function () {
+    $this->travelTo(now()->startOfDay()->addHours(10));
+    $upper = followUpPrescription(Customer::factory()->create(), now()->subYear()->toDateString(), today()->addDays(30)->toDateString());
+    $lower = followUpPrescription(Customer::factory()->create(), now()->subYear()->toDateString(), today()->subDays(30)->toDateString());
+    $outside = followUpPrescription(Customer::factory()->create(), now()->subYear()->toDateString(), today()->addDays(31)->toDateString());
+
+    Livewire::test(ExpiringPrescriptionsWidget::class)
+        ->assertCanSeeTableRecords([$upper, $lower])
+        ->assertCanNotSeeTableRecords([$outside]);
+});
+
 it('drops a prescription once it is marked contacted', function () {
     $customer = Customer::factory()->create();
     $rx = followUpPrescription($customer, now()->subYear()->toDateString(), now()->addDays(5)->toDateString());

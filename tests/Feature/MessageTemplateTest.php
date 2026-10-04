@@ -15,6 +15,15 @@ it('falls back to the translated default body', function () {
         ->toBe(__('app.message_templates.defaults.order_ready'));
 });
 
+it('renders the default in the app locale, not the staff interface locale', function () {
+    config(['app.customer_locale' => 'es']);
+    app()->setLocale('en');
+
+    expect(MessageTemplate::bodyFor($this->admin->company_id, MessageTemplateKey::OrderReady))
+        ->toBe(__('app.message_templates.defaults.order_ready', [], 'es'))
+        ->not->toBe(__('app.message_templates.defaults.order_ready', [], 'en'));
+});
+
 it('renders the stored body with the placeholders filled', function () {
     MessageTemplate::create(['company_id' => $this->admin->company_id, 'key' => MessageTemplateKey::BalanceDue, 'body' => 'Hola {cliente}, la orden {orden} tiene saldo {saldo}. {optica}']);
 

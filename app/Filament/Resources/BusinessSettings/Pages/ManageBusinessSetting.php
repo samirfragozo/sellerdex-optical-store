@@ -51,6 +51,11 @@ class ManageBusinessSetting extends EditRecord
     {
         InvoicingStep::persist($this->getRecord(), $this->receiptPrefixState ?? []);
 
+        // The form didn't send templates: never delete what is stored.
+        if ($this->templatesState === null) {
+            return;
+        }
+
         // Only real edits are stored, so untouched messages keep following the translated default.
         foreach (MessageTemplateKey::cases() as $key) {
             $body = trim((string) ($this->templatesState[$key->value] ?? ''));

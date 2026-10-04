@@ -31,7 +31,7 @@ class ExpiringPrescriptionsWidget extends TableWidget
             ->query(fn (): Builder => Prescription::query()
                 ->with('customer')
                 ->whereHas('customer')
-                ->whereBetween('expires_at', [today()->subDays(30)->toDateString(), today()->addDays(30)->toDateString()])
+                ->whereBetween('expires_at', [today()->subDays(30), today()->addDays(30)])
                 // Only the customer's latest prescription: a renewed exam silences the old one.
                 ->whereNotExists(fn ($newer) => $newer->selectRaw('1')->from('prescriptions as newer')
                     ->whereColumn('newer.customer_id', 'prescriptions.customer_id')
