@@ -10,6 +10,7 @@ use App\Filament\Resources\BusinessSettings\BusinessSettingResource;
 use App\Filament\Resources\CashRegisterSessions\CashRegisterSessionResource;
 use App\Filament\Resources\LensCombinations\LensCombinationResource;
 use App\Filament\Resources\PaymentMethods\PaymentMethodResource;
+use App\Filament\Resources\Sales\SaleResource;
 use App\Filament\Resources\Suppliers\SupplierResource;
 use App\Filament\Resources\Users\UserResource;
 use App\Models\CashRegisterSession;
@@ -18,6 +19,7 @@ use App\Models\KitSlot;
 use App\Models\LensCombinationPrice;
 use App\Models\PaymentMethod;
 use App\Models\Product;
+use App\Models\Sale;
 use App\Models\Supplier;
 use App\Models\User;
 use App\Scopes\CompanyScope;
@@ -127,6 +129,19 @@ class SaleReadiness
                 $issues[] = new ReadinessIssue('resolution_expired', ReadinessSeverity::Warning, __('app.readiness.resolution_expired'), BusinessSettingResource::getUrl('index', panel: 'admin'));
             } elseif ($dates->contains(fn ($date): bool => $date->lte(today()->addDays(30)))) {
                 $issues[] = new ReadinessIssue('resolution_expiring', ReadinessSeverity::Warning, __('app.readiness.resolution_expiring'), BusinessSettingResource::getUrl('index', panel: 'admin'));
+            }
+
+            // The law asks for same-day issuing: today's invoiced sales (sold today, or a layaway delivered today) still without a document.
+            $pending = Sale::withoutGlobalScopes()->whereNull('sales.deleted_at')->where('sales.company_id', $company->id)
+                ->where(fn ($query) => $query->whereDate('sales.sold_at', today())->orWhereDate('sales.delivered_at', today()))
+                ->missingFiscalDocument()
+                ->count();
+            if ($pending > 0) {
+                $issues[] = new ReadinessIssue(
+                    'fiscal_documents_pending', ReadinessSeverity::Warning,
+                    __('app.readiness.fiscal_documents_pending', ['count' => $pending]),
+                    SaleResource::getUrl('index', ['tableFilters' => ['missing_fiscal_document' => ['isActive' => true]]], panel: 'admin'),
+                );
             }
         }
 

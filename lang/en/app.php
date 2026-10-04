@@ -956,6 +956,7 @@ return [
     ],
 
     'readiness' => [
+        'fiscal_documents_pending' => ':count sale(s) from today without a registered invoice or POS document. The law requires issuing them the same day.',
         'invoicing_mode' => 'Choose how you invoice before selling.',
         'resolution_expiring' => 'Your numbering resolution expires in less than 30 days: request its renewal from the DIAN.',
         'resolution_expired' => 'Your numbering resolution has expired: do not issue documents with it.',
@@ -1071,6 +1072,7 @@ return [
             'register' => 'Register document',
             'register_note' => 'Register note',
         ],
+        'missing_filter' => 'Without fiscal document',
         'column' => 'Document',
         'void_after_document' => 'This sale already has an invoice or POS document: it cannot be voided. Register a return and its credit or adjustment note.',
         'fields' => [

@@ -956,6 +956,7 @@ return [
     ],
 
     'readiness' => [
+        'fiscal_documents_pending' => ':count venta(s) de hoy sin factura o POS electrónico registrado. La ley exige emitirlos el mismo día.',
         'invoicing_mode' => 'Elige cómo facturas antes de vender.',
         'resolution_expiring' => 'Tu resolución de numeración vence en menos de 30 días: solicita la renovación ante la DIAN.',
         'resolution_expired' => 'Tu resolución de numeración está vencida: no emitas documentos con ella.',
@@ -1071,6 +1072,7 @@ return [
             'register' => 'Registrar documento',
             'register_note' => 'Registrar nota',
         ],
+        'missing_filter' => 'Sin documento fiscal',
         'column' => 'Documento',
         'void_after_document' => 'Esta venta ya tiene factura o POS electrónico: no se anula. Registra una devolución y su nota crédito o de ajuste.',
         'fields' => [

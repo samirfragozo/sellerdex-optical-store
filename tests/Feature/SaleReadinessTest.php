@@ -12,9 +12,11 @@ use App\Models\LensType;
 use App\Models\PaymentMethod;
 use App\Models\Product;
 use App\Models\ProductCategory;
+use App\Models\Sale;
 use App\Models\Supplier;
 use App\Models\User;
 use App\Support\Readiness\ReadinessIssue;
+use App\Support\Readiness\SaleReadiness;
 
 function readyCompany(): Company
 {
@@ -175,4 +177,11 @@ it('ignores resolution dates in receipt-only mode', function () {
     $company->update(['invoicing_mode' => InvoicingMode::ReceiptOnly->value, 'pos_resolution_expires_at' => today()->subDay(), 'invoice_resolution_expires_at' => today()->addDay()]);
 
     expect(issueKeys($company))->not->toContain('resolution_expired')->not->toContain('resolution_expiring');
+});
+
+it('does not raise the pending-documents warning for companies that do not invoice externally', function () {
+    $company = Company::factory()->create(['invoicing_mode' => InvoicingMode::ReceiptOnly->value]);
+    Sale::factory()->create(['company_id' => $company->id]);
+
+    expect(collect(SaleReadiness::for($company))->pluck('key'))->not->toContain('fiscal_documents_pending');
 });

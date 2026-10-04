@@ -384,6 +384,27 @@ class Sale extends Model
             || Company::withoutGlobalScopes()->whereKey($this->company_id)->value('layaway_invoicing') === LayawayInvoicing::OnSale;
     }
 
+    /**
+     * Invoiced sales (the rule of isInvoiceableNow, in SQL) that have no registered factura or POS electrónico.
+     * Each sale is matched against its own company's layaway setting, never the logged-in user's.
+     */
+    public function scopeMissingFiscalDocument(Builder $query): void
+    {
+        $query->where('sales.status', '!=', SaleStatus::Voided->value)
+            ->whereNotNull('sales.company_id')
+            ->where('sales.document_type', '!=', SaleDocumentType::Quote->value)
+            ->where(fn (Builder $query) => $query
+                ->where('sales.document_type', '!=', SaleDocumentType::Layaway->value)
+                ->orWhere('sales.is_delivered', true)
+                ->orWhereExists(fn ($sub) => $sub->selectRaw('1')->from('companies')
+                    ->whereColumn('companies.id', 'sales.company_id')
+                    ->where('companies.layaway_invoicing', LayawayInvoicing::OnSale->value)))
+            ->whereNotExists(fn ($sub) => $sub->selectRaw('1')->from('fiscal_documents')
+                ->whereColumn('fiscal_documents.sale_id', 'sales.id')
+                ->whereNull('fiscal_documents.sale_return_id')
+                ->whereIn('fiscal_documents.document_type', [FiscalDocumentType::PosElectronic->value, FiscalDocumentType::ElectronicInvoice->value]));
+    }
+
     public function receipt(): ?FiscalDocument
     {
         return $this->fiscalDocuments()->where('document_type', FiscalDocumentType::Receipt->value)->first();

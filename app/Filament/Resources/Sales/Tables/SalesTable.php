@@ -3,11 +3,13 @@
 namespace App\Filament\Resources\Sales\Tables;
 
 use App\Actions\ConvertQuoteToOrder;
+use App\Enums\FiscalDocumentType;
 use App\Enums\SaleDocumentType;
 use App\Enums\SaleStatus;
 use App\Filament\Resources\Sales\Actions\FiscalDocumentActions;
 use App\Filament\Resources\Sales\Actions\SaleReturnActions;
 use App\Models\Customer;
+use App\Models\FiscalDocument;
 use App\Models\Sale;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
@@ -18,6 +20,7 @@ use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Actions\RestoreBulkAction;
 use Filament\Notifications\Notification;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
@@ -30,6 +33,7 @@ class SalesTable
     public static function configure(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(fn (Builder $query): Builder => $query->with('fiscalDocuments'))
             ->defaultSort('sold_at', 'desc')
             ->columns([
                 TextColumn::make('number')
@@ -66,6 +70,14 @@ class SalesTable
                     ->label(__('app.fields.sold_at'))
                     ->date()
                     ->sortable(),
+                TextColumn::make('fiscal_document_number')
+                    ->label(__('app.fiscal_document.column'))
+                    ->state(fn (Sale $record): ?string => self::shownDocument($record)?->number)
+                    ->url(fn (Sale $record): ?string => ($document = self::shownDocument($record))?->pdf_path !== null
+                        ? route('documents.fiscal-document.pdf', $document)
+                        : null, shouldOpenInNewTab: true)
+                    ->placeholder('—')
+                    ->toggleable(),
                 TextColumn::make('deleted_at')
                     ->dateTime()
                     ->sortable()
@@ -86,6 +98,10 @@ class SalesTable
                 SelectFilter::make('status')
                     ->label(__('app.fields.status'))
                     ->options(SaleStatus::options()),
+                Filter::make('missing_fiscal_document')
+                    ->label(__('app.fiscal_document.missing_filter'))
+                    ->query(fn (Builder $query): Builder => $query->missingFiscalDocument())
+                    ->toggle(),
                 TrashedFilter::make(),
             ])
             ->recordActions([
@@ -154,5 +170,14 @@ class SalesTable
                     RestoreBulkAction::make(),
                 ]),
             ]);
+    }
+
+    /** The sale's factura or POS electrónico, else its receipt, read from the eager-loaded relation. */
+    private static function shownDocument(Sale $sale): ?FiscalDocument
+    {
+        $documents = $sale->fiscalDocuments->whereNull('sale_return_id');
+
+        return $documents->first(fn (FiscalDocument $document): bool => in_array($document->document_type, [FiscalDocumentType::PosElectronic, FiscalDocumentType::ElectronicInvoice], true))
+            ?? $documents->first(fn (FiscalDocument $document): bool => $document->document_type === FiscalDocumentType::Receipt);
     }
 }
