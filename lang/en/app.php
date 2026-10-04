@@ -1092,7 +1092,7 @@ return [
         'totals' => 'Totals',
         'base' => 'Base',
         'tax' => 'VAT',
-        'unit_price' => 'Unit price',
+        'unit_price' => 'Unit price (VAT included)',
         'surcharge' => 'Payment method surcharge',
         'final_consumer' => 'Final consumer :id',
         'final_consumer_name' => 'Final consumer',

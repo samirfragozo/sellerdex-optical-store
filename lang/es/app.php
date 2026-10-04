@@ -1092,7 +1092,7 @@ return [
         'totals' => 'Totales',
         'base' => 'Base',
         'tax' => 'IVA',
-        'unit_price' => 'Valor unitario',
+        'unit_price' => 'Valor unitario (IVA incluido)',
         'surcharge' => 'Recargo por medio de pago',
         'final_consumer' => 'Consumidor final :id',
         'final_consumer_name' => 'Consumidor final',

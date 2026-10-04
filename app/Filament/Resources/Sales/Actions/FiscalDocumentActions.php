@@ -80,7 +80,8 @@ class FiscalDocumentActions
         $buyer = $data['buyer'];
         $sections = [
             Section::make(__('app.invoice_data.buyer'))->columns(2)->schema([
-                $text('buyer_document', __('app.fields.id_number'), $buyer['document']),
+                $text('buyer_document_type', __('app.fields.document_type'), $buyer['document_type']),
+                $text('buyer_id_number', __('app.fields.id_number'), $buyer['id_number']),
                 $text('buyer_name', __('app.fields.full_name'), $buyer['name']),
                 $text('buyer_phone', __('app.fields.phone'), $buyer['phone']),
                 $text('buyer_email', __('app.fields.email'), $buyer['email']),
