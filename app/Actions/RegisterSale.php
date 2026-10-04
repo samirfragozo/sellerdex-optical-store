@@ -44,6 +44,7 @@ class RegisterSale
                 'surcharge_percent' => $this->resolveSurcharge($data),
                 'sold_at' => $data['sold_at'] ?? now()->toDateString(),
                 'notes' => $data['notes'] ?? null,
+                'fiscal_document_type' => $data['fiscal_document_type'] ?? null,
             ]);
 
             $this->buildArmados($sale, $data['armados'] ?? []);

@@ -66,6 +66,10 @@ class PosController extends Controller
             ->values();
 
         return Inertia::render('Pos', [
+            'invoicing' => [
+                'mode' => Company::current()->invoicing_mode->value,
+                'default_document' => Company::current()->default_fiscal_document->value,
+            ],
             'products' => [
                 'data' => $products->items(),
                 'meta' => [

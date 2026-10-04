@@ -493,6 +493,8 @@ return [
     ],
 
     'validation' => [
+        'buyer_fiscal_field_required' => 'The electronic invoice needs: :field.',
+        'pos_document_needs_id' => 'The electronic POS document needs the customer\'s ID; complete it or sell without a customer as final consumer.',
         'payments_exceed_total' => 'The payments cannot exceed the sale total.',
         'axis_required_with_cylinder' => 'Enter the axis when there is a cylinder.',
         'cylinder_required_with_axis' => 'Enter the cylinder when there is an axis.',

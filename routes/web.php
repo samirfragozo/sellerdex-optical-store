@@ -6,6 +6,7 @@ use App\Http\Controllers\CashRegisterSession\NoteController;
 use App\Http\Controllers\CashRegisterSession\PreviewController;
 use App\Http\Controllers\CashRegisterSession\ReportController as CashRegisterSessionReportController;
 use App\Http\Controllers\CashRegisterSessionController;
+use App\Http\Controllers\Customer\FiscalDataController as CustomerFiscalDataController;
 use App\Http\Controllers\Customer\PrescriptionsController as CustomerPrescriptionsController;
 use App\Http\Controllers\Customer\SearchController as CustomerSearchController;
 use App\Http\Controllers\CustomerController;
@@ -37,6 +38,7 @@ Route::middleware(['auth', 'verified', EnsureCompanyIsOnboarded::class])->group(
     Route::post('pos/customers', [CustomerController::class, 'store'])->name('pos.customers.store');
     Route::get('pos/customers/search', CustomerSearchController::class)->name('pos.customers.search');
     Route::get('pos/customers/{customer}/prescriptions', CustomerPrescriptionsController::class)->name('pos.customers.prescriptions');
+    Route::get('pos/customers/{customer}/fiscal-data', CustomerFiscalDataController::class)->name('pos.customers.fiscal-data');
     Route::get('pos/lens-offers', LensOffersController::class)->name('pos.lens-offers');
     Route::post('pos/lens-recommendation', LensRecommendationController::class)
         ->name('pos.lens-recommendation');

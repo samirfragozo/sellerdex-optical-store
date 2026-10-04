@@ -3,8 +3,12 @@
 namespace App\Http\Requests;
 
 use App\Enums\DocumentType;
+use App\Enums\FiscalDocumentType;
+use App\Enums\FiscalResponsibility;
 use App\Enums\FrameType;
+use App\Enums\InvoicingMode;
 use App\Enums\LensKind;
+use App\Enums\PersonType;
 use App\Enums\SaleDocumentType;
 use App\Models\Customer;
 use App\Models\LensCombination;
@@ -103,6 +107,13 @@ class StoreSaleRequest extends FormRequest
             'payments.*.amount' => ['required', 'integer', 'min:1', 'max:100000000'],
             'payments.*.reference' => ['nullable', 'string', 'max:255'],
             'surcharge_percent' => ['nullable', 'numeric', 'between:0,100'],
+            'fiscal_document_type' => ['nullable', Rule::in([FiscalDocumentType::PosElectronic->value, FiscalDocumentType::ElectronicInvoice->value])],
+            'buyer' => ['nullable', 'array'],
+            'buyer.person_type' => ['nullable', Rule::enum(PersonType::class)],
+            'buyer.email' => ['nullable', 'email', 'max:255'],
+            'buyer.dane_municipality_code' => ['nullable', 'regex:/^\d{5}$/'],
+            'buyer.fiscal_responsibilities' => ['nullable', 'array'],
+            'buyer.fiscal_responsibilities.*' => [Rule::enum(FiscalResponsibility::class)],
         ];
     }
 
@@ -130,6 +141,7 @@ class StoreSaleRequest extends FormRequest
             }
 
             $this->validateStoreCreditPayments($validator);
+            $this->validateFiscalDocument($validator);
 
             if (! $this->cartHasLens()) {
                 return;
@@ -165,6 +177,42 @@ class StoreSaleRequest extends FormRequest
                 'balance' => '$'.number_format($customer->creditBalance(), 0, ',', '.'),
             ]));
         }
+    }
+
+    /**
+     * A factura for an identified buyer needs their fiscal data; a POS document needs their ID. Walk-in sales are consumidor final.
+     * ponytail: a brand-new inline customer (`customer` array, no id) is not validated here; the POS creates customers through `pos/customers` before checkout.
+     */
+    private function validateFiscalDocument(Validator $validator): void
+    {
+        $company = $this->user()->company;
+        if ($company->invoicing_mode !== InvoicingMode::ExternalManual || $validator->errors()->has('customer_id')) {
+            return;
+        }
+
+        $customer = is_numeric($this->input('customer_id')) ? Customer::find((int) $this->input('customer_id')) : null;
+        if ($customer === null) {
+            return;
+        }
+
+        if ($this->fiscalDocumentType() === FiscalDocumentType::ElectronicInvoice) {
+            foreach ($customer->missingFiscalData((array) $this->input('buyer', [])) as $field) {
+                $validator->errors()->add("buyer.{$field}", __('app.validation.buyer_fiscal_field_required', ['field' => __('app.fields.'.$field)]));
+            }
+        } elseif (blank($customer->id_number)) {
+            $validator->errors()->add('customer_id', __('app.validation.pos_document_needs_id'));
+        }
+    }
+
+    /** The document the sale is meant to get: the cashier's choice, else the company default; null outside external-manual mode. */
+    public function fiscalDocumentType(): ?FiscalDocumentType
+    {
+        $company = $this->user()->company;
+        if ($company->invoicing_mode !== InvoicingMode::ExternalManual) {
+            return null;
+        }
+
+        return FiscalDocumentType::tryFrom((string) $this->input('fiscal_document_type')) ?? $company->default_fiscal_document;
     }
 
     /** A live customer of the seller's company — the payer or an armado's patient. */

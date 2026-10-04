@@ -493,6 +493,8 @@ return [
     ],
 
     'validation' => [
+        'buyer_fiscal_field_required' => 'Para la factura electrónica falta: :field.',
+        'pos_document_needs_id' => 'El POS electrónico necesita la cédula o NIT del cliente; complétala o vende sin cliente como consumidor final.',
         'payments_exceed_total' => 'La suma de los abonos no puede superar el total de la venta.',
         'axis_required_with_cylinder' => 'Indica el eje cuando hay cilindro.',
         'cylinder_required_with_axis' => 'Indica el cilindro cuando hay eje.',

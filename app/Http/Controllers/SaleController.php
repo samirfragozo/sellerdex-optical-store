@@ -43,6 +43,13 @@ class SaleController extends Controller
             $data['customer_id'] = Customer::create($data['customer'])->id;
         }
 
+        // Saved on the customer even if the sale then fails: it is valid buyer data either way.
+        $buyer = array_filter((array) ($data['buyer'] ?? []), fn (mixed $value): bool => filled($value));
+        if ($buyer !== [] && ! empty($data['customer_id'])) {
+            Customer::whereKey($data['customer_id'])->first()?->update($buyer);
+        }
+        $data['fiscal_document_type'] = $request->fiscalDocumentType()?->value;
+
         $sale = $registerSale->handle($data, $request->user());
 
         return response()->json([
