@@ -6,6 +6,7 @@ use App\Models\Company;
 use App\Models\Sale;
 use App\Models\SaleItem;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 /**
  * Bring an expired quote to today's prices. Lens lines move by the change in their base price, so kit
@@ -47,6 +48,10 @@ class RepriceQuote
     {
         $config = $item->lensConfig;
         $combination = $config->lensCombination;
+
+        if ($combination === null) {
+            throw ValidationException::withMessages(['lens' => __('app.pos.lens_form.invalid_combination')]);
+        }
 
         $resolved = (new ResolveLensPricing)->handle(
             $combination->lens_type_id,

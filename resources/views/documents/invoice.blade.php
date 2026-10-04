@@ -13,7 +13,7 @@
         </tr>
     </table>
     <p class="muted">{{ $sale->document_type->legend() }}</p>
-    @if ($sale->quote_valid_until)
+    @if ($sale->document_type === \App\Enums\SaleDocumentType::Quote && $sale->quote_valid_until)
         <p class="muted"><strong>{{ __('app.documents.quote_valid_until', ['date' => $sale->quote_valid_until->format('d/m/Y')]) }}</strong></p>
     @endif
     <p class="muted"><strong>{{ __('app.documents.not_an_invoice') }}</strong></p>

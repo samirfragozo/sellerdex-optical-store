@@ -116,3 +116,20 @@ it('keeps an expired quote as a quote when its lens can no longer be priced', fu
     expect(fn () => app(ConvertQuoteToOrder::class)->handle($quote))->toThrow(ValidationException::class);
     expect($quote->fresh()->document_type)->toBe(SaleDocumentType::Quote);
 });
+
+it('does not print the validity line once the quote became an order', function () {
+    $quote = Sale::factory()->create(['document_type' => SaleDocumentType::Quote, 'sold_at' => today()]);
+
+    app(ConvertQuoteToOrder::class)->handle($quote);
+
+    $this->get(route('documents.invoice', $quote))->assertDontSee(__('app.documents.quote_valid_until', ['date' => $quote->fresh()->quote_valid_until->format('d/m/Y')]));
+});
+
+it('keeps an expired quote as a quote when its lens combination was deleted', function () {
+    [$quote] = quoteValidityArmadoQuote($this);
+
+    $quote->items->first(fn ($item) => $item->isLens())->lensConfig->update(['lens_combination_id' => null]);
+
+    expect(fn () => app(ConvertQuoteToOrder::class)->handle($quote))->toThrow(ValidationException::class);
+    expect($quote->fresh()->document_type)->toBe(SaleDocumentType::Quote);
+});
