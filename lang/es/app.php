@@ -1021,6 +1021,7 @@ return [
         'rejection_reason_required' => 'Indica por qué se rechaza el reclamo.',
         'replacement_product_required' => 'Elige el producto que se entrega a cambio.',
         'refund_reason' => 'Garantía #:id: devolución del dinero',
+        'refund_must_be_full' => 'La devolución por garantía es por el valor completo pagado: :amount.',
         'resolved' => 'Reclamo resuelto',
     ],
 ];

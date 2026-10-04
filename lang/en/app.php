@@ -1021,6 +1021,7 @@ return [
         'rejection_reason_required' => 'Say why the claim is rejected.',
         'replacement_product_required' => 'Choose the product given in exchange.',
         'refund_reason' => 'Warranty #:id: refund',
+        'refund_must_be_full' => 'A warranty refund is for the full amount paid: :amount.',
         'resolved' => 'Claim resolved',
     ],
 ];

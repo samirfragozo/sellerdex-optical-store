@@ -62,9 +62,8 @@ class WarrantyClaimsTable
                             $approver = AdminApproval::ensure(AdminApproval::approver(auth()->user(), $data['approval_pin'] ?? null));
                             app(ResolveWarrantyClaim::class)->handle($record, WarrantyResolution::from($data['resolution']), $data, auth()->user(), $approver);
                         } catch (ValidationException $exception) {
-                            // The return's own errors are keyed by its lines; the modal only has the resolution field to show them under.
                             throw ValidationException::withMessages(collect($exception->errors())
-                                ->mapWithKeys(fn (array $messages, string $key): array => ['mountedActions.0.data.'.(str_starts_with($key, 'items') ? 'resolution' : $key) => $messages])
+                                ->mapWithKeys(fn (array $messages, string $key): array => ['mountedActions.0.data.'.self::formKey($key, $record) => $messages])
                                 ->all());
                         } catch (DomainException $exception) {
                             Notification::make()->danger()->title($exception->getMessage())->send();
@@ -87,10 +86,28 @@ class WarrantyClaimsTable
             ]);
     }
 
+    /** Puts an error under a field the modal shows; anything without one (the return's `items`, `reason`, a hidden field) goes under the resolution. */
+    private static function formKey(string $key, WarrantyClaim $claim): string
+    {
+        // Walk-in sales have no store-credit field, so the money-limit errors go under the refund.
+        if ($key === 'store_credit_amount' && $claim->saleItem->sale->customer_id === null) {
+            return 'refund_amount';
+        }
+
+        $shown = ['resolution', 'responsible', 'store_cost', 'rejection_reason', 'refund_amount', 'refund_payment_method_id', 'store_credit_amount', 'approval_pin'];
+        if (! $claim->saleItem->isLens()) {
+            $shown[] = 'replacement_product_id';
+        }
+
+        return in_array($key, $shown, true) ? $key : 'resolution';
+    }
+
     /** @return list<mixed> */
     private static function resolveFields(WarrantyClaim $claim): array
     {
         $isLens = $claim->saleItem->isLens();
+        $hasCustomer = $claim->saleItem->sale->customer_id !== null;
+        $refundDue = ResolveWarrantyClaim::refundDue($claim->saleItem);
         $isRefund = fn (Get $get): bool => $get('resolution') === WarrantyResolution::Refund->value;
         $isRejected = fn (Get $get): bool => $get('resolution') === WarrantyResolution::Rejected->value;
 
@@ -126,7 +143,7 @@ class WarrantyClaimsTable
                 ->label(__('app.sale_return.fields.refund_amount'))
                 ->integer()
                 ->minValue(0)
-                ->default(0)
+                ->default($hasCustomer ? 0 : $refundDue)
                 ->prefix('$')
                 ->visible($isRefund),
             Select::make('refund_payment_method_id')
@@ -144,9 +161,9 @@ class WarrantyClaimsTable
                 ->label(__('app.sale_return.fields.store_credit_amount'))
                 ->integer()
                 ->minValue(0)
-                ->default(0)
+                ->default($hasCustomer ? $refundDue : 0)
                 ->prefix('$')
-                ->visible(fn (Get $get): bool => $isRefund($get) && $claim->saleItem->sale->customer_id !== null),
+                ->visible(fn (Get $get): bool => $isRefund($get) && $hasCustomer),
             ApprovalPinInput::make(),
         ];
     }

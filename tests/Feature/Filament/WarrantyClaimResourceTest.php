@@ -3,6 +3,7 @@
 use App\Enums\WarrantyClaimStatus;
 use App\Filament\Resources\WarrantyClaims\Pages\CreateWarrantyClaim;
 use App\Filament\Resources\WarrantyClaims\Pages\ListWarrantyClaims;
+use App\Models\PaymentMethod;
 use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Models\User;
@@ -84,4 +85,17 @@ it('delivers a resolved claim', function () {
     Livewire::test(ListWarrantyClaims::class)->callTableAction('deliver', $claim);
 
     expect($claim->fresh()->status)->toBe(WarrantyClaimStatus::Delivered);
+});
+
+it('shows a refund above what is due under the refund field on a walk-in sale', function () {
+    User::factory()->admin()->create(['company_id' => $this->sale->company_id, 'approval_pin' => '4321']);
+    $this->sale->forceFill(['customer_id' => null])->saveQuietly();
+    $method = PaymentMethod::factory()->create(['company_id' => $this->sale->company_id]);
+    $claim = WarrantyClaim::factory()->create(['sale_item_id' => $this->item->id, 'status' => WarrantyClaimStatus::InReview]);
+
+    Livewire::test(ListWarrantyClaims::class)
+        ->callTableAction('resolve', $claim, ['resolution' => 'refund', 'refund_amount' => 999_999, 'refund_payment_method_id' => $method->id, 'approval_pin' => '4321'])
+        ->assertHasTableActionErrors(['refund_amount']);
+
+    expect($claim->fresh()->status)->toBe(WarrantyClaimStatus::InReview);
 });

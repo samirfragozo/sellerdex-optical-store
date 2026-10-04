@@ -37,6 +37,18 @@ function resolveClaim(WarrantyClaim $claim, WarrantyResolution $resolution, arra
     return app(ResolveWarrantyClaim::class)->handle($claim, $resolution, $data, test()->admin, $approver ?? test()->admin);
 }
 
+/** @return list<string> */
+function warrantyErrorKeys(Closure $callback): array
+{
+    try {
+        $callback();
+    } catch (ValidationException $exception) {
+        return array_keys($exception->errors());
+    }
+
+    return [];
+}
+
 it('resolves a repair with no side effects', function () {
     $claim = resolveClaim($this->claim, WarrantyResolution::Repair);
 
@@ -49,7 +61,7 @@ it('resolves a repair with no side effects', function () {
 });
 
 it('needs a reason to reject a claim', function () {
-    expect(fn () => resolveClaim($this->claim, WarrantyResolution::Rejected))->toThrow(ValidationException::class);
+    expect(warrantyErrorKeys(fn () => resolveClaim($this->claim, WarrantyResolution::Rejected)))->toBe(['rejection_reason']);
 
     $claim = resolveClaim($this->claim->fresh(), WarrantyResolution::Rejected, ['rejection_reason' => 'Golpe del cliente']);
 
@@ -69,7 +81,7 @@ it('takes the same product out of stock on a same replacement', function () {
 it('takes the replacement product out of stock on another replacement', function () {
     $other = Product::factory()->create(['is_stockable' => true, 'stock' => 3]);
 
-    expect(fn () => resolveClaim($this->claim, WarrantyResolution::OtherReplacement))->toThrow(ValidationException::class);
+    expect(warrantyErrorKeys(fn () => resolveClaim($this->claim, WarrantyResolution::OtherReplacement)))->toBe(['replacement_product_id']);
 
     $claim = resolveClaim($this->claim->fresh(), WarrantyResolution::OtherReplacement, ['replacement_product_id' => $other->id]);
 
@@ -113,10 +125,27 @@ it('refunds the full amount with no fee, even on a layaway', function () {
         ->and($this->product->fresh()->stock)->toBe(4);
 });
 
+it('refuses a refund that is not the full amount paid', function (int $amount) {
+    $cash = PaymentMethod::where('is_default', true)->first() ?? PaymentMethod::factory()->create(['is_default' => true, 'name' => 'Efectivo']);
+    Payment::factory()->create(['sale_id' => $this->sale->id, 'payment_method_id' => $cash->id, 'amount' => 100_000]);
+    openCashRegisterSession($this->admin, 100_000);
+
+    expect(ResolveWarrantyClaim::refundDue($this->item->fresh()))->toBe(100_000)
+        ->and(warrantyErrorKeys(fn () => resolveClaim($this->claim, WarrantyResolution::Refund, ['refund_amount' => $amount, 'refund_payment_method_id' => $cash->id])))->toBe(['refund_amount'])
+        ->and($this->claim->fresh()->status)->toBe(WarrantyClaimStatus::InReview);
+})->with([0, 60_000]);
+
 it('refuses to resolve a claim that was not reviewed', function () {
     $this->claim->update(['status' => WarrantyClaimStatus::Received]);
 
     resolveClaim($this->claim, WarrantyResolution::Repair);
+})->throws(DomainException::class);
+
+it('refuses to resolve a claim already resolved by someone else', function () {
+    $stale = $this->claim->fresh();
+    resolveClaim($this->claim, WarrantyResolution::Repair);
+
+    resolveClaim($stale, WarrantyResolution::Rejected, ['rejection_reason' => 'x']);
 })->throws(DomainException::class);
 
 it('refuses a non-admin approver', function () {
