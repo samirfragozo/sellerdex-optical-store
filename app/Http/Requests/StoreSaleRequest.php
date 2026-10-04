@@ -52,6 +52,7 @@ class StoreSaleRequest extends FormRequest
             'document_type' => ['required', Rule::enum(SaleDocumentType::class)],
             'discount_percent' => ['nullable', 'numeric', 'between:0,100'],
             'notes' => ['nullable', 'string', 'max:1000'],
+            'approval_pin' => ['nullable', 'string', 'max:20'],
             'armados' => ['nullable', 'array'],
             'armados.*.patient_id' => ['nullable', 'integer', $this->companyCustomer()],
             'armados.*.prescription_id' => [

@@ -774,11 +774,13 @@ it('applies discount percent and per-line included tax when registering a pos sa
     $customer = Customer::factory()->create(['company_id' => $seller->company_id]);
     $tax = Tax::factory()->create(['company_id' => $seller->company_id, 'rate' => 19]);
     $product = Product::factory()->create(['company_id' => $seller->company_id, 'price' => 100_000, 'tax_id' => $tax->id, 'is_pos_selectable' => true]);
+    User::factory()->admin()->create(['company_id' => $seller->company_id, 'approval_pin' => '4321']);
 
     $this->actingAs($seller)->postJson('/pos', [
         'customer_id' => $customer->id,
         'document_type' => 'order',
         'discount_percent' => 10,
+        'approval_pin' => '4321',
         'products' => [[
             'product_id' => $product->id,
             'description' => $product->name,

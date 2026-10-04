@@ -187,6 +187,7 @@ return [
         'status' => 'Status',
         'subtotal' => 'Subtotal',
         'discount' => 'Discount',
+        'discount_approved_by' => 'Discount approved by',
         'discount_percent' => 'Discount percentage',
         'tax' => 'Tax',
         'total' => 'Total',
@@ -454,6 +455,7 @@ return [
     ],
 
     'sale_actions' => [
+        'discount_cap_help' => 'You can give up to :percent %. For more, ask an administrator.',
         'convert_to_order' => 'Convert to sale',
         'converted' => 'Quote converted to sale.',
         'mark_delivered' => 'Mark as delivered',

@@ -73,7 +73,9 @@ it('bounds the payment by a seller-entered price_override instead of the catalog
     openCashRegisterSession($this->seller);
     Supplier::factory()->laboratory()->create(['company_id' => $this->seller->company_id]);
 
-    $this->postJson('/pos', lensSalePayload(80_001, ['price_override' => 80_000]))
+    User::factory()->admin()->create(['company_id' => $this->seller->company_id, 'approval_pin' => '4321']);
+
+    $this->postJson('/pos', ['approval_pin' => '4321'] + lensSalePayload(80_001, ['price_override' => 80_000]))
         ->assertJsonValidationErrors(['payments' => 'La suma de los abonos no puede superar el total de la venta.']);
 });
 

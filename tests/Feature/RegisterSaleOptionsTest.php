@@ -57,9 +57,12 @@ it('prices an armado lens from its resolved configuration and snapshots it', fun
 });
 
 it('lets a seller-entered price_override win over the computed catalog price', function () {
+    User::factory()->admin()->create(['company_id' => $this->seller->company_id, 'approval_pin' => '4321']);
+
     $sale = app(RegisterSale::class)->handle([
         'customer_id' => $this->customer->id,
         'document_type' => 'order',
+        'approval_pin' => '4321',
         'armados' => [['lens' => armadoLens(['price_override' => 80000])]],
     ], $this->seller);
 

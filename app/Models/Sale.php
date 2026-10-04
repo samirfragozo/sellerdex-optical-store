@@ -24,7 +24,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
-#[Fillable(['company_id', 'number', 'customer_id', 'seller_id', 'document_type', 'status', 'subtotal', 'discount', 'discount_percent', 'surcharge_percent', 'tax_amount', 'total', 'is_delivered', 'delivered_at', 'sold_at', 'notes', 'created_by'])]
+#[Fillable(['company_id', 'number', 'customer_id', 'seller_id', 'document_type', 'status', 'subtotal', 'discount', 'discount_percent', 'surcharge_percent', 'tax_amount', 'total', 'is_delivered', 'delivered_at', 'sold_at', 'notes', 'created_by', 'discount_approved_by', 'quote_valid_until'])]
 class Sale extends Model
 {
     /** @use HasFactory<SaleFactory> */
@@ -47,6 +47,7 @@ class Sale extends Model
             'is_delivered' => 'boolean',
             'delivered_at' => 'date',
             'sold_at' => 'date',
+            'quote_valid_until' => 'date',
         ];
     }
 
@@ -294,6 +295,11 @@ class Sale extends Model
     public function customer(): BelongsTo
     {
         return $this->belongsTo(Customer::class);
+    }
+
+    public function discountApprover(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'discount_approved_by');
     }
 
     public function seller(): BelongsTo

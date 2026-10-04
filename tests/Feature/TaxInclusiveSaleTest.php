@@ -49,7 +49,9 @@ it('charges exactly the tax-inclusive price and derives the VAT inside it', func
 it('applies a discount to the tax-inclusive price and prorates the VAT', function () {
     $frame = Product::factory()->create(['price' => 100_000, 'tax_id' => $this->iva19->id]);
 
-    $sale = sellProduct($frame, ['discount_percent' => 10]);
+    User::factory()->admin()->create(['company_id' => $this->seller->company_id, 'approval_pin' => '4321']);
+
+    $sale = sellProduct($frame, ['discount_percent' => 10, 'approval_pin' => '4321']);
 
     // line tax = 100000 - 100000/1.19 = 15966; prorated by 90000/100000 = 14369.4 → 14369
     expect($sale->total)->toBe(90_000)

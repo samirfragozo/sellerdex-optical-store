@@ -169,6 +169,7 @@ return [
         'status' => 'Estado',
         'subtotal' => 'Subtotal',
         'discount' => 'Descuento',
+        'discount_approved_by' => 'Descuento aprobado por',
         'discount_percent' => 'Porcentaje de descuento',
         'tax' => 'Impuesto',
         'total' => 'Total',
@@ -454,6 +455,7 @@ return [
     'purchase_order_actions' => ['receive' => 'Recibir', 'cancel' => 'Cancelar'],
 
     'sale_actions' => [
+        'discount_cap_help' => 'Puedes dar hasta :percent %. Para más, pide a un administrador.',
         'convert_to_order' => 'Convertir a venta',
         'converted' => 'Cotización convertida a venta.',
         'mark_delivered' => 'Marcar como entregada',

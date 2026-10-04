@@ -156,10 +156,12 @@ it('adds the free exam surcharge per armado when requested', function () {
 
 it('lets a seller-entered price_override win over the resolved catalog price', function () {
     seedCatalog();
+    User::factory()->admin()->create(['company_id' => $this->seller->company_id, 'approval_pin' => '4321']);
 
     $sale = app(RegisterSale::class)->handle([
         'customer_id' => Customer::factory()->create()->id,
         'document_type' => 'order',
+        'approval_pin' => '4321',
         'armados' => [[
             'lens' => lensPayload(['price' => 250000], ['price_override' => 90000]),
             'own_frame' => true,

@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Sales\Schemas;
 
 use App\Enums\SaleDocumentType;
+use App\Models\Company;
 use App\Models\Sale;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Placeholder;
@@ -42,10 +43,14 @@ class SaleForm
                     ->numeric()
                     ->default(0)
                     ->minValue(0)
-                    ->maxValue(100)
+                    ->maxValue(fn (): float => auth()->user()?->isAdmin() ? 100 : (float) Company::current()->seller_max_discount_percent)
+                    ->helperText(fn (): ?string => auth()->user()?->isAdmin() ? null : __('app.sale_actions.discount_cap_help', ['percent' => (float) Company::current()->seller_max_discount_percent]))
                     ->suffix('%')
-                    // The charged value is frozen once returns or a void exist.
-                    ->disabled(fn (?Sale $record): bool => $record?->isLockedForEdits() ?? false),
+                    // The charged value is frozen once returns or a void exist; a discount above the cap was
+                    // approved by an admin, so only an admin may change it again.
+                    ->disabled(fn (?Sale $record): bool => ($record?->isLockedForEdits() ?? false)
+                        || ($record !== null && auth()->user()?->isAdmin() !== true
+                            && (float) $record->discount_percent > (float) Company::current()->seller_max_discount_percent)),
                 Placeholder::make('total')
                     ->label(__('app.fields.total'))
                     ->visibleOn('edit')
@@ -54,6 +59,10 @@ class SaleForm
                     ->label(__('app.fields.balance'))
                     ->visibleOn('edit')
                     ->content(fn (?Sale $record): string => $record ? '$'.number_format($record->balance, 0, ',', '.') : '—'),
+                Placeholder::make('discount_approved_by')
+                    ->label(__('app.fields.discount_approved_by'))
+                    ->visible(fn (?Sale $record): bool => $record?->discount_approved_by !== null)
+                    ->content(fn (?Sale $record): string => (string) $record?->discountApprover?->name),
                 Placeholder::make('real_margin')
                     ->label(__('app.fields.real_margin'))
                     // A record only exists when editing; costs are internal, so only admins see the margin.

@@ -123,3 +123,15 @@ it('keeps sales with payments when force deleting in bulk from the list', functi
     expect(Sale::withTrashed()->find($paid->id))->not->toBeNull()
         ->and(Sale::withTrashed()->find($clean->id))->toBeNull();
 });
+
+it('stops a seller from raising a sale discount above the company cap', function () {
+    $seller = User::factory()->seller()->create();
+    $seller->company->update(['seller_max_discount_percent' => 5]);
+    $this->actingAs($seller);
+    $sale = Sale::factory()->create();
+
+    Livewire::test(EditSale::class, ['record' => $sale->getRouteKey()])
+        ->fillForm(['discount_percent' => 10])
+        ->call('save')
+        ->assertHasFormErrors(['discount_percent']);
+});

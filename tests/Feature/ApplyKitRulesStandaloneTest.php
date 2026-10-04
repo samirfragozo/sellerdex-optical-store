@@ -16,11 +16,13 @@ require_once __DIR__.'/../Support/GoldenCatalog.php';
 beforeEach(function () {
     $this->seller = User::factory()->seller()->create();
     $this->catalog = goldenCatalog($this->seller);
+    // The threshold tests price lines below the catalog price, which only an admin may do without a PIN.
+    $this->admin = User::factory()->admin()->create(['company_id' => $this->seller->company_id]);
 });
 
 function kitSellProducts(array $lines): Sale
 {
-    return app(RegisterSale::class)->handle(['document_type' => 'order', 'products' => $lines], test()->seller);
+    return app(RegisterSale::class)->handle(['document_type' => 'order', 'products' => $lines], test()->admin);
 }
 
 function kitLine(Product $p, int $price, int $qty = 1): array

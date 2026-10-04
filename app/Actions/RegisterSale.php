@@ -11,12 +11,15 @@ use App\Models\ProductCategory;
 use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Models\User;
+use App\Support\AdminApproval;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class RegisterSale
 {
     private User $seller;
+
+    private bool $needsApproval = false;
 
     /**
      * Create a sale with its line items, apply the company's combo slots and record
@@ -27,8 +30,11 @@ class RegisterSale
     public function handle(array $data, User $seller): Sale
     {
         $this->seller = $seller;
+        $this->needsApproval = false;
+        // Outside the transaction: a wrong PIN must count against the throttle even though the sale rolls back.
+        $approver = AdminApproval::approver($seller, $data['approval_pin'] ?? null);
 
-        return DB::transaction(function () use ($data, $seller): Sale {
+        return DB::transaction(function () use ($data, $seller, $approver): Sale {
             $sale = Sale::create([
                 'customer_id' => $data['customer_id'] ?? null,
                 'seller_id' => $seller->id,
@@ -43,6 +49,9 @@ class RegisterSale
             $this->buildArmados($sale, $data['armados'] ?? []);
             foreach ($data['products'] ?? [] as $productLine) {
                 $product = Product::find($productLine['product_id'] ?? null);
+                if ($product !== null && (int) $productLine['unit_price'] < $product->price) {
+                    $this->needsApproval = true;
+                }
                 $sale->items()->create([
                     'product_id' => $productLine['product_id'] ?? null,
                     'description' => $productLine['description'],
@@ -57,6 +66,10 @@ class RegisterSale
             $kitRules->forSale($sale, $seller);
 
             $sale->recalculateTotals();
+
+            if ($this->needsApproval || (float) $sale->discount_percent > (float) $seller->company->seller_max_discount_percent) {
+                $sale->forceFill(['discount_approved_by' => AdminApproval::ensure($approver)->id])->saveQuietly();
+            }
 
             $paid = (int) collect($data['payments'] ?? [])->sum(fn (array $p): int => max(0, (int) ($p['amount'] ?? 0)));
             if ($paid > $sale->total) {
@@ -141,6 +154,7 @@ class RegisterSale
             // silently swap out the protected computed price.
             if (isset($lens['price_override'])) {
                 $unitPrice = (int) $lens['price_override'];
+                $this->needsApproval = $this->needsApproval || $unitPrice < $resolved['price'];
             }
 
             $combination = $resolved['combination'];
@@ -203,6 +217,10 @@ class RegisterSale
 
             if (empty($armado['own_frame']) && ! empty($armado['frame'])) {
                 $frame = $armado['frame'];
+                $frameProduct = Product::find($frame['product_id'] ?? null);
+                if ($frameProduct !== null && (int) $frame['unit_price'] < $frameProduct->price) {
+                    $this->needsApproval = true;
+                }
                 $sale->items()->create([
                     'group_key' => $groupKey,
                     'product_id' => $frame['product_id'] ?? null,
@@ -210,7 +228,7 @@ class RegisterSale
                     'quantity' => $frame['quantity'] ?? 1,
                     'unit_price' => $this->seller->company->armadoFrameUnitPrice((int) $frame['unit_price']),
                     'unit_cost' => $frame['unit_cost'] ?? 0,
-                    ...SaleItem::taxSnapshotFor(Product::find($frame['product_id'] ?? null), $this->seller->company),
+                    ...SaleItem::taxSnapshotFor($frameProduct, $this->seller->company),
                 ]);
             }
 
