@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Sales\Pages;
 use App\Actions\ConvertQuoteToOrder;
 use App\Enums\SaleDocumentType;
 use App\Filament\Concerns\RedirectsToResourceIndex;
+use App\Filament\Resources\Sales\Actions\FiscalDocumentActions;
 use App\Filament\Resources\Sales\Actions\SaleReturnActions;
 use App\Filament\Resources\Sales\SaleResource;
 use App\Models\Sale;
@@ -50,6 +51,7 @@ class EditSale extends EditRecord
                             : __('app.sale_actions.converted'))
                         ->send();
                 }),
+            FiscalDocumentActions::registerForSale(),
             ...SaleReturnActions::make(),
             DeleteAction::make(),
             // Money and returns are accounting records: a sale holding any of them is never wiped.

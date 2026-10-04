@@ -9,6 +9,7 @@ use App\Http\Controllers\CashRegisterSessionController;
 use App\Http\Controllers\Customer\PrescriptionsController as CustomerPrescriptionsController;
 use App\Http\Controllers\Customer\SearchController as CustomerSearchController;
 use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\FiscalDocument\PdfController as FiscalDocumentPdfController;
 use App\Http\Controllers\LensOrder\DocumentController as LabOrderDocumentController;
 use App\Http\Controllers\LensOrder\DocumentPdfController as LabOrderDocumentPdfController;
 use App\Http\Controllers\Locale\UpdateController as LocaleUpdateController;
@@ -61,6 +62,7 @@ Route::middleware('auth')->group(function () {
     Route::get('lens-orders/{lensOrder}/document/pdf', LabOrderDocumentPdfController::class)->name('documents.lab-order.pdf');
     Route::get('warranty-claims/{warrantyClaim}/document', WarrantyClaimDocumentController::class)->name('documents.warranty-claim');
     Route::get('cash-sessions/{cashRegisterSession}/report', CashRegisterSessionReportController::class)->name('documents.cash-session');
+    Route::get('fiscal-documents/{fiscalDocument}/pdf', FiscalDocumentPdfController::class)->name('documents.fiscal-document.pdf');
     Route::get('prescriptions/{prescription}/attachment', AttachmentController::class)->name('documents.prescription.attachment');
 });
 

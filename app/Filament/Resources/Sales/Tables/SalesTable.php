@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Sales\Tables;
 use App\Actions\ConvertQuoteToOrder;
 use App\Enums\SaleDocumentType;
 use App\Enums\SaleStatus;
+use App\Filament\Resources\Sales\Actions\FiscalDocumentActions;
 use App\Filament\Resources\Sales\Actions\SaleReturnActions;
 use App\Models\Customer;
 use App\Models\Sale;
@@ -132,6 +133,7 @@ class SalesTable
                                     : __('app.sale_actions.converted'))
                                 ->send();
                         }),
+                    FiscalDocumentActions::registerForSale(),
                     ...SaleReturnActions::make(),
                     Action::make('printInvoice')
                         ->label(__('app.documents.print_invoice'))
