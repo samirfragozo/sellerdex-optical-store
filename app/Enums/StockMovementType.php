@@ -12,6 +12,7 @@ enum StockMovementType: string implements HasColor, HasLabel
     case SaleReturn = 'sale_return';
     case Purchase = 'purchase';
     case Adjustment = 'adjustment';
+    case WarrantyReplacement = 'warranty_replacement';
 
     public function label(): string
     {
@@ -31,6 +32,7 @@ enum StockMovementType: string implements HasColor, HasLabel
             self::SaleReturn => 'warning',
             self::Purchase => 'success',
             self::Adjustment => 'danger',
+            self::WarrantyReplacement => 'warning',
         };
     }
 

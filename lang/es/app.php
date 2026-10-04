@@ -348,6 +348,7 @@ return [
         'sale_return' => 'Devolución',
         'purchase' => 'Compra',
         'adjustment' => 'Ajuste',
+        'warranty_replacement' => 'Cambio por garantía',
     ],
 
     'purchase_order_status' => [
@@ -798,6 +799,8 @@ return [
         'free' => 'GRATIS',
         'included' => 'Incluido',
         'paid' => 'Abonado',
+        'warranty_claim_title' => 'Recibo de reclamo de garantía',
+        'warranty_claim_note' => 'El término de la garantía se suspende mientras el producto está en reclamo (Ley 1480 de 2011).',
         'signature' => 'Firma y sello',
         'patient' => 'Paciente',
         'eye' => 'Ojo',
@@ -997,10 +1000,17 @@ return [
         'fields' => [
             'customer_description' => 'Lo que reporta el cliente',
             'resolution' => 'Resolución',
+            'responsible' => 'Responsable',
+            'store_cost' => 'Costo para la óptica',
+            'rejection_reason' => 'Motivo del rechazo',
+            'replacement_product' => 'Producto de reemplazo',
         ],
         'actions' => [
             'start_review' => 'Revisar',
             'send_to_supplier' => 'Enviar al proveedor',
+            'resolve' => 'Resolver',
+            'deliver' => 'Entregar al cliente',
+            'print' => 'Imprimir recibo',
         ],
         'not_delivered' => 'Solo se reciben reclamos de ventas entregadas: la garantía cuenta desde la entrega.',
         'fully_returned' => 'Este producto ya fue devuelto.',
@@ -1008,5 +1018,9 @@ return [
         'adaptation_not_addition' => 'La garantía de adaptación aplica solo a lentes progresivos o bifocales.',
         'out_of_term' => 'La garantía venció el :date.',
         'invalid_transition' => 'El reclamo no puede pasar a ese estado.',
+        'rejection_reason_required' => 'Indica por qué se rechaza el reclamo.',
+        'replacement_product_required' => 'Elige el producto que se entrega a cambio.',
+        'refund_reason' => 'Garantía #:id: devolución del dinero',
+        'resolved' => 'Reclamo resuelto',
     ],
 ];

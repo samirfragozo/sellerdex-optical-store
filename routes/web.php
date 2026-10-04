@@ -22,6 +22,7 @@ use App\Http\Controllers\Prescription\PosPrescriptionController;
 use App\Http\Controllers\Sale\InvoiceController;
 use App\Http\Controllers\Sale\InvoicePdfController;
 use App\Http\Controllers\SaleController;
+use App\Http\Controllers\WarrantyClaim\DocumentController as WarrantyClaimDocumentController;
 use App\Http\Middleware\EnsureCompanyIsOnboarded;
 use Illuminate\Support\Facades\Route;
 
@@ -58,6 +59,7 @@ Route::middleware('auth')->group(function () {
     Route::get('prescriptions/{prescription}/formula/pdf', FormulaPdfController::class)->name('documents.formula.pdf');
     Route::get('lens-orders/{lensOrder}/document', LabOrderDocumentController::class)->name('documents.lab-order');
     Route::get('lens-orders/{lensOrder}/document/pdf', LabOrderDocumentPdfController::class)->name('documents.lab-order.pdf');
+    Route::get('warranty-claims/{warrantyClaim}/document', WarrantyClaimDocumentController::class)->name('documents.warranty-claim');
     Route::get('cash-sessions/{cashRegisterSession}/report', CashRegisterSessionReportController::class)->name('documents.cash-session');
     Route::get('prescriptions/{prescription}/attachment', AttachmentController::class)->name('documents.prescription.attachment');
 });

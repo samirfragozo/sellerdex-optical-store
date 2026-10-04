@@ -55,3 +55,33 @@ it('finds a delivered sale older than the 200 most recent by its number', functi
         ->assertFormFieldExists('sale_id', fn (Select $field): bool => array_keys($field->getSearchResults($oldest->number)) === [$oldest->id]
             && $field->getSearchResults('no-such-sale') === []);
 });
+
+it('resolves a claim from the list with an admin PIN', function () {
+    $admin = User::factory()->admin()->create(['company_id' => $this->sale->company_id, 'approval_pin' => '4321']);
+    $claim = WarrantyClaim::factory()->create(['sale_item_id' => $this->item->id, 'status' => WarrantyClaimStatus::InReview]);
+
+    Livewire::test(ListWarrantyClaims::class)
+        ->callTableAction('resolve', $claim, ['resolution' => 'repair', 'approval_pin' => '4321'])
+        ->assertHasNoTableActionErrors();
+
+    expect($claim->fresh())->status->toBe(WarrantyClaimStatus::Resolved)->resolved_by->toBe($admin->id);
+});
+
+it('refuses a wrong PIN when resolving', function () {
+    User::factory()->admin()->create(['company_id' => $this->sale->company_id, 'approval_pin' => '4321']);
+    $claim = WarrantyClaim::factory()->create(['sale_item_id' => $this->item->id, 'status' => WarrantyClaimStatus::InReview]);
+
+    Livewire::test(ListWarrantyClaims::class)
+        ->callTableAction('resolve', $claim, ['resolution' => 'repair', 'approval_pin' => '0000'])
+        ->assertHasTableActionErrors(['approval_pin']);
+
+    expect($claim->fresh()->status)->toBe(WarrantyClaimStatus::InReview);
+});
+
+it('delivers a resolved claim', function () {
+    $claim = WarrantyClaim::factory()->create(['sale_item_id' => $this->item->id, 'status' => WarrantyClaimStatus::Resolved]);
+
+    Livewire::test(ListWarrantyClaims::class)->callTableAction('deliver', $claim);
+
+    expect($claim->fresh()->status)->toBe(WarrantyClaimStatus::Delivered);
+});

@@ -7,6 +7,7 @@ use App\Models\Company;
 use App\Models\LensOrder;
 use App\Models\Prescription;
 use App\Models\Sale;
+use App\Models\WarrantyClaim;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Response;
@@ -158,6 +159,13 @@ class DocumentRenderer
             'order' => $order,
             'frame' => $order->frameDescription(),
         ];
+    }
+
+    public function warrantyClaim(WarrantyClaim $claim): View
+    {
+        $claim->loadMissing(['saleItem.sale.customer', 'user', 'resolvedBy']);
+
+        return view('documents.warranty-claim', [...$this->businessHeader(), 'claim' => $claim]);
     }
 
     public function cashSession(CashRegisterSession $session): View

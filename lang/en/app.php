@@ -382,6 +382,7 @@ return [
         'sale_return' => 'Return',
         'purchase' => 'Purchase',
         'adjustment' => 'Adjustment',
+        'warranty_replacement' => 'Warranty replacement',
     ],
 
     'purchase_order_status' => [
@@ -798,6 +799,8 @@ return [
         'free' => 'FREE',
         'included' => 'Included',
         'paid' => 'Paid',
+        'warranty_claim_title' => 'Warranty claim receipt',
+        'warranty_claim_note' => 'The warranty term is suspended while the product is under claim (Law 1480 of 2011).',
         'signature' => 'Signature and stamp',
         'patient' => 'Patient',
         'eye' => 'Eye',
@@ -997,10 +1000,17 @@ return [
         'fields' => [
             'customer_description' => 'What the customer reports',
             'resolution' => 'Resolution',
+            'responsible' => 'Responsible',
+            'store_cost' => 'Cost to the store',
+            'rejection_reason' => 'Rejection reason',
+            'replacement_product' => 'Replacement product',
         ],
         'actions' => [
             'start_review' => 'Review',
             'send_to_supplier' => 'Send to supplier',
+            'resolve' => 'Resolve',
+            'deliver' => 'Deliver to customer',
+            'print' => 'Print receipt',
         ],
         'not_delivered' => 'Only delivered sales take claims: the warranty runs from delivery.',
         'fully_returned' => 'This item was already returned.',
@@ -1008,5 +1018,9 @@ return [
         'adaptation_not_addition' => 'The adaptation warranty applies only to progressive or bifocal lenses.',
         'out_of_term' => 'The warranty expired on :date.',
         'invalid_transition' => 'The claim cannot move to that status.',
+        'rejection_reason_required' => 'Say why the claim is rejected.',
+        'replacement_product_required' => 'Choose the product given in exchange.',
+        'refund_reason' => 'Warranty #:id: refund',
+        'resolved' => 'Claim resolved',
     ],
 ];
