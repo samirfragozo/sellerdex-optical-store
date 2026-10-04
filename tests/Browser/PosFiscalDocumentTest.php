@@ -57,6 +57,30 @@ it('asks for the missing buyer data when the cashier switches to factura', funct
         ->and($customer->fresh()->dane_municipality_code)->toBe('11001');
 });
 
+it('goes back to the default document when the customer changes', function () {
+    $seller = posFiscalSeller(true);
+    Customer::factory()->create(['company_id' => $seller->company_id, 'name' => 'Marcela', 'last_name' => 'Rojas']);
+    Customer::factory()->create(['company_id' => $seller->company_id, 'name' => 'Pedro', 'last_name' => 'Soto']);
+    $this->actingAs($seller);
+
+    visit('/pos')
+        ->fill('#customer_id', 'Marcela')
+        ->wait(1)
+        ->click('text=Marcela Rojas')
+        ->click('.line-clamp-2')
+        ->click('text=Cobrar')
+        ->click('[data-testid="fiscal-document-electronic_invoice"]')
+        ->keys('[role="dialog"]', 'Escape')
+        ->assertMissing('[role="dialog"]')
+        ->click('button[aria-label="Quitar cliente"]')
+        ->fill('#customer_id', 'Pedro')
+        ->wait(1)
+        ->click('text=Pedro Soto')
+        ->click('text=Cobrar')
+        ->assertVisible('[data-testid="fiscal-document-pos_electronic"][aria-pressed="true"]')
+        ->assertNoJavaScriptErrors();
+});
+
 it('shows no document choice in receipt-only mode', function () {
     $seller = posFiscalSeller(false);
     $this->actingAs($seller);

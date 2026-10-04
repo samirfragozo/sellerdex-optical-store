@@ -85,6 +85,19 @@ it('ignores the document choice outside external-manual mode', function () {
         ->fiscal_responsibilities->toBeNull();
 });
 
+it('does not validate the document choice or buyer data outside external-manual mode', function () {
+    $this->company->update(['invoicing_mode' => InvoicingMode::ReceiptOnly]);
+
+    $this->postJson(route('pos.store'), posFiscalPayload([
+        'customer_id' => $this->customer->id,
+        'fiscal_document_type' => 'receipt',
+        'buyer' => ['email' => 'not-an-email'],
+    ]))->assertOk();
+
+    expect(Sale::sole()->fiscal_document_type)->toBeNull()
+        ->and($this->customer->fresh()->email)->toBe($this->customer->email);
+});
+
 it('accepts a factura with no buyer data when the customer already has it all', function () {
     $this->customer->update([
         'email' => 'ana@example.com', 'person_type' => 'natural', 'dane_municipality_code' => '11001', 'fiscal_responsibilities' => ['R-99-PN'],

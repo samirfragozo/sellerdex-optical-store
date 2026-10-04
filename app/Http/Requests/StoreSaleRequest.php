@@ -20,6 +20,7 @@ use App\Models\Sale;
 use App\Models\Supplier;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\ExcludeIf;
 use Illuminate\Validation\Rules\Exists;
 use Illuminate\Validation\Validator;
 
@@ -107,13 +108,13 @@ class StoreSaleRequest extends FormRequest
             'payments.*.amount' => ['required', 'integer', 'min:1', 'max:100000000'],
             'payments.*.reference' => ['nullable', 'string', 'max:255'],
             'surcharge_percent' => ['nullable', 'numeric', 'between:0,100'],
-            'fiscal_document_type' => ['nullable', Rule::in([FiscalDocumentType::PosElectronic->value, FiscalDocumentType::ElectronicInvoice->value])],
-            'buyer' => ['nullable', 'array'],
-            'buyer.person_type' => ['nullable', Rule::enum(PersonType::class)],
-            'buyer.email' => ['nullable', 'email', 'max:255'],
-            'buyer.dane_municipality_code' => ['nullable', 'regex:/^\d{5}$/'],
-            'buyer.fiscal_responsibilities' => ['nullable', 'array'],
-            'buyer.fiscal_responsibilities.*' => [Rule::enum(FiscalResponsibility::class)],
+            'fiscal_document_type' => [$this->excludeOutsideExternalManual(), 'nullable', Rule::in([FiscalDocumentType::PosElectronic->value, FiscalDocumentType::ElectronicInvoice->value])],
+            'buyer' => [$this->excludeOutsideExternalManual(), 'nullable', 'array'],
+            'buyer.person_type' => [$this->excludeOutsideExternalManual(), 'nullable', Rule::enum(PersonType::class)],
+            'buyer.email' => [$this->excludeOutsideExternalManual(), 'nullable', 'email', 'max:255'],
+            'buyer.dane_municipality_code' => [$this->excludeOutsideExternalManual(), 'nullable', 'regex:/^\d{5}$/'],
+            'buyer.fiscal_responsibilities' => [$this->excludeOutsideExternalManual(), 'nullable', 'array'],
+            'buyer.fiscal_responsibilities.*' => [$this->excludeOutsideExternalManual(), Rule::enum(FiscalResponsibility::class)],
         ];
     }
 
@@ -202,6 +203,12 @@ class StoreSaleRequest extends FormRequest
         } elseif (blank($customer->id_number)) {
             $validator->errors()->add('customer_id', __('app.validation.pos_document_needs_id'));
         }
+    }
+
+    /** The fiscal document choice and buyer data only matter in external-manual mode; elsewhere they are neither validated nor kept. */
+    private function excludeOutsideExternalManual(): ExcludeIf
+    {
+        return Rule::excludeIf(fn (): bool => $this->user()->company->invoicing_mode !== InvoicingMode::ExternalManual);
     }
 
     /** The document the sale is meant to get: the cashier's choice, else the company default; null outside external-manual mode. */

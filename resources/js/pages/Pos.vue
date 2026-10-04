@@ -31,7 +31,7 @@ import type {
 } from '@/composables/useLensCatalog';
 import type { Armado, KitProp } from '@/composables/usePosCart';
 import { armadoTotal, usePosCart } from '@/composables/usePosCart';
-import { usePosCheckout } from '@/composables/usePosCheckout';
+import { emptyBuyer, usePosCheckout } from '@/composables/usePosCheckout';
 import { useTranslations } from '@/composables/useTranslations';
 import { csrfFetch } from '@/lib/csrfFetch';
 import { index } from '@/routes/pos';
@@ -325,10 +325,16 @@ watch(
 
 // Store credit belongs to the customer it was added for: drop those payments
 // when the customer changes, so another customer's balance is never debited.
+// The fiscal document and buyer data are per-sale and per-customer too.
 watch(customerId, () => {
     checkout.payments.value = checkout.payments.value.filter(
         (p) => p.payment_method_id !== props.storeCreditMethodId,
     );
+    checkout.fiscalDocumentType.value =
+        props.invoicing.mode === 'external_manual'
+            ? props.invoicing.default_document
+            : null;
+    checkout.buyer.value = emptyBuyer();
 });
 
 async function confirmCheckout(): Promise<void> {

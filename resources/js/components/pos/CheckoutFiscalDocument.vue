@@ -98,6 +98,14 @@ watch(
 function selectDocument(type: string): void {
     // eslint-disable-next-line vue/no-mutating-props
     props.checkout.fiscalDocumentType.value = type;
+
+    // Buyer errors belong to the document that was just left behind.
+    for (const key of Object.keys(props.checkout.errors.value)) {
+        if (key.startsWith('buyer.')) {
+            // eslint-disable-next-line vue/no-mutating-props
+            delete props.checkout.errors.value[key];
+        }
+    }
 }
 </script>
 
