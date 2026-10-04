@@ -15,11 +15,14 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
-#[Fillable(['company_id', 'sale_id', 'group_key', 'product_id', 'description', 'quantity', 'unit_price', 'unit_cost', 'tax_name', 'tax_rate', 'tax_treatment', 'line_total'])]
+#[Fillable(['company_id', 'sale_id', 'group_key', 'product_id', 'description', 'quantity', 'unit_price', 'unit_cost', 'tax_name', 'tax_rate', 'tax_treatment', 'line_total', 'warranty_months'])]
 class SaleItem extends Model
 {
     /** @use HasFactory<SaleItemFactory> */
     use BelongsToCompany, HasFactory;
+
+    /** Ley 1480: with no stated term, one year is presumed. */
+    public const LEGAL_WARRANTY_MONTHS = 12;
 
     protected function casts(): array
     {
@@ -31,11 +34,17 @@ class SaleItem extends Model
             'tax_treatment' => TaxTreatment::class,
             'tax_amount' => 'integer',
             'line_total' => 'integer',
+            'warranty_months' => 'integer',
         ];
     }
 
     protected static function booted(): void
     {
+        // The term printed on the sale document: a later category edit never changes it.
+        static::creating(function (SaleItem $item): void {
+            $item->warranty_months ??= ($item->product?->category ?? $item->product?->baseProduct?->category)?->warranty_months;
+        });
+
         static::saving(function (SaleItem $item): void {
             $item->line_total = $item->quantity * $item->unit_price;
 
@@ -107,6 +116,11 @@ class SaleItem extends Model
     {
         return $this->product?->is_stockable === true
             && $this->sale?->holdsStock() === true;
+    }
+
+    public function warrantyMonths(): int
+    {
+        return $this->warranty_months ?? self::LEGAL_WARRANTY_MONTHS;
     }
 
     public function sale(): BelongsTo

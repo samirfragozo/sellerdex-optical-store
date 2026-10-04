@@ -29,7 +29,12 @@
             @foreach ($sale->items as $item)
                 <tr>
                     <td>{{ $item->quantity }}</td>
-                    <td>{{ $item->description }}</td>
+                    <td>
+                        {{ $item->description }}
+                        @if ($item->warranty_months)
+                            <br><span class="muted">{{ __('app.documents.warranty_term', ['months' => $item->warranty_months]) }}</span>
+                        @endif
+                    </td>
                     @if ((int) $item->line_total === 0)
                         <td class="right" colspan="2">{{ $item->product?->category?->key === 'service' ? __('app.documents.free') : __('app.documents.included') }}</td>
                     @else
@@ -40,6 +45,7 @@
             @endforeach
         </tbody>
     </table>
+    <p class="muted">{{ __('app.documents.warranty_note') }}</p>
     <table class="totals" style="margin-top:8px">
         @if ((float) $sale->surcharge_percent <= 0)
             <tr><td class="right">{{ __('app.fields.subtotal') }}</td><td class="right" style="width:90px">{{ $fmt($sale->subtotal) }}</td></tr>

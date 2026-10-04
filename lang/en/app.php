@@ -82,6 +82,10 @@ return [
     ],
 
     'fields' => [
+        'warranty_months' => 'Warranty',
+        'warranty_months_help' => "Warranty months printed on the sale document for this category's products.",
+        'months' => 'months',
+        'days' => 'days',
         'credit_balance' => 'Store credit',
         'remake_reason' => 'Reason',
         'remake_responsible' => 'Responsible',
@@ -702,6 +706,12 @@ return [
     'cash_close_status' => ['open' => 'Open', 'closed' => 'Closed', 'approved' => 'Approved'],
 
     'business' => [
+        'seller_max_discount_percent' => 'Seller maximum discount',
+        'seller_max_discount_percent_help' => 'Above this discount, or when a price is lowered, the POS asks for an admin PIN.',
+        'quote_validity_days' => 'Quote validity',
+        'quote_validity_days_help' => 'An expired quote is re-priced with current prices when converted into a sale.',
+        'adaptation_warranty_days' => 'Adaptation warranty',
+        'adaptation_warranty_days_help' => 'Days from delivery in which a customer with progressive or bifocal lenses can ask for a no-cost change for non-adaptation.',
         'tracks_inventory' => 'Track inventory',
         'tracks_inventory_help' => 'Turning it on asks for an initial count. Turning it off keeps the history.',
         'title' => 'Business details',
@@ -756,6 +766,8 @@ return [
     ],
 
     'documents' => [
+        'warranty_term' => 'Warranty: :months months',
+        'warranty_note' => 'The warranty runs from delivery and is suspended while the product is under claim (Law 1480 of 2011).',
         'print_invoice' => 'Print receipt',
         'download_invoice' => 'Download PDF',
         'print_formula' => 'Print formula',

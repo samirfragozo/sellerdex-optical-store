@@ -82,6 +82,10 @@ return [
     ],
 
     'fields' => [
+        'warranty_months' => 'Garantía',
+        'warranty_months_help' => 'Meses de garantía que se imprimen en el comprobante para los productos de esta categoría.',
+        'months' => 'meses',
+        'days' => 'días',
         'credit_balance' => 'Saldo a favor',
         'remake_reason' => 'Motivo',
         'remake_responsible' => 'Responsable',
@@ -702,6 +706,12 @@ return [
     'cash_close_status' => ['open' => 'Abierto', 'closed' => 'Cerrado', 'approved' => 'Aprobado'],
 
     'business' => [
+        'seller_max_discount_percent' => 'Descuento máximo del vendedor',
+        'seller_max_discount_percent_help' => 'Por encima de este descuento, o al bajar un precio, el POS pide el PIN de un administrador.',
+        'quote_validity_days' => 'Vigencia de las cotizaciones',
+        'quote_validity_days_help' => 'Una cotización vencida se recalcula con los precios actuales al convertirla en venta.',
+        'adaptation_warranty_days' => 'Garantía de adaptación',
+        'adaptation_warranty_days_help' => 'Días desde la entrega en que un cliente con lentes progresivos o bifocales puede pedir un cambio sin costo por no adaptación.',
         'tracks_inventory' => 'Llevar inventario',
         'tracks_inventory_help' => 'Al activarlo te pediremos un conteo inicial. Al desactivarlo se conserva el historial.',
         'title' => 'Datos del negocio',
@@ -756,6 +766,8 @@ return [
     ],
 
     'documents' => [
+        'warranty_term' => 'Garantía: :months meses',
+        'warranty_note' => 'La garantía cuenta desde la entrega y se suspende mientras el producto está en reclamo (Ley 1480 de 2011).',
         'print_invoice' => 'Imprimir comprobante',
         'download_invoice' => 'Descargar PDF',
         'print_formula' => 'Imprimir fórmula',

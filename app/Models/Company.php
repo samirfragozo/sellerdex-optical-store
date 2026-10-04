@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
-#[Fillable(['name', 'slug', 'tax_id', 'vat_regime', 'sale_number_prefix', 'next_sale_number', 'prescription_validity_months', 'address', 'phones', 'logo', 'is_active', 'plan', 'onboarding_step', 'onboarded_at', 'armado_frame_price_mode', 'armado_frame_discount_percent', 'tracks_inventory', 'inventory_counted_at', 'blind_cash_count', 'cash_difference_note_threshold', 'layaway_cancellation_fee_percent'])]
+#[Fillable(['name', 'slug', 'tax_id', 'vat_regime', 'sale_number_prefix', 'next_sale_number', 'prescription_validity_months', 'address', 'phones', 'logo', 'is_active', 'plan', 'onboarding_step', 'onboarded_at', 'armado_frame_price_mode', 'armado_frame_discount_percent', 'tracks_inventory', 'inventory_counted_at', 'blind_cash_count', 'cash_difference_note_threshold', 'layaway_cancellation_fee_percent', 'quote_validity_days', 'seller_max_discount_percent', 'adaptation_warranty_days'])]
 class Company extends Model
 {
     /** @use HasFactory<CompanyFactory> */
@@ -37,6 +37,9 @@ class Company extends Model
             'blind_cash_count' => 'boolean',
             'cash_difference_note_threshold' => 'integer',
             'layaway_cancellation_fee_percent' => 'decimal:2',
+            'quote_validity_days' => 'integer',
+            'seller_max_discount_percent' => 'decimal:2',
+            'adaptation_warranty_days' => 'integer',
         ];
     }
 

@@ -152,6 +152,8 @@ class RegisterSale
                 'quantity' => $lens['quantity'] ?? 1,
                 'unit_price' => $unitPrice,
                 'unit_cost' => $resolved['cost'],
+                'warranty_months' => ProductCategory::withoutGlobalScopes()
+                    ->where('company_id', $this->seller->company_id)->where('key', 'lens')->value('warranty_months'),
                 ...SaleItem::taxSnapshot($combination->tax ?? ProductCategory::keyed('lens')?->defaultTax, $this->seller->company),
             ]);
 

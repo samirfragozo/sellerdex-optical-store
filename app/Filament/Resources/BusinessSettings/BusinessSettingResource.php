@@ -73,6 +73,18 @@ class BusinessSettingResource extends Resource
                     ->maxValue(100)
                     ->required()
                     ->suffix('%'),
+                TextInput::make('seller_max_discount_percent')
+                    ->label(__('app.business.seller_max_discount_percent'))
+                    ->helperText(__('app.business.seller_max_discount_percent_help'))
+                    ->numeric()->minValue(0)->maxValue(100)->required()->suffix('%'),
+                TextInput::make('quote_validity_days')
+                    ->label(__('app.business.quote_validity_days'))
+                    ->helperText(__('app.business.quote_validity_days_help'))
+                    ->integer()->minValue(1)->maxValue(365)->required()->suffix(__('app.fields.days')),
+                TextInput::make('adaptation_warranty_days')
+                    ->label(__('app.business.adaptation_warranty_days'))
+                    ->helperText(__('app.business.adaptation_warranty_days_help'))
+                    ->integer()->minValue(0)->maxValue(365)->required()->suffix(__('app.fields.days')),
             ]);
     }
 

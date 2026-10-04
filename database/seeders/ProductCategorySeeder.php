@@ -20,6 +20,7 @@ class ProductCategorySeeder extends Seeder
                     'requires_prescription' => $category['requires_prescription'],
                     'generates_lab_order' => $category['generates_lab_order'],
                     'is_made_to_order' => $category['is_made_to_order'],
+                    'warranty_months' => $category['warranty_months'],
                     'default_tax_id' => ProductCategory::defaultTaxIdFor($category['key'], Auth::user()?->company_id),
                 ],
             );

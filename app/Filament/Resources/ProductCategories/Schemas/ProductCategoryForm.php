@@ -26,6 +26,15 @@ class ProductCategoryForm
                     ->disabled(fn (?ProductCategory $record): bool => (bool) $record?->is_system)
                     ->required()
                     ->maxLength(255),
+                TextInput::make('warranty_months')
+                    ->label(__('app.fields.warranty_months'))
+                    ->helperText(__('app.fields.warranty_months_help'))
+                    ->integer()
+                    ->minValue(1)
+                    ->maxValue(120)
+                    ->default(12)
+                    ->required()
+                    ->suffix(__('app.fields.months')),
                 Select::make('default_tax_id')
                     ->label(__('app.taxes.default_for_category'))
                     ->relationship('defaultTax', 'name', fn ($query, $record) => $query->where(fn ($q) => $q->where('is_active', true)->when($record?->default_tax_id, fn ($q, $id) => $q->orWhere('taxes.id', $id))))

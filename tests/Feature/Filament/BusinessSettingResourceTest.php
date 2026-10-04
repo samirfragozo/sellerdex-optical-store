@@ -88,3 +88,18 @@ it('saves the blind cash count and the note threshold', function () {
         ->blind_cash_count->toBeTrue()
         ->cash_difference_note_threshold->toBe(5_000);
 });
+
+it('saves the seller discount limit, the quote validity and the adaptation warranty', function () {
+    $admin = User::factory()->admin()->create();
+    $this->actingAs($admin);
+
+    Livewire::test(ManageBusinessSetting::class)
+        ->fillForm(['seller_max_discount_percent' => 10, 'quote_validity_days' => 30, 'adaptation_warranty_days' => 45])
+        ->call('save')
+        ->assertHasNoFormErrors();
+
+    expect($admin->company->fresh())
+        ->seller_max_discount_percent->toBe('10.00')
+        ->quote_validity_days->toBe(30)
+        ->adaptation_warranty_days->toBe(45);
+});

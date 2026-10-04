@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
-#[Fillable(['company_id', 'name', 'key', 'is_active', 'is_system', 'requires_prescription', 'generates_lab_order', 'is_made_to_order', 'default_tax_id'])]
+#[Fillable(['company_id', 'name', 'key', 'is_active', 'is_system', 'requires_prescription', 'generates_lab_order', 'is_made_to_order', 'default_tax_id', 'warranty_months'])]
 class ProductCategory extends Model
 {
     /** @use HasFactory<ProductCategoryFactory> */
@@ -24,14 +24,14 @@ class ProductCategory extends Model
      * Spanish label. Flags encode business rules. Shared by ProductCategorySeeder
      * (global bootstrap) and SeedCompanyDefaults (per-company provisioning).
      *
-     * @var array<int,array{key:string,name:string,requires_prescription:bool,generates_lab_order:bool,is_made_to_order:bool}>
+     * @var array<int,array{key:string,name:string,requires_prescription:bool,generates_lab_order:bool,is_made_to_order:bool,warranty_months:int}>
      */
     public const SYSTEM_CATEGORIES = [
-        ['key' => 'lens', 'name' => 'Lentes', 'requires_prescription' => true, 'generates_lab_order' => true, 'is_made_to_order' => true],
-        ['key' => 'frame', 'name' => 'Monturas', 'requires_prescription' => false, 'generates_lab_order' => false, 'is_made_to_order' => false],
-        ['key' => 'sunglasses', 'name' => 'Gafas de sol', 'requires_prescription' => false, 'generates_lab_order' => false, 'is_made_to_order' => false],
-        ['key' => 'accessory', 'name' => 'Accesorios', 'requires_prescription' => false, 'generates_lab_order' => false, 'is_made_to_order' => false],
-        ['key' => 'service', 'name' => 'Servicios', 'requires_prescription' => false, 'generates_lab_order' => false, 'is_made_to_order' => false],
+        ['key' => 'lens', 'name' => 'Lentes', 'requires_prescription' => true, 'generates_lab_order' => true, 'is_made_to_order' => true, 'warranty_months' => 6],
+        ['key' => 'frame', 'name' => 'Monturas', 'requires_prescription' => false, 'generates_lab_order' => false, 'is_made_to_order' => false, 'warranty_months' => 6],
+        ['key' => 'sunglasses', 'name' => 'Gafas de sol', 'requires_prescription' => false, 'generates_lab_order' => false, 'is_made_to_order' => false, 'warranty_months' => 12],
+        ['key' => 'accessory', 'name' => 'Accesorios', 'requires_prescription' => false, 'generates_lab_order' => false, 'is_made_to_order' => false, 'warranty_months' => 12],
+        ['key' => 'service', 'name' => 'Servicios', 'requires_prescription' => false, 'generates_lab_order' => false, 'is_made_to_order' => false, 'warranty_months' => 12],
     ];
 
     /**
@@ -80,6 +80,7 @@ class ProductCategory extends Model
             'requires_prescription' => 'boolean',
             'generates_lab_order' => 'boolean',
             'is_made_to_order' => 'boolean',
+            'warranty_months' => 'integer',
         ];
     }
 
