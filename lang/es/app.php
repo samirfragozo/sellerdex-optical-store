@@ -56,6 +56,7 @@ return [
         'supplier' => ['label' => 'Proveedor', 'plural' => 'Proveedores', 'nav' => 'Proveedores'],
         'purchase_order' => ['label' => 'Orden de compra', 'plural' => 'Órdenes de compra', 'nav' => 'Órdenes de compra'],
         'lens_order' => ['label' => 'Orden de laboratorio', 'plural' => 'Órdenes de laboratorio', 'nav' => 'Laboratorio'],
+        'warranty_claim' => ['label' => 'Reclamo de garantía', 'plural' => 'Reclamos de garantía', 'nav' => 'Garantías'],
         'user' => ['label' => 'Usuario', 'plural' => 'Usuarios', 'nav' => 'Usuarios'],
         'tax' => ['label' => 'Impuesto', 'plural' => 'Impuestos', 'nav' => 'Impuestos'],
         'combo_settings' => ['nav' => 'Combos'],
@@ -82,6 +83,8 @@ return [
     ],
 
     'fields' => [
+        'sale' => 'Venta',
+        'item' => 'Producto',
         'warranty_months' => 'Garantía',
         'warranty_months_help' => 'Meses de garantía que se imprimen en el comprobante para los productos de esta categoría.',
         'months' => 'meses',
@@ -980,5 +983,30 @@ return [
         'price_includes_tax' => 'El precio que escribes ya incluye este impuesto.',
         'default_for_category' => 'Impuesto sugerido para la categoría',
         'use_lens_category' => 'Usar el impuesto de la categoría Lentes',
+    ],
+
+    'warranty_claim_type' => ['warranty' => 'Garantía', 'adaptation' => 'Garantía de adaptación'],
+
+    'warranty_claim_status' => ['received' => 'Recibido', 'in_review' => 'En revisión', 'at_supplier' => 'En el proveedor', 'resolved' => 'Resuelto', 'delivered' => 'Entregado'],
+
+    'warranty_resolution' => ['repair' => 'Reparación', 'same_replacement' => 'Cambio por el mismo', 'other_replacement' => 'Cambio por otro', 'refund' => 'Devolución del dinero', 'rejected' => 'Rechazado'],
+
+    'warranty_responsible' => ['store' => 'La óptica', 'supplier' => 'El proveedor o laboratorio'],
+
+    'warranty' => [
+        'fields' => [
+            'customer_description' => 'Lo que reporta el cliente',
+            'resolution' => 'Resolución',
+        ],
+        'actions' => [
+            'start_review' => 'Revisar',
+            'send_to_supplier' => 'Enviar al proveedor',
+        ],
+        'not_delivered' => 'Solo se reciben reclamos de ventas entregadas: la garantía cuenta desde la entrega.',
+        'fully_returned' => 'Este producto ya fue devuelto.',
+        'already_open' => 'Este producto ya tiene un reclamo abierto.',
+        'adaptation_not_addition' => 'La garantía de adaptación aplica solo a lentes progresivos o bifocales.',
+        'out_of_term' => 'La garantía venció el :date.',
+        'invalid_transition' => 'El reclamo no puede pasar a ese estado.',
     ],
 ];

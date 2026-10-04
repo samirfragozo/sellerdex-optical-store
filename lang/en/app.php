@@ -53,6 +53,7 @@ return [
         'sale' => ['label' => 'Sale', 'plural' => 'Sales', 'nav' => 'Sales'],
         'cash_close' => ['label' => 'Cash close', 'plural' => 'Cash closes', 'nav' => 'Cash close'],
         'cash_register_session' => ['label' => 'Cash session', 'plural' => 'Cash sessions', 'nav' => 'Cash sessions'],
+        'warranty_claim' => ['label' => 'Warranty claim', 'plural' => 'Warranty claims', 'nav' => 'Warranties'],
         'user' => ['label' => 'User', 'plural' => 'Users', 'nav' => 'Users'],
         'tax' => ['label' => 'Tax', 'plural' => 'Taxes', 'nav' => 'Taxes'],
         'combo_settings' => ['nav' => 'Combos'],
@@ -82,6 +83,8 @@ return [
     ],
 
     'fields' => [
+        'sale' => 'Sale',
+        'item' => 'Item',
         'warranty_months' => 'Warranty',
         'warranty_months_help' => "Warranty months printed on the sale document for this category's products.",
         'months' => 'months',
@@ -980,5 +983,30 @@ return [
         'price_includes_tax' => 'The price you enter already includes this tax.',
         'default_for_category' => 'Suggested tax for the category',
         'use_lens_category' => 'Use the Lenses category tax',
+    ],
+
+    'warranty_claim_type' => ['warranty' => 'Warranty', 'adaptation' => 'Adaptation warranty'],
+
+    'warranty_claim_status' => ['received' => 'Received', 'in_review' => 'In review', 'at_supplier' => 'At supplier', 'resolved' => 'Resolved', 'delivered' => 'Delivered'],
+
+    'warranty_resolution' => ['repair' => 'Repair', 'same_replacement' => 'Same replacement', 'other_replacement' => 'Other replacement', 'refund' => 'Refund', 'rejected' => 'Rejected'],
+
+    'warranty_responsible' => ['store' => 'The store', 'supplier' => 'The supplier or lab'],
+
+    'warranty' => [
+        'fields' => [
+            'customer_description' => 'What the customer reports',
+            'resolution' => 'Resolution',
+        ],
+        'actions' => [
+            'start_review' => 'Review',
+            'send_to_supplier' => 'Send to supplier',
+        ],
+        'not_delivered' => 'Only delivered sales take claims: the warranty runs from delivery.',
+        'fully_returned' => 'This item was already returned.',
+        'already_open' => 'This item already has an open claim.',
+        'adaptation_not_addition' => 'The adaptation warranty applies only to progressive or bifocal lenses.',
+        'out_of_term' => 'The warranty expired on :date.',
+        'invalid_transition' => 'The claim cannot move to that status.',
     ],
 ];

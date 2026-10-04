@@ -144,6 +144,11 @@ class SaleItem extends Model
         return $this->hasOne(SaleItemLensConfig::class);
     }
 
+    public function warrantyClaims(): HasMany
+    {
+        return $this->hasMany(WarrantyClaim::class);
+    }
+
     public function options(): HasMany
     {
         return $this->hasMany(SaleItemOption::class);
