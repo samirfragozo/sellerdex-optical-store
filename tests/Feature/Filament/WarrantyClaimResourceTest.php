@@ -8,6 +8,7 @@ use App\Models\SaleItem;
 use App\Models\User;
 use App\Models\WarrantyClaim;
 use Database\Seeders\RolesAndPermissionsSeeder;
+use Filament\Forms\Components\Select;
 use Livewire\Livewire;
 
 beforeEach(function () {
@@ -43,4 +44,14 @@ it('starts the review from the list', function () {
     Livewire::test(ListWarrantyClaims::class)->callTableAction('startReview', $claim);
 
     expect($claim->fresh()->status)->toBe(WarrantyClaimStatus::InReview);
+});
+
+it('finds a delivered sale older than the 200 most recent by its number', function () {
+    $oldest = Sale::factory()->create(['is_delivered' => true, 'delivered_at' => today()->subDays(400)]);
+    Sale::factory()->count(200)->create(['is_delivered' => true, 'delivered_at' => today()]);
+    Sale::factory()->create(['is_delivered' => false, 'number' => $oldest->number.'X']);
+
+    Livewire::test(CreateWarrantyClaim::class)
+        ->assertFormFieldExists('sale_id', fn (Select $field): bool => array_keys($field->getSearchResults($oldest->number)) === [$oldest->id]
+            && $field->getSearchResults('no-such-sale') === []);
 });

@@ -10,6 +10,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
+use Illuminate\Database\Eloquent\Builder;
 
 class WarrantyClaimForm
 {
@@ -19,9 +20,16 @@ class WarrantyClaimForm
             ->components([
                 Select::make('sale_id')
                     ->label(__('app.fields.sale'))
-                    ->options(fn (): array => Sale::query()->where('is_delivered', true)->latest('delivered_at')->limit(200)
-                        ->with('customer')->get()
-                        ->mapWithKeys(fn (Sale $sale): array => [$sale->id => $sale->number.' — '.($sale->customer?->full_name ?? '—')])->all())
+                    ->getSearchResultsUsing(fn (string $search): array => Sale::query()
+                        ->where('is_delivered', true)
+                        ->where(fn (Builder $query): Builder => $query
+                            ->where('number', 'like', "%{$search}%")
+                            ->orWhereHas('customer', fn (Builder $customer): Builder => $customer
+                                ->where('name', 'like', "%{$search}%")
+                                ->orWhere('last_name', 'like', "%{$search}%")))
+                        ->with('customer')->latest('delivered_at')->limit(50)->get()
+                        ->mapWithKeys(fn (Sale $sale): array => [$sale->id => self::saleLabel($sale)])->all())
+                    ->getOptionLabelUsing(fn ($value): ?string => ($sale = Sale::query()->with('customer')->find($value)) ? self::saleLabel($sale) : null)
                     ->searchable()
                     ->live()
                     ->required()
@@ -46,5 +54,10 @@ class WarrantyClaimForm
                     ->maxLength(2000)
                     ->columnSpanFull(),
             ]);
+    }
+
+    private static function saleLabel(Sale $sale): string
+    {
+        return $sale->number.' — '.($sale->customer?->full_name ?? '—');
     }
 }
