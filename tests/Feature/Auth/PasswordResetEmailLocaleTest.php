@@ -21,7 +21,14 @@ test('reset password email is sent in spanish', function () {
         $mail = $notification->toMail($user);
 
         expect($mail->subject)->toBe(__('mail.reset_password.subject', [], 'es'))
-            ->and($mail->introLines)->toContain(__('mail.reset_password.line_1', [], 'es'));
+            ->and($mail->introLines)->toContain(__('mail.reset_password.line_1', [], 'es'))
+            ->and($mail->actionUrl)->toBe(url(route('password.reset', ['token' => $notification->token, 'email' => $user->email], false)));
+
+        $html = (string) $mail->render();
+
+        expect($html)->toContain('Saludos,')
+            ->and($html)->toContain('copia y pega esta URL')
+            ->and($html)->not->toContain('Regards,');
 
         return true;
     });

@@ -37,8 +37,10 @@ class AppServiceProvider extends ServiceProvider
      */
     protected function configureMail(): void
     {
-        ResetPassword::toMailUsing(function (object $notifiable, string $url): MailMessage {
+        // The callback receives the reset token, not the URL: build the link like the framework does.
+        ResetPassword::toMailUsing(function (object $notifiable, string $token): MailMessage {
             $expireMinutes = config('auth.passwords.users.expire');
+            $url = url(route('password.reset', ['token' => $token, 'email' => $notifiable->getEmailForPasswordReset()], false));
 
             return (new MailMessage)
                 ->subject(__('mail.reset_password.subject'))
