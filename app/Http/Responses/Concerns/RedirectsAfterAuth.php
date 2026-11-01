@@ -18,7 +18,8 @@ trait RedirectsAfterAuth
     {
         $url = session()->pull('url.intended', $default);
 
-        return Str::startsWith($url, ['/admin', '/superadmin'])
+        // The intended URL is absolute (e.g. https://host/admin), so compare its path only.
+        return Str::startsWith(parse_url($url, PHP_URL_PATH) ?? '', ['/admin', '/superadmin'])
             ? Inertia::location($url)
             : redirect()->to($url);
     }

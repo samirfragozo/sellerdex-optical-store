@@ -68,6 +68,21 @@ test('superadmin users are redirected to the superadmin panel after login', func
     $response->assertHeader('X-Inertia-Location', '/superadmin');
 });
 
+test('an absolute intended panel url triggers a full browser visit after login', function () {
+    $user = User::factory()->admin()->create();
+
+    $response = $this->withSession(['url.intended' => url('/admin/customers')])
+        ->withHeaders(['X-Inertia' => 'true'])
+        ->post(route('login.store'), [
+            'email' => $user->email,
+            'password' => 'password',
+        ]);
+
+    $this->assertAuthenticated();
+    $response->assertStatus(409);
+    $response->assertHeader('X-Inertia-Location', url('/admin/customers'));
+});
+
 test('users can not authenticate with invalid password', function () {
     $user = User::factory()->create();
 
