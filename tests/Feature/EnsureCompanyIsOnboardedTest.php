@@ -17,6 +17,15 @@ it('lets the admin open the onboarding itself', function () {
     $this->actingAs($admin)->get(Onboarding::getUrl())->assertSuccessful();
 });
 
+it('shows the onboarding full screen, without the panel navigation', function () {
+    $admin = User::factory()->forCompany(Company::factory()->notOnboarded()->create())->admin()->create();
+
+    $this->actingAs($admin)->get(Onboarding::getUrl())
+        ->assertSuccessful()
+        ->assertDontSee('fi-sidebar-close-overlay')
+        ->assertDontSee(route('pos.index'));
+});
+
 it('tells staff of a new company to wait instead of looping', function () {
     $seller = User::factory()->forCompany(Company::factory()->notOnboarded()->create())->seller()->create();
 

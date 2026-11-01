@@ -34,6 +34,8 @@ class AdminPanelProvider extends PanelProvider
             ->viteTheme('resources/css/filament/admin/theme.css')
             ->login(RedirectToLogin::class)
             ->globalSearch(false)
+            // The onboarding is full screen: no sidebar to wander off from it.
+            ->navigation(fn (): bool => ! request()->routeIs('filament.admin.pages.onboarding'))
             ->brandLogo(asset('images/brand/logo-color.png'))
             ->darkModeBrandLogo(asset('images/brand/logo-blanco.png'))
             ->brandLogoHeight('1.5rem')
@@ -65,7 +67,8 @@ class AdminPanelProvider extends PanelProvider
                 Action::make('pos')
                     ->label('Nueva venta')
                     ->icon('heroicon-o-shopping-cart')
-                    ->url(fn (): string => route('pos.index')),
+                    ->url(fn (): string => route('pos.index'))
+                    ->hidden(fn (): bool => request()->routeIs('filament.admin.pages.onboarding')),
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
             ->middleware([
