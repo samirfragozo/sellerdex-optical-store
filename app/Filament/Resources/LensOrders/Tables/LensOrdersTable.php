@@ -25,7 +25,7 @@ class LensOrdersTable
                     ->label(__('app.fields.patient'))
                     ->searchable(query: fn (Builder $query, string $search): Builder => $query->whereHas(
                         'saleItem.lensConfig.patient',
-                        fn (Builder $patient): Builder => $patient->where('name', 'like', "%{$search}%")->orWhere('last_name', 'like', "%{$search}%"),
+                        fn (Builder $patient): Builder => $patient->whereLike('name', "%{$search}%")->orWhereLike('last_name', "%{$search}%"),
                     )),
                 TextColumn::make('saleItem.description')
                     ->label(__('app.fields.sale_item'))

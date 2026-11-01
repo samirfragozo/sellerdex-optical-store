@@ -73,7 +73,7 @@ class LensCombinationPrice extends Model
             ->where('cylinder_min', '<=', $cylinder)->where('cylinder_max', '>=', $cylinder)
             ->where(fn (Builder $query) => $query->whereNull('add_min')->orWhere('add_min', '<=', $add))
             ->where(fn (Builder $query) => $query->whereNull('add_max')->orWhere('add_max', '>=', $add))
-            ->orderByRaw('(select max(p2.is_preferred) from lens_combination_prices as p2 where p2.lens_combination_id = lens_combination_prices.lens_combination_id and p2.supplier_id = lens_combination_prices.supplier_id and p2.is_active = 1) desc')
+            ->orderByRaw('(select max(case when p2.is_preferred then 1 else 0 end) from lens_combination_prices as p2 where p2.lens_combination_id = lens_combination_prices.lens_combination_id and p2.supplier_id = lens_combination_prices.supplier_id and p2.is_active) desc')
             ->orderByRaw('(sphere_max - sphere_min) + (cylinder_max - cylinder_min) + (COALESCE(add_max, 4) - COALESCE(add_min, 0))')
             ->orderBy('id');
     }

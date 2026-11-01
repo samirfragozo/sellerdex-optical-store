@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -16,15 +17,21 @@ return new class extends Migration
             $table->dropColumn('lens_type');
         });
 
-        Schema::table('prescriptions', function (Blueprint $table) {
-            foreach (['od', 'os'] as $eye) {
-                $table->decimal("{$eye}_sphere", 5, 2)->nullable()->change();
-                $table->decimal("{$eye}_cylinder", 5, 2)->nullable()->change();
-                $table->unsignedSmallInteger("{$eye}_axis")->nullable()->change();
-                $table->decimal("{$eye}_add", 5, 2)->nullable()->change();
-                $table->decimal("{$eye}_pd", 4, 1)->nullable()->change();
-            }
+        if (DB::getDriverName() === 'pgsql') {
+            $this->castRxColumnsOnPostgres();
+        } else {
+            Schema::table('prescriptions', function (Blueprint $table) {
+                foreach (['od', 'os'] as $eye) {
+                    $table->decimal("{$eye}_sphere", 5, 2)->nullable()->change();
+                    $table->decimal("{$eye}_cylinder", 5, 2)->nullable()->change();
+                    $table->unsignedSmallInteger("{$eye}_axis")->nullable()->change();
+                    $table->decimal("{$eye}_add", 5, 2)->nullable()->change();
+                    $table->decimal("{$eye}_pd", 4, 1)->nullable()->change();
+                }
+            });
+        }
 
+        Schema::table('prescriptions', function (Blueprint $table) {
             $table->decimal('od_prism', 4, 2)->nullable()->after('os_pd');
             $table->string('od_prism_base')->nullable()->after('od_prism');
             $table->decimal('os_prism', 4, 2)->nullable()->after('od_prism_base');
@@ -39,6 +46,23 @@ return new class extends Migration
         Schema::table('companies', function (Blueprint $table) {
             $table->unsignedTinyInteger('prescription_validity_months')->default(12)->after('sale_number_prefix');
         });
+    }
+
+    /**
+     * Postgres can't cast varchar to numeric implicitly. Free-text values that aren't
+     * a number (e.g. "N/A", "plano") become null: the numeric Rx model can't hold them.
+     */
+    private function castRxColumnsOnPostgres(): void
+    {
+        $types = ['sphere' => 'numeric(5,2)', 'cylinder' => 'numeric(5,2)', 'axis' => 'smallint', 'add' => 'numeric(5,2)', 'pd' => 'numeric(4,1)'];
+
+        foreach (['od', 'os'] as $eye) {
+            foreach ($types as $field => $type) {
+                $column = "{$eye}_{$field}";
+                $number = "replace(trim({$column}), ',', '.')";
+                DB::statement("alter table prescriptions alter column {$column} type {$type} using (case when {$number} ~ '^[+-]?[0-9]+(\\.[0-9]+)?$' then round({$number}::numeric, 2) end)::{$type}");
+            }
+        }
     }
 
     /**

@@ -24,10 +24,10 @@ class WarrantyClaimForm
                     ->getSearchResultsUsing(fn (string $search): array => Sale::query()
                         ->where('is_delivered', true)
                         ->where(fn (Builder $query): Builder => $query
-                            ->where('number', 'like', "%{$search}%")
+                            ->whereLike('number', "%{$search}%")
                             ->orWhereHas('customer', fn (Builder $customer): Builder => $customer
-                                ->where('name', 'like', "%{$search}%")
-                                ->orWhere('last_name', 'like', "%{$search}%")))
+                                ->whereLike('name', "%{$search}%")
+                                ->orWhereLike('last_name', "%{$search}%")))
                         ->with('customer')->latest('delivered_at')->limit(50)->get()
                         ->mapWithKeys(fn (Sale $sale): array => [$sale->id => self::saleLabel($sale)])->all())
                     ->getOptionLabelUsing(fn ($value): ?string => ($sale = Sale::query()->with('customer')->find($value)) ? self::saleLabel($sale) : null)

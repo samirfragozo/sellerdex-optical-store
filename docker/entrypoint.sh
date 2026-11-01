@@ -11,4 +11,7 @@ php artisan view:cache
 
 php artisan migrate --force
 
+# Idempotent: gives existing companies the permissions added by new releases.
+php artisan companies:sync-roles
+
 exec "$@"

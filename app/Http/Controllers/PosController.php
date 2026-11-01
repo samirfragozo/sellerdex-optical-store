@@ -34,7 +34,7 @@ class PosController extends Controller
 
         $products = Product::query()->where('is_active', true)
             ->where('is_pos_selectable', true)
-            ->when($request->filled('search'), fn ($q) => $q->where('name', 'like', '%'.$request->string('search').'%'))
+            ->when($request->filled('search'), fn ($q) => $q->whereLike('name', '%'.$request->string('search').'%'))
             ->when($request->filled('category'), fn ($q) => $q->whereHas(
                 'category',
                 fn ($cq) => $cq->where('key', $request->string('category')),

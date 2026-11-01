@@ -11,7 +11,7 @@ it('backfills discount_percent from the legacy discount amount', function () {
     // 20_000 (a real peso amount), discount_percent left at its default 0
     // because the column didn't exist when this row was created.
     $sale = Sale::factory()->create(['subtotal' => 200_000, 'discount' => 20_000]);
-    DB::table('sales')->whereKey($sale->id)->update(['discount_percent' => 0]);
+    DB::table('sales')->where('id', $sale->id)->update(['discount_percent' => 0]);
 
     $migration = require database_path('migrations/2026_09_13_100002_backfill_discount_percent_on_sales.php');
     $migration->up();

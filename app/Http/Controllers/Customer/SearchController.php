@@ -15,9 +15,9 @@ class SearchController extends Controller
 
         $customers = Customer::query()
             ->when($search->isNotEmpty(), fn ($q) => $q->where(fn ($q) => $q
-                ->where('name', 'like', "%{$search}%")
-                ->orWhere('last_name', 'like', "%{$search}%")
-                ->orWhere('id_number', 'like', "%{$search}%")))
+                ->whereLike('name', "%{$search}%")
+                ->orWhereLike('last_name', "%{$search}%")
+                ->orWhereLike('id_number', "%{$search}%")))
             ->withSum('credits', 'amount')
             ->orderBy('name')
             ->limit(20)

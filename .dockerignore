@@ -25,3 +25,12 @@ tests
 README.md
 CLAUDE.md
 AGENTS.md
+
+graphify-out
+docs
+.superpowers
+.worktrees
+.claude
+.junie
+.mcp.json
+boost.json
