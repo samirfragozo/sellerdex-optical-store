@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\CashRegisterSessions;
 
+use App\Enums\NavigationGroup;
 use App\Filament\Resources\CashRegisterSessions\Pages\ListCashRegisterSessions;
 use App\Filament\Resources\CashRegisterSessions\Pages\ViewCashRegisterSession;
 use App\Filament\Resources\CashRegisterSessions\Schemas\CashRegisterSessionInfolist;
@@ -12,12 +13,17 @@ use BackedEnum;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use UnitEnum;
 
 class CashRegisterSessionResource extends Resource
 {
     protected static ?string $model = CashRegisterSession::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCalculator;
+
+    protected static string|UnitEnum|null $navigationGroup = NavigationGroup::Finance;
+
+    protected static ?int $navigationSort = 1;
 
     public static function canCreate(): bool
     {

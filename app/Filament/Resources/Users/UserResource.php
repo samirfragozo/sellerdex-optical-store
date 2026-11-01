@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Users;
 
+use App\Enums\NavigationGroup;
 use App\Filament\Resources\Resource;
 use App\Filament\Resources\Users\Pages\CreateUser;
 use App\Filament\Resources\Users\Pages\EditUser;
@@ -15,12 +16,17 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
+use UnitEnum;
 
 class UserResource extends Resource
 {
     protected static ?string $model = User::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedUsers;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedIdentification;
+
+    protected static string|UnitEnum|null $navigationGroup = NavigationGroup::Settings;
+
+    protected static ?int $navigationSort = 2;
 
     /**
      * User is the app's Auth model, so it cannot carry a global CompanyScope

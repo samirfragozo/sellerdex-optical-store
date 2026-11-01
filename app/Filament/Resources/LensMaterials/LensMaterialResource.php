@@ -19,7 +19,7 @@ class LensMaterialResource extends Resource
 {
     protected static ?string $model = LensMaterial::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedSwatch;
 
     protected static ?string $cluster = CatalogoCluster::class;
 

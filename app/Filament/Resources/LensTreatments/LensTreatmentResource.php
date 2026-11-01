@@ -19,7 +19,7 @@ class LensTreatmentResource extends Resource
 {
     protected static ?string $model = LensTreatment::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedSparkles;
 
     protected static ?string $cluster = CatalogoCluster::class;
 

@@ -13,6 +13,13 @@ return [
         'log_out' => 'Log out',
     ],
 
+    'navigation_groups' => [
+        'counter' => 'Counter',
+        'finance' => 'Cash & finance',
+        'inventory' => 'Inventory',
+        'settings' => 'Settings',
+    ],
+
     'clusters' => [
         'compras' => 'Purchasing',
         'catalogo' => 'Catalog',

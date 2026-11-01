@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\LensOrders;
 
+use App\Enums\NavigationGroup;
 use App\Filament\Resources\LensOrders\Pages\CreateLensOrder;
 use App\Filament\Resources\LensOrders\Pages\EditLensOrder;
 use App\Filament\Resources\LensOrders\Pages\ListLensOrders;
@@ -13,6 +14,7 @@ use BackedEnum;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use UnitEnum;
 
 class LensOrderResource extends Resource
 {
@@ -20,7 +22,9 @@ class LensOrderResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBeaker;
 
-    protected static ?int $navigationSort = 3;
+    protected static string|UnitEnum|null $navigationGroup = NavigationGroup::Counter;
+
+    protected static ?int $navigationSort = 2;
 
     public static function form(Schema $schema): Schema
     {

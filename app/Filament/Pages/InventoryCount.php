@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Enums\NavigationGroup;
 use App\Enums\StockMovementType;
 use App\Models\Company;
 use App\Models\Product;
@@ -15,6 +16,7 @@ use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
+use UnitEnum;
 
 /** The physical count that opens the kardex: one number per stockable product, written as `initial` movements. */
 class InventoryCount extends Page
@@ -23,7 +25,11 @@ class InventoryCount extends Page
 
     protected static ?string $slug = 'inventory-count';
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedClipboardDocumentList;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedClipboardDocumentCheck;
+
+    protected static string|UnitEnum|null $navigationGroup = NavigationGroup::Inventory;
+
+    protected static ?int $navigationSort = 3;
 
     /** @var array<string, mixed> */
     public array $data = [];

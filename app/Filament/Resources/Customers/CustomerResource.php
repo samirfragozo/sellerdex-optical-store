@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Customers;
 
+use App\Enums\NavigationGroup;
 use App\Filament\Resources\Customers\Pages\CreateCustomer;
 use App\Filament\Resources\Customers\Pages\EditCustomer;
 use App\Filament\Resources\Customers\Pages\ListCustomers;
@@ -17,12 +18,17 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use UnitEnum;
 
 class CustomerResource extends Resource
 {
     protected static ?string $model = Customer::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedUsers;
+
+    protected static string|UnitEnum|null $navigationGroup = NavigationGroup::Counter;
+
+    protected static ?int $navigationSort = 3;
 
     public static function form(Schema $schema): Schema
     {

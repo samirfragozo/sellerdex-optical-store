@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\CashCloses;
 
+use App\Enums\NavigationGroup;
 use App\Filament\Resources\CashCloses\Pages\CreateCashClose;
 use App\Filament\Resources\CashCloses\Pages\EditCashClose;
 use App\Filament\Resources\CashCloses\Pages\ListCashCloses;
@@ -13,12 +14,17 @@ use BackedEnum;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use UnitEnum;
 
 class CashCloseResource extends Resource
 {
     protected static ?string $model = CashClose::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBanknotes;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedLockClosed;
+
+    protected static string|UnitEnum|null $navigationGroup = NavigationGroup::Finance;
+
+    protected static ?int $navigationSort = 2;
 
     public static function form(Schema $schema): Schema
     {

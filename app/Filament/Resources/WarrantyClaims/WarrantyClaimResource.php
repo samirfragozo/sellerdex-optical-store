@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\WarrantyClaims;
 
+use App\Enums\NavigationGroup;
 use App\Filament\Resources\Resource;
 use App\Filament\Resources\WarrantyClaims\Pages\CreateWarrantyClaim;
 use App\Filament\Resources\WarrantyClaims\Pages\ListWarrantyClaims;
@@ -12,6 +13,7 @@ use BackedEnum;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use UnitEnum;
 
 class WarrantyClaimResource extends Resource
 {
@@ -19,7 +21,9 @@ class WarrantyClaimResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedShieldCheck;
 
-    protected static ?int $navigationSort = 4;
+    protected static string|UnitEnum|null $navigationGroup = NavigationGroup::Counter;
+
+    protected static ?int $navigationSort = 6;
 
     public static function form(Schema $schema): Schema
     {

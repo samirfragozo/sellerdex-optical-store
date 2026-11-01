@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\BusinessSettings;
 
 use App\Enums\MessageTemplateKey;
+use App\Enums\NavigationGroup;
 use App\Filament\Pages\Onboarding\Steps\CompanyStep;
 use App\Filament\Pages\Onboarding\Steps\InvoicingStep;
 use App\Filament\Resources\BusinessSettings\Pages\ManageBusinessSetting;
@@ -15,6 +16,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
+use UnitEnum;
 
 /**
  * Single-record ("singleton") resource: the navigation entry opens straight to the
@@ -25,6 +27,10 @@ class BusinessSettingResource extends Resource
     protected static ?string $model = Company::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBuildingOffice2;
+
+    protected static string|UnitEnum|null $navigationGroup = NavigationGroup::Settings;
+
+    protected static ?int $navigationSort = 1;
 
     public static function getNavigationLabel(): string
     {

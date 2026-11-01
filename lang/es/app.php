@@ -13,6 +13,13 @@ return [
         'log_out' => 'Cerrar sesión',
     ],
 
+    'navigation_groups' => [
+        'counter' => 'Mostrador',
+        'finance' => 'Caja y finanzas',
+        'inventory' => 'Inventario',
+        'settings' => 'Configuración',
+    ],
+
     'clusters' => [
         'compras' => 'Compras',
         'catalogo' => 'Catálogo',

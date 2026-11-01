@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Enums\NavigationGroup;
 use App\Filament\Widgets\FinancialSummaryWidget;
 use App\Filament\Widgets\SalesByCategoryWidget;
 use App\Filament\Widgets\SellerPerformanceWidget;
@@ -14,12 +15,17 @@ use Filament\Pages\Dashboard\Concerns\HasFiltersForm;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
+use UnitEnum;
 
 class Reports extends Dashboard
 {
     use HasFiltersForm;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedChartBar;
+
+    protected static string|UnitEnum|null $navigationGroup = NavigationGroup::Finance;
+
+    protected static ?int $navigationSort = 4;
 
     protected static string $routePath = '/reports';
 

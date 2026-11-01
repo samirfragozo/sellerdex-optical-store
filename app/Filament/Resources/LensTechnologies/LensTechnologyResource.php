@@ -19,7 +19,7 @@ class LensTechnologyResource extends Resource
 {
     protected static ?string $model = LensTechnology::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCpuChip;
 
     protected static ?string $cluster = CatalogoCluster::class;
 

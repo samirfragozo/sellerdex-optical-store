@@ -2,12 +2,14 @@
 
 namespace App\Filament\Pages;
 
+use App\Enums\NavigationGroup;
 use App\Filament\Widgets\FollowUp\BalancesDueWidget;
 use App\Filament\Widgets\FollowUp\BirthdaysWidget;
 use App\Filament\Widgets\FollowUp\ExpiringPrescriptionsWidget;
 use BackedEnum;
 use Filament\Pages\Page;
 use Filament\Support\Icons\Heroicon;
+use UnitEnum;
 
 /** Who to call today: prescriptions to renew, balances to collect and birthdays. */
 class FollowUp extends Page
@@ -16,9 +18,11 @@ class FollowUp extends Page
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedChatBubbleLeftRight;
 
-    protected static ?string $slug = 'follow-up';
+    protected static string|UnitEnum|null $navigationGroup = NavigationGroup::Counter;
 
     protected static ?int $navigationSort = 5;
+
+    protected static ?string $slug = 'follow-up';
 
     public static function getNavigationLabel(): string
     {

@@ -19,7 +19,7 @@ class LensTypeResource extends Resource
 {
     protected static ?string $model = LensType::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedViewfinderCircle;
 
     protected static ?string $cluster = CatalogoCluster::class;
 

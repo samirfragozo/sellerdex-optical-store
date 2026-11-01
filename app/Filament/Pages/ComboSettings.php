@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Enums\NavigationGroup;
 use App\Filament\Pages\Onboarding\Steps\CombosStep;
 use App\Models\Company;
 use BackedEnum;
@@ -10,6 +11,7 @@ use Filament\Pages\Page;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Support\Arr;
+use UnitEnum;
 
 /** The onboarding combos step as a settings page, plus the per-product combos. */
 class ComboSettings extends Page
@@ -17,6 +19,10 @@ class ComboSettings extends Page
     protected string $view = 'filament.pages.combo-settings';
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedGift;
+
+    protected static string|UnitEnum|null $navigationGroup = NavigationGroup::Settings;
+
+    protected static ?int $navigationSort = 5;
 
     /** @var array<string, mixed> */
     public array $data = [];

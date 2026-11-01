@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Prescriptions;
 
+use App\Enums\NavigationGroup;
 use App\Filament\Resources\Prescriptions\Pages\CreatePrescription;
 use App\Filament\Resources\Prescriptions\Pages\EditPrescription;
 use App\Filament\Resources\Prescriptions\Pages\ListPrescriptions;
@@ -16,12 +17,17 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use UnitEnum;
 
 class PrescriptionResource extends Resource
 {
     protected static ?string $model = Prescription::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedEye;
+
+    protected static string|UnitEnum|null $navigationGroup = NavigationGroup::Counter;
+
+    protected static ?int $navigationSort = 4;
 
     public static function form(Schema $schema): Schema
     {
