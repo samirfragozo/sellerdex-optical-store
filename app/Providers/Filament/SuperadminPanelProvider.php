@@ -30,6 +30,7 @@ class SuperadminPanelProvider extends PanelProvider
             ->brandLogo(asset('images/brand/logo-color.png'))
             ->darkModeBrandLogo(asset('images/brand/logo-blanco.png'))
             ->brandLogoHeight('1.5rem')
+            ->favicon(asset('favicon.ico'))
             ->colors(['primary' => Color::hex('#00C950')])
             ->pages([Dashboard::class])
             ->resources([CompanyResource::class])

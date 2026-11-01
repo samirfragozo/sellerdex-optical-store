@@ -42,3 +42,10 @@ it('lets onboarded companies through', function () {
     $this->actingAs($admin)->get('/admin')->assertSuccessful();
     $this->actingAs($admin)->get(route('pos.index'))->assertSuccessful();
 });
+
+it('shows the Sellerdex favicon in the panel', function () {
+    $admin = User::factory()->forCompany(Company::factory()->notOnboarded()->create())->admin()->create();
+
+    $this->actingAs($admin)->get(Onboarding::getUrl())
+        ->assertSee('<link rel="icon" href="'.asset('favicon.ico').'"', escape: false);
+});
