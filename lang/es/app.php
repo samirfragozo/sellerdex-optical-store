@@ -918,10 +918,11 @@ return [
         ],
         'payment_methods' => [
             'label' => 'Métodos de pago',
-            'description' => 'Cómo te pagan tus clientes. El recargo se suma al total cuando se usa ese método.',
+            'description' => 'Cómo te pagan tus clientes.',
             'cash_notice' => 'Efectivo ya está incluido y siempre activo.',
             'others' => 'Otros métodos de pago',
             'add' => 'Agregar método de pago',
+            'surcharge_help' => 'Porcentaje que se suma al total cuando el cliente paga con este método, por ejemplo para cubrir la comisión del datáfono. Déjalo en 0 si no cobras recargo.',
         ],
         'counter_products' => [
             'tracks_inventory' => '¿Llevas inventario de estos productos?',

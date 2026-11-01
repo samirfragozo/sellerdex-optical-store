@@ -123,22 +123,32 @@ it('adds extra payment methods and keeps cash as the fixed default', function ()
     Livewire::test(Onboarding::class)
         ->assertSet('step', PaymentMethodsStep::key())
         ->set('data.paymentMethods', [
-            ['name' => 'Nequi', 'surcharge_percent' => 0, 'is_active' => true],
-            ['name' => 'Addi', 'surcharge_percent' => 7, 'is_active' => true],
+            ['name' => 'Nequi', 'surcharge_percent' => 0],
+            ['name' => 'Addi', 'surcharge_percent' => 7],
         ])
         ->call('next')
         ->assertHasNoErrors()
         ->assertSet('step', CounterProductsStep::key());
 
     expect(PaymentMethod::where('company_id', $admin->company_id)->orderBy('id')->pluck('name')->all())
-        ->toBe(['Efectivo', 'Nequi', 'Addi']);
+        ->toBe(['Efectivo', 'Nequi', 'Addi'])
+        ->and(PaymentMethod::where('company_id', $admin->company_id)->where('is_active', false)->exists())->toBeFalse();
+});
+
+it('does not offer an active switch for payment methods during onboarding', function () {
+    onboardingAt(PaymentMethodsStep::key());
+
+    Livewire::test(Onboarding::class)
+        ->set('data.paymentMethods', [['name' => 'Nequi', 'surcharge_percent' => 0]])
+        ->assertDontSeeHtml('paymentMethods.0.is_active')
+        ->assertSee(__('app.onboarding.payment_methods.surcharge_help'));
 });
 
 it('updates a payment method when going back instead of duplicating it', function () {
     $admin = onboardingAt(PaymentMethodsStep::key());
 
     $page = Livewire::test(Onboarding::class)
-        ->set('data.paymentMethods', [['name' => 'Nequi', 'surcharge_percent' => 0, 'is_active' => true]])
+        ->set('data.paymentMethods', [['name' => 'Nequi', 'surcharge_percent' => 0]])
         ->call('next')
         ->call('previous')
         ->assertSet('step', PaymentMethodsStep::key());

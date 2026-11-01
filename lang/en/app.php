@@ -918,10 +918,11 @@ return [
         ],
         'payment_methods' => [
             'label' => 'Payment methods',
-            'description' => 'How your customers pay you. The surcharge is added to the total when that method is used.',
+            'description' => 'How your customers pay you.',
             'cash_notice' => 'Cash is already included and always active.',
             'others' => 'Other payment methods',
             'add' => 'Add payment method',
+            'surcharge_help' => 'Percentage added to the total when the customer pays with this method, for example to cover the card terminal fee. Leave it at 0 if you don\'t charge a surcharge.',
         ],
         'counter_products' => [
             'tracks_inventory' => 'Do you track inventory for these products?',

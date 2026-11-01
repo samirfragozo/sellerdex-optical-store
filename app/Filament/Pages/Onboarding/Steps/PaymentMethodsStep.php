@@ -6,7 +6,6 @@ use App\Filament\Pages\Onboarding\OnboardingStep;
 use App\Models\Company;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Toggle;
 use Filament\Infolists\Components\TextEntry;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -40,10 +39,11 @@ class PaymentMethodsStep extends OnboardingStep
                 ->schema([
                     TextInput::make('name')->label(__('app.fields.name'))->required()->maxLength(255),
                     TextInput::make('surcharge_percent')->label(__('app.fields.surcharge_percent'))
-                        ->numeric()->minValue(0)->maxValue(100)->default(0)->suffix('%'),
-                    Toggle::make('is_active')->label(__('app.fields.active'))->default(true),
+                        ->numeric()->minValue(0)->maxValue(100)->default(0)->suffix('%')
+                        ->helperText(__('app.onboarding.payment_methods.surcharge_help')),
                 ])
-                ->columns(3)
+                // ponytail: no active switch, new methods are active (DB default); deactivating belongs to settings.
+                ->columns(2)
                 ->defaultItems(0)
                 ->addActionLabel(__('app.onboarding.payment_methods.add')),
         ];
