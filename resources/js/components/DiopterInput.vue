@@ -8,6 +8,8 @@ const props = withDefaults(
         fixedSign?: '+' | '-' | null;
         min?: number;
         max?: number;
+        /** Higher magnitude allowed while the sign is minus (sphere reaches further on the minus side). */
+        maxNegative?: number;
         step?: number;
         placeholder?: string;
         ariaLabel?: string;
@@ -17,6 +19,7 @@ const props = withDefaults(
         fixedSign: null,
         min: 0,
         max: 20,
+        maxNegative: undefined,
         step: 0.25,
         placeholder: '0.00',
         ariaLabel: undefined,
@@ -108,7 +111,7 @@ function signClass(value: '+' | '-'): string {
             type="number"
             inputmode="decimal"
             :min="min"
-            :max="max"
+            :max="sign === '-' ? (maxNegative ?? max) : max"
             :step="step"
             :placeholder="placeholder"
             :aria-label="ariaLabel"

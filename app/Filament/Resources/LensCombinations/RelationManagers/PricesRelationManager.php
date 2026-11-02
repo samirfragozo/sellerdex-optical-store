@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\LensCombinations\RelationManagers;
 
 use App\Models\LensCombinationPrice;
+use App\Models\Prescription;
 use Closure;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
@@ -30,9 +31,9 @@ class PricesRelationManager extends RelationManager
 
     public function form(Schema $schema): Schema
     {
-        $diopter = fn (string $name, int $limit): TextInput => TextInput::make($name)
+        $diopter = fn (string $name, string $scale): TextInput => TextInput::make($name)
             ->label(__("app.fields.{$name}"))
-            ->numeric()->step(0.25)->minValue(-$limit)->maxValue($limit)
+            ->numeric()->step(0.25)->minValue(Prescription::LIMITS[$scale][0])->maxValue(Prescription::LIMITS[$scale][1])
             ->default(LensCombinationPrice::ALL_PRESCRIPTIONS[$name])->required();
 
         return $schema
@@ -44,13 +45,13 @@ class PricesRelationManager extends RelationManager
                     ->required()
                     ->columnSpanFull()
                     ->helperText(__('app.resources.lens_combination.prices_help')),
-                $diopter('sphere_min', 20),
-                $diopter('sphere_max', 20)->gte('sphere_min'),
-                $diopter('cylinder_min', 10),
-                $diopter('cylinder_max', 10)->gte('cylinder_min'),
-                TextInput::make('add_min')->label(__('app.fields.add_min'))->numeric()->step(0.25)->minValue(0)->maxValue(4),
+                $diopter('sphere_min', 'sphere'),
+                $diopter('sphere_max', 'sphere')->gte('sphere_min'),
+                $diopter('cylinder_min', 'cylinder'),
+                $diopter('cylinder_max', 'cylinder')->gte('cylinder_min'),
+                TextInput::make('add_min')->label(__('app.fields.add_min'))->numeric()->step(0.25)->minValue(0)->maxValue(Prescription::LIMITS['add'][1]),
                 // ponytail: gte() takes no condition in Filament v4, so the "only when both are filled" check is a rule.
-                TextInput::make('add_max')->label(__('app.fields.add_max'))->numeric()->step(0.25)->minValue(0)->maxValue(4)
+                TextInput::make('add_max')->label(__('app.fields.add_max'))->numeric()->step(0.25)->minValue(0)->maxValue(Prescription::LIMITS['add'][1])
                     ->rule(fn (Get $get): Closure => function (string $attribute, mixed $value, Closure $fail) use ($get): void {
                         $min = $get('add_min');
 

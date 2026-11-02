@@ -21,8 +21,8 @@ class LensCombinationPrice extends Model
 
     /** The whole diopter scale: the "all prescriptions" range onboarding starts every lab with. */
     public const ALL_PRESCRIPTIONS = [
-        'sphere_min' => -20, 'sphere_max' => 20,
-        'cylinder_min' => -10, 'cylinder_max' => 10,
+        'sphere_min' => Prescription::LIMITS['sphere'][0], 'sphere_max' => Prescription::LIMITS['sphere'][1],
+        'cylinder_min' => Prescription::LIMITS['cylinder'][0], 'cylinder_max' => Prescription::LIMITS['cylinder'][1],
         'add_min' => null, 'add_max' => null,
     ];
 

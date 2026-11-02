@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Prescriptions\Schemas;
 use App\Enums\PrismBase;
 use App\Models\Prescription;
 use App\Rules\Diopter;
+use Closure;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
@@ -14,6 +15,7 @@ use Filament\Forms\Components\ToggleButtons;
 use Filament\Schemas\Components\Component;
 use Filament\Schemas\Components\FusedGroup;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 
 class PrescriptionForm
@@ -91,8 +93,8 @@ class PrescriptionForm
     protected static function eyeFields(string $eye): array
     {
         return [
-            self::signed("{$eye}_sphere", __('app.fields.sphere'), 20),
-            self::signed("{$eye}_cylinder", __('app.fields.cylinder'), 10, requiredWith: "{$eye}_axis"),
+            self::signed("{$eye}_sphere", __('app.fields.sphere'), Prescription::LIMITS['sphere'][1], -Prescription::LIMITS['sphere'][0]),
+            self::signed("{$eye}_cylinder", __('app.fields.cylinder'), Prescription::LIMITS['cylinder'][1], requiredWith: "{$eye}_axis"),
             TextInput::make("{$eye}_axis")
                 ->label(__('app.fields.axis'))
                 ->numeric()
@@ -104,7 +106,7 @@ class PrescriptionForm
                 ->label(__('app.fields.add'))
                 ->numeric()
                 ->prefix('+')
-                ->rule(new Diopter(0.25, 4)),
+                ->rule(new Diopter(...Prescription::LIMITS['add'])),
             TextInput::make("{$eye}_va")
                 ->label(__('app.fields.va'))
                 ->maxLength(10),
@@ -129,15 +131,29 @@ class PrescriptionForm
 
     /**
      * A signed diopter field: the +/- toggle fused next to the magnitude input.
+     * The scale can reach further on the minus side ($maxNegative) than on the plus side ($maxPositive).
      */
-    protected static function signed(string $field, string $label, float $max, ?string $requiredWith = null): FusedGroup
+    protected static function signed(string $field, string $label, float $maxPositive, ?float $maxNegative = null, ?string $requiredWith = null): FusedGroup
     {
+        $maxNegative ??= $maxPositive;
+
         $magnitude = TextInput::make("{$field}_num")
             ->placeholder($label)
             ->numeric()
             ->minValue(0)
-            ->maxValue($max)
-            ->rule(new Diopter(0, $max));
+            ->maxValue(max($maxPositive, $maxNegative))
+            ->rule(new Diopter(0, max($maxPositive, $maxNegative)))
+            ->rule(fn (Get $get): Closure => function (string $attribute, mixed $value, Closure $fail) use ($get, $field, $label, $maxPositive, $maxNegative): void {
+                $limit = $get("{$field}_sign") === '-' ? $maxNegative : $maxPositive;
+
+                if (is_numeric($value) && (float) $value > $limit) {
+                    $fail(__('app.validation.diopter.out_of_range', [
+                        'attribute' => $label,
+                        'min' => $get("{$field}_sign") === '-' ? "-{$limit}" : '0',
+                        'max' => $limit,
+                    ]));
+                }
+            });
 
         if ($requiredWith !== null) {
             $magnitude->requiredWith($requiredWith);

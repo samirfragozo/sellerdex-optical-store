@@ -101,3 +101,11 @@ it('rejects a pupillary distance off its 0.5 step and an overlong visual acuity 
         'od_pd' => '32.3', 'od_va' => str_repeat('x', 11),
     ]))->assertStatus(422)->assertJsonValidationErrors(['od_pd', 'od_va']);
 });
+
+it('accepts prescriptions up to the manufacturing limits and rejects beyond them', function () {
+    $this->postJson(route('pos.prescriptions.store'), posRxPayload(['od_sphere' => '-25.00', 'os_sphere' => '+20.00', 'od_cylinder' => '-8.00', 'od_axis' => 90, 'od_add' => '10.00']))
+        ->assertSuccessful();
+
+    $this->postJson(route('pos.prescriptions.store'), posRxPayload(['od_sphere' => '-25.25', 'os_sphere' => '+20.25', 'od_cylinder' => '-8.25', 'od_axis' => 90, 'od_add' => '10.25']))
+        ->assertStatus(422)->assertJsonValidationErrors(['od_sphere', 'os_sphere', 'od_cylinder', 'od_add']);
+});

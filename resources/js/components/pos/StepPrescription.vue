@@ -321,6 +321,7 @@ async function save(): Promise<void> {
                             v-model="form[eye].sphere"
                             :min="0"
                             :max="20"
+                            :max-negative="25"
                             :aria-label="`${eye.toUpperCase()} — ${trans('app.fields.sphere')}`"
                             :aria-describedby="`rx_${eye}_sphere_error`"
                         />
@@ -333,7 +334,7 @@ async function save(): Promise<void> {
                         <DiopterInput
                             v-model="form[eye].cylinder"
                             :min="0"
-                            :max="10"
+                            :max="8"
                             :aria-label="`${eye.toUpperCase()} — ${trans('app.fields.cylinder')}`"
                             :aria-describedby="`rx_${eye}_cylinder_error`"
                         />
@@ -362,7 +363,7 @@ async function save(): Promise<void> {
                             v-model="form[eye].add"
                             fixed-sign="+"
                             :min="0"
-                            :max="4"
+                            :max="10"
                             :aria-label="`${eye.toUpperCase()} — ${trans('app.fields.add')}`"
                             :aria-describedby="`rx_${eye}_add_error`"
                         />

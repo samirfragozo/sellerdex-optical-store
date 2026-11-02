@@ -230,3 +230,19 @@ it('lists the sales and patient of the armados made on a prescription', function
         ->assertSee($item->sale->number)
         ->assertSee('Luis Pérez');
 });
+
+it('allows a -22.00 sphere but not +22.00 in Filament', function () {
+    $this->actingAs(User::factory()->admin()->create());
+    $customer = Customer::factory()->create();
+    $base = ['customer_id' => $customer->id, 'exam_date' => now()->subMonth()->toDateString(), 'prescriber_name' => 'Dra. Ruiz'];
+
+    Livewire::test(CreatePrescription::class)
+        ->fillForm([...$base, 'od_sphere_sign' => '+', 'od_sphere_num' => '22.00'])
+        ->call('create')
+        ->assertHasFormErrors(['od_sphere_num']);
+
+    Livewire::test(CreatePrescription::class)
+        ->fillForm([...$base, 'od_sphere_sign' => '-', 'od_sphere_num' => '22.00'])
+        ->call('create')
+        ->assertHasNoFormErrors();
+});
