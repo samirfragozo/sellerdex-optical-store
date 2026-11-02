@@ -133,6 +133,48 @@ class Prescription extends Model
         return $this->expires_at !== null && $this->expires_at->lt(($at ?? now())->copy()->startOfDay());
     }
 
+    /** Manufacturing limits [min, max] checked against lab price ranges. */
+    public const array LIMITS = ['sphere' => [-25.0, 20.0], 'cylinder' => [-8.0, 8.0], 'add' => [0.25, 10.0]];
+
+    /** Refraction used when no prescription is given. */
+    public const array PLANO_REFRACTION = [
+        'od' => ['sphere' => 0.0, 'cylinder' => 0.0],
+        'os' => ['sphere' => 0.0, 'cylinder' => 0.0],
+        'add' => 0.0,
+    ];
+
+    /**
+     * Transpose a plus cylinder to minus cylinder; anything else is unchanged.
+     *
+     * @return array{sphere: float, cylinder: float}
+     */
+    public static function toMinusCylinder(float $sphere, float $cylinder): array
+    {
+        return $cylinder > 0
+            ? ['sphere' => $sphere + $cylinder, 'cylinder' => -$cylinder]
+            : ['sphere' => $sphere, 'cylinder' => $cylinder];
+    }
+
+    /**
+     * Both eyes in minus cylinder (blanks as 0) plus the larger addition,
+     * ready to check against lab price ranges.
+     *
+     * @return array{od: array{sphere: float, cylinder: float}, os: array{sphere: float, cylinder: float}, add: float}
+     */
+    public function refractionForRanges(): array
+    {
+        $eye = fn (string $side): array => self::toMinusCylinder(
+            (float) ($this->{"{$side}_sphere"} ?? 0),
+            (float) ($this->{"{$side}_cylinder"} ?? 0),
+        );
+
+        return [
+            'od' => $eye('od'),
+            'os' => $eye('os'),
+            'add' => max((float) ($this->od_add ?? 0), (float) ($this->os_add ?? 0)),
+        ];
+    }
+
     /**
      * The eye with the highest power — its strongest meridian,
      * max(|sphere|, |sphere + cylinder|) — which decides the lab price

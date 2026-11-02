@@ -77,3 +77,25 @@ it('keeps an existing expiry when only the company validity and other fields cha
 
     expect($rx->fresh()->expires_at->toDateString())->toBe('2027-01-10');
 });
+
+it('transposes a plus cylinder to minus cylinder and leaves the rest alone', function (float $sphere, float $cylinder, array $expected) {
+    expect(Prescription::toMinusCylinder($sphere, $cylinder))->toBe($expected);
+})->with([
+    'plus cylinder' => [-2.00, 1.50, ['sphere' => -0.5, 'cylinder' => -1.5]],
+    'high plus' => [5.50, 1.00, ['sphere' => 6.5, 'cylinder' => -1.0]],
+    'minus cylinder' => [-3.00, -0.75, ['sphere' => -3.0, 'cylinder' => -0.75]],
+    'no cylinder' => [1.25, 0.0, ['sphere' => 1.25, 'cylinder' => 0.0]],
+]);
+
+it('gives both eyes transposed, blanks as plano, and the larger addition', function () {
+    $rx = Prescription::factory()->make([
+        'od_sphere' => '-1.00', 'od_cylinder' => '+1.50', 'od_add' => '1.75',
+        'os_sphere' => null, 'os_cylinder' => null, 'os_add' => '2.00',
+    ]);
+
+    expect($rx->refractionForRanges())->toBe([
+        'od' => ['sphere' => 0.5, 'cylinder' => -1.5],
+        'os' => ['sphere' => 0.0, 'cylinder' => 0.0],
+        'add' => 2.0,
+    ]);
+});
