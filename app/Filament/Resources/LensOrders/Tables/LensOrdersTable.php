@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\LensOrders\Tables;
 
 use App\Filament\Resources\LensOrders\Actions\LabOrderActions;
+use App\Models\LensOrder;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
@@ -38,7 +39,7 @@ class LensOrdersTable
                     ->badge(),
                 TextColumn::make('expected_date')
                     ->label(__('app.fields.expected_date'))
-                    ->date()
+                    ->formatStateUsing(fn (LensOrder $record): ?string => $record->expectedDateLabel())
                     ->sortable(),
                 TextColumn::make('sent_at')
                     ->label(__('app.fields.sent_at'))

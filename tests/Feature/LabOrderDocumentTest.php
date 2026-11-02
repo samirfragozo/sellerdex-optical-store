@@ -35,6 +35,14 @@ beforeEach(function () {
     ]);
 });
 
+it('prints the expected delivery range', function () {
+    $this->order->update(['sent_at' => '2026-10-02 10:00', 'expected_date_from' => '2026-10-07', 'expected_date' => '2026-10-09']);
+
+    $this->get(route('documents.lab-order', $this->order))
+        ->assertOk()
+        ->assertSee('07/10/2026 – 09/10/2026');
+});
+
 it('prints everything the lab needs', function () {
     $this->get(route('documents.lab-order', $this->order))
         ->assertOk()

@@ -36,9 +36,13 @@ class LaboratoriesStep extends OnboardingStep
                     TextInput::make('phone')->label(__('app.fields.phone'))->tel()->maxLength(255),
                     TextInput::make('lead_time_days')->label(__('app.fields.lead_time_days'))
                         ->helperText(__('app.onboarding.laboratories.lead_time_help'))
-                        ->integer()->minValue(0)->maxValue(90)->suffix(__('app.onboarding.laboratories.days')),
+                        ->integer()->minValue(0)->maxValue(90)->suffix(__('app.onboarding.laboratories.days'))
+                        ->requiredWith('lead_time_max_days'),
+                    TextInput::make('lead_time_max_days')->label(__('app.fields.lead_time_max_days'))
+                        ->helperText(__('app.onboarding.laboratories.lead_time_max_help'))
+                        ->integer()->minValue(0)->maxValue(90)->gte('lead_time_days')->suffix(__('app.onboarding.laboratories.days')),
                 ])
-                ->columns(3)
+                ->columns(4)
                 ->minItems(1)
                 ->defaultItems(1)
                 ->addActionLabel(__('app.onboarding.laboratories.add')),
@@ -53,9 +57,12 @@ class LaboratoriesStep extends OnboardingStep
     public function summary(Company $company): string
     {
         return $company->laboratories()->where('is_active', true)->get()
-            ->map(fn ($lab) => $lab->lead_time_days !== null
-                ? __('app.onboarding.laboratories.summary_item', ['name' => $lab->name, 'days' => $lab->lead_time_days])
-                : $lab->name)
+            ->map(fn ($lab) => match (true) {
+                $lab->lead_time_days === null => $lab->name,
+                $lab->lead_time_max_days > $lab->lead_time_days => __('app.onboarding.laboratories.summary_range', ['name' => $lab->name, 'min' => $lab->lead_time_days, 'max' => $lab->lead_time_max_days]),
+                $lab->lead_time_days === 0 => __('app.onboarding.laboratories.summary_same_day', ['name' => $lab->name]),
+                default => __('app.onboarding.laboratories.summary_item', ['name' => $lab->name, 'days' => $lab->lead_time_days]),
+            })
             ->join(', ');
     }
 }

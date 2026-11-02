@@ -59,6 +59,11 @@ class LensOrderForm
                     ->default(LensOrderStatus::PendingAssignment->value)
                     ->disabled()
                     ->dehydrated(false),
+                // Only a lab with a delivery range sets it; editable then, but never after the latest date.
+                DatePicker::make('expected_date_from')
+                    ->label(__('app.fields.expected_date_from'))
+                    ->beforeOrEqual('expected_date')
+                    ->visible(fn (?LensOrder $record): bool => $record?->expected_date_from !== null),
                 DatePicker::make('expected_date')
                     ->label(__('app.fields.expected_date')),
                 DatePicker::make('received_date')

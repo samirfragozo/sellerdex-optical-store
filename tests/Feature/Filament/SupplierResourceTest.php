@@ -36,6 +36,18 @@ it('crea un proveedor desde el formulario', function () {
     expect(Supplier::where('name', 'Laboratorio Visión')->where('is_laboratory', true)->exists())->toBeTrue();
 });
 
+it('guarda el rango de días de entrega de un laboratorio', function () {
+    $this->actingAs(User::factory()->admin()->create());
+
+    Livewire::test(CreateSupplier::class)
+        ->fillForm(['name' => 'Lab Rango', 'is_laboratory' => true, 'is_active' => true, 'lead_time_days' => 3, 'lead_time_max_days' => 5])
+        ->call('create')
+        ->assertHasNoFormErrors();
+
+    expect(Supplier::where('name', 'Lab Rango')->sole()->only(['lead_time_days', 'lead_time_max_days']))
+        ->toBe(['lead_time_days' => 3, 'lead_time_max_days' => 5]);
+});
+
 it('la pestaña laboratorios filtra solo proveedores con is_laboratory=true', function () {
     $this->actingAs(User::factory()->admin()->create());
 

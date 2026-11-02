@@ -38,7 +38,15 @@ class SupplierForm
                     ->live(),
                 TextInput::make('lead_time_days')
                     ->label(__('app.fields.lead_time_days'))
+                    ->helperText(__('app.onboarding.laboratories.lead_time_help'))
                     ->integer()->minValue(0)->maxValue(90)
+                    ->requiredWith('lead_time_max_days')
+                    ->visible(fn ($get) => (bool) $get('is_laboratory')),
+                TextInput::make('lead_time_max_days')
+                    ->label(__('app.fields.lead_time_max_days'))
+                    ->helperText(__('app.onboarding.laboratories.lead_time_max_help'))
+                    ->integer()->minValue(0)->maxValue(90)
+                    ->gte('lead_time_days')
                     ->visible(fn ($get) => (bool) $get('is_laboratory')),
                 Toggle::make('is_active')
                     ->label(__('app.fields.active'))

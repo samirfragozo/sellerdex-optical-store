@@ -22,7 +22,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable([
-    'company_id', 'sale_item_id', 'supplier_id', 'lab_status', 'expected_date', 'received_date', 'notes',
+    'company_id', 'sale_item_id', 'supplier_id', 'lab_status', 'expected_date_from', 'expected_date', 'received_date', 'notes',
     'od_pd', 'os_pd', 'od_height', 'os_height', 'frame_a', 'frame_b', 'frame_dbl',
     'frame_type', 'frame_source', 'customer_frame_description', 'customer_frame_condition',
     'prescription_snapshot', 'sent_at', 'customer_notified_at',
@@ -42,6 +42,7 @@ class LensOrder extends Model
     {
         return [
             'lab_status' => LensOrderStatus::class,
+            'expected_date_from' => 'date',
             'expected_date' => 'date',
             'received_date' => 'date',
             'od_pd' => 'decimal:1',
@@ -100,18 +101,37 @@ class LensOrder extends Model
         ));
     }
 
-    /** Hand the order to the lab: expected back after the lab's lead time in business days. */
+    /**
+     * Hand the order to the lab: expected back after the lab's lead time in business days.
+     * A lab with a range (3 to 5 days) dates both ends; expected_date is always the latest.
+     */
     public function markSent(?CarbonInterface $at = null): void
     {
         $at ??= now();
-        $leadTime = $this->supplier?->lead_time_days;
+        $shortest = $this->supplier?->lead_time_days;
+        $longest = $this->supplier?->lead_time_max_days;
+        $isRange = $shortest !== null && $longest !== null && $longest > $shortest;
+        // ponytail: Mon–Fri only; Colombian holidays are not modeled. Add a holiday calendar if labs complain.
+        $dateAfter = fn (int $days): string => $at->copy()->addWeekdays($days)->toDateString();
 
         $this->update([
             'lab_status' => LensOrderStatus::Sent,
             'sent_at' => $at,
-            // ponytail: Mon–Fri only; Colombian holidays are not modeled. Add a holiday calendar if labs complain.
-            'expected_date' => $leadTime === null ? null : $at->copy()->addWeekdays($leadTime)->toDateString(),
+            'expected_date_from' => $isRange ? $dateAfter($shortest) : null,
+            'expected_date' => $shortest === null ? null : $dateAfter($isRange ? $longest : $shortest),
         ]);
+    }
+
+    /** The expected arrival as shown to people: one date, or "from – to" for a lab with a range. */
+    public function expectedDateLabel(): ?string
+    {
+        if ($this->expected_date === null) {
+            return null;
+        }
+
+        return $this->expected_date_from === null
+            ? $this->expected_date->format('d/m/Y')
+            : $this->expected_date_from->format('d/m/Y').' – '.$this->expected_date->format('d/m/Y');
     }
 
     /**

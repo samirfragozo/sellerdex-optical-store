@@ -181,6 +181,35 @@ it('requires at least one laboratory and stores its lead time', function () {
         ->and($lab->lead_time_days)->toBe(5);
 });
 
+it('accepts a same-day laboratory and says so in the summary', function () {
+    $admin = onboardingAt(LaboratoriesStep::key());
+
+    Livewire::test(Onboarding::class)
+        ->set('data.laboratories', [['name' => 'Lab Rápido', 'phone' => null, 'lead_time_days' => 0]])
+        ->assertSee(__('app.onboarding.laboratories.lead_time_help'))
+        ->call('next')
+        ->assertHasNoErrors();
+
+    expect(Supplier::where('company_id', $admin->company_id)->sole()->lead_time_days)->toBe(0)
+        ->and((new LaboratoriesStep)->summary($admin->company))->toBe(__('app.onboarding.laboratories.summary_same_day', ['name' => 'Lab Rápido']));
+});
+
+it('stores a laboratory delivery range and summarizes it', function () {
+    $admin = onboardingAt(LaboratoriesStep::key());
+
+    Livewire::test(Onboarding::class)
+        ->set('data.laboratories', [['name' => 'Lab Rango', 'phone' => null, 'lead_time_days' => 3, 'lead_time_max_days' => 2]])
+        ->call('next')
+        ->assertHasErrors()
+        ->set('data.laboratories', [['name' => 'Lab Rango', 'phone' => null, 'lead_time_days' => 3, 'lead_time_max_days' => 5]])
+        ->call('next')
+        ->assertHasNoErrors();
+
+    $lab = Supplier::where('company_id', $admin->company_id)->sole();
+    expect($lab->only(['lead_time_days', 'lead_time_max_days']))->toBe(['lead_time_days' => 3, 'lead_time_max_days' => 5])
+        ->and((new LaboratoriesStep)->summary($admin->company))->toBe(__('app.onboarding.laboratories.summary_range', ['name' => 'Lab Rango', 'min' => 3, 'max' => 5]));
+});
+
 it('creates the lens combinations the user keeps, with the prices they typed', function () {
     $admin = onboardingAt(LensesStep::key());
     $labs = Supplier::factory()->laboratory()->count(2)->create(['company_id' => $admin->company_id]);

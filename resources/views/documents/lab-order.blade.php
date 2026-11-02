@@ -13,7 +13,7 @@
             <td><strong>{{ __('app.fields.laboratory') }}:</strong> {{ $order->supplier?->name }}</td>
             <td class="right">
                 @if ($order->sent_at) {{ __('app.fields.sent_at') }}: {{ $order->sent_at->format('d/m/Y') }} @endif
-                @if ($order->expected_date) · {{ __('app.fields.expected_date') }}: {{ $order->expected_date->format('d/m/Y') }} @endif
+                @if ($order->expected_date) · {{ __('app.fields.expected_date') }}: {{ $order->expectedDateLabel() }} @endif
             </td>
         </tr>
         <tr><td colspan="2"><strong>{{ __('app.documents.patient') }}:</strong> {{ $order->saleItem?->lensConfig?->patient?->full_name }}</td></tr>

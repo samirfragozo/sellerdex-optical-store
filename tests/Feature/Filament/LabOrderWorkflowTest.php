@@ -57,7 +57,24 @@ it('sends a complete order and dates it in business days', function () {
     $order->refresh();
     expect($order->lab_status)->toBe(LensOrderStatus::Sent)
         ->and($order->sent_at->toDateString())->toBe('2026-10-02')
-        ->and($order->expected_date->toDateString())->toBe('2026-10-07');
+        ->and($order->expected_date->toDateString())->toBe('2026-10-07')
+        ->and($order->expected_date_from)->toBeNull()
+        ->and($order->expectedDateLabel())->toBe('07/10/2026');
+});
+
+it('dates a lab with a delivery range between its shortest and longest time', function () {
+    $this->lab->update(['lead_time_days' => 3, 'lead_time_max_days' => 5]);
+    $order = workflowOrder();
+    Carbon::setTestNow('2026-10-02 10:00'); // a Friday
+
+    $order->markSent();
+    $order->refresh();
+
+    expect($order->expected_date_from->toDateString())->toBe('2026-10-07')
+        ->and($order->expected_date->toDateString())->toBe('2026-10-09')
+        ->and($order->expectedDateLabel())->toBe('07/10/2026 – 09/10/2026');
+
+    Livewire::test(ListLensOrders::class)->assertSee('07/10/2026 – 09/10/2026');
 });
 
 it('leaves the expected date empty when the lab has no lead time', function () {
