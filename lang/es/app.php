@@ -945,11 +945,13 @@ return [
             'summary_item' => ':name (:days días)',
             'summary_same_day' => ':name (mismo día)',
             'summary_range' => ':name (:min a :max días)',
+            'notes_placeholder' => 'Opcional. Contacto, horarios, cómo recibe los pedidos…',
         ],
         'lenses' => [
             'label' => 'Lentes',
             'description' => 'Elige qué combinaciones de tipo, tecnología y material vendes y ajusta su costo y precio. Luego podrás afinar precios por rango de fórmula.',
             'selected_combo_keys' => 'Combinaciones que vendes',
+            'laboratories' => '¿Qué laboratorios lo fabrican?',
             'already_have' => 'Ya tienes combinaciones creadas. Marca solo las que quieras agregar.',
             'summary' => ':count combinaciones con precio',
         ],

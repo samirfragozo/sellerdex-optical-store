@@ -210,6 +210,17 @@ it('stores a laboratory delivery range and summarizes it', function () {
         ->and((new LaboratoriesStep)->summary($admin->company))->toBe(__('app.onboarding.laboratories.summary_range', ['name' => 'Lab Rango', 'min' => 3, 'max' => 5]));
 });
 
+it('stores notes about a laboratory', function () {
+    $admin = onboardingAt(LaboratoriesStep::key());
+
+    Livewire::test(Onboarding::class)
+        ->set('data.laboratories', [['name' => 'Lab Central', 'phone' => null, 'lead_time_days' => 3, 'notes' => 'Recogen los martes. Contacto: Ana']])
+        ->call('next')
+        ->assertHasNoErrors();
+
+    expect(Supplier::where('company_id', $admin->company_id)->sole()->notes)->toBe('Recogen los martes. Contacto: Ana');
+});
+
 it('creates the lens combinations the user keeps, with the prices they typed', function () {
     $admin = onboardingAt(LensesStep::key());
     $labs = Supplier::factory()->laboratory()->count(2)->create(['company_id' => $admin->company_id]);
@@ -235,6 +246,35 @@ it('creates the lens combinations the user keeps, with the prices they typed', f
         ->and($combination->installation_price)->toBe(20000)
         ->and(app(LensesStep::class)->isComplete($admin->company))->toBeTrue()
         ->and(LensType::where('name', 'Progresivo')->exists())->toBeFalse();
+});
+
+it('prices each lens only at the laboratories the user says make it', function () {
+    $admin = onboardingAt(LensesStep::key());
+    [$monofocalOnly, $allLenses] = Supplier::factory()->laboratory()->count(2)->create(['company_id' => $admin->company_id])->all();
+
+    Livewire::test(Onboarding::class)
+        ->assertSee(__('app.onboarding.lenses.laboratories'))
+        ->assertSet('data.pricing.monofocal-standard-cr39.supplier_ids', [$monofocalOnly->id, $allLenses->id])
+        ->set('data.selected_combo_keys', ['monofocal-standard-cr39', 'progresivo-standard-cr39'])
+        ->set('data.pricing.progresivo-standard-cr39.supplier_ids', [])
+        ->call('next')
+        ->assertHasErrors(['data.pricing.progresivo-standard-cr39.supplier_ids'])
+        ->set('data.pricing.progresivo-standard-cr39.supplier_ids', [$allLenses->id])
+        ->call('next')
+        ->assertHasNoErrors();
+
+    $labsOf = fn (string $type): array => LensCombinationPrice::whereHas('lensCombination.lensType', fn ($query) => $query->where('name', $type))
+        ->orderBy('id')->get(['supplier_id', 'is_preferred'])->map->only(['supplier_id', 'is_preferred'])->all();
+
+    expect($labsOf('Monofocal'))->toBe([['supplier_id' => $monofocalOnly->id, 'is_preferred' => true], ['supplier_id' => $allLenses->id, 'is_preferred' => false]])
+        ->and($labsOf('Progresivo'))->toBe([['supplier_id' => $allLenses->id, 'is_preferred' => true]]);
+});
+
+it('does not ask which laboratories make each lens when there is only one', function () {
+    $admin = onboardingAt(LensesStep::key());
+    Supplier::factory()->laboratory()->create(['company_id' => $admin->company_id]);
+
+    Livewire::test(Onboarding::class)->assertDontSee(__('app.onboarding.lenses.laboratories'));
 });
 
 it('preselects every reference combination', function () {

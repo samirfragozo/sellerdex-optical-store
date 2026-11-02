@@ -14,13 +14,13 @@ use App\Support\ReferenceLensCatalog;
 /**
  * Turns the reference combinations the user kept in the onboarding lenses
  * step into LensType/LensTechnology/LensMaterial/LensCombination rows, priced
- * at every active lab of the company.
+ * at the active labs the user said make each lens (every active lab by default).
  */
 class CreateReferenceLensCombinations
 {
     /**
      * @param  array<int, string>  $selectedKeys
-     * @param  array<string, array{cost: int, price: int, installation_price: int}>  $overrides  keyed by combination key
+     * @param  array<string, array{cost: int, price: int, installation_price: int, supplier_ids?: array<int, int|string>}>  $overrides  keyed by combination key
      */
     public function handle(Company $company, array $selectedKeys, array $overrides = []): void
     {
@@ -52,8 +52,12 @@ class CreateReferenceLensCombinations
                 ],
             );
 
+            $makers = isset($pricing['supplier_ids'])
+                ? $labs->whereIn('id', array_map('intval', $pricing['supplier_ids']))->values()
+                : $labs;
+
             // Onboarding starts every lab with one "all prescriptions" range; the shop refines ranges later.
-            foreach ($labs as $position => $lab) {
+            foreach ($makers as $position => $lab) {
                 $combination->prices()->firstOrCreate(
                     ['supplier_id' => $lab->id, ...LensCombinationPrice::ALL_PRESCRIPTIONS],
                     ['cost' => $pricing['cost'], 'price' => $pricing['price'], 'is_preferred' => $position === 0, 'is_active' => true],

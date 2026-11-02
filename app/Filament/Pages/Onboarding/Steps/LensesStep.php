@@ -7,11 +7,13 @@ use App\Filament\Pages\Onboarding\OnboardingStep;
 use App\Models\Company;
 use App\Models\LensCombination;
 use App\Models\LensCombinationPrice;
+use App\Models\Supplier;
 use App\Support\ReferenceLensCatalog;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
+use Illuminate\Database\Eloquent\Collection;
 
 class LensesStep extends OnboardingStep
 {
@@ -52,6 +54,7 @@ class LensesStep extends OnboardingStep
     /** @return array<int, Section> */
     private function pricingSections(): array
     {
+        $labs = $this->activeLabs()->pluck('name', 'id')->all();
         $sections = [];
         foreach (ReferenceLensCatalog::combinations() as $key => $c) {
             $sections[] = Section::make("{$c['type']} · {$c['technology']} · {$c['material']}")
@@ -61,6 +64,14 @@ class LensesStep extends OnboardingStep
                     TextInput::make("pricing.{$key}.cost")->label(__('app.fields.cost'))->required()->numeric()->minValue(0)->prefix('$'),
                     TextInput::make("pricing.{$key}.price")->label(__('app.fields.price'))->required()->numeric()->minValue(1)->prefix('$'),
                     TextInput::make("pricing.{$key}.installation_price")->label(__('app.fields.installation_price'))->required()->numeric()->minValue(0)->prefix('$'),
+                    // With a single lab there is nothing to choose: it makes every lens.
+                    CheckboxList::make("pricing.{$key}.supplier_ids")
+                        ->label(__('app.onboarding.lenses.laboratories'))
+                        ->options($labs)
+                        ->visible(count($labs) > 1)
+                        ->required()
+                        ->columns(3)
+                        ->columnSpanFull(),
                 ]);
         }
 
@@ -70,11 +81,13 @@ class LensesStep extends OnboardingStep
     public function fill(Company $company): array
     {
         $catalog = ReferenceLensCatalog::combinations();
+        $labIds = $this->activeLabs()->pluck('id')->all();
 
         return [
             'selected_combo_keys' => $this->isComplete($company) ? [] : array_keys($catalog),
             'pricing' => array_map(fn (array $c) => [
                 'cost' => $c['cost'], 'price' => $c['price'], 'installation_price' => $c['installation_price'],
+                'supplier_ids' => $labIds,
             ], $catalog),
         ];
     }
@@ -85,6 +98,12 @@ class LensesStep extends OnboardingStep
         $overrides = array_intersect_key($state['pricing'] ?? [], array_flip($keys));
 
         app(CreateReferenceLensCombinations::class)->handle($company, $keys, $overrides);
+    }
+
+    /** @return Collection<int, Supplier> */
+    private function activeLabs(): Collection
+    {
+        return Supplier::query()->laboratories()->where('is_active', true)->orderBy('id')->get();
     }
 
     public function isComplete(Company $company): bool

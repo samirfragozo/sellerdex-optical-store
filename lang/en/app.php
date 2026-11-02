@@ -945,11 +945,13 @@ return [
             'summary_item' => ':name (:days days)',
             'summary_same_day' => ':name (same day)',
             'summary_range' => ':name (:min to :max days)',
+            'notes_placeholder' => 'Optional. Contact, hours, how it takes orders…',
         ],
         'lenses' => [
             'label' => 'Lenses',
             'description' => 'Pick which type, technology and material combinations you sell and adjust their cost and price. You can fine-tune prices by prescription range later.',
             'selected_combo_keys' => 'Combinations you sell',
+            'laboratories' => 'Which laboratories make it?',
             'already_have' => 'You already have combinations. Tick only the ones you want to add.',
             'summary' => ':count priced combinations',
         ],

@@ -5,6 +5,7 @@ namespace App\Filament\Pages\Onboarding\Steps;
 use App\Filament\Pages\Onboarding\OnboardingStep;
 use App\Models\Company;
 use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 
 class LaboratoriesStep extends OnboardingStep
@@ -41,6 +42,9 @@ class LaboratoriesStep extends OnboardingStep
                     TextInput::make('lead_time_max_days')->label(__('app.fields.lead_time_max_days'))
                         ->helperText(__('app.onboarding.laboratories.lead_time_max_help'))
                         ->integer()->minValue(0)->maxValue(90)->gte('lead_time_days')->suffix(__('app.onboarding.laboratories.days')),
+                    Textarea::make('notes')->label(__('app.fields.notes'))
+                        ->placeholder(__('app.onboarding.laboratories.notes_placeholder'))
+                        ->rows(2)->columnSpanFull(),
                 ])
                 ->columns(4)
                 ->minItems(1)
