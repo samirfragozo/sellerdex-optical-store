@@ -3,6 +3,7 @@
 use App\Models\Company;
 use App\Models\LensCombination;
 use App\Models\LensCombinationPrice;
+use App\Models\LensPriceBand;
 use App\Models\Prescription;
 use App\Models\Supplier;
 use App\Models\User;
@@ -12,11 +13,12 @@ beforeEach(function () {
     $this->labA = Supplier::factory()->laboratory()->create(['name' => 'Lab A']);
     $this->labB = Supplier::factory()->laboratory()->create(['name' => 'Lab B']);
     $this->combination = LensCombination::factory()->unpriced()->create(['installation_price' => 5_000]);
-    foreach ([[$this->labA, 150_000, false], [$this->labB, 160_000, true]] as [$lab, $price, $preferred]) {
+    LensPriceBand::factory()->create(['lens_combination_id' => $this->combination->id, 'price' => 150_000]);
+    foreach ([[$this->labA, 40_000, false], [$this->labB, 45_000, true]] as [$lab, $cost, $preferred]) {
         LensCombinationPrice::factory()->create([
             'lens_combination_id' => $this->combination->id, 'supplier_id' => $lab->id,
             ...LensCombinationPrice::ALL_PRESCRIPTIONS, 'sphere_min' => -6, 'sphere_max' => 6,
-            'cost' => 40_000, 'price' => $price, 'is_preferred' => $preferred,
+            'cost' => $cost, 'is_preferred' => $preferred,
         ]);
     }
 });
@@ -33,7 +35,7 @@ function lensOffersQuery(Prescription $rx): array
     ];
 }
 
-it('offers each lab that can make the lens, preferred first, with installation included', function () {
+it('offers each lab that can make the lens at the band price, preferred first, with installation included', function () {
     $rx = Prescription::factory()->create(['od_sphere' => '-2.00', 'os_sphere' => null, 'od_cylinder' => null, 'os_cylinder' => null]);
 
     $this->getJson(route('pos.lens-offers', lensOffersQuery($rx)))
@@ -41,9 +43,11 @@ it('offers each lab that can make the lens, preferred first, with installation i
         ->assertJsonPath('message', null)
         ->assertJsonPath('offers.0.supplier_id', $this->labB->id)
         ->assertJsonPath('offers.0.supplier_name', 'Lab B')
-        ->assertJsonPath('offers.0.price', 165_000)
+        ->assertJsonPath('offers.0.price', 155_000)
+        ->assertJsonPath('offers.0.cost', 45_000)
         ->assertJsonPath('offers.0.is_preferred', true)
-        ->assertJsonPath('offers.1.price', 155_000);
+        ->assertJsonPath('offers.1.price', 155_000)
+        ->assertJsonPath('offers.1.cost', 40_000);
 });
 
 it('explains when the prescription is outside every range', function () {

@@ -48,9 +48,8 @@ class LensCombinationFactory extends Factory
     /** Sold at $price and costing $cost at a lab, for every prescription. */
     public function priced(int $price, int $cost = 0): static
     {
-        // ponytail: the cost row keeps `price` until lens offers price from bands (Task 4).
         return $this->has(LensPriceBand::factory()->state(['price' => $price]), 'priceBands')
-            ->has(LensCombinationPrice::factory()->state(['price' => $price, 'cost' => $cost]), 'prices');
+            ->has(LensCombinationPrice::factory()->state(['cost' => $cost]), 'prices');
     }
 
     /** No sale band nor cost row — not sellable. */

@@ -6,6 +6,7 @@ use App\Models\Company;
 use App\Models\Customer;
 use App\Models\KitSlot;
 use App\Models\LensCombination;
+use App\Models\LensCombinationPrice;
 use App\Models\LensMaterial;
 use App\Models\LensTechnology;
 use App\Models\LensType;
@@ -271,6 +272,17 @@ it('hides non-pos-selectable products from the pos picker', function () {
 
     expect($ids)->toContain($sellable->id)
         ->and($ids)->not->toContain($hidden->id);
+});
+
+it('leaves a lens with lab costs but no price band out of the pos catalog', function () {
+    $this->actingAs(User::factory()->seller()->create());
+    $priced = LensCombination::factory()->create();
+    $costOnly = LensCombination::factory()->unpriced()->create();
+    LensCombinationPrice::factory()->create(['lens_combination_id' => $costOnly->id]);
+
+    $this->get('/pos')->assertInertia(fn ($page) => $page
+        ->where('lensCatalog.combinations', fn ($combinations) => collect($combinations)->pluck('id')->contains($priced->id)
+            && ! collect($combinations)->pluck('id')->contains($costOnly->id)));
 });
 
 it('allows a non-lens sale without any customer', function () {

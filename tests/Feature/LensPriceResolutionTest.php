@@ -3,6 +3,7 @@
 use App\Enums\MixedRangePricing;
 use App\Models\LensCombination;
 use App\Models\LensCombinationPrice;
+use App\Models\LensPriceBand;
 use App\Models\Prescription;
 use App\Models\Supplier;
 use App\Models\User;
@@ -15,19 +16,31 @@ beforeEach(function () {
     $this->combination = LensCombination::factory()->unpriced()->create();
 });
 
-/** One price row of the test combination at $lab, "all prescriptions" unless overridden. */
+/** One cost row of the test combination at $lab, "all prescriptions" unless overridden. */
 function rangePriceRow(Supplier $lab, array $overrides = []): LensCombinationPrice
 {
     return LensCombinationPrice::factory()->create([
         'lens_combination_id' => test()->combination->id,
         'supplier_id' => $lab->id,
         ...LensCombinationPrice::ALL_PRESCRIPTIONS,
-        'cost' => 50_000, 'price' => 150_000, 'is_preferred' => false,
+        'cost' => 50_000, 'is_preferred' => false,
+        ...$overrides,
+    ]);
+}
+
+/** One sale band of the test combination, "all prescriptions" at 150.000 unless overridden. */
+function rangePriceBand(array $overrides = []): LensPriceBand
+{
+    return LensPriceBand::factory()->create([
+        'lens_combination_id' => test()->combination->id,
+        ...LensCombinationPrice::ALL_PRESCRIPTIONS,
+        'price' => 150_000,
         ...$overrides,
     ]);
 }
 
 it('offers nothing when the weaker eye is out of the only row', function () {
+    rangePriceBand();
     rangePriceRow($this->labA, ['sphere_min' => -6, 'sphere_max' => 6, 'cylinder_min' => -2, 'cylinder_max' => 0]);
     $rx = Prescription::factory()->make(['od_sphere' => '-4.00', 'od_cylinder' => null, 'od_add' => null, 'os_sphere' => '-1.00', 'os_cylinder' => '-3.00', 'os_add' => null]);
 
@@ -35,6 +48,7 @@ it('offers nothing when the weaker eye is out of the only row', function () {
 });
 
 it('compares a plus-cylinder prescription transposed to minus cylinder', function () {
+    rangePriceBand();
     rangePriceRow($this->labA, ['sphere_min' => -6, 'sphere_max' => 6, 'cylinder_min' => -2, 'cylinder_max' => 0]);
     $tooStrong = Prescription::factory()->make(['od_sphere' => '+5.50', 'od_cylinder' => '+1.00', 'od_add' => null, 'os_sphere' => null, 'os_cylinder' => null, 'os_add' => null]);
     $fits = Prescription::factory()->make(['od_sphere' => '-1.00', 'od_cylinder' => '+1.50', 'od_add' => null, 'os_sphere' => null, 'os_cylinder' => null, 'os_add' => null]);
@@ -45,8 +59,10 @@ it('compares a plus-cylinder prescription transposed to minus cylinder', functio
 
 it('prices a pair whose eyes use different rows by the lab rule', function (MixedRangePricing $rule, int $cost) {
     $this->labA->update(['mixed_range_pricing' => $rule]);
-    $normal = rangePriceRow($this->labA, ['cylinder_min' => -2, 'cylinder_max' => 0, 'cost' => 12_000, 'price' => 40_000]);
-    $extended = rangePriceRow($this->labA, ['cylinder_min' => -4, 'cylinder_max' => -2.25, 'cost' => 24_000, 'price' => 70_000]);
+    $normal = rangePriceRow($this->labA, ['cylinder_min' => -2, 'cylinder_max' => 0, 'cost' => 12_000]);
+    $extended = rangePriceRow($this->labA, ['cylinder_min' => -4, 'cylinder_max' => -2.25, 'cost' => 24_000]);
+    rangePriceBand(['cylinder_min' => -2, 'cylinder_max' => 0, 'price' => 40_000]);
+    rangePriceBand(['cylinder_min' => -4, 'cylinder_max' => -2.25, 'price' => 70_000]);
     $rx = Prescription::factory()->make(['od_sphere' => '-1.00', 'od_cylinder' => '-3.00', 'od_add' => null, 'os_sphere' => '-1.00', 'os_cylinder' => '-0.50', 'os_add' => null]);
 
     $offer = LensCombinationPrice::resolve($this->combination, $rx);
@@ -61,8 +77,10 @@ it('prices a pair whose eyes use different rows by the lab rule', function (Mixe
 ]);
 
 it('treats a blank eye as plano so a strong single eye still gets its narrow row', function () {
-    $broad = rangePriceRow($this->labA, ['price' => 150_000]);
-    $narrow = rangePriceRow($this->labA, ['sphere_min' => -20, 'sphere_max' => -6.25, 'price' => 260_000]);
+    $broad = rangePriceRow($this->labA);
+    $narrow = rangePriceRow($this->labA, ['sphere_min' => -20, 'sphere_max' => -6.25]);
+    rangePriceBand();
+    rangePriceBand(['sphere_min' => -20, 'sphere_max' => -6.25, 'price' => 260_000]);
     $rx = Prescription::factory()->make(['od_sphere' => '-8.00', 'od_cylinder' => null, 'od_add' => null, 'os_sphere' => null, 'os_cylinder' => null, 'os_add' => null]);
 
     $offer = LensCombinationPrice::resolve($this->combination, $rx);
@@ -73,6 +91,7 @@ it('treats a blank eye as plano so a strong single eye still gets its narrow row
 });
 
 it('prefers a low-vision addition row over a broad row with an open addition', function () {
+    rangePriceBand();
     rangePriceRow($this->labA);
     $lowVision = rangePriceRow($this->labA, ['add_min' => 4.25, 'add_max' => 10]);
     $rx = Prescription::factory()->make(['od_sphere' => '-1.00', 'od_cylinder' => null, 'od_add' => '5.00', 'os_sphere' => null, 'os_cylinder' => null, 'os_add' => null]);
@@ -81,8 +100,10 @@ it('prefers a low-vision addition row over a broad row with an open addition', f
 });
 
 it('prices each eye by the narrowest range that covers it', function () {
-    $base = rangePriceRow($this->labA, ['price' => 150_000]);
-    $high = rangePriceRow($this->labA, ['sphere_min' => -20, 'sphere_max' => -6.25, 'price' => 260_000]);
+    $base = rangePriceRow($this->labA);
+    $high = rangePriceRow($this->labA, ['sphere_min' => -20, 'sphere_max' => -6.25]);
+    rangePriceBand();
+    rangePriceBand(['sphere_min' => -20, 'sphere_max' => -6.25, 'price' => 260_000]);
 
     $low = Prescription::factory()->make(['od_sphere' => '-2.00', 'os_sphere' => '-1.50', 'od_cylinder' => null, 'os_cylinder' => null, 'od_add' => null, 'os_add' => null]);
     $strong = Prescription::factory()->make(['od_sphere' => '-1.00', 'os_sphere' => '-7.00', 'od_cylinder' => null, 'os_cylinder' => null, 'od_add' => null, 'os_add' => null]);
@@ -92,6 +113,7 @@ it('prices each eye by the narrowest range that covers it', function () {
 });
 
 it('prefers the narrower addition range at the same lab', function () {
+    rangePriceBand();
     $wide = rangePriceRow($this->labA, ['add_min' => 0, 'add_max' => 4]);
     $narrow = rangePriceRow($this->labA, ['add_min' => 1, 'add_max' => 2.5]);
     $rx = Prescription::factory()->make(['od_sphere' => '-1.00', 'os_sphere' => null, 'od_cylinder' => null, 'os_cylinder' => null, 'od_add' => '2.00', 'os_add' => null]);
@@ -100,6 +122,7 @@ it('prefers the narrower addition range at the same lab', function () {
 });
 
 it('finds nothing for a prescription outside every range', function () {
+    rangePriceBand();
     rangePriceRow($this->labA, ['sphere_min' => -6, 'sphere_max' => 6]);
     $rx = Prescription::factory()->make(['od_sphere' => '-8.00', 'os_sphere' => null, 'od_cylinder' => null, 'os_cylinder' => null, 'od_add' => null, 'os_add' => null]);
 
@@ -108,6 +131,7 @@ it('finds nothing for a prescription outside every range', function () {
 });
 
 it('respects addition bounds', function () {
+    rangePriceBand();
     rangePriceRow($this->labA, ['add_min' => 0.75, 'add_max' => 2.00]);
     $noAdd = Prescription::factory()->make(['od_sphere' => '-1.00', 'os_sphere' => null, 'od_cylinder' => null, 'os_cylinder' => null, 'od_add' => null, 'os_add' => null]);
     $withAdd = Prescription::factory()->make(['od_sphere' => '-1.00', 'os_sphere' => null, 'od_cylinder' => null, 'os_cylinder' => null, 'od_add' => '1.50', 'os_add' => '1.50']);
@@ -117,14 +141,15 @@ it('respects addition bounds', function () {
 });
 
 it('picks the preferred lab unless a lab is asked for, and skips inactive rows and labs', function () {
-    rangePriceRow($this->labA, ['price' => 150_000]);
-    $preferred = rangePriceRow($this->labB, ['price' => 170_000, 'is_preferred' => true]);
+    rangePriceBand();
+    rangePriceRow($this->labA, ['cost' => 50_000]);
+    $preferred = rangePriceRow($this->labB, ['cost' => 70_000, 'is_preferred' => true]);
     $inactiveLab = Supplier::factory()->laboratory()->create(['is_active' => false]);
     rangePriceRow($inactiveLab, ['is_preferred' => true]);
-    rangePriceRow($this->labA, ['price' => 1, 'is_active' => false, 'sphere_min' => -1, 'sphere_max' => 1]);
+    rangePriceRow($this->labA, ['cost' => 1, 'is_active' => false, 'sphere_min' => -1, 'sphere_max' => 1]);
 
     expect(LensCombinationPrice::resolve($this->combination, null)->odRow->is($preferred))->toBeTrue()
-        ->and(LensCombinationPrice::resolve($this->combination, null, $this->labA->id)->price)->toBe(150_000)
+        ->and(LensCombinationPrice::resolve($this->combination, null, $this->labA->id)->cost)->toBe(50_000)
         ->and(LensCombinationPrice::resolve($this->combination, null, $inactiveLab->id))->toBeNull()
         ->and(LensCombinationPrice::offers($this->combination, null)->map(fn (LensOffer $offer) => $offer->supplier->id)->all())->toBe([$this->labB->id, $this->labA->id]);
 });
@@ -139,9 +164,11 @@ it('names the combination and the lab in the out-of-range message', function () 
 });
 
 it('lets a narrow non-preferred row win within the preferred lab', function () {
-    $broad = rangePriceRow($this->labA, ['price' => 150_000, 'is_preferred' => true]);
-    $narrow = rangePriceRow($this->labA, ['sphere_min' => -20, 'sphere_max' => -6.25, 'price' => 280_000]);
-    rangePriceRow($this->labB, ['price' => 140_000]);
+    $broad = rangePriceRow($this->labA, ['is_preferred' => true]);
+    $narrow = rangePriceRow($this->labA, ['sphere_min' => -20, 'sphere_max' => -6.25]);
+    rangePriceRow($this->labB);
+    rangePriceBand();
+    rangePriceBand(['sphere_min' => -20, 'sphere_max' => -6.25, 'price' => 280_000]);
     $strong = Prescription::factory()->make(['od_sphere' => '-8.00', 'os_sphere' => null, 'od_cylinder' => null, 'os_cylinder' => null, 'od_add' => null, 'os_add' => null]);
 
     $offers = LensCombinationPrice::offers($this->combination, $strong);
@@ -154,10 +181,30 @@ it('lets a narrow non-preferred row win within the preferred lab', function () {
 });
 
 it('ranks the preferred lab ahead of a lab with only a narrower non-preferred row', function () {
-    $preferred = rangePriceRow($this->labA, ['price' => 150_000, 'is_preferred' => true]);
-    rangePriceRow($this->labB, ['sphere_min' => -20, 'sphere_max' => -6.25, 'price' => 200_000]);
+    rangePriceBand();
+    $preferred = rangePriceRow($this->labA, ['is_preferred' => true]);
+    rangePriceRow($this->labB, ['sphere_min' => -20, 'sphere_max' => -6.25]);
     $strong = Prescription::factory()->make(['od_sphere' => '-8.00', 'os_sphere' => '-7.00', 'od_cylinder' => null, 'os_cylinder' => null, 'od_add' => null, 'os_add' => null]);
 
     expect(LensCombinationPrice::resolve($this->combination, $strong)->odRow->is($preferred))->toBeTrue()
         ->and(LensCombinationPrice::offers($this->combination, $strong)->map(fn (LensOffer $offer) => $offer->supplier->id)->all())->toBe([$this->labA->id, $this->labB->id]);
+});
+
+it('prices every lab offer from the lens bands, not from the lab rows', function () {
+    rangePriceRow($this->labA, ['cost' => 50_000]);
+    rangePriceRow($this->labB, ['cost' => 60_000]);
+    LensPriceBand::factory()->create(['lens_combination_id' => $this->combination->id, 'price' => 180_000]);
+
+    $offers = LensCombinationPrice::offers($this->combination, null);
+
+    expect($offers->map(fn (LensOffer $offer) => [$offer->supplier->id, $offer->cost, $offer->price])->all())
+        ->toEqualCanonicalizing([[$this->labA->id, 50_000, 180_000], [$this->labB->id, 60_000, 180_000]]);
+});
+
+it('offers nothing when no band covers the prescription even if a lab could make it', function () {
+    rangePriceRow($this->labA);
+    LensPriceBand::factory()->create(['lens_combination_id' => $this->combination->id, 'sphere_min' => -6, 'sphere_max' => 6]);
+    $rx = Prescription::factory()->make(['od_sphere' => '-8.00', 'od_cylinder' => null, 'od_add' => null, 'os_sphere' => null, 'os_cylinder' => null, 'os_add' => null]);
+
+    expect(LensCombinationPrice::offers($this->combination, $rx))->toBeEmpty();
 });

@@ -59,11 +59,10 @@ class CreateReferenceLensCombinations
             // Onboarding starts with one "all prescriptions" sale band and cost row per lab; the shop refines ranges later.
             $combination->priceBands()->firstOrCreate(LensCombinationPrice::ALL_PRESCRIPTIONS, ['price' => $pricing['price']]);
 
-            // ponytail: cost rows keep `price` until lens offers price from bands (Task 4).
             foreach ($makers as $position => $lab) {
                 $combination->prices()->firstOrCreate(
                     ['supplier_id' => $lab->id, ...LensCombinationPrice::ALL_PRESCRIPTIONS],
-                    ['cost' => $pricing['cost'], 'price' => $pricing['price'], 'is_preferred' => $position === 0, 'is_active' => true],
+                    ['cost' => $pricing['cost'], 'is_preferred' => $position === 0, 'is_active' => true],
                 );
             }
         }

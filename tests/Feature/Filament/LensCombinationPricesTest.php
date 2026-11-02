@@ -93,10 +93,10 @@ it('only offers active labs of the company', function () {
     }
 });
 
-it('lists the lab and price of each range', function () {
+it('lists the lab and cost of each range', function () {
     $this->combination->prices()->create([
         'supplier_id' => $this->lab->id, ...LensCombinationPrice::ALL_PRESCRIPTIONS,
-        'cost' => 50_000, 'price' => 150_000, 'is_preferred' => true, 'is_active' => true,
+        'cost' => 50_000, 'is_preferred' => true, 'is_active' => true,
     ]);
 
     pricesManager()->assertSee('Lab Central')->assertCanSeeTableRecords($this->combination->prices);

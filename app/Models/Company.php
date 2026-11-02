@@ -26,6 +26,9 @@ class Company extends Model
     /** @use HasFactory<CompanyFactory> */
     use HasFactory;
 
+    /** Matches the column default, so a model never refreshed after create still has its rule. */
+    protected $attributes = ['mixed_range_pricing' => 'highest'];
+
     protected function casts(): array
     {
         return [

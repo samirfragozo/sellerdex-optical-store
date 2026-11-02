@@ -31,7 +31,6 @@ class LensCombinationPriceFactory extends Factory
                 ?? Supplier::factory()->laboratory()->create(['company_id' => $attributes['company_id']])->id,
             ...LensCombinationPrice::ALL_PRESCRIPTIONS,
             'cost' => fake()->numberBetween(20_000, 200_000),
-            'price' => fake()->numberBetween(80_000, 600_000),
             'is_preferred' => true,
             'is_active' => true,
         ];

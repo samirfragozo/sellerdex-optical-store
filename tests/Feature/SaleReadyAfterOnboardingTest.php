@@ -148,7 +148,7 @@ it('lets a new shop onboard with its own counter products and combo and sell an 
 
     $sale = Sale::latest('id')->first();
     expect($sale->items->pluck('product.name'))->toContain('Estuche pequeño', 'Paño microfibra', 'Examen visual', 'Bolsa plástica')
-        ->and($sale->items->first(fn ($i) => $i->isLens())->unit_price)->toBe($combination->prices()->firstOrFail()->price + $combination->installation_price + 20_000);
+        ->and($sale->items->first(fn ($i) => $i->isLens())->unit_price)->toBe($combination->priceBands()->firstOrFail()->price + $combination->installation_price + 20_000);
 });
 
 it('lets a new shop record an external prescription with a photo and sell glasses on it', function () {
@@ -214,16 +214,15 @@ it('lets a new shop sell two armados for two patients on one sale', function () 
         ->toBe(collect([$payer->id, $son->id])->sort()->values()->all());
 });
 
-it('prices a lens by the prescription range at the lab onboarding set up', function () {
+it('prices a lens by the prescription range of the band onboarding set up', function () {
     $admin = registerAndOnboard('m6@optica.test', VatRegime::NotResponsible);
     openCashRegisterSession($admin);
     $combination = LensCombination::firstOrFail();
-    $base = $combination->prices()->firstOrFail();
-    $combination->prices()->create([
-        'supplier_id' => $base->supplier_id,
+    $base = $combination->priceBands()->firstOrFail();
+    $combination->priceBands()->create([
         ...LensCombinationPrice::ALL_PRESCRIPTIONS,
         'sphere_min' => -20, 'sphere_max' => -6.25,
-        'cost' => $base->cost + 30_000, 'price' => $base->price + 100_000, 'is_preferred' => true, 'is_active' => true,
+        'price' => $base->price + 100_000,
     ]);
     $customer = Customer::factory()->create();
 

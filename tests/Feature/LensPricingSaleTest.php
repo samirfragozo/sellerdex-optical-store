@@ -4,6 +4,7 @@ use App\Models\Company;
 use App\Models\Customer;
 use App\Models\LensCombination;
 use App\Models\LensCombinationPrice;
+use App\Models\LensPriceBand;
 use App\Models\PaymentMethod;
 use App\Models\Prescription;
 use App\Models\Sale;
@@ -19,16 +20,20 @@ beforeEach(function () {
     $this->labB = Supplier::factory()->laboratory()->create(['name' => 'Lab B']);
     $this->combination = LensCombination::factory()->unpriced()->create(['installation_price' => 5_000]);
     $this->customer = Customer::factory()->create();
-    foreach ([[$this->labA, 50_000, 150_000, true], [$this->labB, 40_000, 160_000, false]] as [$lab, $cost, $price, $preferred]) {
+    foreach ([[$this->labA, 50_000, true], [$this->labB, 40_000, false]] as [$lab, $cost, $preferred]) {
         LensCombinationPrice::factory()->create([
             'lens_combination_id' => $this->combination->id, 'supplier_id' => $lab->id,
-            ...LensCombinationPrice::ALL_PRESCRIPTIONS, 'cost' => $cost, 'price' => $price, 'is_preferred' => $preferred,
+            ...LensCombinationPrice::ALL_PRESCRIPTIONS, 'cost' => $cost, 'is_preferred' => $preferred,
         ]);
     }
     LensCombinationPrice::factory()->create([
         'lens_combination_id' => $this->combination->id, 'supplier_id' => $this->labA->id,
         ...LensCombinationPrice::ALL_PRESCRIPTIONS, 'sphere_min' => -20, 'sphere_max' => -6.25,
-        'cost' => 90_000, 'price' => 280_000, 'is_preferred' => true,
+        'cost' => 90_000, 'is_preferred' => true,
+    ]);
+    LensPriceBand::factory()->create(['lens_combination_id' => $this->combination->id, 'price' => 150_000]);
+    LensPriceBand::factory()->create([
+        'lens_combination_id' => $this->combination->id, 'sphere_min' => -20, 'sphere_max' => -6.25, 'price' => 280_000,
     ]);
 });
 
@@ -77,11 +82,11 @@ it('prices the lens by the prescription range at the preferred lab', function (s
     'high prescription' => ['-8.00', 280_000, 90_000],
 ]);
 
-it('takes cost and price from the lab the seller chose', function () {
+it('takes the cost from the lab the seller chose and the price from the bands', function () {
     $this->postJson(route('pos.store'), rangeSalePayload(rangeRx('-2.00'), $this->labB->id))->assertOk();
 
     $lens = Sale::sole()->items()->whereHas('lensConfig')->with('lensOrder')->sole();
-    expect($lens->unit_price)->toBe(165_000)
+    expect($lens->unit_price)->toBe(155_000)
         ->and($lens->unit_cost)->toBe(40_000)
         ->and($lens->lensOrder->supplier_id)->toBe($this->labB->id);
 });

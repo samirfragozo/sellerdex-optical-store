@@ -8,6 +8,7 @@ use App\Models\Customer;
 use App\Models\KitSlot;
 use App\Models\LensCombination;
 use App\Models\LensCombinationPrice;
+use App\Models\LensPriceBand;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\SaleItem;
@@ -97,7 +98,7 @@ it('re-prices the lens and the armado frame of an expired quote and keeps slot l
     $lensBefore = $quote->items->first(fn ($item) => $item->isLens())->unit_price;
     $slotBefore = $quote->items->firstWhere('product_id', $estuche->id)->unit_price;
 
-    LensCombinationPrice::where('lens_combination_id', $combination->id)->update(['price' => 190_000]);
+    LensPriceBand::where('lens_combination_id', $combination->id)->update(['price' => 190_000]);
     $frame->update(['price' => $frame->price + 5_000]);
 
     expect(app(ConvertQuoteToOrder::class)->handle($quote))->toBeTrue();

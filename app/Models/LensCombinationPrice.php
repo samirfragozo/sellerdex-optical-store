@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Enums\MixedRangePricing;
 use App\Models\Concerns\HasPrescriptionRange;
 use App\Support\Optics\LensOffer;
 use App\Traits\BelongsToCompany;
@@ -57,7 +56,9 @@ class LensCombinationPrice extends Model
      * One offer per active lab that can make this lens for this
      * prescription (plano when there is none): each eye takes that lab's
      * narrowest active row covering it (ties: oldest row), and a lab
-     * whose rows miss either eye makes no offer. Best first: preferred
+     * whose rows miss either eye makes no offer. Every offer sells at the
+     * lens's band price under the company's pair rule; no covering band
+     * means no offers at all. Best first: preferred
      * lab — any of its active rows for this combination is preferred —
      * then the narrower pair, then the oldest row.
      *
@@ -66,6 +67,11 @@ class LensCombinationPrice extends Model
     public static function offers(LensCombination $combination, ?Prescription $prescription): Collection
     {
         $refraction = $prescription?->refractionForRanges() ?? Prescription::PLANO_REFRACTION;
+        $price = LensPriceBand::priceFor($combination, $refraction, $combination->company->mixed_range_pricing);
+
+        if ($price === null) {
+            return collect();
+        }
 
         return self::query()
             ->where('lens_combination_id', $combination->id)
@@ -75,7 +81,7 @@ class LensCombinationPrice extends Model
             ->orderBy('id')
             ->get()
             ->groupBy('supplier_id')
-            ->map(function (Collection $rows) use ($refraction): ?LensOffer {
+            ->map(function (Collection $rows) use ($refraction, $price): ?LensOffer {
                 $odRow = self::narrowestCovering($rows, $refraction['od'], $refraction['add']);
                 $osRow = self::narrowestCovering($rows, $refraction['os'], $refraction['add']);
 
@@ -88,8 +94,7 @@ class LensCombinationPrice extends Model
                     odRow: $odRow,
                     osRow: $osRow,
                     cost: $odRow->supplier->mixed_range_pricing->combine($odRow->cost, $osRow->cost),
-                    // ponytail: the company's own pricing rule arrives with price bands (spec §4 step 6).
-                    price: MixedRangePricing::Highest->combine($odRow->price, $osRow->price),
+                    price: $price,
                     isPreferred: $rows->contains('is_preferred', true),
                 );
             })

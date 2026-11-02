@@ -5,6 +5,7 @@ use App\Models\Customer;
 use App\Models\LensCombination;
 use App\Models\LensCombinationPrice;
 use App\Models\LensMaterial;
+use App\Models\LensPriceBand;
 use App\Models\LensTechnology;
 use App\Models\LensType;
 use App\Models\PaymentMethod;
@@ -18,7 +19,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
-it('preselects the preferred lab, re-prices when the seller switches lab, and keeps it on re-edit', function () {
+it('preselects the preferred lab, keeps the band price but takes the lab cost when the seller switches lab, and keeps it on re-edit', function () {
     test()->seed(RolesAndPermissionsSeeder::class);
     $seller = User::factory()->seller()->create();
     $companyId = $seller->company_id;
@@ -33,17 +34,18 @@ it('preselects the preferred lab, re-prices when the seller switches lab, and ke
     $otherMaterial = LensMaterial::factory()->create(['name' => 'Policarbonato', 'company_id' => $companyId]);
     // Same type and technology, two materials priced differently, so switching material must re-price.
     foreach ([
-        [$material, [[$labA, 150_000, 50_000, true], [$labB, 170_000, 30_000, false]]],
-        [$otherMaterial, [[$labA, 180_000, 55_000, true], [$labB, 200_000, 35_000, false]]],
-    ] as [$lensMaterial, $offers]) {
+        [$material, 150_000, [[$labA, 50_000, true], [$labB, 30_000, false]]],
+        [$otherMaterial, 180_000, [[$labA, 55_000, true], [$labB, 35_000, false]]],
+    ] as [$lensMaterial, $price, $offers]) {
         $combination = LensCombination::factory()->unpriced()->create([
             'company_id' => $companyId, 'installation_price' => 0,
             'lens_type_id' => $type->id, 'lens_technology_id' => $technology->id, 'lens_material_id' => $lensMaterial->id,
         ]);
-        foreach ($offers as [$lab, $price, $cost, $preferred]) {
+        LensPriceBand::factory()->create(['company_id' => $companyId, 'lens_combination_id' => $combination->id, 'price' => $price]);
+        foreach ($offers as [$lab, $cost, $preferred]) {
             LensCombinationPrice::factory()->create([
                 'company_id' => $companyId, 'lens_combination_id' => $combination->id, 'supplier_id' => $lab->id,
-                ...LensCombinationPrice::ALL_PRESCRIPTIONS, 'price' => $price, 'cost' => $cost, 'is_preferred' => $preferred,
+                ...LensCombinationPrice::ALL_PRESCRIPTIONS, 'cost' => $cost, 'is_preferred' => $preferred,
             ]);
         }
     }
@@ -71,7 +73,7 @@ it('preselects the preferred lab, re-prices when the seller switches lab, and ke
         ->assertAttribute('button[aria-pressed]:has-text("Lab Central")', 'aria-pressed', 'true')
         ->click('button[aria-pressed]:has-text("Lab Norte")')
         ->assertAttribute('button[aria-pressed]:has-text("Lab Norte")', 'aria-pressed', 'true')
-        ->assertSee('$200.000')
+        ->assertSee('$180.000')
         ->click('button:has-text("Continuar a la montura")')
         ->click('text=El cliente trae su montura')
         ->click('button:has-text("Continuar al combo")')
@@ -80,7 +82,7 @@ it('preselects the preferred lab, re-prices when the seller switches lab, and ke
         ->click('button:has-text("Editar ítem")')
         ->click('Continuar al lente')
         ->assertAttribute('button[aria-pressed]:has-text("Lab Norte")', 'aria-pressed', 'true')
-        ->assertSee('$200.000')
+        ->assertSee('$180.000')
         ->click('button:has-text("Continuar a la montura")')
         ->click('button:has-text("Continuar al combo")')
         ->click('button:has-text("Guardar ítem")')
@@ -90,7 +92,7 @@ it('preselects the preferred lab, re-prices when the seller switches lab, and ke
         ->assertNoJavaScriptErrors();
 
     $lens = Sale::sole()->items()->whereHas('lensConfig')->with('lensOrder')->sole();
-    expect($lens->unit_price)->toBe(200_000)
+    expect($lens->unit_price)->toBe(180_000)
         ->and($lens->unit_cost)->toBe(35_000)
         ->and($lens->lensOrder->supplier_id)->toBe($labB->id);
 });

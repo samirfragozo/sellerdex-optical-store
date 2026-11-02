@@ -19,6 +19,9 @@ class Supplier extends Model
     /** @use HasFactory<SupplierFactory> */
     use BelongsToCompany, HasFactory, SoftDeletes;
 
+    /** Matches the column default, so a model never refreshed after create still has its rule. */
+    protected $attributes = ['mixed_range_pricing' => 'highest'];
+
     protected function casts(): array
     {
         return [
