@@ -15,8 +15,8 @@ class LensOffersController extends Controller
 {
     /**
      * The labs that can make this lens for this prescription — preferred
-     * first, each eye priced by its own range —
-     * or why none can, so the POS can say so before the sale.
+     * first; each offer carries the lens band price (same at every lab) and
+     * that lab's cost — or why none can, so the POS can say so before the sale.
      */
     public function __invoke(Request $request): JsonResponse
     {

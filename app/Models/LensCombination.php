@@ -46,7 +46,7 @@ class LensCombination extends Model
         return $this->belongsTo(Tax::class);
     }
 
-    /** Prices of this combination per lab and prescription range. */
+    /** Lab cost of this combination per lab and prescription range (the sale price lives in the price bands). */
     public function prices(): HasMany
     {
         return $this->hasMany(LensCombinationPrice::class);

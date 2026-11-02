@@ -13,9 +13,10 @@ use Illuminate\Validation\ValidationException;
 
 /**
  * Validate a chosen lens configuration (Tipo, Tecnología, Material,
- * Tratamientos) and resolve its total sellable price/cost from the price
- * lab offer covering both eyes of the prescription (plano when there is
- * none) at the chosen lab, or at the preferred one.
+ * Tratamientos) and resolve its total sellable price/cost: the lens price
+ * comes from the lens price bands, the cost from the rows of the lab offer
+ * covering both eyes of the prescription (plano when there is none) at the
+ * chosen lab, or at the preferred one.
  */
 class ResolveLensPricing
 {

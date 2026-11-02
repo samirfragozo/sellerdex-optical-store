@@ -76,6 +76,19 @@ it('prices a pair whose eyes use different rows by the lab rule', function (Mixe
     'half of each' => [MixedRangePricing::HalfEach, 18_000],
 ]);
 
+it('prices a pair whose eyes use different bands by the shop rule', function (MixedRangePricing $rule, int $price) {
+    $this->combination->company->update(['mixed_range_pricing' => $rule]);
+    rangePriceRow($this->labA, ['cylinder_min' => -4, 'cylinder_max' => 0]);
+    rangePriceBand(['cylinder_min' => -2, 'cylinder_max' => 0, 'price' => 40_000]);
+    rangePriceBand(['cylinder_min' => -4, 'cylinder_max' => -2.25, 'price' => 70_000]);
+    $rx = Prescription::factory()->make(['od_sphere' => '-1.00', 'od_cylinder' => '-3.00', 'od_add' => null, 'os_sphere' => '-1.00', 'os_cylinder' => '-0.50', 'os_add' => null]);
+
+    expect(LensCombinationPrice::resolve($this->combination->fresh(), $rx)->price)->toBe($price);
+})->with([
+    'highest' => [MixedRangePricing::Highest, 70_000],
+    'half of each' => [MixedRangePricing::HalfEach, 55_000],
+]);
+
 it('treats a blank eye as plano so a strong single eye still gets its narrow row', function () {
     $broad = rangePriceRow($this->labA);
     $narrow = rangePriceRow($this->labA, ['sphere_min' => -20, 'sphere_max' => -6.25]);

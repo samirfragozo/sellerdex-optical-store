@@ -7,7 +7,7 @@ import { lensOffers } from '@/routes/pos';
 export interface LensOffer {
     supplier_id: number;
     supplier_name: string;
-    /** Lens price at this lab, installation included, before treatments. */
+    /** Lens sale price (same at every lab), installation included, before treatments. */
     price: number;
     cost: number;
     is_preferred: boolean;
