@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\MixedRangePricing;
+use App\Models\Concerns\HasPrescriptionRange;
 use App\Support\Optics\LensOffer;
 use App\Traits\BelongsToCompany;
 use Database\Factories\LensCombinationPriceFactory;
@@ -17,7 +18,7 @@ use Illuminate\Support\Collection;
 class LensCombinationPrice extends Model
 {
     /** @use HasFactory<LensCombinationPriceFactory> */
-    use BelongsToCompany, HasFactory;
+    use BelongsToCompany, HasFactory, HasPrescriptionRange;
 
     /** The whole diopter scale: the "all prescriptions" range onboarding starts every lab with. */
     public const ALL_PRESCRIPTIONS = [
@@ -106,37 +107,6 @@ class LensCombinationPrice extends Model
     {
         return self::offers($combination, $prescription)
             ->first(fn (LensOffer $offer): bool => $supplierId === null || $offer->supplier->id === $supplierId);
-    }
-
-    /**
-     * The narrowest of $rows (ordered by id, so ties go to the oldest) covering one eye.
-     *
-     * @param  Collection<int, self>  $rows
-     * @param  array{sphere: float, cylinder: float}  $eye
-     */
-    private static function narrowestCovering(Collection $rows, array $eye, float $add): ?self
-    {
-        return $rows
-            ->filter(fn (self $row): bool => $row->covers($eye['sphere'], $eye['cylinder'], $add))
-            ->sortBy(fn (self $row): float => $row->rangeWidth())
-            ->first();
-    }
-
-    /** Whether this row covers one eye (minus cylinder) and the addition; a null addition bound is open. */
-    private function covers(float $sphere, float $cylinder, float $add): bool
-    {
-        return (float) $this->sphere_min <= $sphere && $sphere <= (float) $this->sphere_max
-            && (float) $this->cylinder_min <= $cylinder && $cylinder <= (float) $this->cylinder_max
-            && ($this->add_min === null || (float) $this->add_min <= $add)
-            && ($this->add_max === null || $add <= (float) $this->add_max);
-    }
-
-    /** How broad this row is, so a specific high-power range beats "all prescriptions". */
-    private function rangeWidth(): float
-    {
-        return ((float) $this->sphere_max - (float) $this->sphere_min)
-            + ((float) $this->cylinder_max - (float) $this->cylinder_min)
-            + ((float) ($this->add_max ?? Prescription::LIMITS['add'][1]) - (float) ($this->add_min ?? 0));
     }
 
     /** "Prescription out of range for <combination> at <lab>" (or at every lab). */

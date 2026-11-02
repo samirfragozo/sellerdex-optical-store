@@ -50,6 +50,12 @@ class LensCombination extends Model
         return $this->hasMany(LensCombinationPrice::class);
     }
 
+    /** What the shop charges for this combination per prescription range. */
+    public function priceBands(): HasMany
+    {
+        return $this->hasMany(LensPriceBand::class);
+    }
+
     /** "Progresivo Digital Policarbonato" — how sellers and labs name the lens. */
     public function label(): string
     {
