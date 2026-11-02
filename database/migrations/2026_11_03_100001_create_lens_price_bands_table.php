@@ -15,7 +15,7 @@ return new class extends Migration
         Schema::create('lens_price_bands', function (Blueprint $table) {
             $table->id();
             $table->foreignId('company_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('lens_combination_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('lens_combination_id')->index()->constrained()->cascadeOnDelete();
             $table->decimal('sphere_min', 5, 2);
             $table->decimal('sphere_max', 5, 2);
             $table->decimal('cylinder_min', 5, 2);
