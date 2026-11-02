@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Enums\MixedRangePricing;
+use App\Support\Optics\LensOffer;
 use App\Traits\BelongsToCompany;
 use Database\Factories\LensCombinationPriceFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -51,49 +53,90 @@ class LensCombinationPrice extends Model
     }
 
     /**
-     * Active rows of $combination, at active labs, whose range covers the
-     * prescription's governing eye (plano when there is no prescription) —
-     * best first: preferred lab first — a lab is preferred when any of its
-     * active rows for this combination is marked preferred — then the
-     * narrowest range (so a specific high-power range beats "all
-     * prescriptions"), then the oldest row.
+     * One offer per active lab that can make this lens for this
+     * prescription (plano when there is none): each eye takes that lab's
+     * narrowest active row covering it (ties: oldest row), and a lab
+     * whose rows miss either eye makes no offer. Best first: preferred
+     * lab — any of its active rows for this combination is preferred —
+     * then the narrower pair, then the oldest row.
      *
-     * @return Builder<self>
+     * @return Collection<int, LensOffer>
      */
-    public static function matching(LensCombination $combination, ?Prescription $prescription): Builder
+    public static function offers(LensCombination $combination, ?Prescription $prescription): Collection
     {
-        ['sphere' => $sphere, 'cylinder' => $cylinder, 'add' => $add] = $prescription?->governingEye()
-            ?? ['sphere' => 0.0, 'cylinder' => 0.0, 'add' => 0.0];
+        $refraction = $prescription?->refractionForRanges() ?? Prescription::PLANO_REFRACTION;
 
         return self::query()
             ->where('lens_combination_id', $combination->id)
             ->where('is_active', true)
             ->whereHas('supplier', fn (Builder $query) => $query->where('is_laboratory', true)->where('is_active', true))
-            ->where('sphere_min', '<=', $sphere)->where('sphere_max', '>=', $sphere)
-            ->where('cylinder_min', '<=', $cylinder)->where('cylinder_max', '>=', $cylinder)
-            ->where(fn (Builder $query) => $query->whereNull('add_min')->orWhere('add_min', '<=', $add))
-            ->where(fn (Builder $query) => $query->whereNull('add_max')->orWhere('add_max', '>=', $add))
-            ->orderByRaw('(select max(case when p2.is_preferred then 1 else 0 end) from lens_combination_prices as p2 where p2.lens_combination_id = lens_combination_prices.lens_combination_id and p2.supplier_id = lens_combination_prices.supplier_id and p2.is_active) desc')
-            ->orderByRaw('(sphere_max - sphere_min) + (cylinder_max - cylinder_min) + (COALESCE(add_max, 4) - COALESCE(add_min, 0))')
-            ->orderBy('id');
+            ->with('supplier')
+            ->orderBy('id')
+            ->get()
+            ->groupBy('supplier_id')
+            ->map(function (Collection $rows) use ($refraction): ?LensOffer {
+                $odRow = self::narrowestCovering($rows, $refraction['od'], $refraction['add']);
+                $osRow = self::narrowestCovering($rows, $refraction['os'], $refraction['add']);
+
+                if ($odRow === null || $osRow === null) {
+                    return null;
+                }
+
+                return new LensOffer(
+                    supplier: $odRow->supplier,
+                    odRow: $odRow,
+                    osRow: $osRow,
+                    cost: $odRow->supplier->mixed_range_pricing->combine($odRow->cost, $osRow->cost),
+                    // ponytail: the company's own pricing rule arrives with price bands (spec §4 step 6).
+                    price: MixedRangePricing::Highest->combine($odRow->price, $osRow->price),
+                    isPreferred: $rows->contains('is_preferred', true),
+                );
+            })
+            ->filter()
+            ->sortBy([
+                fn (LensOffer $a, LensOffer $b): int => $b->isPreferred <=> $a->isPreferred,
+                fn (LensOffer $a, LensOffer $b): int => ($a->odRow->rangeWidth() + $a->osRow->rangeWidth()) <=> ($b->odRow->rangeWidth() + $b->osRow->rangeWidth()),
+                fn (LensOffer $a, LensOffer $b): int => min($a->odRow->id, $a->osRow->id) <=> min($b->odRow->id, $b->osRow->id),
+            ])
+            ->values();
     }
 
-    /** The row that prices this lens: at $supplierId when given, otherwise at the preferred lab. */
-    public static function resolve(LensCombination $combination, ?Prescription $prescription, ?int $supplierId = null): ?self
+    /** The offer that prices this lens: at $supplierId when given, otherwise the best one. */
+    public static function resolve(LensCombination $combination, ?Prescription $prescription, ?int $supplierId = null): ?LensOffer
     {
-        return self::matching($combination, $prescription)
-            ->when($supplierId !== null, fn (Builder $query) => $query->where('supplier_id', $supplierId))
-            ->first();
+        return self::offers($combination, $prescription)
+            ->first(fn (LensOffer $offer): bool => $supplierId === null || $offer->supplier->id === $supplierId);
     }
 
     /**
-     * One offer per lab able to make this lens for this prescription, preferred first.
+     * The narrowest of $rows (ordered by id, so ties go to the oldest) covering one eye.
      *
-     * @return Collection<int, self>
+     * @param  Collection<int, self>  $rows
+     * @param  array{sphere: float, cylinder: float}  $eye
      */
-    public static function offers(LensCombination $combination, ?Prescription $prescription): Collection
+    private static function narrowestCovering(Collection $rows, array $eye, float $add): ?self
     {
-        return self::matching($combination, $prescription)->with('supplier')->get()->unique('supplier_id')->values();
+        return $rows
+            ->filter(fn (self $row): bool => $row->covers($eye['sphere'], $eye['cylinder'], $add))
+            ->sortBy(fn (self $row): float => $row->rangeWidth())
+            ->first();
+    }
+
+    /** Whether this row covers one eye (minus cylinder) and the addition; a null addition bound is open. */
+    private function covers(float $sphere, float $cylinder, float $add): bool
+    {
+        return (float) $this->sphere_min <= $sphere && $sphere <= (float) $this->sphere_max
+            && (float) $this->cylinder_min <= $cylinder && $cylinder <= (float) $this->cylinder_max
+            && ($this->add_min === null || (float) $this->add_min <= $add)
+            && ($this->add_max === null || $add <= (float) $this->add_max);
+    }
+
+    /** How broad this row is, so a specific high-power range beats "all prescriptions". */
+    private function rangeWidth(): float
+    {
+        return ((float) $this->sphere_max - (float) $this->sphere_min)
+            + ((float) $this->cylinder_max - (float) $this->cylinder_min)
+            + ((float) ($this->add_max ?? 4) - (float) ($this->add_min ?? 0));
     }
 
     /** "Prescription out of range for <combination> at <lab>" (or at every lab). */

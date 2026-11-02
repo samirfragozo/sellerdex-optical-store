@@ -180,8 +180,8 @@ class RegisterSale
                 'type_name' => $combination->lensType->name,
                 'technology_name' => $combination->lensTechnology->name,
                 'material_name' => $combination->lensMaterial->name,
-                'combination_cost' => $resolved['price_row']->cost,
-                'combination_price' => $resolved['price_row']->price,
+                'combination_cost' => $resolved['offer']->cost,
+                'combination_price' => $resolved['offer']->price,
                 'installation_price' => $combination->installation_price,
             ]);
 
@@ -200,7 +200,7 @@ class RegisterSale
 
             $lensItem->lensOrder()->create([
                 // The lab that priced the lens makes it; the order carries everything it needs.
-                'supplier_id' => $resolved['price_row']->supplier_id,
+                'supplier_id' => $resolved['offer']->supplier->id,
                 'lab_status' => LensOrderStatus::PendingAssignment,
                 'prescription_snapshot' => $prescription?->labSnapshot(),
                 'od_pd' => $prescription?->od_pd,

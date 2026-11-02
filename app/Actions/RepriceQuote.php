@@ -70,8 +70,8 @@ class RepriceQuote
         ]);
 
         $config->update([
-            'combination_cost' => $resolved['price_row']->cost,
-            'combination_price' => $resolved['price_row']->price,
+            'combination_cost' => $resolved['offer']->cost,
+            'combination_price' => $resolved['offer']->price,
             'installation_price' => $combination->installation_price,
         ]);
 

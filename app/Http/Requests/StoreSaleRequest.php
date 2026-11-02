@@ -281,7 +281,7 @@ class StoreSaleRequest extends FormRequest
 
     /**
      * The chosen lab (or, when none is chosen, some lab) must price this
-     * combination for the prescription's governing eye.
+     * combination for both eyes of the prescription.
      *
      * @param  array<string, mixed>  $lens
      */

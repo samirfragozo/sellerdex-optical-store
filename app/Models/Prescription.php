@@ -176,31 +176,6 @@ class Prescription extends Model
     }
 
     /**
-     * The eye with the highest power — its strongest meridian,
-     * max(|sphere|, |sphere + cylinder|) — which decides the lab price
-     * range. Ties go to OD; blank values count as 0. The addition is the
-     * larger of both eyes, since it isn't tied to the governing meridian.
-     *
-     * @return array{sphere: float, cylinder: float, add: float}
-     */
-    public function governingEye(): array
-    {
-        $eye = fn (string $side): array => [
-            'sphere' => (float) ($this->{"{$side}_sphere"} ?? 0),
-            'cylinder' => (float) ($this->{"{$side}_cylinder"} ?? 0),
-            'add' => (float) ($this->{"{$side}_add"} ?? 0),
-        ];
-        $power = fn (array $values): float => max(abs($values['sphere']), abs($values['sphere'] + $values['cylinder']));
-
-        [$od, $os] = [$eye('od'), $eye('os')];
-
-        $governing = $power($os) > $power($od) ? $os : $od;
-        $governing['add'] = max($od['add'], $os['add']);
-
-        return $governing;
-    }
-
-    /**
      * Shape this prescription as a POS "option": the list entry the prescription
      * step shows (existing prescriptions on page load, or the one just saved).
      *

@@ -28,7 +28,7 @@ it('suma el precio y costo de la combinación y los tratamientos elegidos', func
     expect($result['price'])->toBe(180000 + 3000 + 50000 + 30000)
         ->and($result['cost'])->toBe(60000 + 20000 + 10000)
         ->and($result['combination']->is($combination))->toBeTrue()
-        ->and($result['price_row']->is($combination->prices()->sole()))->toBeTrue()
+        ->and($result['offer']->odRow->is($combination->prices()->sole()))->toBeTrue()
         ->and($result)->not->toHaveKey('package')
         ->and($result['treatments']->pluck('id')->sort()->values()->all())->toBe(collect([$t1->id, $t2->id])->sort()->values()->all());
 });

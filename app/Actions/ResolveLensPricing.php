@@ -7,20 +7,21 @@ use App\Models\LensCombinationPrice;
 use App\Models\LensTreatment;
 use App\Models\Prescription;
 use App\Models\Supplier;
+use App\Support\Optics\LensOffer;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
 
 /**
  * Validate a chosen lens configuration (Tipo, Tecnología, Material,
  * Tratamientos) and resolve its total sellable price/cost from the price
- * row that covers the prescription (plano when there is none) at the
- * chosen lab, or at the preferred one.
+ * lab offer covering both eyes of the prescription (plano when there is
+ * none) at the chosen lab, or at the preferred one.
  */
 class ResolveLensPricing
 {
     /**
      * @param  array<int, int>  $treatmentIds
-     * @return array{combination: LensCombination, treatments: Collection<int, LensTreatment>, price_row: LensCombinationPrice, price: int, cost: int}
+     * @return array{combination: LensCombination, treatments: Collection<int, LensTreatment>, offer: LensOffer, price: int, cost: int}
      */
     public function handle(int $lensTypeId, int $lensTechnologyId, int $lensMaterialId, array $treatmentIds, ?Prescription $prescription = null, ?int $supplierId = null): array
     {
@@ -44,9 +45,9 @@ class ResolveLensPricing
             ]);
         }
 
-        $priceRow = LensCombinationPrice::resolve($combination, $prescription, $supplierId);
+        $offer = LensCombinationPrice::resolve($combination, $prescription, $supplierId);
 
-        if ($priceRow === null) {
+        if ($offer === null) {
             $combination->loadMissing(['lensType', 'lensTechnology', 'lensMaterial']);
 
             throw ValidationException::withMessages([
@@ -54,9 +55,9 @@ class ResolveLensPricing
             ]);
         }
 
-        $price = $priceRow->price + $combination->installation_price + (int) $treatments->sum('price');
-        $cost = $priceRow->cost + (int) $treatments->sum('cost');
+        $price = $offer->price + $combination->installation_price + (int) $treatments->sum('price');
+        $cost = $offer->cost + (int) $treatments->sum('cost');
 
-        return ['combination' => $combination, 'treatments' => $treatments, 'price_row' => $priceRow, 'price' => $price, 'cost' => $cost];
+        return ['combination' => $combination, 'treatments' => $treatments, 'offer' => $offer, 'price' => $price, 'cost' => $cost];
     }
 }
