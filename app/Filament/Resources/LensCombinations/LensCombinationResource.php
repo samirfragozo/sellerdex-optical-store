@@ -6,6 +6,7 @@ use App\Filament\Clusters\Catalogo\CatalogoCluster;
 use App\Filament\Resources\LensCombinations\Pages\CreateLensCombination;
 use App\Filament\Resources\LensCombinations\Pages\EditLensCombination;
 use App\Filament\Resources\LensCombinations\Pages\ListLensCombinations;
+use App\Filament\Resources\LensCombinations\RelationManagers\PriceBandsRelationManager;
 use App\Filament\Resources\LensCombinations\RelationManagers\PricesRelationManager;
 use App\Filament\Resources\LensCombinations\Schemas\LensCombinationForm;
 use App\Filament\Resources\LensCombinations\Tables\LensCombinationsTable;
@@ -38,7 +39,7 @@ class LensCombinationResource extends Resource
 
     public static function getRelations(): array
     {
-        return [PricesRelationManager::class];
+        return [PriceBandsRelationManager::class, PricesRelationManager::class];
     }
 
     public static function getPages(): array

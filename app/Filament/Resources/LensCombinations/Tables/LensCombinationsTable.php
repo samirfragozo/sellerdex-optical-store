@@ -28,7 +28,7 @@ class LensCombinationsTable
                 TextColumn::make('lensMaterial.name')
                     ->label(__('app.resources.lens_material.label'))
                     ->searchable(),
-                TextColumn::make('prices_min_price')->min('prices', 'price')->label(__('app.fields.price_from'))->money('COP')->sortable(),
+                TextColumn::make('price_bands_min_price')->min('priceBands', 'price')->label(__('app.fields.price_from'))->money('COP')->sortable(),
                 TextColumn::make('installation_price')->label(__('app.fields.installation_price'))->money('COP')->sortable(),
                 IconColumn::make('is_active')->label(__('app.fields.active_f'))->boolean(),
             ])

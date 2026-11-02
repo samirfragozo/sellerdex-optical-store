@@ -16,13 +16,12 @@ use App\Filament\Resources\Users\UserResource;
 use App\Models\CashRegisterSession;
 use App\Models\Company;
 use App\Models\KitSlot;
-use App\Models\LensCombinationPrice;
+use App\Models\LensCombination;
 use App\Models\PaymentMethod;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\Supplier;
 use App\Models\User;
-use App\Scopes\CompanyScope;
 use App\Support\PermissionsTeam;
 
 /**
@@ -60,11 +59,7 @@ class SaleReadiness
             );
         }
 
-        $hasPricedLens = LensCombinationPrice::withoutGlobalScopes()
-            ->where('company_id', $company->id)->where('is_active', true)->where('price', '>', 0)
-            ->whereHas('lensCombination', fn ($query) => $query->withoutGlobalScopes()->where('is_active', true))
-            ->whereHas('supplier', fn ($query) => $query->withoutGlobalScope(CompanyScope::class)->where('is_laboratory', true)->where('is_active', true))
-            ->exists();
+        $hasPricedLens = LensCombination::withoutGlobalScopes()->where('company_id', $company->id)->sellable()->exists();
         if (! $hasPricedLens) {
             $issues[] = new ReadinessIssue(
                 'lens_price', ReadinessSeverity::Blocking,

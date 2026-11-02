@@ -56,7 +56,10 @@ class CreateReferenceLensCombinations
                 ? $labs->whereIn('id', array_map('intval', $pricing['supplier_ids']))->values()
                 : $labs;
 
-            // Onboarding starts every lab with one "all prescriptions" range; the shop refines ranges later.
+            // Onboarding starts with one "all prescriptions" sale band and cost row per lab; the shop refines ranges later.
+            $combination->priceBands()->firstOrCreate(LensCombinationPrice::ALL_PRESCRIPTIONS, ['price' => $pricing['price']]);
+
+            // ponytail: cost rows keep `price` until lens offers price from bands (Task 4).
             foreach ($makers as $position => $lab) {
                 $combination->prices()->firstOrCreate(
                     ['supplier_id' => $lab->id, ...LensCombinationPrice::ALL_PRESCRIPTIONS],

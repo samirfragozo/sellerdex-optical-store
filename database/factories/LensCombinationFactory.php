@@ -5,6 +5,7 @@ namespace Database\Factories;
 use App\Models\LensCombination;
 use App\Models\LensCombinationPrice;
 use App\Models\LensMaterial;
+use App\Models\LensPriceBand;
 use App\Models\LensTechnology;
 use App\Models\LensType;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -30,25 +31,34 @@ class LensCombinationFactory extends Factory
         ];
     }
 
-    /** Sellable by default: one "all prescriptions" price at a lab, unless a test priced it itself. */
+    /** Sellable by default: one "all prescriptions" sale band and cost row at a lab, unless a test priced it itself. */
     public function configure(): static
     {
         return $this->afterCreating(function (LensCombination $combination): void {
+            if (! $combination->priceBands()->withoutGlobalScopes()->exists()) {
+                LensPriceBand::factory()->create(['lens_combination_id' => $combination->id]);
+            }
+
             if (! $combination->prices()->withoutGlobalScopes()->exists()) {
                 LensCombinationPrice::factory()->create(['lens_combination_id' => $combination->id]);
             }
         });
     }
 
-    /** Priced at a lab with these values for every prescription. */
+    /** Sold at $price and costing $cost at a lab, for every prescription. */
     public function priced(int $price, int $cost = 0): static
     {
-        return $this->has(LensCombinationPrice::factory()->state(['price' => $price, 'cost' => $cost]), 'prices');
+        // ponytail: the cost row keeps `price` until lens offers price from bands (Task 4).
+        return $this->has(LensPriceBand::factory()->state(['price' => $price]), 'priceBands')
+            ->has(LensCombinationPrice::factory()->state(['price' => $price, 'cost' => $cost]), 'prices');
     }
 
-    /** No price rows — not sellable. */
+    /** No sale band nor cost row — not sellable. */
     public function unpriced(): static
     {
-        return $this->afterCreating(fn (LensCombination $combination) => $combination->prices()->withoutGlobalScopes()->delete());
+        return $this->afterCreating(function (LensCombination $combination): void {
+            $combination->priceBands()->withoutGlobalScopes()->delete();
+            $combination->prices()->withoutGlobalScopes()->delete();
+        });
     }
 }

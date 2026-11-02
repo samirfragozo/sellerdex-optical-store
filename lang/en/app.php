@@ -52,7 +52,7 @@ return [
         'lens_technology' => ['label' => 'Manufacturing technology', 'plural' => 'Manufacturing technologies', 'nav' => 'Manufacturing technologies'],
         'lens_material' => ['label' => 'Lens material', 'plural' => 'Lens materials', 'nav' => 'Lens materials'],
         'lens_treatment' => ['label' => 'Functional treatment', 'plural' => 'Functional treatments', 'nav' => 'Functional treatments'],
-        'lens_combination' => ['label' => 'Lens combination', 'plural' => 'Lens combinations', 'nav' => 'Lens combinations', 'duplicate' => 'A combination with this type, technology and material already exists.', 'prices_help' => 'The price is picked with the prescription eye of highest power. When several ranges of the same lab apply, the narrowest wins.', 'preferred_help' => 'Marks this lab as preferred for this lens.'],
+        'lens_combination' => ['label' => 'Lens combination', 'plural' => 'Lens combinations', 'nav' => 'Lens combinations', 'duplicate' => 'A combination with this type, technology and material already exists.', 'price_bands_help' => 'The price you charge per pair. Add ranges if you charge differently by prescription; each eye uses the narrowest range that contains it.', 'prices_help' => 'The price is picked with the prescription eye of highest power. When several ranges of the same lab apply, the narrowest wins.', 'preferred_help' => 'Marks this lab as preferred for this lens.'],
         'payment_method' => ['label' => 'Payment method', 'plural' => 'Payment methods', 'nav' => 'Payment methods'],
         'expense' => ['label' => 'Expense', 'plural' => 'Expenses', 'nav' => 'Expenses'],
         'expense_category' => ['label' => 'Expense category', 'plural' => 'Expense categories', 'nav' => 'Expense categories'],
@@ -79,7 +79,8 @@ return [
     ],
 
     'relations' => [
-        'lens_prices' => 'Prices by lab and range',
+        'lens_price_bands' => 'Sale prices',
+        'lens_prices' => 'Lab costs',
         'payments' => 'Payments',
         'products' => 'Products',
         'add_payment' => 'Add payment',

@@ -7,6 +7,7 @@ use App\Models\Company;
 use App\Models\KitSlot;
 use App\Models\LensCombination;
 use App\Models\LensMaterial;
+use App\Models\LensPriceBand;
 use App\Models\LensTechnology;
 use App\Models\LensType;
 use App\Models\PaymentMethod;
@@ -71,6 +72,13 @@ it('blocks only lens sales when there is no active laboratory or priced lens', f
     expect($issues->pluck('key')->all())->toEqualCanonicalizing(['laboratory', 'lens_price'])
         ->and($issues->every(fn ($i) => $i->scope === 'lens' && $i->severity === ReadinessSeverity::Blocking))->toBeTrue()
         ->and($company->isReadyToSell())->toBeTrue();
+});
+
+it('blocks lens sales when the only lens has no sale price band', function () {
+    $company = readyCompany();
+    LensPriceBand::withoutGlobalScopes()->where('company_id', $company->id)->delete();
+
+    expect(issueKeys($company))->toBe(['lens_price']);
 });
 
 it('warns when an active laboratory has no lead time', function () {

@@ -28,14 +28,21 @@ it('adds a price range for a lab', function () {
         ->callAction(TestAction::make('create')->table(), [
             'supplier_id' => $this->lab->id,
             'sphere_min' => -20, 'sphere_max' => -6.25, 'cylinder_min' => -8, 'cylinder_max' => 8,
-            'cost' => 90_000, 'price' => 280_000, 'is_preferred' => true, 'is_active' => true,
+            'cost' => 90_000, 'is_preferred' => true, 'is_active' => true,
         ])
         ->assertHasNoFormErrors();
 
     expect($this->combination->prices()->sole())
         ->supplier_id->toBe($this->lab->id)
-        ->price->toBe(280_000)
+        ->cost->toBe(90_000)
+        ->price->toBe(0)
         ->sphere_max->toBe('-6.25');
+});
+
+it('asks a lab row only for its cost, not a sale price', function () {
+    pricesManager()
+        ->mountAction(TestAction::make('create')->table())
+        ->assertFormFieldDoesNotExist('price');
 });
 
 it('rejects a range whose maximum is below its minimum', function () {
@@ -43,7 +50,7 @@ it('rejects a range whose maximum is below its minimum', function () {
         ->callAction(TestAction::make('create')->table(), [
             'supplier_id' => $this->lab->id,
             'sphere_min' => 2, 'sphere_max' => -2, 'cylinder_min' => -8, 'cylinder_max' => 8,
-            'cost' => 1, 'price' => 1,
+            'cost' => 1,
         ])
         ->assertHasFormErrors(['sphere_max']);
 });
@@ -54,7 +61,7 @@ it('rejects an addition range whose maximum is below its minimum', function () {
             'supplier_id' => $this->lab->id,
             'sphere_min' => -20, 'sphere_max' => 20, 'cylinder_min' => -8, 'cylinder_max' => 8,
             'add_min' => 2, 'add_max' => 1,
-            'cost' => 1, 'price' => 1,
+            'cost' => 1,
         ])
         ->assertHasFormErrors(['add_max']);
 });
@@ -64,7 +71,7 @@ it('accepts an open addition range', function () {
         ->callAction(TestAction::make('create')->table(), [
             'supplier_id' => $this->lab->id,
             'sphere_min' => -20, 'sphere_max' => 20, 'cylinder_min' => -8, 'cylinder_max' => 8,
-            'cost' => 1, 'price' => 1,
+            'cost' => 1,
         ])
         ->assertHasNoFormErrors();
 
@@ -80,7 +87,7 @@ it('only offers active labs of the company', function () {
             ->callAction(TestAction::make('create')->table(), [
                 'supplier_id' => $supplier->id,
                 'sphere_min' => -20, 'sphere_max' => 20, 'cylinder_min' => -8, 'cylinder_max' => 8,
-                'cost' => 1, 'price' => 1,
+                'cost' => 1,
             ])
             ->assertHasFormErrors(['supplier_id']);
     }
@@ -96,7 +103,7 @@ it('lists the lab and price of each range', function () {
 });
 
 it('accepts the manufacturing limits and rejects a cylinder beyond them', function () {
-    $row = ['supplier_id' => $this->lab->id, 'sphere_min' => -25, 'sphere_max' => 20, 'cylinder_min' => -8, 'cylinder_max' => 8, 'add_max' => 10, 'cost' => 1, 'price' => 1];
+    $row = ['supplier_id' => $this->lab->id, 'sphere_min' => -25, 'sphere_max' => 20, 'cylinder_min' => -8, 'cylinder_max' => 8, 'add_max' => 10, 'cost' => 1];
 
     pricesManager()
         ->callAction(TestAction::make('create')->table(), $row)

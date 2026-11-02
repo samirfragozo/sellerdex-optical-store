@@ -29,13 +29,57 @@ class PricesRelationManager extends RelationManager
         return __('app.relations.lens_prices');
     }
 
-    public function form(Schema $schema): Schema
+    /**
+     * Sphere, cylinder and addition min-max inputs, defaulting to "all prescriptions"
+     * and bounded by the manufacturing limits. Shared with the sale price bands.
+     *
+     * @return array<int, TextInput>
+     */
+    public static function rangeFields(): array
     {
         $diopter = fn (string $name, string $scale): TextInput => TextInput::make($name)
             ->label(__("app.fields.{$name}"))
             ->numeric()->step(0.25)->minValue(Prescription::LIMITS[$scale][0])->maxValue(Prescription::LIMITS[$scale][1])
             ->default(LensCombinationPrice::ALL_PRESCRIPTIONS[$name])->required();
 
+        return [
+            $diopter('sphere_min', 'sphere'),
+            $diopter('sphere_max', 'sphere')->gte('sphere_min'),
+            $diopter('cylinder_min', 'cylinder'),
+            $diopter('cylinder_max', 'cylinder')->gte('cylinder_min'),
+            TextInput::make('add_min')->label(__('app.fields.add_min'))->numeric()->step(0.25)->minValue(0)->maxValue(Prescription::LIMITS['add'][1]),
+            // ponytail: gte() takes no condition in Filament v4, so the "only when both are filled" check is a rule.
+            TextInput::make('add_max')->label(__('app.fields.add_max'))->numeric()->step(0.25)->minValue(0)->maxValue(Prescription::LIMITS['add'][1])
+                ->rule(fn (Get $get): Closure => function (string $attribute, mixed $value, Closure $fail) use ($get): void {
+                    $min = $get('add_min');
+
+                    if (filled($min) && filled($value) && (float) $value < (float) $min) {
+                        $fail(__('validation.gte.numeric', ['attribute' => __('app.fields.add_max'), 'value' => $min]));
+                    }
+                }),
+        ];
+    }
+
+    /**
+     * "min … max" columns of the three prescription ranges.
+     *
+     * @return array<int, TextColumn>
+     */
+    public static function rangeColumns(): array
+    {
+        $range = fn (string $from, string $to) => fn (Model $record): string => $record->{$from} === null && $record->{$to} === null
+            ? '—'
+            : sprintf('%s … %s', $record->{$from} ?? '—', $record->{$to} ?? '—');
+
+        return [
+            TextColumn::make('sphere_range')->label(__('app.fields.sphere'))->state($range('sphere_min', 'sphere_max')),
+            TextColumn::make('cylinder_range')->label(__('app.fields.cylinder'))->state($range('cylinder_min', 'cylinder_max')),
+            TextColumn::make('add_range')->label(__('app.fields.add'))->state($range('add_min', 'add_max')),
+        ];
+    }
+
+    public function form(Schema $schema): Schema
+    {
         return $schema
             ->columns(2)
             ->components([
@@ -45,22 +89,8 @@ class PricesRelationManager extends RelationManager
                     ->required()
                     ->columnSpanFull()
                     ->helperText(__('app.resources.lens_combination.prices_help')),
-                $diopter('sphere_min', 'sphere'),
-                $diopter('sphere_max', 'sphere')->gte('sphere_min'),
-                $diopter('cylinder_min', 'cylinder'),
-                $diopter('cylinder_max', 'cylinder')->gte('cylinder_min'),
-                TextInput::make('add_min')->label(__('app.fields.add_min'))->numeric()->step(0.25)->minValue(0)->maxValue(Prescription::LIMITS['add'][1]),
-                // ponytail: gte() takes no condition in Filament v4, so the "only when both are filled" check is a rule.
-                TextInput::make('add_max')->label(__('app.fields.add_max'))->numeric()->step(0.25)->minValue(0)->maxValue(Prescription::LIMITS['add'][1])
-                    ->rule(fn (Get $get): Closure => function (string $attribute, mixed $value, Closure $fail) use ($get): void {
-                        $min = $get('add_min');
-
-                        if (filled($min) && filled($value) && (float) $value < (float) $min) {
-                            $fail(__('validation.gte.numeric', ['attribute' => __('app.fields.add_max'), 'value' => $min]));
-                        }
-                    }),
+                ...self::rangeFields(),
                 TextInput::make('cost')->label(__('app.fields.cost'))->numeric()->minValue(0)->prefix('$')->required(),
-                TextInput::make('price')->label(__('app.fields.price'))->numeric()->minValue(1)->prefix('$')->required(),
                 Toggle::make('is_preferred')
                     ->label(__('app.fields.is_preferred_lab'))
                     ->helperText(__('app.resources.lens_combination.preferred_help')),
@@ -70,18 +100,11 @@ class PricesRelationManager extends RelationManager
 
     public function table(Table $table): Table
     {
-        $range = fn (string $from, string $to) => fn (LensCombinationPrice $record): string => $record->{$from} === null && $record->{$to} === null
-            ? '—'
-            : sprintf('%s … %s', $record->{$from} ?? '—', $record->{$to} ?? '—');
-
         return $table
             ->columns([
                 TextColumn::make('supplier.name')->label(__('app.fields.laboratory')),
-                TextColumn::make('sphere_range')->label(__('app.fields.sphere'))->state($range('sphere_min', 'sphere_max')),
-                TextColumn::make('cylinder_range')->label(__('app.fields.cylinder'))->state($range('cylinder_min', 'cylinder_max')),
-                TextColumn::make('add_range')->label(__('app.fields.add'))->state($range('add_min', 'add_max')),
+                ...self::rangeColumns(),
                 TextColumn::make('cost')->label(__('app.fields.cost'))->money('COP'),
-                TextColumn::make('price')->label(__('app.fields.price'))->money('COP'),
                 IconColumn::make('is_preferred')->label(__('app.fields.is_preferred_lab'))->boolean(),
                 IconColumn::make('is_active')->label(__('app.fields.active'))->boolean(),
             ])

@@ -237,8 +237,11 @@ it('creates the lens combinations the user keeps, with the prices they typed', f
 
     $combination = LensCombination::sole();
     $prices = $combination->prices()->orderBy('id')->get();
-    expect($prices->pluck('supplier_id')->all())->toBe($labs->pluck('id')->all())
-        ->and($prices->pluck('price')->unique()->all())->toBe([120000])
+    $band = $combination->priceBands()->sole();
+    expect($band->price)->toBe(120000)
+        ->and([(float) $band->sphere_min, (float) $band->sphere_max, (float) $band->cylinder_min, (float) $band->cylinder_max, $band->add_min, $band->add_max])
+        ->toBe([-25.0, 20.0, -8.0, 8.0, null, null])
+        ->and($prices->pluck('supplier_id')->all())->toBe($labs->pluck('id')->all())
         ->and($prices->pluck('cost')->unique()->all())->toBe([40000])
         ->and($prices->pluck('is_preferred')->all())->toBe([true, false])
         ->and($prices->every(fn (LensCombinationPrice $row): bool => (float) $row->sphere_min === -25.0 && (float) $row->sphere_max === 20.0

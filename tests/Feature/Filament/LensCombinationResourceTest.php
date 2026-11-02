@@ -1,13 +1,17 @@
 <?php
 
 use App\Filament\Resources\LensCombinations\LensCombinationResource;
+use App\Filament\Resources\LensCombinations\Pages\EditLensCombination;
 use App\Filament\Resources\LensCombinations\Pages\ListLensCombinations;
+use App\Filament\Resources\LensCombinations\RelationManagers\PriceBandsRelationManager;
+use App\Filament\Resources\LensCombinations\RelationManagers\PricesRelationManager;
 use App\Models\LensCombination;
 use App\Models\LensCombinationPrice;
 use App\Models\LensMaterial;
 use App\Models\LensTechnology;
 use App\Models\LensType;
 use App\Models\User;
+use Filament\Actions\Testing\TestAction;
 use Filament\Tables\Columns\TextColumn;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
@@ -92,16 +96,33 @@ it('permite editar una combinación existente sin chocar consigo misma', functio
     expect($combination->refresh()->installation_price)->toBe(9000);
 });
 
-it('lists each combination from its lowest price', function () {
+it('lists each combination from its lowest band price', function () {
     $this->actingAs(User::factory()->admin()->create());
     $combination = LensCombination::factory()->priced(180000)->create();
-    $combination->prices()->create([
-        'supplier_id' => $combination->prices()->value('supplier_id'),
+    $combination->priceBands()->create([
         ...LensCombinationPrice::ALL_PRESCRIPTIONS,
         'sphere_min' => -20, 'sphere_max' => -6.25, 'price' => 260000,
     ]);
 
     Livewire::test(ListLensCombinations::class)
-        ->assertTableColumnExists('prices_min_price', fn (TextColumn $column): bool => $column->getLabel() === __('app.fields.price_from'))
-        ->assertTableColumnStateSet('prices_min_price', 180000, $combination);
+        ->assertTableColumnExists('price_bands_min_price', fn (TextColumn $column): bool => $column->getLabel() === __('app.fields.price_from'))
+        ->assertTableColumnStateSet('price_bands_min_price', 180000, $combination);
+});
+
+it('adds an all-prescriptions sale price band', function () {
+    $this->actingAs(User::factory()->admin()->create());
+    $combination = LensCombination::factory()->unpriced()->create();
+
+    Livewire::test(PriceBandsRelationManager::class, ['ownerRecord' => $combination, 'pageClass' => EditLensCombination::class])
+        ->callAction(TestAction::make('create')->table(), ['price' => 180_000])
+        ->assertHasNoFormErrors();
+
+    $band = $combination->priceBands()->sole();
+    expect($band->price)->toBe(180_000)
+        ->and([(float) $band->sphere_min, (float) $band->sphere_max, (float) $band->cylinder_min, (float) $band->cylinder_max, $band->add_min, $band->add_max])
+        ->toBe([-25.0, 20.0, -8.0, 8.0, null, null]);
+});
+
+it('lists the sale price bands before the lab costs', function () {
+    expect(LensCombinationResource::getRelations())->toBe([PriceBandsRelationManager::class, PricesRelationManager::class]);
 });
