@@ -61,14 +61,23 @@ it('prices a pair whose eyes use different rows by the lab rule', function (Mixe
 ]);
 
 it('treats a blank eye as plano so a strong single eye still gets its narrow row', function () {
-    rangePriceRow($this->labA, ['price' => 150_000]);
+    $broad = rangePriceRow($this->labA, ['price' => 150_000]);
     $narrow = rangePriceRow($this->labA, ['sphere_min' => -20, 'sphere_max' => -6.25, 'price' => 260_000]);
     $rx = Prescription::factory()->make(['od_sphere' => '-8.00', 'od_cylinder' => null, 'od_add' => null, 'os_sphere' => null, 'os_cylinder' => null, 'os_add' => null]);
 
     $offer = LensCombinationPrice::resolve($this->combination, $rx);
 
     expect($offer->odRow->is($narrow))->toBeTrue()
+        ->and($offer->osRow->is($broad))->toBeTrue()
         ->and($offer->price)->toBe(260_000);
+});
+
+it('prefers a low-vision addition row over a broad row with an open addition', function () {
+    rangePriceRow($this->labA);
+    $lowVision = rangePriceRow($this->labA, ['add_min' => 4.25, 'add_max' => 10]);
+    $rx = Prescription::factory()->make(['od_sphere' => '-1.00', 'od_cylinder' => null, 'od_add' => '5.00', 'os_sphere' => null, 'os_cylinder' => null, 'os_add' => null]);
+
+    expect(LensCombinationPrice::resolve($this->combination, $rx)->odRow->is($lowVision))->toBeTrue();
 });
 
 it('prices each eye by the narrowest range that covers it', function () {

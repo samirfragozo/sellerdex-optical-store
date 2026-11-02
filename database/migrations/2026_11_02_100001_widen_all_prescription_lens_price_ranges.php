@@ -4,23 +4,27 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
 /**
- * "All prescriptions" used to mean sphere -20..20 / cylinder -10..10; the real
- * manufacturing limits are sphere -25..20 / cylinder -8..8. Only rows that held
- * exactly the old whole-scale values move; custom ranges stay as they are.
+ * Prescription ranges used to stop at sphere -20 and cylinder -10..10; the real
+ * manufacturing limits are sphere -25..20 / cylinder -8..8. Each old bound moves
+ * on its own, so a custom range like "sphere -20..-6.25" keeps its other edge.
  */
 return new class extends Migration
 {
     public function up(): void
     {
-        DB::table('lens_combination_prices')
-            ->where(['sphere_min' => -20, 'sphere_max' => 20, 'cylinder_min' => -10, 'cylinder_max' => 10])
-            ->update(['sphere_min' => -25, 'sphere_max' => 20, 'cylinder_min' => -8, 'cylinder_max' => 8]);
+        $prices = DB::table('lens_combination_prices');
+
+        (clone $prices)->where('sphere_min', -20)->update(['sphere_min' => -25]);
+        (clone $prices)->where('cylinder_min', -10)->update(['cylinder_min' => -8]);
+        (clone $prices)->where('cylinder_max', 10)->update(['cylinder_max' => 8]);
     }
 
     public function down(): void
     {
-        DB::table('lens_combination_prices')
-            ->where(['sphere_min' => -25, 'sphere_max' => 20, 'cylinder_min' => -8, 'cylinder_max' => 8])
-            ->update(['sphere_min' => -20, 'sphere_max' => 20, 'cylinder_min' => -10, 'cylinder_max' => 10]);
+        $prices = DB::table('lens_combination_prices');
+
+        (clone $prices)->where('sphere_min', -25)->update(['sphere_min' => -20]);
+        (clone $prices)->where('cylinder_min', -8)->update(['cylinder_min' => -10]);
+        (clone $prices)->where('cylinder_max', 8)->update(['cylinder_max' => 10]);
     }
 };

@@ -136,7 +136,7 @@ class LensCombinationPrice extends Model
     {
         return ((float) $this->sphere_max - (float) $this->sphere_min)
             + ((float) $this->cylinder_max - (float) $this->cylinder_min)
-            + ((float) ($this->add_max ?? 4) - (float) ($this->add_min ?? 0));
+            + ((float) ($this->add_max ?? Prescription::LIMITS['add'][1]) - (float) ($this->add_min ?? 0));
     }
 
     /** "Prescription out of range for <combination> at <lab>" (or at every lab). */

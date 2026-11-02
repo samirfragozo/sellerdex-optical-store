@@ -144,13 +144,14 @@ class PrescriptionForm
             ->maxValue(max($maxPositive, $maxNegative))
             ->rule(new Diopter(0, max($maxPositive, $maxNegative)))
             ->rule(fn (Get $get): Closure => function (string $attribute, mixed $value, Closure $fail) use ($get, $field, $label, $maxPositive, $maxNegative): void {
-                $limit = $get("{$field}_sign") === '-' ? $maxNegative : $maxPositive;
+                $isMinus = $get("{$field}_sign") === '-';
+                $limit = $isMinus ? $maxNegative : $maxPositive;
 
                 if (is_numeric($value) && (float) $value > $limit) {
                     $fail(__('app.validation.diopter.out_of_range', [
                         'attribute' => $label,
-                        'min' => $get("{$field}_sign") === '-' ? "-{$limit}" : '0',
-                        'max' => $limit,
+                        'min' => $isMinus ? "-{$limit}" : '0',
+                        'max' => $isMinus ? '0' : $limit,
                     ]));
                 }
             });
