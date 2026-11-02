@@ -3,9 +3,11 @@
 use App\Enums\FiscalDocumentType;
 use App\Enums\InvoicingMode;
 use App\Enums\MessageTemplateKey;
+use App\Enums\MixedRangePricing;
 use App\Enums\VatRegime;
 use App\Filament\Resources\BusinessSettings\BusinessSettingResource;
 use App\Filament\Resources\BusinessSettings\Pages\ManageBusinessSetting;
+use App\Models\Company;
 use App\Models\MessageTemplate;
 use App\Models\NumberingRange;
 use App\Models\User;
@@ -153,4 +155,17 @@ it('edits the WhatsApp templates and drops blank ones back to the default', func
 
     expect($stored())->toBeNull()
         ->and(MessageTemplate::bodyFor($admin->company_id, MessageTemplateKey::OrderReady))->toBe(MessageTemplateKey::OrderReady->defaultBody());
+});
+
+it('stores how the shop prices a pair across price bands, defaulting to the most expensive', function () {
+    $this->actingAs(User::factory()->admin()->create());
+
+    expect(Company::current()->refresh()->mixed_range_pricing)->toBe(MixedRangePricing::Highest);
+
+    Livewire::test(ManageBusinessSetting::class)
+        ->fillForm(['mixed_range_pricing' => 'half_each'])
+        ->call('save')
+        ->assertHasNoFormErrors();
+
+    expect(Company::current()->refresh()->mixed_range_pricing)->toBe(MixedRangePricing::HalfEach);
 });

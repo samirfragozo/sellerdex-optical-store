@@ -380,6 +380,7 @@ return [
         'highest' => 'La fórmula más cara',
         'half_each' => 'La mitad de cada fórmula',
         'help' => 'Cómo te cobra este laboratorio un par cuando cada ojo queda en un rango de precio distinto.',
+        'company_help' => 'Cómo cobras un par cuando cada ojo queda en un rango de precio de venta distinto.',
     ],
 
     'frame_type' => [

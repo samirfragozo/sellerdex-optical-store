@@ -335,6 +335,7 @@ return [
         'highest' => 'The most expensive prescription',
         'half_each' => 'Half of each prescription',
         'help' => 'How this lab charges a pair when each eye falls in a different price range.',
+        'company_help' => 'How you charge a pair when each eye falls in a different sale price range.',
     ],
 
     'frame_type' => [

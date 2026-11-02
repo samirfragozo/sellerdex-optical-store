@@ -3,12 +3,14 @@
 namespace App\Filament\Resources\BusinessSettings;
 
 use App\Enums\MessageTemplateKey;
+use App\Enums\MixedRangePricing;
 use App\Enums\NavigationGroup;
 use App\Filament\Pages\Onboarding\Steps\CompanyStep;
 use App\Filament\Pages\Onboarding\Steps\InvoicingStep;
 use App\Filament\Resources\BusinessSettings\Pages\ManageBusinessSetting;
 use App\Models\Company;
 use BackedEnum;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -87,6 +89,11 @@ class BusinessSettingResource extends Resource
                     ->label(__('app.business.seller_max_discount_percent'))
                     ->helperText(__('app.business.seller_max_discount_percent_help'))
                     ->numeric()->minValue(0)->maxValue(100)->required()->suffix('%'),
+                Select::make('mixed_range_pricing')
+                    ->label(__('app.fields.mixed_range_pricing'))
+                    ->helperText(__('app.mixed_range_pricing.company_help'))
+                    ->options(MixedRangePricing::options())
+                    ->required(),
                 TextInput::make('quote_validity_days')
                     ->label(__('app.business.quote_validity_days'))
                     ->helperText(__('app.business.quote_validity_days_help'))
