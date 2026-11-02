@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\MixedRangePricing;
 use App\Filament\Resources\Suppliers\Pages\CreateSupplier;
 use App\Filament\Resources\Suppliers\Pages\ListSuppliers;
 use App\Filament\Resources\Suppliers\SupplierResource;
@@ -58,4 +59,16 @@ it('la pestaña laboratorios filtra solo proveedores con is_laboratory=true', fu
         ->set('activeTab', 'laboratorios')
         ->assertCanSeeTableRecords(Supplier::where('is_laboratory', true)->get())
         ->assertCanNotSeeTableRecords(Supplier::where('is_laboratory', false)->get());
+});
+
+it('guarda cómo cobra el laboratorio cuando los ojos caen en rangos distintos', function () {
+    $this->actingAs(User::factory()->admin()->create());
+
+    Livewire::test(CreateSupplier::class)
+        ->fillForm(['name' => 'Lab Mitad', 'is_laboratory' => true, 'is_active' => true, 'mixed_range_pricing' => 'half_each'])
+        ->call('create')
+        ->assertHasNoFormErrors();
+
+    expect(Supplier::where('name', 'Lab Mitad')->sole()->mixed_range_pricing)->toBe(MixedRangePricing::HalfEach)
+        ->and(Supplier::factory()->laboratory()->create()->refresh()->mixed_range_pricing)->toBe(MixedRangePricing::Highest);
 });

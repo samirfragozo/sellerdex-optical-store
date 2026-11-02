@@ -245,6 +245,7 @@ return [
         'logo' => 'Logo',
         'lead_time_days' => 'Lead time (days)',
         'lead_time_max_days' => 'Up to (days)',
+        'mixed_range_pricing' => 'Charge when the eyes fall in different ranges',
         'prescriber_name' => 'Prescribed by',
         'prescriber_license' => 'Professional license',
         'prism' => 'Prism',
@@ -328,6 +329,12 @@ return [
         'ce' => 'Foreigner ID',
         'pa' => 'Passport',
         'nit' => 'Tax ID (NIT)',
+    ],
+
+    'mixed_range_pricing' => [
+        'highest' => 'The most expensive prescription',
+        'half_each' => 'Half of each prescription',
+        'help' => 'How this lab charges a pair when each eye falls in a different price range.',
     ],
 
     'frame_type' => [

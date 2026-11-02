@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\Suppliers\Schemas;
 
+use App\Enums\MixedRangePricing;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -47,6 +49,13 @@ class SupplierForm
                     ->helperText(__('app.onboarding.laboratories.lead_time_max_help'))
                     ->integer()->minValue(0)->maxValue(90)
                     ->gte('lead_time_days')
+                    ->visible(fn ($get) => (bool) $get('is_laboratory')),
+                Select::make('mixed_range_pricing')
+                    ->label(__('app.fields.mixed_range_pricing'))
+                    ->helperText(__('app.mixed_range_pricing.help'))
+                    ->options(MixedRangePricing::options())
+                    ->default(MixedRangePricing::Highest->value)
+                    ->required()
                     ->visible(fn ($get) => (bool) $get('is_laboratory')),
                 Toggle::make('is_active')
                     ->label(__('app.fields.active'))

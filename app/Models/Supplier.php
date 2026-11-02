@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\MixedRangePricing;
 use App\Traits\BelongsToCompany;
 use Database\Factories\SupplierFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -12,7 +13,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-#[Fillable(['company_id', 'name', 'nit', 'contact_name', 'phone', 'email', 'address', 'notes', 'is_laboratory', 'lead_time_days', 'lead_time_max_days', 'is_active'])]
+#[Fillable(['company_id', 'name', 'nit', 'contact_name', 'phone', 'email', 'address', 'notes', 'is_laboratory', 'lead_time_days', 'lead_time_max_days', 'mixed_range_pricing', 'is_active'])]
 class Supplier extends Model
 {
     /** @use HasFactory<SupplierFactory> */
@@ -24,6 +25,7 @@ class Supplier extends Model
             'is_laboratory' => 'boolean',
             'lead_time_days' => 'integer',
             'lead_time_max_days' => 'integer',
+            'mixed_range_pricing' => MixedRangePricing::class,
             'is_active' => 'boolean',
         ];
     }

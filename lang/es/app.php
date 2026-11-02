@@ -234,6 +234,7 @@ return [
         'supplier_cost' => 'Costo del proveedor',
         'lead_time_days' => 'Días de entrega',
         'lead_time_max_days' => 'Hasta (días)',
+        'mixed_range_pricing' => 'Cobro si los ojos caen en rangos distintos',
         'supplier_sku' => 'Referencia del proveedor',
         'preferred' => 'Preferido',
         'supplier' => 'Proveedor',
@@ -373,6 +374,12 @@ return [
         'sent' => 'Enviada',
         'received' => 'Recibida',
         'cancelled' => 'Cancelada',
+    ],
+
+    'mixed_range_pricing' => [
+        'highest' => 'La fórmula más cara',
+        'half_each' => 'La mitad de cada fórmula',
+        'help' => 'Cómo te cobra este laboratorio un par cuando cada ojo queda en un rango de precio distinto.',
     ],
 
     'frame_type' => [
