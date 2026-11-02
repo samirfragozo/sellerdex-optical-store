@@ -14,14 +14,14 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 
-/** Read-only kardex: every stock change of the product with the balance it left. */
+/** Read-only stock history: every stock change of the product with the balance it left. */
 class StockMovementsRelationManager extends RelationManager
 {
     protected static string $relationship = 'stockMovements';
 
     public static function getTitle(Model $ownerRecord, string $pageClass): string
     {
-        return __('app.inventory.kardex');
+        return __('app.inventory.stock_movements');
     }
 
     public static function canViewForRecord(Model $ownerRecord, string $pageClass): bool

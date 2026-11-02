@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // The kardex: every change of a product's stock, with the balance it left.
+        // The stock history: every change of a product's stock, with the balance it left.
         Schema::create('stock_movements', function (Blueprint $table) {
             $table->id();
             $table->foreignId('company_id')->constrained()->cascadeOnDelete();

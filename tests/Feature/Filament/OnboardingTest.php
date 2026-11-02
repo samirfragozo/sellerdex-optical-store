@@ -34,6 +34,8 @@ it('starts on the company step and saves it before moving on', function () {
 
     Livewire::test(Onboarding::class)
         ->assertSet('step', CompanyStep::key())
+        ->assertSee(__('app.onboarding.company.sale_number_prefix'))
+        ->assertDontSee('órdenes de trabajo')
         ->assertSet('data.prescription_validity_months', 12)
         ->set('data.name', 'Óptica Central')
         ->set('data.tax_id', '900123456-7')

@@ -67,7 +67,7 @@ it('records the stock typed on creation as an initial movement', function () {
         ->and($created->stockMovements()->sole()->type)->toBe(StockMovementType::Initial);
 });
 
-it('shows the kardex of a stockable product', function () {
+it('shows the stock history of a stockable product', function () {
     $this->product->stockMovements()->create([
         'company_id' => $this->product->company_id, 'type' => StockMovementType::Adjustment,
         'quantity' => -1, 'balance_after' => 9, 'reason' => 'Rotura',
@@ -76,6 +76,12 @@ it('shows the kardex of a stockable product', function () {
     Livewire::test(StockMovementsRelationManager::class, ['ownerRecord' => $this->product, 'pageClass' => EditProduct::class])
         ->assertSee('Rotura')
         ->assertCanSeeTableRecords($this->product->stockMovements);
+});
+
+it('titles the stock history in plain words', function () {
+    app()->setLocale('es');
+
+    expect(StockMovementsRelationManager::getTitle($this->product, EditProduct::class))->toBe('Movimientos de inventario');
 });
 
 it('labels a movement by its sale number and survives a source that no longer exists', function () {
@@ -92,7 +98,7 @@ it('labels a movement by its sale number and survives a source that no longer ex
         ->assertSee($gone->balance_after);
 });
 
-it('hides stock, the kardex, the adjustment and the low-stock widget when the shop does not track inventory', function () {
+it('hides stock, the stock history, the adjustment and the low-stock widget when the shop does not track inventory', function () {
     $this->admin->company->update(['tracks_inventory' => false]);
 
     Livewire::test(EditProduct::class, ['record' => $this->product->getRouteKey()])
@@ -118,7 +124,7 @@ it('does not offer the adjustment on a trashed product', function () {
         ->assertActionHidden('adjustStock');
 });
 
-it('does not offer the adjustment or the kardex to a seller', function () {
+it('does not offer the adjustment or the stock history to a seller', function () {
     $this->actingAs(User::factory()->seller()->forCompany($this->admin->company)->create());
 
     expect(StockMovementsRelationManager::canViewForRecord($this->product, EditProduct::class))->toBeFalse();

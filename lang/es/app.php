@@ -341,7 +341,7 @@ return [
         'reason' => 'Motivo',
         'adjusted' => 'Stock ajustado',
         'initial_stock' => 'Stock inicial',
-        'kardex' => 'Kardex',
+        'stock_movements' => 'Movimientos de inventario',
         'date' => 'Fecha',
         'type' => 'Tipo',
         'quantity' => 'Cantidad',
@@ -913,8 +913,8 @@ return [
             'description' => 'Los datos que aparecen en tus comprobantes.',
             'vat_regime' => 'Régimen de IVA',
             'vat_regime_help' => 'Define si tus ventas llevan IVA. Los precios que escribas ya lo incluyen; si no estás seguro, confírmalo con tu contador.',
-            'sale_number_prefix' => 'Prefijo de las órdenes de trabajo',
-            'sale_number_prefix_help' => 'Opcional. Ejemplo: OC- produce OC-000001.',
+            'sale_number_prefix' => 'Prefijo del número de venta',
+            'sale_number_prefix_help' => 'Opcional. Letras que van antes del número de cada venta en el POS y en el comprobante. Por ejemplo, con OPT- tus ventas serán OPT-000001, OPT-000002… Déjalo vacío para usar solo el número.',
         ],
         'payment_methods' => [
             'label' => 'Métodos de pago',
@@ -926,7 +926,7 @@ return [
         ],
         'counter_products' => [
             'tracks_inventory' => '¿Llevas inventario de estos productos?',
-            'tracks_inventory_help' => 'Si lo activas, cada venta y compra mueve el stock y queda en el kardex. Puedes cambiarlo luego en la configuración.',
+            'tracks_inventory_help' => 'Si lo activas, cada venta resta unidades y cada compra las suma, y en cada producto verás el historial de entradas y salidas. Puedes cambiarlo luego en la configuración.',
             'label' => 'Productos de mostrador',
             'description' => 'Lo que vendes además de lentes. Te sugerimos una lista: renombra, cambia precios o borra lo que no manejes.',
             'add_category' => 'Agregar categoría',

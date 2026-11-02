@@ -37,6 +37,7 @@ it('suggests the reference counter catalog and creates it', function () {
         ->toBe(['price' => 10_000, 'cost' => 2_900, 'is_active' => true, 'is_pos_selectable' => true, 'sku' => null])
         ->and($case->tax_id)->toBe($case->category->default_tax_id)->not->toBeNull()
         ->and(Product::where('name', 'Examen visual')->sole()->category->key)->toBe('service')
+        ->and(Product::where('name', 'Examen visual')->sole()->cost)->toBe(20_000)
         ->and(ProductCategory::where('key', 'service')->count())->toBe(1)
         ->and(ProductCategory::keyed('case')->is_system)->toBeFalse();
 });
@@ -192,4 +193,11 @@ it('leaves frames and sunglasses to their own resource', function () {
 
     expect(collect($page->get('data.categories'))->pluck('key'))->not->toContain('frame')->not->toContain('sunglasses')
         ->and(Product::whereKey($frame->id)->exists())->toBeTrue();
+});
+
+it('explains inventory tracking in plain words', function () {
+    counterAdmin();
+
+    Livewire::test(Onboarding::class)
+        ->assertSee(__('app.onboarding.counter_products.tracks_inventory_help'));
 });

@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 /**
- * The only writer of products.stock: every change becomes a kardex movement
+ * The only writer of products.stock: every change becomes a stock movement
  * carrying the balance it left. Nothing is written when the company doesn't
  * track inventory or the product isn't stockable (services, made-to-order lenses).
  */

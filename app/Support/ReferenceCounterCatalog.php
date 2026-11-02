@@ -34,7 +34,7 @@ class ReferenceCounterCatalog
                 ['name' => 'Bolsa de papel', 'price' => 800, 'cost' => 400],
             ]],
             ['key' => 'service', 'name' => 'Servicios', 'products' => [
-                ['name' => 'Examen visual', 'price' => 35_000, 'cost' => 0],
+                ['name' => 'Examen visual', 'price' => 35_000, 'cost' => 20_000],
             ]],
             ['key' => 'accessory', 'name' => 'Accesorios', 'products' => []],
         ];

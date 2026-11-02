@@ -375,7 +375,7 @@ return [
         'reason' => 'Reason',
         'adjusted' => 'Stock adjusted',
         'initial_stock' => 'Initial stock',
-        'kardex' => 'Stock history',
+        'stock_movements' => 'Stock movements',
         'date' => 'Date',
         'type' => 'Type',
         'quantity' => 'Quantity',
@@ -913,8 +913,8 @@ return [
             'description' => 'The details printed on your receipts.',
             'vat_regime' => 'VAT regime',
             'vat_regime_help' => 'Decides whether your sales carry VAT. The prices you enter already include it; if unsure, confirm with your accountant.',
-            'sale_number_prefix' => 'Work-order number prefix',
-            'sale_number_prefix_help' => 'Optional. Example: OC- produces OC-000001.',
+            'sale_number_prefix' => 'Sale number prefix',
+            'sale_number_prefix_help' => 'Optional. Letters placed before each sale number in the POS and on the receipt. For example, with OPT- your sales will be OPT-000001, OPT-000002… Leave it empty to use just the number.',
         ],
         'payment_methods' => [
             'label' => 'Payment methods',
@@ -926,7 +926,7 @@ return [
         ],
         'counter_products' => [
             'tracks_inventory' => 'Do you track inventory for these products?',
-            'tracks_inventory_help' => 'If you turn it on, every sale and purchase moves stock and is kept in the stock history. You can change it later in the settings.',
+            'tracks_inventory_help' => 'If you turn it on, every sale subtracts units and every purchase adds them, and each product shows its history of stock in and out. You can change it later in the settings.',
             'label' => 'Counter products',
             'description' => 'What you sell besides lenses. We suggest a list: rename, re-price or remove what you don\'t carry.',
             'add_category' => 'Add category',

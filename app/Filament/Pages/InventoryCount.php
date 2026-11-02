@@ -18,7 +18,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use UnitEnum;
 
-/** The physical count that opens the kardex: one number per stockable product, written as `initial` movements. */
+/** The physical count that opens the stock history: one number per stockable product, written as `initial` movements. */
 class InventoryCount extends Page
 {
     protected string $view = 'filament.pages.inventory-count';

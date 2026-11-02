@@ -11,7 +11,7 @@ use Filament\Actions\Action;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 
-/** Set a product's stock to what was physically counted, leaving the reason in the kardex. */
+/** Set a product's stock to what was physically counted, leaving the reason in the stock history. */
 class AdjustStockAction
 {
     public static function make(): Action

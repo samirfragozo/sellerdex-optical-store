@@ -51,7 +51,7 @@ class Company extends Model
         ];
     }
 
-    /** Whether the shop keeps stock and a kardex (null — not decided yet — counts as no). */
+    /** Whether the shop keeps stock and a stock history (null — not decided yet — counts as no). */
     public function tracksInventory(): bool
     {
         return $this->tracks_inventory === true;
