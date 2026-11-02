@@ -17,26 +17,29 @@ class ReferenceCounterCatalog
     {
         return [
             ['key' => 'case', 'name' => 'Estuches', 'products' => [
-                ['name' => 'Estuche pequeño', 'price' => 10_000, 'cost' => 2_900],
+                ['name' => 'Estuche pequeño', 'price' => 12_000, 'cost' => 3_000],
                 ['name' => 'Estuche grande', 'price' => 15_000, 'cost' => 4_000],
             ]],
             ['key' => 'cloth', 'name' => 'Paños', 'products' => [
-                ['name' => 'Paño microfibra', 'price' => 2_000, 'cost' => 600],
+                ['name' => 'Paño microfibra', 'price' => 3_000, 'cost' => 500],
             ]],
             ['key' => 'cleaning', 'name' => 'Líquidos', 'products' => [
-                ['name' => 'Líquido limpiador', 'price' => 8_000, 'cost' => 2_000],
+                ['name' => 'Líquido limpiador', 'price' => 10_000, 'cost' => 2_000],
             ]],
             ['key' => 'pouch', 'name' => 'Fundas', 'products' => [
                 ['name' => 'Funda', 'price' => 3_000, 'cost' => 500],
             ]],
             ['key' => 'bag', 'name' => 'Bolsas', 'products' => [
                 ['name' => 'Bolsa plástica', 'price' => 200, 'cost' => 100],
-                ['name' => 'Bolsa de papel', 'price' => 800, 'cost' => 400],
+                ['name' => 'Bolsa de papel', 'price' => 1_000, 'cost' => 500],
             ]],
             ['key' => 'service', 'name' => 'Servicios', 'products' => [
                 ['name' => 'Examen visual', 'price' => 35_000, 'cost' => 20_000],
             ]],
-            ['key' => 'accessory', 'name' => 'Accesorios', 'products' => []],
+            ['key' => 'accessory', 'name' => 'Accesorios', 'products' => [
+                ['name' => 'Lagrimales de silicona', 'price' => 7_000, 'cost' => 500],
+                ['name' => 'Lagrimales de aire', 'price' => 10_000, 'cost' => 1_000],
+            ]],
         ];
     }
 }

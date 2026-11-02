@@ -34,10 +34,16 @@ it('suggests the reference counter catalog and creates it', function () {
     $case = Product::where('name', 'Estuche pequeño')->sole();
     expect($case->category->key)->toBe('case')
         ->and($case->only(['price', 'cost', 'is_active', 'is_pos_selectable', 'sku']))
-        ->toBe(['price' => 10_000, 'cost' => 2_900, 'is_active' => true, 'is_pos_selectable' => true, 'sku' => null])
+        ->toBe(['price' => 12_000, 'cost' => 3_000, 'is_active' => true, 'is_pos_selectable' => true, 'sku' => null])
         ->and($case->tax_id)->toBe($case->category->default_tax_id)->not->toBeNull()
         ->and(Product::where('name', 'Examen visual')->sole()->category->key)->toBe('service')
         ->and(Product::where('name', 'Examen visual')->sole()->cost)->toBe(20_000)
+        ->and(Product::where('name', 'Paño microfibra')->sole()->only(['price', 'cost']))->toBe(['price' => 3_000, 'cost' => 500])
+        ->and(Product::where('name', 'Líquido limpiador')->sole()->price)->toBe(10_000)
+        ->and(Product::where('name', 'Bolsa de papel')->sole()->only(['price', 'cost']))->toBe(['price' => 1_000, 'cost' => 500])
+        ->and(ProductCategory::keyed('accessory')->products()->pluck('name')->all())->toBe(['Lagrimales de silicona', 'Lagrimales de aire'])
+        ->and(Product::where('name', 'Lagrimales de silicona')->sole()->only(['price', 'cost']))->toBe(['price' => 7_000, 'cost' => 500])
+        ->and(Product::where('name', 'Lagrimales de aire')->sole()->only(['price', 'cost']))->toBe(['price' => 10_000, 'cost' => 1_000])
         ->and(ProductCategory::where('key', 'service')->count())->toBe(1)
         ->and(ProductCategory::keyed('case')->is_system)->toBeFalse();
 });
@@ -119,7 +125,7 @@ it('summarizes the counter products', function () {
     Livewire::test(Onboarding::class)->call('next');
 
     expect($step->isComplete($admin->company))->toBeTrue()
-        ->and($step->summary($admin->company))->toBe(__('app.onboarding.counter_products.summary', ['products' => 8, 'categories' => 6]));
+        ->and($step->summary($admin->company))->toBe(__('app.onboarding.counter_products.summary', ['products' => 10, 'categories' => 7]));
 });
 
 it('rejects a category name another category already uses', function () {
