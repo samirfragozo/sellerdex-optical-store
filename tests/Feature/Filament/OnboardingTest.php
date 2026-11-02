@@ -241,8 +241,8 @@ it('creates the lens combinations the user keeps, with the prices they typed', f
         ->and($prices->pluck('price')->unique()->all())->toBe([120000])
         ->and($prices->pluck('cost')->unique()->all())->toBe([40000])
         ->and($prices->pluck('is_preferred')->all())->toBe([true, false])
-        ->and($prices->every(fn (LensCombinationPrice $row): bool => (float) $row->sphere_min === -20.0 && (float) $row->sphere_max === 20.0
-            && (float) $row->cylinder_min === -10.0 && (float) $row->cylinder_max === 10.0 && $row->add_min === null && $row->add_max === null))->toBeTrue()
+        ->and($prices->every(fn (LensCombinationPrice $row): bool => (float) $row->sphere_min === -25.0 && (float) $row->sphere_max === 20.0
+            && (float) $row->cylinder_min === -8.0 && (float) $row->cylinder_max === 8.0 && $row->add_min === null && $row->add_max === null))->toBeTrue()
         ->and($combination->installation_price)->toBe(20000)
         ->and(app(LensesStep::class)->isComplete($admin->company))->toBeTrue()
         ->and(LensType::where('name', 'Progresivo')->exists())->toBeFalse();
