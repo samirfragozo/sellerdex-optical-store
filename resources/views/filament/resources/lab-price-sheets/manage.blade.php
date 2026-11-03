@@ -85,7 +85,7 @@
                                             </div>
                                             <x-filament::icon-button icon="heroicon-m-x-mark" color="gray" size="sm"
                                                 :label="__('app.lab_sheets.remove_column')"
-                                                wire:click="removeColumn('{{ $column['key'] }}')"
+                                                wire:click="removeColumn('{{ $column['key'] }}')" x-on:click="dirty = true"
                                                 wire:confirm="{{ __('app.lab_sheets.remove_column_confirm') }}" />
                                         </div>
                                         <div class="fi-input-wrp {{ $invalid("columns.{$colIndex}.lens_type_id") }}">
@@ -138,7 +138,7 @@
                                             </div>
                                             <x-filament::icon-button icon="heroicon-m-x-mark" color="gray" size="sm"
                                                 :label="__('app.lab_sheets.remove_row')"
-                                                wire:click="removeRow('{{ $row['key'] }}')"
+                                                wire:click="removeRow('{{ $row['key'] }}')" x-on:click="dirty = true"
                                                 wire:confirm="{{ __('app.lab_sheets.remove_row_confirm') }}" />
                                         </div>
                                         <div class="fi-input-wrp {{ $invalid("rows.{$rowIndex}.lens_material_id") }}">

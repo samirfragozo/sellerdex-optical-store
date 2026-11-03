@@ -161,7 +161,7 @@ class ManageLabPriceSheet extends Page
             }
         }
 
-        $notification = Notification::make()->title(__('app.lab_sheets.pasted', ['count' => $pasted]));
+        $notification = Notification::make()->title(trans_choice('app.lab_sheets.pasted', $pasted, ['count' => $pasted]));
 
         if ($skipped > 0) {
             $notification->warning()->body(__('app.lab_sheets.paste_skipped', ['count' => $skipped]));

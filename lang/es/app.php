@@ -1031,7 +1031,7 @@ return [
         'empty' => 'Agrega columnas (diseños) y filas (materiales) para empezar.',
         'grid_help' => 'Escribe el costo por par tal como está en la hoja. Deja vacías las casillas que no vendes. Puedes pegar un bloque copiado desde Excel.',
         'back_to_lab' => 'Volver al laboratorio',
-        'pasted' => 'Se pegaron :count casillas.',
+        'pasted' => '{1} Se pegó 1 casilla.|[2,*] Se pegaron :count casillas.',
         'paste_skipped' => ':count quedaron fuera de la hoja; agrega columnas o filas y vuelve a pegar.',
         'invalid' => 'Revisa :count casillas o campos marcados en rojo; no se guardó nada.',
         'unsaved_warning' => 'Tienes cambios sin guardar en esta hoja. ¿Salir de todas formas?',

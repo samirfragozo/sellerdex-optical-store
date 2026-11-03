@@ -4,8 +4,8 @@ namespace App\Support;
 
 /**
  * Turns a block copied from a spreadsheet (rows on new lines, cells on tabs)
- * into lab costs. Colombian prices use "." as thousands separator and have no
- * cents, so every non-digit is dropped; a cell with no digit is blank.
+ * into lab costs. A trailing decimal part (",00" in es-CO currency display) is
+ * dropped, then every non-digit; a cell with no digit is blank.
  */
 final class LabSheetPaste
 {
@@ -20,7 +20,8 @@ final class LabSheetPaste
 
         return array_map(
             fn (string $line): array => array_map(function (string $cell): ?int {
-                $digits = preg_replace('/\D/', '', $cell);
+                // Thousands groups are always 3 digits, so a trailing 1–2 digit group is cents to drop.
+                $digits = preg_replace('/\D/', '', preg_replace('/[.,]\d{1,2}\s*$/', '', $cell));
 
                 return $digits === '' ? null : (int) $digits;
             }, explode("\t", $line)),

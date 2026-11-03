@@ -190,7 +190,7 @@ it('pastes a block from the anchor cell rightwards and downwards', function () {
         ->assertSet("costs.{$r1}.{$c2}", '2')
         ->assertSet("costs.{$r2}.{$c1}", '3')
         ->assertSet("costs.{$r2}.{$c2}", '4')
-        ->assertNotified(__('app.lab_sheets.pasted', ['count' => 4]));
+        ->assertNotified(trans_choice('app.lab_sheets.pasted', 4, ['count' => 4]));
 });
 
 it('skips pasted values outside the grid and says so', function () {
@@ -203,7 +203,7 @@ it('skips pasted values outside the grid and says so', function () {
         ->assertSet("costs.{$r2}.{$c1}", '4')
         ->assertSet("costs.{$r2}.{$c2}", '5')
         ->assertNotified(Notification::make()->warning()
-            ->title(__('app.lab_sheets.pasted', ['count' => 4]))
+            ->title(trans_choice('app.lab_sheets.pasted', 4, ['count' => 4]))
             ->body(__('app.lab_sheets.paste_skipped', ['count' => 5])));
 });
 
@@ -217,7 +217,7 @@ it('says how many cells are invalid and saves nothing', function () {
         ->set("costs.{$r1}.{$c2}", 'abc')
         ->call('save')
         ->assertHasErrors(["costs.{$r1}.{$c2}"])
-        ->assertNotified(__('app.lab_sheets.invalid', ['count' => 1]))
+        ->assertNotified(Notification::make()->danger()->title(__('app.lab_sheets.invalid', ['count' => 1])))
         ->assertSeeHtml('aria-describedby="error-costs-'.$r1.'-'.$c2.'"');
 
     expect($cell->fresh()->cost)->toBe(50_000)

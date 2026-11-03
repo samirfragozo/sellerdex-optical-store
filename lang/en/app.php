@@ -1031,7 +1031,7 @@ return [
         'empty' => 'Add columns (designs) and rows (materials) to start.',
         'grid_help' => 'Type the cost per pair as printed on the sheet. Leave blank the cells you don\'t sell. You can paste a block copied from Excel.',
         'back_to_lab' => 'Back to the lab',
-        'pasted' => 'Pasted :count cells.',
+        'pasted' => '{1} Pasted 1 cell.|[2,*] Pasted :count cells.',
         'paste_skipped' => ':count fell outside the sheet; add columns or rows and paste again.',
         'invalid' => 'Check the :count cells or fields marked in red; nothing was saved.',
         'unsaved_warning' => 'You have unsaved changes in this sheet. Leave anyway?',

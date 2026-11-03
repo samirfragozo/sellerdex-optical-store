@@ -47,8 +47,17 @@ it('moves down with Enter, never saves on Enter, and saves only with the button'
         document.querySelector('[data-row="0"][data-col="0"]')
             .dispatchEvent(new ClipboardEvent('paste', { clipboardData: data, bubbles: true, cancelable: true }));
         JS);
-    $page->assertSee(__('app.lab_sheets.pasted', ['count' => 2]))
+    $page->assertSee(trans_choice('app.lab_sheets.pasted', 2, ['count' => 2]))
         ->assertValue('[data-row="1"][data-col="0"]', '95000');
+
+    // Removing a row counts as an unsaved change on its own (the paste already set the flag, so clear it first).
+    $dirty = "Alpine.\$data(document.querySelector('[data-row]').closest('form')).dirty";
+    $page->script("{$dirty} = false");
+    $page->click('tbody tr:last-child [wire\\:click^="removeRow"]')
+        ->assertScript($dirty, false); // a cancelled confirm (Playwright dismisses dialogs) changes nothing
+    $page->script('window.confirm = () => true');
+    $page->click('tbody tr:last-child [wire\\:click^="removeRow"]')
+        ->assertScript($dirty, true);
 
     $cost = fn (LabSheetRow $row): ?int => LabSheetCell::query()
         ->where(['lab_sheet_row_id' => $row->id, 'lab_sheet_column_id' => $column->id])->value('cost');
