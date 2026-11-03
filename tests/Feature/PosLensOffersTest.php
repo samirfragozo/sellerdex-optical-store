@@ -52,7 +52,7 @@ it('explains when the prescription is outside every range', function () {
     $this->getJson(route('pos.lens-offers', lensOffersQuery($rx)))
         ->assertOk()
         ->assertJsonCount(0, 'offers')
-        ->assertJsonPath('message', $this->combination->outOfRangeMessage(null));
+        ->assertJsonPath('message', __('app.pos.lens_form.out_of_range_any', ['combination' => $this->combination->label()]));
 });
 
 it('rejects a prescription of another company', function () {

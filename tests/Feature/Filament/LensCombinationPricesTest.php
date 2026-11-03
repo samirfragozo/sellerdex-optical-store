@@ -18,10 +18,13 @@ it('lists each lab cell costing the lens, read-only', function () {
     $cell = labCost($this->combination, $this->lab, ['cost' => 50_000]);
     $cell->column->update(['label' => 'Classic']);
     $cell->row->update(['label' => 'Poly Blue Cut']);
+    $other = labCost($this->combination, Supplier::factory()->laboratory()->create(), ['cost' => 70_000]);
 
     Livewire::test(CellsRelationManager::class, ['ownerRecord' => $this->combination, 'pageClass' => EditLensCombination::class])
         ->assertCanSeeTableRecords([$cell])
         ->assertSee(['Lab Central', 'Classic', 'Poly Blue Cut'])
+        ->assertTableColumnFormattedStateSet('cost', "50.000,00\u{00A0}COP", $cell)
+        ->assertTableColumnFormattedStateSet('cost', "70.000,00\u{00A0}COP", $other)
         ->assertActionDoesNotExist(TestAction::make('create')->table())
         ->assertActionExists(TestAction::make('edit_sheet')->table($cell));
 });

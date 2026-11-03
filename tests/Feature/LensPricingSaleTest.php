@@ -91,7 +91,7 @@ it('rejects a prescription outside every range with an explicit message', functi
 
     $this->postJson(route('pos.store'), rangeSalePayload(rangeRx('-8.00')))
         ->assertStatus(422)
-        ->assertJsonValidationErrors(['armados.0.lens' => $this->combination->outOfRangeMessage(null)]);
+        ->assertJsonValidationErrors(['armados.0.lens' => __('app.pos.lens_form.out_of_range_any', ['combination' => $this->combination->label()])]);
 
     expect(Sale::count())->toBe(0);
 });
@@ -102,7 +102,7 @@ it('rejects a lab that does not price this prescription', function () {
 
     $this->postJson(route('pos.store'), rangeSalePayload(rangeRx('-8.00'), $this->labB->id))
         ->assertStatus(422)
-        ->assertJsonValidationErrors(['armados.0.lens' => $this->combination->outOfRangeMessage($this->labB)]);
+        ->assertJsonValidationErrors(['armados.0.lens' => __('app.pos.lens_form.out_of_range', ['combination' => $this->combination->label(), 'lab' => $this->labB->name])]);
 });
 
 it('rejects a crafted supplier that is not an active lab of the company', function (Closure $makeSupplier) {

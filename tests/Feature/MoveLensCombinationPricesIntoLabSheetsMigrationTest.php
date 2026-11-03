@@ -50,7 +50,9 @@ it('moves each lab\'s legacy rows into one sheet of columns, rows and cells and 
         ->and($sheet->cells()->where('cost', 50_000)->sole()->is_preferred)->toBeTrue()
         ->and($sheet->cells()->where('cost', 50_000)->sole()->lens_combination_id)->toBe($single->id)
         ->and($sheet->columns()->whereNotNull('add_min')->sole()->label)->toContain('add 0.5–2')
-        ->and($sheet->rows()->where('sphere_min', -25)->where('sphere_max', -6.25)->sole()->label)->toContain('esf -25/-6.25');
+        ->and($sheet->rows()->where('sphere_min', -25)->where('sphere_max', -6.25)->sole()->label)->toContain('esf -25/-6.25')
+        ->and($sheet->rows()->where('sphere_min', -25)->where('sphere_max', 20)->sole()->label)->not->toContain(' (esf')
+        ->and($sheet->columns()->whereNull('add_min')->sole()->label)->not->toContain(' (add');
 
     $sheetB = LabPriceSheet::where('supplier_id', $labB->id)->sole();
     expect($sheetB->cells()->sole())->cost->toBe(60_000)->is_active->toBeFalse();

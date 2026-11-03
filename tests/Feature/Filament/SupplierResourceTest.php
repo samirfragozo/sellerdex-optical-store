@@ -2,11 +2,16 @@
 
 use App\Enums\MixedRangePricing;
 use App\Filament\Resources\Suppliers\Pages\CreateSupplier;
+use App\Filament\Resources\Suppliers\Pages\EditSupplier;
 use App\Filament\Resources\Suppliers\Pages\ListSuppliers;
+use App\Filament\Resources\Suppliers\RelationManagers\PriceSheetsRelationManager;
 use App\Filament\Resources\Suppliers\SupplierResource;
+use App\Models\LabPriceSheet;
 use App\Models\Supplier;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
+use Filament\Actions\CreateAction;
+use Filament\Actions\Testing\TestAction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 
@@ -18,6 +23,19 @@ it('permite a un admin ver el listado de proveedores', function () {
     $this->actingAs(User::factory()->admin()->create())
         ->get(SupplierResource::getUrl())
         ->assertSuccessful();
+});
+
+it('crea una hoja de precios desde las hojas del laboratorio', function () {
+    $admin = User::factory()->admin()->create();
+    $this->actingAs($admin);
+    $lab = Supplier::factory()->laboratory()->create();
+
+    Livewire::test(PriceSheetsRelationManager::class, ['ownerRecord' => $lab, 'pageClass' => EditSupplier::class])
+        ->callAction(TestAction::make(CreateAction::class)->table(), ['name' => 'Lista 2026'])
+        ->assertHasNoActionErrors();
+
+    expect(LabPriceSheet::sole()->only(['supplier_id', 'name', 'company_id']))
+        ->toBe(['supplier_id' => $lab->id, 'name' => 'Lista 2026', 'company_id' => $admin->company_id]);
 });
 
 it('prohíbe a un vendedor el módulo de proveedores', function () {

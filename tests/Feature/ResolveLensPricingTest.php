@@ -2,7 +2,10 @@
 
 use App\Actions\ResolveLensPricing;
 use App\Models\LensCombination;
+use App\Models\LensPriceBand;
 use App\Models\LensTreatment;
+use App\Models\Prescription;
+use App\Models\Supplier;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Validation\ValidationException;
@@ -90,6 +93,21 @@ it('rechaza una combinación sin precio para la fórmula, nombrándola', functio
         (new ResolveLensPricing)->handle($combination->lens_type_id, $combination->lens_technology_id, $combination->lens_material_id, []);
         $this->fail('Expected a ValidationException.');
     } catch (ValidationException $exception) {
-        expect($exception->errors()['lens'])->toBe([$combination->load(['lensType', 'lensTechnology', 'lensMaterial'])->outOfRangeMessage(null)]);
+        expect($exception->errors()['lens'])->toBe([__('app.pos.lens_form.out_of_range_any', ['combination' => $combination->load(['lensType', 'lensTechnology', 'lensMaterial'])->label()])]);
+    }
+});
+
+it('rechaza con el mensaje de sin precio de venta cuando el laboratorio cubre la fórmula pero ninguna banda', function () {
+    $this->actingAs(User::factory()->admin()->create());
+    $combination = LensCombination::factory()->unpriced()->create();
+    labCost($combination, Supplier::factory()->laboratory()->create(), ['sphere_min' => -10, 'sphere_max' => 6]);
+    LensPriceBand::factory()->create(['lens_combination_id' => $combination->id, 'sphere_min' => -6, 'sphere_max' => 6, 'price' => 150_000]);
+    $prescription = Prescription::factory()->create(['od_sphere' => '-8.00', 'os_sphere' => null, 'od_cylinder' => null, 'os_cylinder' => null]);
+
+    try {
+        (new ResolveLensPricing)->handle($combination->lens_type_id, $combination->lens_technology_id, $combination->lens_material_id, [], $prescription);
+        $this->fail('Expected a ValidationException.');
+    } catch (ValidationException $exception) {
+        expect($exception->errors()['lens'])->toBe([__('app.pos.lens_form.no_sale_price', ['combination' => $combination->load(['lensType', 'lensTechnology', 'lensMaterial'])->label()])]);
     }
 });

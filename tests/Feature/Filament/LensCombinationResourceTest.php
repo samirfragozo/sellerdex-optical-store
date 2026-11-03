@@ -8,8 +8,10 @@ use App\Filament\Resources\LensCombinations\RelationManagers\PriceBandsRelationM
 use App\Models\LensCombination;
 use App\Models\LensCombinationPrice;
 use App\Models\LensMaterial;
+use App\Models\LensPriceBand;
 use App\Models\LensTechnology;
 use App\Models\LensType;
+use App\Models\Supplier;
 use App\Models\User;
 use Filament\Actions\Action;
 use Filament\Actions\Testing\TestAction;
@@ -132,9 +134,13 @@ it('flags in the list which lenses can be sold', function () {
     $this->actingAs(User::factory()->admin()->create());
     $unpriced = LensCombination::factory()->unpriced()->create();
     $sellable = LensCombination::factory()->create();
+    $inactiveLabOnly = LensCombination::factory()->unpriced()->create();
+    LensPriceBand::factory()->create(['lens_combination_id' => $inactiveLabOnly->id]);
+    labCost($inactiveLabOnly, Supplier::factory()->laboratory()->create(['is_active' => false]));
 
     Livewire::test(ListLensCombinations::class)
         ->assertTableColumnStateSet('is_sellable', false, $unpriced)
+        ->assertTableColumnStateSet('is_sellable', false, $inactiveLabOnly)
         ->assertTableColumnStateSet('is_sellable', true, $sellable);
 });
 
