@@ -14,6 +14,7 @@ use App\Models\LensType;
 use App\Models\Supplier;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
+use Filament\Notifications\Notification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 
@@ -164,4 +165,74 @@ it('lets an admin open the sheet grid', function () {
     $this->get(LabPriceSheetResource::getUrl('edit', ['record' => $sheet]))
         ->assertSuccessful()
         ->assertSee(__('app.lab_sheets.empty'));
+});
+
+/**
+ * A sheet with two columns and two rows.
+ *
+ * @return array{0: LabPriceSheet, 1: list<string>, 2: list<string>} sheet, row keys, column keys
+ */
+function twoByTwoSheet(): array
+{
+    $sheet = LabPriceSheet::factory()->create();
+    $columns = collect([0, 1])->map(fn (int $i) => 'c'.LabSheetColumn::factory()->for($sheet, 'sheet')->create(['sort_order' => $i])->id)->all();
+    $rows = collect([0, 1])->map(fn (int $i) => 'r'.LabSheetRow::factory()->for($sheet, 'sheet')->create(['sort_order' => $i])->id)->all();
+
+    return [$sheet, $rows, $columns];
+}
+
+it('pastes a block from the anchor cell rightwards and downwards', function () {
+    [$sheet, [$r1, $r2], [$c1, $c2]] = twoByTwoSheet();
+
+    sheetGrid($sheet)
+        ->call('paste', $r1, $c1, "1\t2\n3\t4")
+        ->assertSet("costs.{$r1}.{$c1}", '1')
+        ->assertSet("costs.{$r1}.{$c2}", '2')
+        ->assertSet("costs.{$r2}.{$c1}", '3')
+        ->assertSet("costs.{$r2}.{$c2}", '4')
+        ->assertNotified(__('app.lab_sheets.pasted', ['count' => 4]));
+});
+
+it('skips pasted values outside the grid and says so', function () {
+    [$sheet, [$r1, $r2], [$c1, $c2]] = twoByTwoSheet();
+
+    sheetGrid($sheet)
+        ->call('paste', $r1, $c1, "1\t2\t3\n4\t5\t6\n7\t8\t9")
+        ->assertSet("costs.{$r1}.{$c1}", '1')
+        ->assertSet("costs.{$r1}.{$c2}", '2')
+        ->assertSet("costs.{$r2}.{$c1}", '4')
+        ->assertSet("costs.{$r2}.{$c2}", '5')
+        ->assertNotified(Notification::make()->warning()
+            ->title(__('app.lab_sheets.pasted', ['count' => 4]))
+            ->body(__('app.lab_sheets.paste_skipped', ['count' => 5])));
+});
+
+it('says how many cells are invalid and saves nothing', function () {
+    [$sheet, [$r1], [$c1, $c2]] = twoByTwoSheet();
+    $cell = LabSheetCell::factory()->create(['lab_sheet_row_id' => substr($r1, 1), 'lab_sheet_column_id' => substr($c1, 1), 'cost' => 50_000]);
+
+    sheetGrid($sheet)
+        ->set('name', 'Renamed')
+        ->set("costs.{$r1}.{$c1}", '60000')
+        ->set("costs.{$r1}.{$c2}", 'abc')
+        ->call('save')
+        ->assertHasErrors(["costs.{$r1}.{$c2}"])
+        ->assertNotified(__('app.lab_sheets.invalid', ['count' => 1]))
+        ->assertSeeHtml('aria-describedby="error-costs-'.$r1.'-'.$c2.'"');
+
+    expect($cell->fresh()->cost)->toBe(50_000)
+        ->and($sheet->fresh()->name)->not->toBe('Renamed')
+        ->and(LabSheetCell::count())->toBe(1);
+});
+
+it('rejects a tampered column or row id instead of failing', function () {
+    $sheet = LabPriceSheet::factory()->create();
+    LabSheetColumn::factory()->for($sheet, 'sheet')->create();
+    LabSheetRow::factory()->for($sheet, 'sheet')->create();
+
+    sheetGrid($sheet)
+        ->set('columns.0.id', ['x'])
+        ->set('rows.0.id', ['x'])
+        ->call('save')
+        ->assertHasErrors(['columns.0.id', 'rows.0.id']);
 });

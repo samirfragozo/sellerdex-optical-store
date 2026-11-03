@@ -13,6 +13,7 @@ use App\Models\LensMaterial;
 use App\Models\LensTechnology;
 use App\Models\LensType;
 use App\Models\Prescription;
+use App\Support\LabSheetPaste;
 use Closure;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
@@ -23,6 +24,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Exists;
+use Illuminate\Validation\ValidationException;
 
 /**
  * The lab's price sheet as one spreadsheet-like grid: columns (designs) across,
@@ -125,9 +127,61 @@ class ManageLabPriceSheet extends Page
         unset($this->costs[$key]);
     }
 
+    /**
+     * Write a block copied from a spreadsheet into the costs, starting at the
+     * given cell and moving right through the columns and down through the rows.
+     */
+    public function paste(string $rowKey, string $columnKey, string $text): void
+    {
+        $rowKeys = array_column($this->rows, 'key');
+        $columnKeys = array_column($this->columns, 'key');
+        $firstRow = array_search($rowKey, $rowKeys, true);
+        $firstColumn = array_search($columnKey, $columnKeys, true);
+
+        if ($firstRow === false || $firstColumn === false) {
+            return;
+        }
+
+        $pasted = 0;
+        $skipped = 0;
+
+        foreach (LabSheetPaste::parse($text) as $rowOffset => $values) {
+            foreach ($values as $columnOffset => $value) {
+                $targetRow = $rowKeys[$firstRow + $rowOffset] ?? null;
+                $targetColumn = $columnKeys[$firstColumn + $columnOffset] ?? null;
+
+                if ($targetRow === null || $targetColumn === null) {
+                    $skipped++;
+
+                    continue;
+                }
+
+                $this->costs[$targetRow][$targetColumn] = $value === null ? null : (string) $value;
+                $pasted++;
+            }
+        }
+
+        $notification = Notification::make()->title(__('app.lab_sheets.pasted', ['count' => $pasted]));
+
+        if ($skipped > 0) {
+            $notification->warning()->body(__('app.lab_sheets.paste_skipped', ['count' => $skipped]));
+        } else {
+            $notification->success();
+        }
+
+        $notification->send();
+    }
+
     public function save(): void
     {
-        $this->validate($this->gridRules(), [], $this->gridAttributes());
+        try {
+            $this->validate($this->gridRules(), [], $this->gridAttributes());
+        } catch (ValidationException $exception) {
+            Notification::make()->danger()->title(__('app.lab_sheets.invalid', ['count' => count($exception->errors())]))->send();
+            $this->dispatch('lab-sheet-invalid');
+
+            throw $exception;
+        }
 
         $sheet = $this->getRecord();
 
@@ -186,6 +240,7 @@ class ManageLabPriceSheet extends Page
         });
 
         $this->loadSheet();
+        $this->dispatch('lab-sheet-saved');
 
         Notification::make()->success()->title(__('app.lab_sheets.saved'))->send();
     }
@@ -227,6 +282,8 @@ class ManageLabPriceSheet extends Page
 
         return [
             'name' => ['required', 'string', 'max:255'],
+            'columns.*.id' => ['nullable', 'integer'],
+            'rows.*.id' => ['nullable', 'integer'],
             'columns.*.label' => ['required', 'string', 'max:100'],
             'columns.*.lens_type_id' => ['required', 'integer', $ofCompany('lens_types')],
             'columns.*.lens_technology_id' => ['required', 'integer', $ofCompany('lens_technologies')],
