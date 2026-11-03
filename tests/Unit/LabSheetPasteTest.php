@@ -30,5 +30,9 @@ it('normalises a typed or pasted cost', function (string $value, ?int $expected)
     'es-CO with cents and currency code' => ['42.000,00 COP', 42_000],
     'currency code first' => ['COP 1.250.000', 1_250_000],
     'peso sign' => ['$ 74.000', 74_000],
+    'peso sign with a spreadsheet non-breaking space' => ["\$\u{00A0}42.000", 42_000],
+    'peso sign glued to the code' => ['COP$ 42.000', 42_000],
     'no digit' => ['N/A', null],
+    'negative' => ['-5', null],
+    'text around a digit' => ['abc1', null],
 ]);

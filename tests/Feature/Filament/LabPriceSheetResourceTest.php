@@ -233,6 +233,17 @@ it('says how many cells are invalid and saves nothing', function () {
         ->and(LabSheetCell::count())->toBe(1);
 });
 
+it('rejects a typed cost that is not a price instead of guessing a number', function (string $typed) {
+    [$sheet, [$r1], [$c1]] = twoByTwoSheet();
+
+    sheetGrid($sheet)
+        ->set("costs.{$r1}.{$c1}", $typed)
+        ->call('save')
+        ->assertHasErrors(["costs.{$r1}.{$c1}"]);
+
+    expect(LabSheetCell::count())->toBe(0);
+})->with(['negative' => '-5', 'text around a digit' => 'abc1']);
+
 it('rejects a cost above the allowed maximum and saves nothing', function () {
     [$sheet, [$r1], [$c1]] = twoByTwoSheet();
 

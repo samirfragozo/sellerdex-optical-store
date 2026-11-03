@@ -306,9 +306,11 @@ class ManageLabPriceSheet extends Page
     {
         foreach ($this->costs as $rowKey => $values) {
             foreach ((array) $values as $columnKey => $value) {
-                // Values with no digit stay as typed so "abc" still fails validation.
-                if (is_string($value) && preg_match('/\d/', $value)) {
-                    $this->costs[$rowKey][$columnKey] = (string) LabSheetPaste::cost($value);
+                // Anything that is not a price stays as typed so validation rejects it.
+                $cost = is_string($value) ? LabSheetPaste::cost($value) : null;
+
+                if ($cost !== null) {
+                    $this->costs[$rowKey][$columnKey] = (string) $cost;
                 }
             }
         }
