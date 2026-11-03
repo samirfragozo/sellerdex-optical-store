@@ -72,3 +72,16 @@ it('says the combination is not available when no active combination matches', f
         ->assertJsonCount(0, 'offers')
         ->assertJsonPath('message', __('app.pos.lens_form.invalid_combination'));
 });
+
+it('says the lens has no sale price when a lab covers the prescription but no band does', function () {
+    labCost($this->combination, $this->labA);
+    LensPriceBand::query()->where('lens_combination_id', $this->combination->id)->delete();
+    LensPriceBand::factory()->create(['lens_combination_id' => $this->combination->id, 'sphere_min' => -6, 'sphere_max' => 6, 'price' => 150_000]);
+    $rx = Prescription::factory()->create(['od_sphere' => '-8.00', 'os_sphere' => null, 'od_cylinder' => null, 'os_cylinder' => null]);
+    $this->combination->load(['lensType', 'lensTechnology', 'lensMaterial']);
+
+    $this->getJson(route('pos.lens-offers', lensOffersQuery($rx)))
+        ->assertOk()
+        ->assertJsonCount(0, 'offers')
+        ->assertJsonPath('message', __('app.pos.lens_form.no_sale_price', ['combination' => $this->combination->label()]));
+});

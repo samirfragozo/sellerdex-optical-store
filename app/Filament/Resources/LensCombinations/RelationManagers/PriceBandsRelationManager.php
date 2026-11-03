@@ -47,6 +47,9 @@ class PriceBandsRelationManager extends RelationManager
                 TextColumn::make('price')->label(__('app.fields.price'))->money('COP'),
             ])
             ->headerActions([CreateAction::make()])
-            ->recordActions([EditAction::make(), DeleteAction::make()]);
+            ->recordActions([
+                EditAction::make(),
+                DeleteAction::make()->modalDescription(__('app.resources.lens_combination.last_band_warning')),
+            ]);
     }
 }

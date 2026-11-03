@@ -11,6 +11,7 @@ use App\Models\LensMaterial;
 use App\Models\LensTechnology;
 use App\Models\LensType;
 use App\Models\User;
+use Filament\Actions\Action;
 use Filament\Actions\Testing\TestAction;
 use Filament\Tables\Columns\TextColumn;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -125,4 +126,25 @@ it('adds an all-prescriptions sale price band', function () {
 
 it('lists the sale price bands before the lab costs', function () {
     expect(LensCombinationResource::getRelations())->toBe([PriceBandsRelationManager::class, CellsRelationManager::class]);
+});
+
+it('flags in the list which lenses can be sold', function () {
+    $this->actingAs(User::factory()->admin()->create());
+    $unpriced = LensCombination::factory()->unpriced()->create();
+    $sellable = LensCombination::factory()->create();
+
+    Livewire::test(ListLensCombinations::class)
+        ->assertTableColumnStateSet('is_sellable', false, $unpriced)
+        ->assertTableColumnStateSet('is_sellable', true, $sellable);
+});
+
+it('warns about the last sale price when deleting a band', function () {
+    $this->actingAs(User::factory()->admin()->create());
+    $combination = LensCombination::factory()->create();
+
+    Livewire::test(PriceBandsRelationManager::class, ['ownerRecord' => $combination, 'pageClass' => EditLensCombination::class])
+        ->assertActionExists(
+            TestAction::make('delete')->table($combination->priceBands()->first()),
+            fn (Action $action): bool => (string) $action->getModalDescription() === __('app.resources.lens_combination.last_band_warning'),
+        );
 });

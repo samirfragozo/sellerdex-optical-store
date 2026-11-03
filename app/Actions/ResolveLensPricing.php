@@ -51,7 +51,7 @@ class ResolveLensPricing
             $combination->loadMissing(['lensType', 'lensTechnology', 'lensMaterial']);
 
             throw ValidationException::withMessages([
-                'lens' => $combination->outOfRangeMessage($supplierId !== null ? Supplier::find($supplierId) : null),
+                'lens' => $combination->outOfRangeMessage($supplierId !== null ? Supplier::find($supplierId) : null, $prescription),
             ]);
         }
 

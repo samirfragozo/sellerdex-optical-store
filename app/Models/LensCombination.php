@@ -98,6 +98,32 @@ class LensCombination extends Model
             return collect();
         }
 
+        return $this->labCoverage($refraction)
+            ->map(fn (array $coverage): LensOffer => new LensOffer(
+                supplier: $coverage['lab'],
+                odCell: $coverage['od'],
+                osCell: $coverage['os'],
+                cost: $coverage['lab']->mixed_range_pricing->combine($coverage['od']->cost, $coverage['os']->cost),
+                price: $price,
+                isPreferred: $coverage['cells']->contains('is_preferred', true),
+            ))
+            ->sortBy([
+                fn (LensOffer $a, LensOffer $b): int => $b->isPreferred <=> $a->isPreferred,
+                fn (LensOffer $a, LensOffer $b): int => ($a->odCell->rangeWidth() + $a->osCell->rangeWidth()) <=> ($b->odCell->rangeWidth() + $b->osCell->rangeWidth()),
+                fn (LensOffer $a, LensOffer $b): int => min($a->odCell->id, $a->osCell->id) <=> min($b->odCell->id, $b->osCell->id),
+            ])
+            ->values();
+    }
+
+    /**
+     * Per active lab, the narrowest active cell covering each eye (across all
+     * its sheets; ties: oldest cell); labs missing either eye are left out.
+     *
+     * @param  array{od: array<string, mixed>, os: array<string, mixed>, add: mixed}  $refraction
+     * @return Collection<int, array{lab: Supplier, od: LabSheetCell, os: LabSheetCell, cells: Collection<int, LabSheetCell>}>
+     */
+    private function labCoverage(array $refraction): Collection
+    {
         return $this->cells()
             ->where('is_active', true)
             ->whereHas('sheet.supplier', fn (Builder $lab) => $lab->where('is_laboratory', true)->where('is_active', true))
@@ -105,32 +131,13 @@ class LensCombination extends Model
             ->orderBy('id')
             ->get()
             ->groupBy(fn (LabSheetCell $cell): int => $cell->sheet->supplier_id)
-            ->map(function (Collection $cells) use ($refraction, $price): ?LensOffer {
-                $odCell = LabSheetCell::narrowestCovering($cells, $refraction['od'], $refraction['add']);
-                $osCell = LabSheetCell::narrowestCovering($cells, $refraction['os'], $refraction['add']);
+            ->map(function (Collection $cells) use ($refraction): ?array {
+                $od = LabSheetCell::narrowestCovering($cells, $refraction['od'], $refraction['add']);
+                $os = LabSheetCell::narrowestCovering($cells, $refraction['os'], $refraction['add']);
 
-                if ($odCell === null || $osCell === null) {
-                    return null;
-                }
-
-                $lab = $odCell->sheet->supplier;
-
-                return new LensOffer(
-                    supplier: $lab,
-                    odCell: $odCell,
-                    osCell: $osCell,
-                    cost: $lab->mixed_range_pricing->combine($odCell->cost, $osCell->cost),
-                    price: $price,
-                    isPreferred: $cells->contains('is_preferred', true),
-                );
+                return $od === null || $os === null ? null : ['lab' => $od->sheet->supplier, 'od' => $od, 'os' => $os, 'cells' => $cells];
             })
-            ->filter()
-            ->sortBy([
-                fn (LensOffer $a, LensOffer $b): int => $b->isPreferred <=> $a->isPreferred,
-                fn (LensOffer $a, LensOffer $b): int => ($a->odCell->rangeWidth() + $a->osCell->rangeWidth()) <=> ($b->odCell->rangeWidth() + $b->osCell->rangeWidth()),
-                fn (LensOffer $a, LensOffer $b): int => min($a->odCell->id, $a->osCell->id) <=> min($b->odCell->id, $b->osCell->id),
-            ])
-            ->values();
+            ->filter();
     }
 
     /** The offer that prices this lens: at $supplierId when given, otherwise the best one. */
@@ -140,9 +147,18 @@ class LensCombination extends Model
             ->first(fn (LensOffer $offer): bool => $supplierId === null || $offer->supplier->id === $supplierId);
     }
 
-    /** "Prescription out of range for <combination> at <lab>" (or at every lab). */
-    public function outOfRangeMessage(?Supplier $lab): string
+    /**
+     * Why the lens cannot be priced: no sale price covers the prescription although a lab
+     * can make it, otherwise "out of range" at the given lab (or at every lab).
+     */
+    public function outOfRangeMessage(?Supplier $lab, ?Prescription $prescription = null): string
     {
+        $refraction = $prescription?->refractionForRanges() ?? Prescription::PLANO_REFRACTION;
+
+        if (LensPriceBand::priceFor($this, $refraction, $this->company->mixed_range_pricing) === null && $this->labCoverage($refraction)->isNotEmpty()) {
+            return __('app.pos.lens_form.no_sale_price', ['combination' => $this->label()]);
+        }
+
         return $lab === null
             ? __('app.pos.lens_form.out_of_range_any', ['combination' => $this->label()])
             : __('app.pos.lens_form.out_of_range', ['combination' => $this->label(), 'lab' => $lab->name]);

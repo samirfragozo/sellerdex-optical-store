@@ -35,7 +35,8 @@ class LensOffersController extends Controller
             return response()->json(['offers' => [], 'message' => __('app.pos.lens_form.invalid_combination')]);
         }
 
-        $offers = $combination->offers(Prescription::findOrFail($validated['prescription_id']));
+        $prescription = Prescription::findOrFail($validated['prescription_id']);
+        $offers = $combination->offers($prescription);
         $combination->load(['lensType', 'lensTechnology', 'lensMaterial']);
 
         return response()->json([
@@ -46,7 +47,7 @@ class LensOffersController extends Controller
                 'cost' => $offer->cost,
                 'is_preferred' => $offer->isPreferred,
             ])->all(),
-            'message' => $offers->isEmpty() ? $combination->outOfRangeMessage(null) : null,
+            'message' => $offers->isEmpty() ? $combination->outOfRangeMessage(null, $prescription) : null,
         ]);
     }
 }

@@ -163,3 +163,15 @@ it('keeps lens sales blocked until a combination has an active price at an activ
 
     expect(collect($this->seller->company->fresh()->saleReadiness())->pluck('key'))->toContain('lens_price');
 });
+
+it('says the lens has no sale price when a lab covers the prescription but no band does', function () {
+    LensPriceBand::query()->where('lens_combination_id', $this->combination->id)->delete();
+    LensPriceBand::factory()->create(['lens_combination_id' => $this->combination->id, 'sphere_min' => -6, 'sphere_max' => 6, 'price' => 150_000]);
+    $this->combination->load(['lensType', 'lensTechnology', 'lensMaterial']);
+
+    $this->postJson(route('pos.store'), rangeSalePayload(rangeRx('-8.00')))
+        ->assertStatus(422)
+        ->assertJsonValidationErrors(['armados.0.lens' => __('app.pos.lens_form.no_sale_price', ['combination' => $this->combination->label()])]);
+
+    expect(Sale::count())->toBe(0);
+});

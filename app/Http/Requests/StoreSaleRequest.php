@@ -309,6 +309,7 @@ class StoreSaleRequest extends FormRequest
         $combination->load(['lensType', 'lensTechnology', 'lensMaterial']);
         $validator->errors()->add("armados.{$index}.lens", $combination->outOfRangeMessage(
             $supplierId !== null ? Supplier::find((int) $supplierId) : null,
+            $prescription,
         ));
     }
 

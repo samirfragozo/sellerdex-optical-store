@@ -78,7 +78,10 @@ it('blocks lens sales when the only lens has no sale price band', function () {
     $company = readyCompany();
     LensPriceBand::withoutGlobalScopes()->where('company_id', $company->id)->delete();
 
-    expect(issueKeys($company))->toBe(['lens_price']);
+    expect(issueKeys($company))->toBe(['lens_price'])
+        ->and(collect($company->saleReadiness())->firstWhere('key', 'lens_price')->message)
+        ->toBe(__('app.readiness.lens_price'))
+        ->toContain('necesita un precio de venta');
 });
 
 it('warns when an active laboratory has no lead time', function () {
