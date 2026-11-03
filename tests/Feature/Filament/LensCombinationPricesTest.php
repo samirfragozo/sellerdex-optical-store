@@ -1,9 +1,8 @@
 <?php
 
 use App\Filament\Resources\LensCombinations\Pages\EditLensCombination;
-use App\Filament\Resources\LensCombinations\RelationManagers\PricesRelationManager;
+use App\Filament\Resources\LensCombinations\RelationManagers\CellsRelationManager;
 use App\Models\LensCombination;
-use App\Models\LensCombinationPrice;
 use App\Models\Supplier;
 use App\Models\User;
 use Filament\Actions\Testing\TestAction;
@@ -15,101 +14,14 @@ beforeEach(function () {
     $this->combination = LensCombination::factory()->unpriced()->create();
 });
 
-function pricesManager()
-{
-    return Livewire::test(PricesRelationManager::class, [
-        'ownerRecord' => test()->combination,
-        'pageClass' => EditLensCombination::class,
-    ]);
-}
+it('lists each lab cell costing the lens, read-only', function () {
+    $cell = labCost($this->combination, $this->lab, ['cost' => 50_000]);
+    $cell->column->update(['label' => 'Classic']);
+    $cell->row->update(['label' => 'Poly Blue Cut']);
 
-it('adds a price range for a lab', function () {
-    pricesManager()
-        ->callAction(TestAction::make('create')->table(), [
-            'supplier_id' => $this->lab->id,
-            'sphere_min' => -20, 'sphere_max' => -6.25, 'cylinder_min' => -8, 'cylinder_max' => 8,
-            'cost' => 90_000, 'is_preferred' => true, 'is_active' => true,
-        ])
-        ->assertHasNoFormErrors();
-
-    expect($this->combination->prices()->sole())
-        ->supplier_id->toBe($this->lab->id)
-        ->cost->toBe(90_000)
-        ->price->toBe(0)
-        ->sphere_max->toBe('-6.25');
-});
-
-it('asks a lab row only for its cost, not a sale price', function () {
-    pricesManager()
-        ->mountAction(TestAction::make('create')->table())
-        ->assertFormFieldDoesNotExist('price');
-});
-
-it('rejects a range whose maximum is below its minimum', function () {
-    pricesManager()
-        ->callAction(TestAction::make('create')->table(), [
-            'supplier_id' => $this->lab->id,
-            'sphere_min' => 2, 'sphere_max' => -2, 'cylinder_min' => -8, 'cylinder_max' => 8,
-            'cost' => 1,
-        ])
-        ->assertHasFormErrors(['sphere_max']);
-});
-
-it('rejects an addition range whose maximum is below its minimum', function () {
-    pricesManager()
-        ->callAction(TestAction::make('create')->table(), [
-            'supplier_id' => $this->lab->id,
-            'sphere_min' => -20, 'sphere_max' => 20, 'cylinder_min' => -8, 'cylinder_max' => 8,
-            'add_min' => 2, 'add_max' => 1,
-            'cost' => 1,
-        ])
-        ->assertHasFormErrors(['add_max']);
-});
-
-it('accepts an open addition range', function () {
-    pricesManager()
-        ->callAction(TestAction::make('create')->table(), [
-            'supplier_id' => $this->lab->id,
-            'sphere_min' => -20, 'sphere_max' => 20, 'cylinder_min' => -8, 'cylinder_max' => 8,
-            'cost' => 1,
-        ])
-        ->assertHasNoFormErrors();
-
-    expect($this->combination->prices()->sole())->add_min->toBeNull()->add_max->toBeNull();
-});
-
-it('only offers active labs of the company', function () {
-    $notLab = Supplier::factory()->create(['name' => 'Distribuidora']);
-    $inactiveLab = Supplier::factory()->laboratory()->create(['name' => 'Lab Cerrado', 'is_active' => false]);
-
-    foreach ([$notLab, $inactiveLab] as $supplier) {
-        pricesManager()
-            ->callAction(TestAction::make('create')->table(), [
-                'supplier_id' => $supplier->id,
-                'sphere_min' => -20, 'sphere_max' => 20, 'cylinder_min' => -8, 'cylinder_max' => 8,
-                'cost' => 1,
-            ])
-            ->assertHasFormErrors(['supplier_id']);
-    }
-});
-
-it('lists the lab and cost of each range', function () {
-    $this->combination->prices()->create([
-        'supplier_id' => $this->lab->id, ...LensCombinationPrice::ALL_PRESCRIPTIONS,
-        'cost' => 50_000, 'is_preferred' => true, 'is_active' => true,
-    ]);
-
-    pricesManager()->assertSee('Lab Central')->assertCanSeeTableRecords($this->combination->prices);
-});
-
-it('accepts the manufacturing limits and rejects a cylinder beyond them', function () {
-    $row = ['supplier_id' => $this->lab->id, 'sphere_min' => -25, 'sphere_max' => 20, 'cylinder_min' => -8, 'cylinder_max' => 8, 'add_max' => 10, 'cost' => 1];
-
-    pricesManager()
-        ->callAction(TestAction::make('create')->table(), $row)
-        ->assertHasNoFormErrors();
-
-    pricesManager()
-        ->callAction(TestAction::make('create')->table(), [...$row, 'cylinder_min' => -10])
-        ->assertHasFormErrors(['cylinder_min']);
+    Livewire::test(CellsRelationManager::class, ['ownerRecord' => $this->combination, 'pageClass' => EditLensCombination::class])
+        ->assertCanSeeTableRecords([$cell])
+        ->assertSee(['Lab Central', 'Classic', 'Poly Blue Cut'])
+        ->assertActionDoesNotExist(TestAction::make('create')->table())
+        ->assertActionExists(TestAction::make('edit_sheet')->table($cell));
 });

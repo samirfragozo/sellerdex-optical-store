@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\LensCombinations\RelationManagers;
 
+use App\Filament\Resources\LensCombinations\Concerns\PrescriptionRangeFields;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
@@ -15,6 +16,8 @@ use Illuminate\Database\Eloquent\Model;
 /** What the shop charges per pair of this lens, by prescription range. */
 class PriceBandsRelationManager extends RelationManager
 {
+    use PrescriptionRangeFields;
+
     protected static string $relationship = 'priceBands';
 
     public static function getTitle(Model $ownerRecord, string $pageClass): string
@@ -27,7 +30,7 @@ class PriceBandsRelationManager extends RelationManager
         return $schema
             ->columns(2)
             ->components([
-                ...PricesRelationManager::rangeFields(),
+                ...self::rangeFields(),
                 TextInput::make('price')
                     ->label(__('app.fields.price'))
                     ->numeric()->integer()->minValue(1)->prefix('$')->required()
@@ -40,7 +43,7 @@ class PriceBandsRelationManager extends RelationManager
     {
         return $table
             ->columns([
-                ...PricesRelationManager::rangeColumns(),
+                ...self::rangeColumns(),
                 TextColumn::make('price')->label(__('app.fields.price'))->money('COP'),
             ])
             ->headerActions([CreateAction::make()])

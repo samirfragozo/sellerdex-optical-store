@@ -1,41 +1,35 @@
 <?php
 
-namespace App\Filament\Resources\LensCombinations\RelationManagers;
+namespace App\Filament\Resources\LensCombinations\Concerns;
 
 use App\Models\LensCombinationPrice;
 use App\Models\Prescription;
 use Closure;
-use Filament\Actions\CreateAction;
-use Filament\Actions\DeleteAction;
-use Filament\Actions\EditAction;
-use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Toggle;
-use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Components\Utilities\Get;
-use Filament\Schemas\Schema;
-use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
-class PricesRelationManager extends RelationManager
+/** Prescription range inputs and columns shared by the price bands and the lab sheet rows and columns. */
+trait PrescriptionRangeFields
 {
-    protected static string $relationship = 'prices';
-
-    public static function getTitle(Model $ownerRecord, string $pageClass): string
-    {
-        return __('app.relations.lens_prices');
-    }
-
     /**
      * Sphere, cylinder and addition min-max inputs, defaulting to "all prescriptions"
-     * and bounded by the manufacturing limits. Shared with the sale price bands.
+     * and bounded by the manufacturing limits.
      *
      * @return array<int, TextInput>
      */
     public static function rangeFields(): array
+    {
+        return [...self::sphereCylinderFields(), ...self::additionFields()];
+    }
+
+    /**
+     * Only the sphere and cylinder inputs.
+     *
+     * @return array<int, TextInput>
+     */
+    public static function sphereCylinderFields(): array
     {
         $diopter = fn (string $name, string $scale): TextInput => TextInput::make($name)
             ->label(__("app.fields.{$name}"))
@@ -47,6 +41,17 @@ class PricesRelationManager extends RelationManager
             $diopter('sphere_max', 'sphere')->gte('sphere_min'),
             $diopter('cylinder_min', 'cylinder'),
             $diopter('cylinder_max', 'cylinder')->gte('cylinder_min'),
+        ];
+    }
+
+    /**
+     * Optional addition min-max inputs (0 to the manufacturing limit).
+     *
+     * @return array<int, TextInput>
+     */
+    public static function additionFields(): array
+    {
+        return [
             TextInput::make('add_min')->label(__('app.fields.add_min'))->numeric()->step(0.25)->minValue(0)->maxValue(Prescription::LIMITS['add'][1]),
             // ponytail: gte() takes no condition in Filament v4, so the "only when both are filled" check is a rule.
             TextInput::make('add_max')->label(__('app.fields.add_max'))->numeric()->step(0.25)->minValue(0)->maxValue(Prescription::LIMITS['add'][1])
@@ -76,39 +81,5 @@ class PricesRelationManager extends RelationManager
             TextColumn::make('cylinder_range')->label(__('app.fields.cylinder'))->state($range('cylinder_min', 'cylinder_max')),
             TextColumn::make('add_range')->label(__('app.fields.add'))->state($range('add_min', 'add_max')),
         ];
-    }
-
-    public function form(Schema $schema): Schema
-    {
-        return $schema
-            ->columns(2)
-            ->components([
-                Select::make('supplier_id')
-                    ->label(__('app.fields.laboratory'))
-                    ->relationship('supplier', 'name', fn (Builder $query) => $query->where('is_laboratory', true)->where('is_active', true))
-                    ->required()
-                    ->columnSpanFull()
-                    ->helperText(__('app.resources.lens_combination.prices_help')),
-                ...self::rangeFields(),
-                TextInput::make('cost')->label(__('app.fields.cost'))->numeric()->minValue(0)->prefix('$')->required(),
-                Toggle::make('is_preferred')
-                    ->label(__('app.fields.is_preferred_lab'))
-                    ->helperText(__('app.resources.lens_combination.preferred_help')),
-                Toggle::make('is_active')->label(__('app.fields.active'))->default(true),
-            ]);
-    }
-
-    public function table(Table $table): Table
-    {
-        return $table
-            ->columns([
-                TextColumn::make('supplier.name')->label(__('app.fields.laboratory')),
-                ...self::rangeColumns(),
-                TextColumn::make('cost')->label(__('app.fields.cost'))->money('COP'),
-                IconColumn::make('is_preferred')->label(__('app.fields.is_preferred_lab'))->boolean(),
-                IconColumn::make('is_active')->label(__('app.fields.active'))->boolean(),
-            ])
-            ->headerActions([CreateAction::make()])
-            ->recordActions([EditAction::make(), DeleteAction::make()]);
     }
 }

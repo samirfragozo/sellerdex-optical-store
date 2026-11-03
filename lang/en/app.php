@@ -64,6 +64,7 @@ return [
         'user' => ['label' => 'User', 'plural' => 'Users', 'nav' => 'Users'],
         'tax' => ['label' => 'Tax', 'plural' => 'Taxes', 'nav' => 'Taxes'],
         'combo_settings' => ['nav' => 'Combos'],
+        'lab_price_sheet' => ['label' => 'Price sheet', 'plural' => 'Price sheets', 'nav' => 'Price sheets'],
         'supplier' => ['label' => 'Supplier', 'plural' => 'Suppliers', 'nav' => 'Suppliers'],
         'purchase_order' => ['label' => 'Purchase order', 'plural' => 'Purchase orders', 'nav' => 'Purchase orders'],
         'lens_order' => ['label' => 'Lab order', 'plural' => 'Lab orders', 'nav' => 'Laboratory'],
@@ -1008,6 +1009,17 @@ return [
 
     'lab_sheets' => [
         'onboarding_sheet' => 'Starting list',
+        'title' => 'Price sheets',
+        'edit' => 'Edit sheet',
+        'columns' => 'Columns (designs)',
+        'rows' => 'Rows (material and filter)',
+        'cells' => 'Costs',
+        'sheet' => 'Sheet',
+        'column' => 'Column',
+        'row' => 'Row',
+        'column_help' => 'As printed on the lab\'s sheet, e.g. «Classic» or «Single vision». Pick the matching lens type and level.',
+        'row_help' => 'As printed on the sheet, e.g. «Poly Blue Cut». Pick the material and copy that row\'s ESF/CYL range.',
+        'cell_help' => 'Cost per pair the lab charges you. Skip the cells you don\'t sell.',
     ],
 
     'readiness' => [

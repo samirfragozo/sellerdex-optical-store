@@ -3,8 +3,8 @@
 use App\Filament\Resources\LensCombinations\LensCombinationResource;
 use App\Filament\Resources\LensCombinations\Pages\EditLensCombination;
 use App\Filament\Resources\LensCombinations\Pages\ListLensCombinations;
+use App\Filament\Resources\LensCombinations\RelationManagers\CellsRelationManager;
 use App\Filament\Resources\LensCombinations\RelationManagers\PriceBandsRelationManager;
-use App\Filament\Resources\LensCombinations\RelationManagers\PricesRelationManager;
 use App\Models\LensCombination;
 use App\Models\LensCombinationPrice;
 use App\Models\LensMaterial;
@@ -124,5 +124,5 @@ it('adds an all-prescriptions sale price band', function () {
 });
 
 it('lists the sale price bands before the lab costs', function () {
-    expect(LensCombinationResource::getRelations())->toBe([PriceBandsRelationManager::class, PricesRelationManager::class]);
+    expect(LensCombinationResource::getRelations())->toBe([PriceBandsRelationManager::class, CellsRelationManager::class]);
 });

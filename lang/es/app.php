@@ -60,6 +60,7 @@ return [
         'sale' => ['label' => 'Venta', 'plural' => 'Ventas', 'nav' => 'Ventas'],
         'cash_close' => ['label' => 'Cuadre de caja', 'plural' => 'Cuadres de caja', 'nav' => 'Cuadre de caja'],
         'cash_register_session' => ['label' => 'Sesión de caja', 'plural' => 'Sesiones de caja', 'nav' => 'Sesiones de caja'],
+        'lab_price_sheet' => ['label' => 'Hoja de precios', 'plural' => 'Hojas de precios', 'nav' => 'Hojas de precios'],
         'supplier' => ['label' => 'Proveedor', 'plural' => 'Proveedores', 'nav' => 'Proveedores'],
         'purchase_order' => ['label' => 'Orden de compra', 'plural' => 'Órdenes de compra', 'nav' => 'Órdenes de compra'],
         'lens_order' => ['label' => 'Orden de laboratorio', 'plural' => 'Órdenes de laboratorio', 'nav' => 'Laboratorio'],
@@ -1008,6 +1009,17 @@ return [
 
     'lab_sheets' => [
         'onboarding_sheet' => 'Lista inicial',
+        'title' => 'Hojas de precios',
+        'edit' => 'Editar hoja',
+        'columns' => 'Columnas (diseños)',
+        'rows' => 'Filas (material y filtro)',
+        'cells' => 'Costos',
+        'sheet' => 'Hoja',
+        'column' => 'Columna',
+        'row' => 'Fila',
+        'column_help' => 'Como aparece en la hoja del laboratorio, por ejemplo «Classic» o «Visión sencilla». Elige el tipo de lente y el nivel que corresponden.',
+        'row_help' => 'Como aparece en la hoja, por ejemplo «Poly Blue Cut». Elige el material y copia el rango ESF/CYL de esa fila.',
+        'cell_help' => 'Costo por par que te cobra el laboratorio. Deja sin crear las casillas que no vendes.',
     ],
 
     'readiness' => [

@@ -41,6 +41,7 @@ class SupplierResource extends Resource
     {
         return [
             RelationManagers\ProductsRelationManager::class,
+            RelationManagers\PriceSheetsRelationManager::class,
         ];
     }
 

@@ -48,16 +48,6 @@ class LensCombination extends Model
         return $this->belongsTo(Tax::class);
     }
 
-    /**
-     * Legacy per-lab cost rows, no longer read (lab sheet cells cost the lens now).
-     *
-     * @deprecated
-     */
-    public function prices(): HasMany
-    {
-        return $this->hasMany(LensCombinationPrice::class);
-    }
-
     /** What the shop charges for this combination per prescription range. */
     public function priceBands(): HasMany
     {
