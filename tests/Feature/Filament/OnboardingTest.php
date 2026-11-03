@@ -278,6 +278,20 @@ it('prices each lens only at the laboratories the user says make it', function (
         ->and(LabPriceSheet::where('supplier_id', $allLenses->id)->count())->toBe(1);
 });
 
+it("costs the lens on the lab's existing sheet instead of starting a second one", function () {
+    $admin = onboardingAt(LensesStep::key());
+    $lab = Supplier::factory()->laboratory()->create(['company_id' => $admin->company_id]);
+    $existing = LabPriceSheet::factory()->create(['supplier_id' => $lab->id, 'name' => 'Otra']);
+
+    Livewire::test(Onboarding::class)
+        ->set('data.selected_combo_keys', ['monofocal-standard-cr39'])
+        ->call('next')
+        ->assertHasNoErrors();
+
+    expect(LabPriceSheet::where('supplier_id', $lab->id)->pluck('name')->all())->toBe(['Otra'])
+        ->and($existing->cells()->count())->toBe(1);
+});
+
 it('does not ask which laboratories make each lens when there is only one', function () {
     $admin = onboardingAt(LensesStep::key());
     Supplier::factory()->laboratory()->create(['company_id' => $admin->company_id]);

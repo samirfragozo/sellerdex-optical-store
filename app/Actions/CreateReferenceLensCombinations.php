@@ -3,7 +3,6 @@
 namespace App\Actions;
 
 use App\Models\Company;
-use App\Models\LabPriceSheet;
 use App\Models\LabSheetCell;
 use App\Models\LensCombination;
 use App\Models\LensCombinationPrice;
@@ -65,7 +64,8 @@ class CreateReferenceLensCombinations
             $combination->priceBands()->firstOrCreate(LensCombinationPrice::ALL_PRESCRIPTIONS, ['price' => $pricing['price']]);
 
             foreach ($makers as $position => $lab) {
-                $sheet = LabPriceSheet::firstOrCreate(['supplier_id' => $lab->id, 'name' => __('app.lab_sheets.onboarding_sheet')]);
+                $sheet = $lab->priceSheets()->oldest('id')->first()
+                    ?? $lab->priceSheets()->create(['name' => __('app.lab_sheets.onboarding_sheet')]);
                 $column = $sheet->columns()->firstOrCreate(
                     ['lens_type_id' => $lensType->id, 'lens_technology_id' => $lensTechnology->id, 'add_min' => null, 'add_max' => null],
                     ['label' => "{$lensType->name} {$lensTechnology->name}"],

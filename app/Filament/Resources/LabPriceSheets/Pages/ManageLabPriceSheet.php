@@ -302,7 +302,7 @@ class ManageLabPriceSheet extends Page
             'rows.*.sphere_max' => [...$diopter('sphere'), 'gte:rows.*.sphere_min'],
             'rows.*.cylinder_min' => $diopter('cylinder'),
             'rows.*.cylinder_max' => [...$diopter('cylinder'), 'gte:rows.*.cylinder_min'],
-            'costs.*.*' => ['nullable', 'integer', 'min:0'],
+            'costs.*.*' => ['nullable', 'integer', 'min:0', 'max:99999999'],
         ];
     }
 

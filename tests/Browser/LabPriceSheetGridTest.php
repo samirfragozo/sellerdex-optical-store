@@ -59,6 +59,8 @@ it('moves down with Enter, never saves on Enter, and saves only with the button'
     $page->click('tbody tr:last-child [wire\\:click^="removeRow"]')
         ->assertScript($dirty, true);
 
+    $page->assertNoJavaScriptErrors();
+
     $cost = fn (LabSheetRow $row): ?int => LabSheetCell::query()
         ->where(['lab_sheet_row_id' => $row->id, 'lab_sheet_column_id' => $column->id])->value('cost');
 

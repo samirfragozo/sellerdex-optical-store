@@ -1,7 +1,10 @@
 <?php
 
+use App\Actions\CopyLabPriceSheet;
 use App\Filament\Resources\LabPriceSheets\LabPriceSheetResource;
 use App\Filament\Resources\LabPriceSheets\Pages\ManageLabPriceSheet;
+use App\Filament\Resources\Suppliers\Pages\EditSupplier;
+use App\Filament\Resources\Suppliers\RelationManagers\PriceSheetsRelationManager;
 use App\Models\Company;
 use App\Models\LabPriceSheet;
 use App\Models\LabSheetCell;
@@ -14,6 +17,7 @@ use App\Models\LensType;
 use App\Models\Supplier;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
+use Filament\Actions\Testing\TestAction;
 use Filament\Notifications\Notification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
@@ -223,6 +227,72 @@ it('says how many cells are invalid and saves nothing', function () {
     expect($cell->fresh()->cost)->toBe(50_000)
         ->and($sheet->fresh()->name)->not->toBe('Renamed')
         ->and(LabSheetCell::count())->toBe(1);
+});
+
+it('rejects a cost above the allowed maximum and saves nothing', function () {
+    [$sheet, [$r1], [$c1]] = twoByTwoSheet();
+
+    sheetGrid($sheet)
+        ->set("costs.{$r1}.{$c1}", '1000000000')
+        ->call('save')
+        ->assertHasErrors(["costs.{$r1}.{$c1}"]);
+
+    expect(LabSheetCell::count())->toBe(0);
+});
+
+function copyManager(Supplier $lab)
+{
+    return Livewire::test(PriceSheetsRelationManager::class, ['ownerRecord' => $lab, 'pageClass' => EditSupplier::class]);
+}
+
+it("copies another sheet's columns and rows without costs", function () {
+    $source = LabPriceSheet::factory()->create(['supplier_id' => $this->lab->id]);
+    $columns = LabSheetColumn::factory()->count(2)->sequence(['sort_order' => 0, 'add_min' => 0, 'add_max' => 1.5], ['sort_order' => 1])->for($source, 'sheet')->create();
+    $rows = LabSheetRow::factory()->count(2)->sequence(['sort_order' => 0], ['sort_order' => 1, 'sphere_min' => -6, 'sphere_max' => 6])->for($source, 'sheet')->create();
+    LabSheetCell::factory()->create(['lab_sheet_row_id' => $rows[0]->id, 'lab_sheet_column_id' => $columns[0]->id]);
+    LabSheetCell::factory()->create(['lab_sheet_row_id' => $rows[0]->id, 'lab_sheet_column_id' => $columns[1]->id]);
+    LabSheetCell::factory()->create(['lab_sheet_row_id' => $rows[1]->id, 'lab_sheet_column_id' => $columns[0]->id]);
+    $otherLab = Supplier::factory()->laboratory()->create();
+
+    copyManager($otherLab)
+        ->callAction(TestAction::make('copyFrom')->table(), ['source_id' => $source->id, 'name' => 'Copia'])
+        ->assertHasNoActionErrors()
+        ->assertRedirect(LabPriceSheetResource::getUrl('edit', ['record' => LabPriceSheet::where('supplier_id', $otherLab->id)->sole()]));
+
+    $copy = LabPriceSheet::where('supplier_id', $otherLab->id)->sole();
+    $columnFields = ['label', 'lens_type_id', 'lens_technology_id', 'add_min', 'add_max', 'sort_order'];
+    $rowFields = ['label', 'lens_material_id', 'sphere_min', 'sphere_max', 'cylinder_min', 'cylinder_max', 'sort_order'];
+
+    expect($copy->name)->toBe('Copia')
+        ->and($copy->columns()->orderBy('sort_order')->get()->map->only($columnFields)->all())->toBe($source->columns()->orderBy('sort_order')->get()->map->only($columnFields)->all())
+        ->and($copy->rows()->orderBy('sort_order')->get()->map->only($rowFields)->all())->toBe($source->rows()->orderBy('sort_order')->get()->map->only($rowFields)->all())
+        ->and($copy->cells()->count())->toBe(0)
+        ->and(LabSheetCell::count())->toBe(3);
+});
+
+it("does not offer or copy another company's sheets", function () {
+    $foreign = LabPriceSheet::factory()->create(['company_id' => Company::factory()->create()->id]);
+
+    copyManager($this->lab)
+        ->callAction(TestAction::make('copyFrom')->table(), ['source_id' => $foreign->id, 'name' => 'x'])
+        ->assertHasActionErrors(['source_id']);
+
+    expect(LabPriceSheet::where('supplier_id', $this->lab->id)->exists())->toBeFalse()
+        ->and(fn () => (new CopyLabPriceSheet)->handle($foreign, $this->lab, 'x'))->toThrow(InvalidArgumentException::class);
+});
+
+it('removes a row and its costs on save and keeps the other rows', function () {
+    [$sheet, [$r1, $r2], [$c1, $c2]] = twoByTwoSheet();
+    foreach ([[$r1, $c1], [$r1, $c2], [$r2, $c1]] as [$row, $column]) {
+        LabSheetCell::factory()->create(['lab_sheet_row_id' => substr($row, 1), 'lab_sheet_column_id' => substr($column, 1)]);
+    }
+
+    sheetGrid($sheet)->call('removeRow', $r1)->call('save')->assertHasNoErrors();
+
+    expect(LabSheetRow::find(substr($r1, 1)))->toBeNull()
+        ->and(LabSheetCell::where('lab_sheet_row_id', substr($r1, 1))->exists())->toBeFalse()
+        ->and(LabSheetRow::find(substr($r2, 1)))->not->toBeNull()
+        ->and(LabSheetCell::where('lab_sheet_row_id', substr($r2, 1))->count())->toBe(1);
 });
 
 it('rejects a tampered column or row id instead of failing', function () {
