@@ -1,7 +1,6 @@
 <?php
 
 use App\Models\LensCombination;
-use App\Models\LensCombinationPrice;
 use App\Models\LensMaterial;
 use App\Models\LensPriceBand;
 use App\Models\LensTechnology;
@@ -73,25 +72,22 @@ it('se nombra por tipo, tecnología y material, y nace con un precio vendible', 
     ]);
 
     expect($combination->label())->toBe('Progresivo Digital Policarbonato')
-        ->and($combination->prices()->sole()->supplier->is_laboratory)->toBeTrue()
+        ->and($combination->cells()->sole()->sheet->supplier->is_laboratory)->toBeTrue()
         ->and($combination->priceBands()->sole()->price)->toBeGreaterThan(0)
-        ->and(LensCombination::factory()->unpriced()->create()->prices()->exists())->toBeFalse();
+        ->and(LensCombination::factory()->unpriced()->create()->cells()->exists())->toBeFalse();
 });
 
-it('is sellable only with a priced band and a cost row at an active lab', function () {
+it('is sellable only with a priced band and a cost cell at an active lab', function () {
     $this->actingAs(User::factory()->admin()->create());
 
     $sellable = LensCombination::factory()->create();
     $noBand = LensCombination::factory()->create();
     $noBand->priceBands()->delete();
     $noLabRow = LensCombination::factory()->create();
-    $noLabRow->prices()->delete();
+    $noLabRow->cells()->delete();
     $deletedLab = LensCombination::factory()->unpriced()->create();
     LensPriceBand::factory()->create(['lens_combination_id' => $deletedLab->id]);
-    LensCombinationPrice::factory()->create([
-        'lens_combination_id' => $deletedLab->id,
-        'supplier_id' => Supplier::factory()->laboratory()->create(['deleted_at' => now()])->id,
-    ]);
+    labCost($deletedLab, Supplier::factory()->laboratory()->create(['deleted_at' => now()]));
 
     expect(LensCombination::query()->sellable()->pluck('id')->all())->toBe([$sellable->id]);
 });

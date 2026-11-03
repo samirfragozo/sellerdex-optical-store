@@ -2,8 +2,9 @@
 
 use App\Models\Company;
 use App\Models\Customer;
+use App\Models\LabSheetCell;
+use App\Models\LabSheetRow;
 use App\Models\LensCombination;
-use App\Models\LensCombinationPrice;
 use App\Models\LensPriceBand;
 use App\Models\PaymentMethod;
 use App\Models\Prescription;
@@ -21,16 +22,9 @@ beforeEach(function () {
     $this->combination = LensCombination::factory()->unpriced()->create(['installation_price' => 5_000]);
     $this->customer = Customer::factory()->create();
     foreach ([[$this->labA, 50_000, true], [$this->labB, 40_000, false]] as [$lab, $cost, $preferred]) {
-        LensCombinationPrice::factory()->create([
-            'lens_combination_id' => $this->combination->id, 'supplier_id' => $lab->id,
-            ...LensCombinationPrice::ALL_PRESCRIPTIONS, 'cost' => $cost, 'is_preferred' => $preferred,
-        ]);
+        labCost($this->combination, $lab, ['cost' => $cost, 'is_preferred' => $preferred]);
     }
-    LensCombinationPrice::factory()->create([
-        'lens_combination_id' => $this->combination->id, 'supplier_id' => $this->labA->id,
-        ...LensCombinationPrice::ALL_PRESCRIPTIONS, 'sphere_min' => -20, 'sphere_max' => -6.25,
-        'cost' => 90_000, 'is_preferred' => true,
-    ]);
+    labCost($this->combination, $this->labA, ['sphere_min' => -20, 'sphere_max' => -6.25, 'cost' => 90_000, 'is_preferred' => true]);
     LensPriceBand::factory()->create(['lens_combination_id' => $this->combination->id, 'price' => 150_000]);
     LensPriceBand::factory()->create([
         'lens_combination_id' => $this->combination->id, 'sphere_min' => -20, 'sphere_max' => -6.25, 'price' => 280_000,
@@ -92,23 +86,23 @@ it('takes the cost from the lab the seller chose and the price from the bands', 
 });
 
 it('rejects a prescription outside every range with an explicit message', function () {
-    LensCombinationPrice::query()->update(['sphere_min' => -6, 'sphere_max' => 6]);
+    LabSheetRow::query()->update(['sphere_min' => -6, 'sphere_max' => 6]);
     $this->combination->load(['lensType', 'lensTechnology', 'lensMaterial']);
 
     $this->postJson(route('pos.store'), rangeSalePayload(rangeRx('-8.00')))
         ->assertStatus(422)
-        ->assertJsonValidationErrors(['armados.0.lens' => LensCombinationPrice::outOfRangeMessage($this->combination, null)]);
+        ->assertJsonValidationErrors(['armados.0.lens' => $this->combination->outOfRangeMessage(null)]);
 
     expect(Sale::count())->toBe(0);
 });
 
 it('rejects a lab that does not price this prescription', function () {
-    LensCombinationPrice::query()->where('supplier_id', $this->labB->id)->update(['sphere_min' => -6, 'sphere_max' => 6]);
+    LabSheetRow::query()->whereRelation('sheet', 'supplier_id', $this->labB->id)->update(['sphere_min' => -6, 'sphere_max' => 6]);
     $this->combination->load(['lensType', 'lensTechnology', 'lensMaterial']);
 
     $this->postJson(route('pos.store'), rangeSalePayload(rangeRx('-8.00'), $this->labB->id))
         ->assertStatus(422)
-        ->assertJsonValidationErrors(['armados.0.lens' => LensCombinationPrice::outOfRangeMessage($this->combination, $this->labB)]);
+        ->assertJsonValidationErrors(['armados.0.lens' => $this->combination->outOfRangeMessage($this->labB)]);
 });
 
 it('rejects a crafted supplier that is not an active lab of the company', function (Closure $makeSupplier) {
@@ -142,10 +136,7 @@ it('offers only combinations with an active price in the POS catalog, without pr
 it('does not offer a combination whose only active price is at an inactive lab', function () {
     $lab = Supplier::factory()->laboratory()->create(['is_active' => false]);
     $onlyAtInactiveLab = LensCombination::factory()->unpriced()->create();
-    LensCombinationPrice::factory()->create([
-        'lens_combination_id' => $onlyAtInactiveLab->id, 'supplier_id' => $lab->id,
-        ...LensCombinationPrice::ALL_PRESCRIPTIONS, 'is_active' => true,
-    ]);
+    labCost($onlyAtInactiveLab, $lab, ['is_active' => true]);
 
     $this->get(route('pos.index'))->assertInertia(fn ($page) => $page
         ->where('lensCatalog.combinations', fn ($combinations) => ! collect($combinations)->pluck('id')->contains($onlyAtInactiveLab->id)
@@ -162,11 +153,11 @@ it('names the laboratory field in the validation error for a crafted supplier', 
 });
 
 it('keeps lens sales blocked until a combination has an active price at an active lab', function () {
-    LensCombinationPrice::query()->update(['is_active' => false]);
+    LabSheetCell::query()->update(['is_active' => false]);
 
     expect(collect($this->seller->company->saleReadiness())->pluck('key'))->toContain('lens_price');
 
-    LensCombinationPrice::query()->update(['is_active' => true]);
+    LabSheetCell::query()->update(['is_active' => true]);
     $this->labA->update(['is_active' => false]);
     $this->labB->update(['is_active' => false]);
 

@@ -3,7 +3,6 @@
 use App\Models\CashRegisterSession;
 use App\Models\Customer;
 use App\Models\LensCombination;
-use App\Models\LensCombinationPrice;
 use App\Models\LensMaterial;
 use App\Models\LensPriceBand;
 use App\Models\LensTechnology;
@@ -43,10 +42,7 @@ it('preselects the preferred lab, keeps the band price but takes the lab cost wh
         ]);
         LensPriceBand::factory()->create(['company_id' => $companyId, 'lens_combination_id' => $combination->id, 'price' => $price]);
         foreach ($offers as [$lab, $cost, $preferred]) {
-            LensCombinationPrice::factory()->create([
-                'company_id' => $companyId, 'lens_combination_id' => $combination->id, 'supplier_id' => $lab->id,
-                ...LensCombinationPrice::ALL_PRESCRIPTIONS, 'cost' => $cost, 'is_preferred' => $preferred,
-            ]);
+            labCost($combination, $lab, ['cost' => $cost, 'is_preferred' => $preferred]);
         }
     }
     $customer = Customer::factory()->create(['company_id' => $companyId, 'name' => 'Ana', 'last_name' => 'Gómez', 'id_number' => '99999999']);

@@ -1006,6 +1006,10 @@ return [
         'throttled' => 'Too many attempts. Try again in :seconds seconds.',
     ],
 
+    'lab_sheets' => [
+        'onboarding_sheet' => 'Starting list',
+    ],
+
     'readiness' => [
         'fiscal_documents_pending' => ':count sale(s) from today without a registered invoice or POS document. The law requires issuing them the same day.',
         'invoicing_mode' => 'Choose how you invoice before selling.',

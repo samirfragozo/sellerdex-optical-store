@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Company;
 use App\Models\LabPriceSheet;
 use App\Models\LabSheetCell;
 use App\Models\LabSheetColumn;
@@ -66,4 +67,21 @@ it('builds a lab cost from the test helper with the old row keys', function () {
         ->and((float) $cell->sphere_max)->toBe(-6.25)
         ->and((float) $cell->add_min)->toBe(1.0)
         ->and($cell->cost)->toBe(260_000);
+});
+
+it('puts a factory cell given only its column on that column\'s sheet', function () {
+    $column = LabSheetColumn::factory()->create();
+
+    $cell = LabSheetCell::factory()->create(['lab_sheet_column_id' => $column->id]);
+
+    expect($cell->lab_price_sheet_id)->toBe($column->lab_price_sheet_id)
+        ->and($cell->row->lab_price_sheet_id)->toBe($column->lab_price_sheet_id);
+});
+
+it('always takes the cell company from its row', function () {
+    $row = LabSheetRow::factory()->create();
+
+    $cell = LabSheetCell::factory()->create(['lab_sheet_row_id' => $row->id, 'company_id' => Company::factory()->create()->id]);
+
+    expect($cell->company_id)->toBe($row->company_id);
 });

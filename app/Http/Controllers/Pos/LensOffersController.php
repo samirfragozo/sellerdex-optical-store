@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Pos;
 
 use App\Http\Controllers\Controller;
 use App\Models\LensCombination;
-use App\Models\LensCombinationPrice;
 use App\Models\Prescription;
 use App\Support\Optics\LensOffer;
 use Illuminate\Http\JsonResponse;
@@ -36,7 +35,7 @@ class LensOffersController extends Controller
             return response()->json(['offers' => [], 'message' => __('app.pos.lens_form.invalid_combination')]);
         }
 
-        $offers = LensCombinationPrice::offers($combination, Prescription::findOrFail($validated['prescription_id']));
+        $offers = $combination->offers(Prescription::findOrFail($validated['prescription_id']));
         $combination->load(['lensType', 'lensTechnology', 'lensMaterial']);
 
         return response()->json([
@@ -47,7 +46,7 @@ class LensOffersController extends Controller
                 'cost' => $offer->cost,
                 'is_preferred' => $offer->isPreferred,
             ])->all(),
-            'message' => $offers->isEmpty() ? LensCombinationPrice::outOfRangeMessage($combination, null) : null,
+            'message' => $offers->isEmpty() ? $combination->outOfRangeMessage(null) : null,
         ]);
     }
 }

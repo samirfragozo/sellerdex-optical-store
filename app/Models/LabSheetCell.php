@@ -34,7 +34,7 @@ class LabSheetCell extends Model
                 throw new InvalidArgumentException('A lab sheet cell\'s row and column must belong to the same sheet.');
             }
 
-            $cell->company_id ??= $row->company_id;
+            $cell->company_id = $row->company_id;
             $cell->lab_price_sheet_id = $row->lab_price_sheet_id;
             $cell->lens_combination_id = LensCombination::withoutGlobalScopes()->firstOrCreate([
                 'company_id' => $cell->company_id,

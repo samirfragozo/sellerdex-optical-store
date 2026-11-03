@@ -10,8 +10,9 @@ use App\Filament\Pages\Onboarding\Steps\PaymentMethodsStep;
 use App\Filament\Pages\Onboarding\Steps\SummaryStep;
 use App\Filament\Pages\Onboarding\Steps\TreatmentsStep;
 use App\Models\Company;
+use App\Models\LabPriceSheet;
+use App\Models\LabSheetCell;
 use App\Models\LensCombination;
-use App\Models\LensCombinationPrice;
 use App\Models\LensType;
 use App\Models\PaymentMethod;
 use App\Models\Product;
@@ -236,16 +237,19 @@ it('creates the lens combinations the user keeps, with the prices they typed', f
         ->assertHasNoErrors();
 
     $combination = LensCombination::sole();
-    $prices = $combination->prices()->orderBy('id')->get();
+    $cells = $combination->cells()->with(['row', 'column', 'sheet'])->orderBy('id')->get();
     $band = $combination->priceBands()->sole();
     expect($band->price)->toBe(120000)
         ->and([(float) $band->sphere_min, (float) $band->sphere_max, (float) $band->cylinder_min, (float) $band->cylinder_max, $band->add_min, $band->add_max])
         ->toBe([-25.0, 20.0, -8.0, 8.0, null, null])
-        ->and($prices->pluck('supplier_id')->all())->toBe($labs->pluck('id')->all())
-        ->and($prices->pluck('cost')->unique()->all())->toBe([40000])
-        ->and($prices->pluck('is_preferred')->all())->toBe([true, false])
-        ->and($prices->every(fn (LensCombinationPrice $row): bool => (float) $row->sphere_min === -25.0 && (float) $row->sphere_max === 20.0
-            && (float) $row->cylinder_min === -8.0 && (float) $row->cylinder_max === 8.0 && $row->add_min === null && $row->add_max === null))->toBeTrue()
+        ->and($cells->pluck('sheet.supplier_id')->all())->toBe($labs->pluck('id')->all())
+        ->and($cells->pluck('sheet.name')->unique()->all())->toBe([__('app.lab_sheets.onboarding_sheet')])
+        ->and($cells->pluck('column.label')->unique()->all())->toBe(['Monofocal Estándar'])
+        ->and($cells->pluck('row.label')->unique()->all())->toBe(['CR-39'])
+        ->and($cells->pluck('cost')->unique()->all())->toBe([40000])
+        ->and($cells->pluck('is_preferred')->all())->toBe([true, false])
+        ->and($cells->every(fn (LabSheetCell $cell): bool => (float) $cell->sphere_min === -25.0 && (float) $cell->sphere_max === 20.0
+            && (float) $cell->cylinder_min === -8.0 && (float) $cell->cylinder_max === 8.0 && $cell->add_min === null && $cell->add_max === null))->toBeTrue()
         ->and($combination->installation_price)->toBe(20000)
         ->and(app(LensesStep::class)->isComplete($admin->company))->toBeTrue()
         ->and(LensType::where('name', 'Progresivo')->exists())->toBeFalse();
@@ -266,11 +270,12 @@ it('prices each lens only at the laboratories the user says make it', function (
         ->call('next')
         ->assertHasNoErrors();
 
-    $labsOf = fn (string $type): array => LensCombinationPrice::whereHas('lensCombination.lensType', fn ($query) => $query->where('name', $type))
-        ->orderBy('id')->get(['supplier_id', 'is_preferred'])->map->only(['supplier_id', 'is_preferred'])->all();
+    $labsOf = fn (string $type): array => LabSheetCell::with('sheet')->whereHas('lensCombination.lensType', fn ($query) => $query->where('name', $type))
+        ->orderBy('id')->get()->map(fn (LabSheetCell $cell): array => ['supplier_id' => $cell->sheet->supplier_id, 'is_preferred' => $cell->is_preferred])->all();
 
     expect($labsOf('Monofocal'))->toBe([['supplier_id' => $monofocalOnly->id, 'is_preferred' => true], ['supplier_id' => $allLenses->id, 'is_preferred' => false]])
-        ->and($labsOf('Progresivo'))->toBe([['supplier_id' => $allLenses->id, 'is_preferred' => true]]);
+        ->and($labsOf('Progresivo'))->toBe([['supplier_id' => $allLenses->id, 'is_preferred' => true]])
+        ->and(LabPriceSheet::where('supplier_id', $allLenses->id)->count())->toBe(1);
 });
 
 it('does not ask which laboratories make each lens when there is only one', function () {

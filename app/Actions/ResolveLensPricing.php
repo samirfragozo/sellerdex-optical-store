@@ -3,7 +3,6 @@
 namespace App\Actions;
 
 use App\Models\LensCombination;
-use App\Models\LensCombinationPrice;
 use App\Models\LensTreatment;
 use App\Models\Prescription;
 use App\Models\Supplier;
@@ -14,7 +13,7 @@ use Illuminate\Validation\ValidationException;
 /**
  * Validate a chosen lens configuration (Tipo, Tecnología, Material,
  * Tratamientos) and resolve its total sellable price/cost: the lens price
- * comes from the lens price bands, the cost from the rows of the lab offer
+ * comes from the lens price bands, the cost from the sheet cells of the lab offer
  * covering both eyes of the prescription (plano when there is none) at the
  * chosen lab, or at the preferred one.
  */
@@ -46,13 +45,13 @@ class ResolveLensPricing
             ]);
         }
 
-        $offer = LensCombinationPrice::resolve($combination, $prescription, $supplierId);
+        $offer = $combination->resolveOffer($prescription, $supplierId);
 
         if ($offer === null) {
             $combination->loadMissing(['lensType', 'lensTechnology', 'lensMaterial']);
 
             throw ValidationException::withMessages([
-                'lens' => LensCombinationPrice::outOfRangeMessage($combination, $supplierId !== null ? Supplier::find($supplierId) : null),
+                'lens' => $combination->outOfRangeMessage($supplierId !== null ? Supplier::find($supplierId) : null),
             ]);
         }
 

@@ -83,7 +83,7 @@ it('auto-creates a pending-assignment lens order for every lens line', function 
     $lensItem = $sale->items->first(fn ($i) => $i->isLens());
 
     expect($lensItem->lensOrder)->not->toBeNull()
-        ->and($lensItem->lensOrder->supplier_id)->toBe($this->combination->prices()->value('supplier_id'))
+        ->and($lensItem->lensOrder->supplier_id)->toBe($this->combination->cells()->sole()->sheet->supplier_id)
         ->and($lensItem->lensOrder->lab_status)->toBe(LensOrderStatus::PendingAssignment);
 });
 

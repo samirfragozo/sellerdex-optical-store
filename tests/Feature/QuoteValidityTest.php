@@ -6,8 +6,8 @@ use App\Enums\ArmadoFramePriceMode;
 use App\Enums\SaleDocumentType;
 use App\Models\Customer;
 use App\Models\KitSlot;
+use App\Models\LabSheetCell;
 use App\Models\LensCombination;
-use App\Models\LensCombinationPrice;
 use App\Models\LensPriceBand;
 use App\Models\Product;
 use App\Models\Sale;
@@ -112,7 +112,7 @@ it('re-prices the lens and the armado frame of an expired quote and keeps slot l
 it('keeps an expired quote as a quote when its lens can no longer be priced', function () {
     [$quote, , , $combination] = quoteValidityArmadoQuote($this);
 
-    LensCombinationPrice::where('lens_combination_id', $combination->id)->update(['is_active' => false]);
+    LabSheetCell::where('lens_combination_id', $combination->id)->update(['is_active' => false]);
 
     expect(fn () => app(ConvertQuoteToOrder::class)->handle($quote))->toThrow(ValidationException::class);
     expect($quote->fresh()->document_type)->toBe(SaleDocumentType::Quote);

@@ -2,7 +2,6 @@
 
 use App\Models\Company;
 use App\Models\LensCombination;
-use App\Models\LensCombinationPrice;
 use App\Models\LensPriceBand;
 use App\Models\Prescription;
 use App\Models\Supplier;
@@ -15,11 +14,7 @@ beforeEach(function () {
     $this->combination = LensCombination::factory()->unpriced()->create(['installation_price' => 5_000]);
     LensPriceBand::factory()->create(['lens_combination_id' => $this->combination->id, 'price' => 150_000]);
     foreach ([[$this->labA, 40_000, false], [$this->labB, 45_000, true]] as [$lab, $cost, $preferred]) {
-        LensCombinationPrice::factory()->create([
-            'lens_combination_id' => $this->combination->id, 'supplier_id' => $lab->id,
-            ...LensCombinationPrice::ALL_PRESCRIPTIONS, 'sphere_min' => -6, 'sphere_max' => 6,
-            'cost' => $cost, 'is_preferred' => $preferred,
-        ]);
+        labCost($this->combination, $lab, ['sphere_min' => -6, 'sphere_max' => 6, 'cost' => $cost, 'is_preferred' => $preferred]);
     }
 });
 
@@ -57,7 +52,7 @@ it('explains when the prescription is outside every range', function () {
     $this->getJson(route('pos.lens-offers', lensOffersQuery($rx)))
         ->assertOk()
         ->assertJsonCount(0, 'offers')
-        ->assertJsonPath('message', LensCombinationPrice::outOfRangeMessage($this->combination, null));
+        ->assertJsonPath('message', $this->combination->outOfRangeMessage(null));
 });
 
 it('rejects a prescription of another company', function () {

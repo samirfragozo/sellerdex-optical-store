@@ -1006,6 +1006,10 @@ return [
         'throttled' => 'Demasiados intentos. Intenta de nuevo en :seconds segundos.',
     ],
 
+    'lab_sheets' => [
+        'onboarding_sheet' => 'Lista inicial',
+    ],
+
     'readiness' => [
         'fiscal_documents_pending' => ':count venta(s) de hoy sin factura o POS electrónico registrado. La ley exige emitirlos el mismo día.',
         'invoicing_mode' => 'Elige cómo facturas antes de vender.',

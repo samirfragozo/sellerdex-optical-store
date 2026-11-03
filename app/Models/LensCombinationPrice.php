@@ -3,16 +3,16 @@
 namespace App\Models;
 
 use App\Models\Concerns\HasPrescriptionRange;
-use App\Support\Optics\LensOffer;
 use App\Traits\BelongsToCompany;
 use Database\Factories\LensCombinationPriceFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Collection;
 
+/**
+ * @deprecated Legacy per-lab rows, no longer read; replaced by lab sheet cells.
+ */
 #[Fillable(['company_id', 'lens_combination_id', 'supplier_id', 'sphere_min', 'sphere_max', 'cylinder_min', 'cylinder_max', 'add_min', 'add_max', 'cost', 'price', 'is_preferred', 'is_active'])]
 class LensCombinationPrice extends Model
 {
@@ -50,75 +50,5 @@ class LensCombinationPrice extends Model
     public function supplier(): BelongsTo
     {
         return $this->belongsTo(Supplier::class);
-    }
-
-    /**
-     * One offer per active lab that can make this lens for this
-     * prescription (plano when there is none): each eye takes that lab's
-     * narrowest active row covering it (ties: oldest row), and a lab
-     * whose rows miss either eye makes no offer. Every offer sells at the
-     * lens's band price under the company's pair rule; no covering band
-     * means no offers at all. Best first: preferred
-     * lab — any of its active rows for this combination is preferred —
-     * then the narrower pair, then the oldest row.
-     *
-     * @return Collection<int, LensOffer>
-     */
-    public static function offers(LensCombination $combination, ?Prescription $prescription): Collection
-    {
-        $refraction = $prescription?->refractionForRanges() ?? Prescription::PLANO_REFRACTION;
-        $price = LensPriceBand::priceFor($combination, $refraction, $combination->company->mixed_range_pricing);
-
-        if ($price === null) {
-            return collect();
-        }
-
-        return self::query()
-            ->where('lens_combination_id', $combination->id)
-            ->where('is_active', true)
-            ->whereHas('supplier', fn (Builder $query) => $query->where('is_laboratory', true)->where('is_active', true))
-            ->with('supplier')
-            ->orderBy('id')
-            ->get()
-            ->groupBy('supplier_id')
-            ->map(function (Collection $rows) use ($refraction, $price): ?LensOffer {
-                $odRow = self::narrowestCovering($rows, $refraction['od'], $refraction['add']);
-                $osRow = self::narrowestCovering($rows, $refraction['os'], $refraction['add']);
-
-                if ($odRow === null || $osRow === null) {
-                    return null;
-                }
-
-                return new LensOffer(
-                    supplier: $odRow->supplier,
-                    odRow: $odRow,
-                    osRow: $osRow,
-                    cost: $odRow->supplier->mixed_range_pricing->combine($odRow->cost, $osRow->cost),
-                    price: $price,
-                    isPreferred: $rows->contains('is_preferred', true),
-                );
-            })
-            ->filter()
-            ->sortBy([
-                fn (LensOffer $a, LensOffer $b): int => $b->isPreferred <=> $a->isPreferred,
-                fn (LensOffer $a, LensOffer $b): int => ($a->odRow->rangeWidth() + $a->osRow->rangeWidth()) <=> ($b->odRow->rangeWidth() + $b->osRow->rangeWidth()),
-                fn (LensOffer $a, LensOffer $b): int => min($a->odRow->id, $a->osRow->id) <=> min($b->odRow->id, $b->osRow->id),
-            ])
-            ->values();
-    }
-
-    /** The offer that prices this lens: at $supplierId when given, otherwise the best one. */
-    public static function resolve(LensCombination $combination, ?Prescription $prescription, ?int $supplierId = null): ?LensOffer
-    {
-        return self::offers($combination, $prescription)
-            ->first(fn (LensOffer $offer): bool => $supplierId === null || $offer->supplier->id === $supplierId);
-    }
-
-    /** "Prescription out of range for <combination> at <lab>" (or at every lab). */
-    public static function outOfRangeMessage(LensCombination $combination, ?Supplier $lab): string
-    {
-        return $lab === null
-            ? __('app.pos.lens_form.out_of_range_any', ['combination' => $combination->label()])
-            : __('app.pos.lens_form.out_of_range', ['combination' => $combination->label(), 'lab' => $lab->name]);
     }
 }

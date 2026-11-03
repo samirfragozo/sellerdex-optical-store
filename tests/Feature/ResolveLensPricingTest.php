@@ -2,7 +2,6 @@
 
 use App\Actions\ResolveLensPricing;
 use App\Models\LensCombination;
-use App\Models\LensCombinationPrice;
 use App\Models\LensTreatment;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -28,7 +27,7 @@ it('suma el precio y costo de la combinación y los tratamientos elegidos', func
     expect($result['price'])->toBe(180000 + 3000 + 50000 + 30000)
         ->and($result['cost'])->toBe(60000 + 20000 + 10000)
         ->and($result['combination']->is($combination))->toBeTrue()
-        ->and($result['offer']->odRow->is($combination->prices()->sole()))->toBeTrue()
+        ->and($result['offer']->odCell->is($combination->cells()->sole()))->toBeTrue()
         ->and($result)->not->toHaveKey('package')
         ->and($result['treatments']->pluck('id')->sort()->values()->all())->toBe(collect([$t1->id, $t2->id])->sort()->values()->all());
 });
@@ -91,6 +90,6 @@ it('rechaza una combinación sin precio para la fórmula, nombrándola', functio
         (new ResolveLensPricing)->handle($combination->lens_type_id, $combination->lens_technology_id, $combination->lens_material_id, []);
         $this->fail('Expected a ValidationException.');
     } catch (ValidationException $exception) {
-        expect($exception->errors()['lens'])->toBe([LensCombinationPrice::outOfRangeMessage($combination->load(['lensType', 'lensTechnology', 'lensMaterial']), null)]);
+        expect($exception->errors()['lens'])->toBe([$combination->load(['lensType', 'lensTechnology', 'lensMaterial'])->outOfRangeMessage(null)]);
     }
 });

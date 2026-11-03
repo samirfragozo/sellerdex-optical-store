@@ -6,7 +6,6 @@ use App\Models\Company;
 use App\Models\Customer;
 use App\Models\KitSlot;
 use App\Models\LensCombination;
-use App\Models\LensCombinationPrice;
 use App\Models\LensMaterial;
 use App\Models\LensTechnology;
 use App\Models\LensType;
@@ -278,7 +277,7 @@ it('leaves a lens with lab costs but no price band out of the pos catalog', func
     $this->actingAs(User::factory()->seller()->create());
     $priced = LensCombination::factory()->create();
     $costOnly = LensCombination::factory()->unpriced()->create();
-    LensCombinationPrice::factory()->create(['lens_combination_id' => $costOnly->id]);
+    labCost($costOnly, Supplier::factory()->laboratory()->create());
 
     $this->get('/pos')->assertInertia(fn ($page) => $page
         ->where('lensCatalog.combinations', fn ($combinations) => collect($combinations)->pluck('id')->contains($priced->id)

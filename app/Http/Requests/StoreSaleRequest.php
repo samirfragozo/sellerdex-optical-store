@@ -12,7 +12,6 @@ use App\Enums\PersonType;
 use App\Enums\SaleDocumentType;
 use App\Models\Customer;
 use App\Models\LensCombination;
-use App\Models\LensCombinationPrice;
 use App\Models\LensType;
 use App\Models\PaymentMethod;
 use App\Models\Prescription;
@@ -298,7 +297,7 @@ class StoreSaleRequest extends FormRequest
 
         $combination = LensCombination::forSelection(...array_map('intval', $ids));
 
-        if ($combination === null || LensCombinationPrice::resolve($combination, $prescription, $supplierId !== null ? (int) $supplierId : null) !== null) {
+        if ($combination === null || $combination->resolveOffer($prescription, $supplierId !== null ? (int) $supplierId : null) !== null) {
             return;
         }
 
@@ -308,8 +307,7 @@ class StoreSaleRequest extends FormRequest
         }
 
         $combination->load(['lensType', 'lensTechnology', 'lensMaterial']);
-        $validator->errors()->add("armados.{$index}.lens", LensCombinationPrice::outOfRangeMessage(
-            $combination,
+        $validator->errors()->add("armados.{$index}.lens", $combination->outOfRangeMessage(
             $supplierId !== null ? Supplier::find((int) $supplierId) : null,
         ));
     }
