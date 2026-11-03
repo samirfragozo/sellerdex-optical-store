@@ -38,6 +38,12 @@ class Supplier extends Model
         return $this->hasMany(LensOrder::class);
     }
 
+    /** The lab's price lists (lens costs per cell). */
+    public function priceSheets(): HasMany
+    {
+        return $this->hasMany(LabPriceSheet::class);
+    }
+
     public function products(): BelongsToMany
     {
         return $this->belongsToMany(Product::class)

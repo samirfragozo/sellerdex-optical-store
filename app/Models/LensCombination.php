@@ -58,6 +58,12 @@ class LensCombination extends Model
         return $this->hasMany(LensPriceBand::class);
     }
 
+    /** The lab price sheet cells costing this combination. */
+    public function cells(): HasMany
+    {
+        return $this->hasMany(LabSheetCell::class);
+    }
+
     /**
      * Active combinations the POS can sell: a sale price band above zero and
      * an active cost row at an active, non-deleted lab. The closures drop the
