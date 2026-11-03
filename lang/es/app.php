@@ -1036,7 +1036,11 @@ return [
         'back_to_lab' => 'Volver al laboratorio',
         'pasted' => '{1} Se pegó 1 casilla.|[2,*] Se pegaron :count casillas.',
         'paste_skipped' => ':count quedaron fuera de la hoja; agrega columnas o filas y vuelve a pegar.',
-        'invalid' => 'Revisa :count casillas o campos marcados en rojo; no se guardó nada.',
+        'invalid' => '{1} Revisa 1 casilla o campo marcado en rojo; no se guardó nada.|[2,*] Revisa :count casillas o campos marcados en rojo; no se guardó nada.',
+        'stale' => 'Alguien más cambió esta hoja mientras la editabas. Recarga la página para ver la versión actual; tus cambios no se guardaron.',
+        'range_summary' => 'ESF :sphere_min/:sphere_max · CIL :cylinder_min/:cylinder_max',
+        'add_summary' => 'ADD :min–:max',
+        'add_open' => 'ADD —',
         'unsaved_warning' => 'Tienes cambios sin guardar en esta hoja. ¿Salir de todas formas?',
     ],
 

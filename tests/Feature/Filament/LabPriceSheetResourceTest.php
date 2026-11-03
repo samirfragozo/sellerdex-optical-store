@@ -19,6 +19,7 @@ use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Filament\Actions\Testing\TestAction;
 use Filament\Notifications\Notification;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 
@@ -128,7 +129,10 @@ it('rejects invalid ranges and foreign ids', function () {
         ->set('columns.0.lens_type_id', $foreignType->id)
         ->set('rows.0.sphere_max', '21')
         ->call('save')
-        ->assertHasErrors(['columns.0.add_max', 'columns.0.lens_type_id', 'rows.0.sphere_max']);
+        ->assertHasErrors(['columns.0.add_max', 'columns.0.lens_type_id', 'rows.0.sphere_max'])
+        // A collapsed range with an error opens itself.
+        ->assertSeeHtml('<details class="open:basis-full" open>')
+        ->assertSeeHtml('<details open>');
 
     expect($column->fresh()->only(['add_min', 'add_max', 'lens_type_id']))
         ->toBe(['add_min' => null, 'add_max' => null, 'lens_type_id' => $column->lens_type_id])
@@ -221,7 +225,7 @@ it('says how many cells are invalid and saves nothing', function () {
         ->set("costs.{$r1}.{$c2}", 'abc')
         ->call('save')
         ->assertHasErrors(["costs.{$r1}.{$c2}"])
-        ->assertNotified(Notification::make()->danger()->title(__('app.lab_sheets.invalid', ['count' => 1])))
+        ->assertNotified(Notification::make()->danger()->title(trans_choice('app.lab_sheets.invalid', 1, ['count' => 1])))
         ->assertSeeHtml('aria-describedby="error-costs-'.$r1.'-'.$c2.'"');
 
     expect($cell->fresh()->cost)->toBe(50_000)
@@ -267,17 +271,19 @@ it("copies another sheet's columns and rows without costs", function () {
         ->and($copy->columns()->orderBy('sort_order')->get()->map->only($columnFields)->all())->toBe($source->columns()->orderBy('sort_order')->get()->map->only($columnFields)->all())
         ->and($copy->rows()->orderBy('sort_order')->get()->map->only($rowFields)->all())->toBe($source->rows()->orderBy('sort_order')->get()->map->only($rowFields)->all())
         ->and($copy->cells()->count())->toBe(0)
+        ->and([...$copy->columns->pluck('company_id'), ...$copy->rows->pluck('company_id')])->each->toBe($otherLab->company_id)
         ->and(LabSheetCell::count())->toBe(3);
 });
 
 it("does not offer or copy another company's sheets", function () {
     $foreign = LabPriceSheet::factory()->create(['company_id' => Company::factory()->create()->id]);
+    LabPriceSheet::factory()->create(['supplier_id' => $this->lab->id]);
 
     copyManager($this->lab)
         ->callAction(TestAction::make('copyFrom')->table(), ['source_id' => $foreign->id, 'name' => 'x'])
         ->assertHasActionErrors(['source_id']);
 
-    expect(LabPriceSheet::where('supplier_id', $this->lab->id)->exists())->toBeFalse()
+    expect(LabPriceSheet::where('supplier_id', $this->lab->id)->count())->toBe(1)
         ->and(fn () => (new CopyLabPriceSheet)->handle($foreign, $this->lab, 'x'))->toThrow(InvalidArgumentException::class);
 });
 
@@ -305,4 +311,101 @@ it('rejects a tampered column or row id instead of failing', function () {
         ->set('rows.0.id', ['x'])
         ->call('save')
         ->assertHasErrors(['columns.0.id', 'rows.0.id']);
+});
+
+it('stores a typed price written the way the lab writes it and still rejects text', function () {
+    [$sheet, [$r1], [$c1, $c2]] = twoByTwoSheet();
+
+    sheetGrid($sheet)
+        ->set("costs.{$r1}.{$c1}", '$ 74.000')
+        ->call('save')
+        ->assertHasNoErrors();
+
+    expect(LabSheetCell::query()->sole()->cost)->toBe(74_000);
+
+    sheetGrid($sheet)
+        ->set("costs.{$r1}.{$c2}", 'abc')
+        ->call('save')
+        ->assertHasErrors(["costs.{$r1}.{$c2}"]);
+});
+
+it("refuses a stale save and keeps another admin's change", function () {
+    [$sheet, [$r1], [$c1]] = twoByTwoSheet();
+    $cell = LabSheetCell::factory()->create(['lab_sheet_row_id' => substr($r1, 1), 'lab_sheet_column_id' => substr($c1, 1), 'cost' => 50_000]);
+    $grid = sheetGrid($sheet);
+
+    // Another admin saves a minute later.
+    $this->travel(1)->minute();
+    $cell->update(['cost' => 60_000]);
+
+    $grid->set("costs.{$r1}.{$c1}", '70000')
+        ->call('save')
+        ->assertNotified(Notification::make()->danger()->title(__('app.lab_sheets.stale'))->persistent());
+
+    expect($cell->fresh()->cost)->toBe(60_000);
+});
+
+it("does not open another company's sheet grid", function () {
+    $foreign = LabPriceSheet::factory()->create(['company_id' => Company::factory()->create()->id]);
+
+    $this->get(LabPriceSheetResource::getUrl('edit', ['record' => $foreign]))->assertNotFound();
+
+    expect(fn () => sheetGrid($foreign))->toThrow(ModelNotFoundException::class);
+});
+
+it('hides the copy action while the company has no sheet to copy from', function () {
+    copyManager($this->lab)->assertActionHidden(TestAction::make('copyFrom')->table());
+});
+
+it('fills blank sphere and cylinder ranges with the manufacturing limits', function () {
+    $sheet = LabPriceSheet::factory()->create();
+    $row = LabSheetRow::factory()->for($sheet, 'sheet')->create(['sphere_min' => -6, 'sphere_max' => 6, 'cylinder_min' => -2, 'cylinder_max' => 0]);
+
+    sheetGrid($sheet)
+        ->set('rows.0.sphere_min', '')
+        ->set('rows.0.sphere_max', '')
+        ->set('rows.0.cylinder_min', '')
+        ->set('rows.0.cylinder_max', '')
+        ->call('save')
+        ->assertHasNoErrors();
+
+    expect($row->fresh()->only(['sphere_min', 'sphere_max', 'cylinder_min', 'cylinder_max']))
+        ->toBe(['sphere_min' => '-25.00', 'sphere_max' => '20.00', 'cylinder_min' => '-8.00', 'cylinder_max' => '8.00']);
+});
+
+it('clears the errors of a removed row', function () {
+    [$sheet, [$r1], [$c1]] = twoByTwoSheet();
+
+    sheetGrid($sheet)
+        ->set("costs.{$r1}.{$c1}", 'abc')
+        ->call('save')
+        ->assertHasErrors(["costs.{$r1}.{$c1}"])
+        ->call('removeRow', $r1)
+        ->assertHasNoErrors();
+});
+
+it('keeps saving from the same page after its own save', function () {
+    [$sheet, [$r1], [$c1]] = twoByTwoSheet();
+    $grid = sheetGrid($sheet);
+
+    $this->travel(1)->minute();
+    $grid->set("costs.{$r1}.{$c1}", '60000')->call('save')->assertHasNoErrors();
+
+    $this->travel(1)->minute();
+    $grid->set("costs.{$r1}.{$c1}", '70000')->call('save')->assertHasNoErrors()
+        ->assertNotNotified(Notification::make()->danger()->title(__('app.lab_sheets.stale'))->persistent());
+
+    expect(LabSheetCell::query()->sole()->cost)->toBe(70_000);
+});
+
+it('offers the copy sources by lab name, then sheet name', function () {
+    $zeta = Supplier::factory()->laboratory()->create(['name' => 'Zeta Lab']);
+    $alfa = Supplier::factory()->laboratory()->create(['name' => 'Alfa Lab']);
+    LabPriceSheet::factory()->create(['supplier_id' => $zeta->id, 'name' => 'Primera']);
+    LabPriceSheet::factory()->create(['supplier_id' => $alfa->id, 'name' => 'Segunda']);
+    LabPriceSheet::factory()->create(['supplier_id' => $alfa->id, 'name' => 'Inicial']);
+
+    copyManager($this->lab)
+        ->mountAction(TestAction::make('copyFrom')->table())
+        ->assertSeeInOrder(['Alfa Lab', 'Inicial', 'Alfa Lab', 'Segunda', 'Zeta Lab', 'Primera']);
 });

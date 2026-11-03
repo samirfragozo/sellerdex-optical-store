@@ -1,7 +1,7 @@
 @php($warnings = collect(rescue(fn () => \App\Models\Company::current()->saleReadiness(), [], report: false))->where('severity', \App\Enums\ReadinessSeverity::Warning)->map->forViewer(auth()->user()))
 @if ($warnings->isNotEmpty())
     <div class="flex flex-col gap-2" x-data="{
-        hidden: sessionStorage.getItem('readiness-banner-hidden') === '1',
+        hidden: (() => { try { return sessionStorage.getItem('readiness-banner-hidden') === '1' } catch (e) { return false } })(),
         dismiss() {
             try { sessionStorage.setItem('readiness-banner-hidden', '1') } catch (e) {}
             this.hidden = true

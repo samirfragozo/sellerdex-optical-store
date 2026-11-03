@@ -30,7 +30,7 @@ it('moves down with Enter, never saves on Enter, and saves only with the button'
     // A failed save says so and lands on the first invalid cell.
     $page->type('[data-row="0"][data-col="0"]', 'abc')
         ->click('button:has-text("'.__('app.lab_sheets.save').'")')
-        ->assertSee(__('app.lab_sheets.invalid', ['count' => 1]))
+        ->assertSee(trans_choice('app.lab_sheets.invalid', 1, ['count' => 1]))
         ->assertScript('document.activeElement.dataset.row', '0');
 
     $page->type('[data-row="0"][data-col="0"]', '74000')
@@ -67,4 +67,33 @@ it('moves down with Enter, never saves on Enter, and saves only with the button'
     expect($cost($first))->toBe(74_000)
         ->and($cost($second))->toBe(84_000)
         ->and($sheet->fresh()->name)->toBe('Lista nueva');
+});
+
+it('fits eight rows on a laptop screen and opens a range from the keyboard', function () {
+    test()->seed(RolesAndPermissionsSeeder::class);
+    $this->actingAs(User::factory()->admin()->create());
+    $sheet = LabPriceSheet::factory()->create();
+    LabSheetColumn::factory()->count(2)->sequence(['sort_order' => 0], ['sort_order' => 1])->for($sheet, 'sheet')->create();
+    LabSheetRow::factory()->count(10)->sequence(fn ($sequence) => ['sort_order' => $sequence->index])->for($sheet, 'sheet')->create();
+
+    $page = visit("/admin/lab-price-sheets/{$sheet->id}/edit")->resize(1366, 768);
+
+    // The 8th row's first cost sits inside the scroll box without scrolling it.
+    expect($page->script(<<<'JS'
+        (() => {
+            const cell = document.querySelector('[data-row="7"][data-col="0"]').getBoundingClientRect();
+            const box = document.querySelector('[data-row]').closest('.overflow-auto').getBoundingClientRect();
+            return cell.top >= box.top && cell.bottom <= box.bottom;
+        })()
+        JS))->toBeTrue();
+
+    $sphereVisible = fn (int $row): bool => $page->script("document.querySelectorAll('tbody tr')[{$row}].querySelector('[wire\\\\:model\$=\"sphere_min\"]').checkVisibility()");
+
+    expect($sphereVisible(0))->toBeFalse();
+    $page->keys('tbody tr:nth-child(1) summary', 'Enter');
+    expect($sphereVisible(0))->toBeTrue();
+    $page->keys('tbody tr:nth-child(2) summary', ' ');
+    expect($sphereVisible(1))->toBeTrue();
+
+    $page->assertNoJavaScriptErrors();
 });

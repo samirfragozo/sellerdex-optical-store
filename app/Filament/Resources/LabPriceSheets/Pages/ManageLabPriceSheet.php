@@ -25,6 +25,7 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Exists;
 use Illuminate\Validation\ValidationException;
+use Livewire\Attributes\Locked;
 
 /**
  * The lab's price sheet as one spreadsheet-like grid: columns (designs) across,
@@ -51,6 +52,10 @@ class ManageLabPriceSheet extends Page
 
     /** @var array<string, array<string, ?string>> cost per [rowKey][columnKey] */
     public array $costs = [];
+
+    /** The sheet's updated_at when the grid was loaded; a save refuses to overwrite a newer sheet. */
+    #[Locked]
+    public string $loadedVersion = '';
 
     public function mount(int|string $record): void
     {
@@ -119,12 +124,15 @@ class ManageLabPriceSheet extends Page
         foreach (array_keys($this->costs) as $rowKey) {
             unset($this->costs[$rowKey][$key]);
         }
+
+        $this->resetErrorBag();
     }
 
     public function removeRow(string $key): void
     {
         $this->rows = array_values(array_filter($this->rows, fn (array $row): bool => $row['key'] !== $key));
         unset($this->costs[$key]);
+        $this->resetErrorBag();
     }
 
     /**
@@ -174,10 +182,13 @@ class ManageLabPriceSheet extends Page
 
     public function save(): void
     {
+        $this->normaliseGrid();
+
         try {
             $this->validate($this->gridRules(), [], $this->gridAttributes());
         } catch (ValidationException $exception) {
-            Notification::make()->danger()->title(__('app.lab_sheets.invalid', ['count' => count($exception->errors())]))->send();
+            $count = count($exception->errors());
+            Notification::make()->danger()->title(trans_choice('app.lab_sheets.invalid', $count, ['count' => $count]))->send();
             $this->dispatch('lab-sheet-invalid');
 
             throw $exception;
@@ -185,7 +196,13 @@ class ManageLabPriceSheet extends Page
 
         $sheet = $this->getRecord();
 
-        DB::transaction(function () use ($sheet): void {
+        $saved = DB::transaction(function () use ($sheet): bool {
+            $current = LabPriceSheet::query()->lockForUpdate()->find($sheet->id);
+
+            if ($current?->updated_at?->toISOString() !== $this->loadedVersion) {
+                return false;
+            }
+
             $sheet->update(['name' => $this->name]);
 
             $columnIds = [];
@@ -237,7 +254,17 @@ class ManageLabPriceSheet extends Page
                     }
                 }
             }
+
+            $sheet->touch();
+
+            return true;
         });
+
+        if (! $saved) {
+            Notification::make()->danger()->title(__('app.lab_sheets.stale'))->persistent()->send();
+
+            return;
+        }
 
         $this->loadSheet();
         $this->dispatch('lab-sheet-saved');
@@ -250,6 +277,7 @@ class ManageLabPriceSheet extends Page
     {
         $sheet = $this->getRecord();
         $this->name = $sheet->name;
+        $this->loadedVersion = (string) $sheet->updated_at?->toISOString();
 
         $this->columns = $sheet->columns()->orderBy('sort_order')->orderBy('id')->get()
             ->map(fn (LabSheetColumn $column): array => [
@@ -270,6 +298,29 @@ class ManageLabPriceSheet extends Page
 
         foreach ($sheet->cells()->get() as $cell) {
             $this->costs["r{$cell->lab_sheet_row_id}"]["c{$cell->lab_sheet_column_id}"] = (string) $cell->cost;
+        }
+    }
+
+    /** Typed prices go through the paste normaliser; blank ranges fall back to the manufacturing limits. */
+    protected function normaliseGrid(): void
+    {
+        foreach ($this->costs as $rowKey => $values) {
+            foreach ((array) $values as $columnKey => $value) {
+                // Values with no digit stay as typed so "abc" still fails validation.
+                if (is_string($value) && preg_match('/\d/', $value)) {
+                    $this->costs[$rowKey][$columnKey] = (string) LabSheetPaste::cost($value);
+                }
+            }
+        }
+
+        foreach ($this->rows as $index => $row) {
+            foreach (['sphere', 'cylinder'] as $scale) {
+                foreach (['min' => 0, 'max' => 1] as $bound => $limit) {
+                    if (blank($row["{$scale}_{$bound}"] ?? null)) {
+                        $this->rows[$index]["{$scale}_{$bound}"] = (string) Prescription::LIMITS[$scale][$limit];
+                    }
+                }
+            }
         }
     }
 

@@ -17,14 +17,14 @@ class CopyLabPriceSheet
         }
 
         return DB::transaction(function () use ($source, $lab, $name): LabPriceSheet {
-            $sheet = LabPriceSheet::create(['supplier_id' => $lab->id, 'name' => $name]);
+            $sheet = LabPriceSheet::create(['company_id' => $lab->company_id, 'supplier_id' => $lab->id, 'name' => $name]);
 
             foreach ($source->columns as $column) {
-                $sheet->columns()->create($column->only(['label', 'lens_type_id', 'lens_technology_id', 'add_min', 'add_max', 'sort_order']));
+                $sheet->columns()->create(['company_id' => $lab->company_id, ...$column->only(['label', 'lens_type_id', 'lens_technology_id', 'add_min', 'add_max', 'sort_order'])]);
             }
 
             foreach ($source->rows as $row) {
-                $sheet->rows()->create($row->only(['label', 'lens_material_id', 'sphere_min', 'sphere_max', 'cylinder_min', 'cylinder_max', 'sort_order']));
+                $sheet->rows()->create(['company_id' => $lab->company_id, ...$row->only(['label', 'lens_material_id', 'sphere_min', 'sphere_max', 'cylinder_min', 'cylinder_max', 'sort_order'])]);
             }
 
             return $sheet;

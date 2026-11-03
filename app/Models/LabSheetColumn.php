@@ -17,6 +17,9 @@ class LabSheetColumn extends Model
     /** @use HasFactory<LabSheetColumnFactory> */
     use BelongsToCompany, HasFactory;
 
+    /** Any change bumps the sheet's updated_at, so a stale grid save can be refused. */
+    protected $touches = ['sheet'];
+
     /** Re-link the cells to their lens when the column is mapped to another type or technology. */
     protected static function booted(): void
     {

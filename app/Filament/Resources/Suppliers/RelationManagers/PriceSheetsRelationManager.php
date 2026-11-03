@@ -50,11 +50,13 @@ class PriceSheetsRelationManager extends RelationManager
                 Action::make('copyFrom')
                     ->label(__('app.lab_sheets.copy_from'))
                     ->color('gray')
+                    ->visible(fn (): bool => $this->canCreate() && LabPriceSheet::query()->exists())
                     ->modalDescription(__('app.lab_sheets.copy_help'))
                     ->schema([
                         Select::make('source_id')
                             ->label(__('app.lab_sheets.copy_source'))
                             ->options(fn (): array => LabPriceSheet::query()->with('supplier')->get()
+                                ->sortBy([fn (LabPriceSheet $a, LabPriceSheet $b): int => [$a->supplier?->name, $a->name] <=> [$b->supplier?->name, $b->name]])
                                 ->mapWithKeys(fn (LabPriceSheet $sheet): array => [$sheet->id => "{$sheet->supplier?->name} · {$sheet->name}"])->all())
                             ->searchable()
                             ->required()

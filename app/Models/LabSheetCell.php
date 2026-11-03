@@ -23,6 +23,9 @@ class LabSheetCell extends Model
     /** @use HasFactory<LabSheetCellFactory> */
     use BelongsToCompany, HasFactory, HasPrescriptionRange;
 
+    /** Any change bumps the sheet's updated_at, so a stale grid save can be refused. */
+    protected $touches = ['sheet'];
+
     /** Keep the cell on its row's sheet and linked to the generic lens its row and column describe. */
     protected static function booted(): void
     {

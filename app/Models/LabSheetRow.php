@@ -17,6 +17,9 @@ class LabSheetRow extends Model
     /** @use HasFactory<LabSheetRowFactory> */
     use BelongsToCompany, HasFactory;
 
+    /** Any change bumps the sheet's updated_at, so a stale grid save can be refused. */
+    protected $touches = ['sheet'];
+
     /** Re-link the cells to their lens when the row is mapped to another material. */
     protected static function booted(): void
     {

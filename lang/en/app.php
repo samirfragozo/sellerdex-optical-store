@@ -1036,7 +1036,11 @@ return [
         'back_to_lab' => 'Back to the lab',
         'pasted' => '{1} Pasted 1 cell.|[2,*] Pasted :count cells.',
         'paste_skipped' => ':count fell outside the sheet; add columns or rows and paste again.',
-        'invalid' => 'Check the :count cells or fields marked in red; nothing was saved.',
+        'invalid' => '{1} Check the 1 cell or field marked in red; nothing was saved.|[2,*] Check the :count cells or fields marked in red; nothing was saved.',
+        'stale' => 'Someone else changed this sheet while you were editing. Reload the page to see the current version; your changes were not saved.',
+        'range_summary' => 'SPH :sphere_min/:sphere_max · CYL :cylinder_min/:cylinder_max',
+        'add_summary' => 'ADD :min–:max',
+        'add_open' => 'ADD —',
         'unsaved_warning' => 'You have unsaved changes in this sheet. Leave anyway?',
     ],
 

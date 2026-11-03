@@ -22,3 +22,13 @@ it('parses pasted text into costs', function (string $text, array $expected) {
     'single value' => ['84000', [[84_000]]],
     'Colombian block' => ["$ 42.000\t\$ 74.000\n53.000\t\n 1.250.000 \tN/A\n", [[42_000, 74_000], [53_000, null], [1_250_000, null]]],
 ]);
+
+it('normalises a typed or pasted cost', function (string $value, ?int $expected) {
+    expect(LabSheetPaste::cost($value))->toBe($expected)
+        ->and(LabSheetPaste::parse($value))->toBe([[$expected]]);
+})->with([
+    'es-CO with cents and currency code' => ['42.000,00 COP', 42_000],
+    'currency code first' => ['COP 1.250.000', 1_250_000],
+    'peso sign' => ['$ 74.000', 74_000],
+    'no digit' => ['N/A', null],
+]);
