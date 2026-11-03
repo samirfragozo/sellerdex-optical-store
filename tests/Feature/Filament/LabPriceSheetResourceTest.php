@@ -1,12 +1,8 @@
 <?php
 
 use App\Filament\Resources\LabPriceSheets\LabPriceSheetResource;
-use App\Filament\Resources\LabPriceSheets\Pages\EditLabPriceSheet;
-use App\Filament\Resources\LabPriceSheets\RelationManagers\CellsRelationManager;
-use App\Filament\Resources\LabPriceSheets\RelationManagers\ColumnsRelationManager;
-use App\Filament\Resources\LabPriceSheets\RelationManagers\RowsRelationManager;
-use App\Filament\Resources\Suppliers\Pages\EditSupplier;
-use App\Filament\Resources\Suppliers\RelationManagers\PriceSheetsRelationManager;
+use App\Filament\Resources\LabPriceSheets\Pages\ManageLabPriceSheet;
+use App\Models\Company;
 use App\Models\LabPriceSheet;
 use App\Models\LabSheetCell;
 use App\Models\LabSheetColumn;
@@ -18,7 +14,6 @@ use App\Models\LensType;
 use App\Models\Supplier;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
-use Filament\Actions\Testing\TestAction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 
@@ -30,63 +25,109 @@ beforeEach(function () {
     $this->lab = Supplier::factory()->laboratory()->create();
 });
 
-function sheetManager(string $manager, LabPriceSheet $sheet)
+function sheetGrid(LabPriceSheet $sheet)
 {
-    return Livewire::test($manager, ['ownerRecord' => $sheet, 'pageClass' => EditLabPriceSheet::class]);
+    return Livewire::test(ManageLabPriceSheet::class, ['record' => $sheet->getRouteKey()]);
 }
 
-it('builds a sheet from the supplier down to a costed cell', function () {
-    Livewire::test(PriceSheetsRelationManager::class, ['ownerRecord' => $this->lab, 'pageClass' => EditSupplier::class])
-        ->callAction(TestAction::make('create')->table(), ['name' => 'Lista 2026'])
-        ->assertHasNoFormErrors();
+it("loads a sheet's columns, rows and costs into the grid", function () {
+    $sheet = LabPriceSheet::factory()->create();
+    $second = LabSheetColumn::factory()->for($sheet, 'sheet')->create(['label' => 'Digital', 'sort_order' => 1]);
+    $first = LabSheetColumn::factory()->for($sheet, 'sheet')->create(['label' => 'Classic', 'sort_order' => 0]);
+    $rowA = LabSheetRow::factory()->for($sheet, 'sheet')->create(['sort_order' => 0]);
+    $rowB = LabSheetRow::factory()->for($sheet, 'sheet')->create(['sort_order' => 1]);
+    LabSheetCell::factory()->create(['lab_sheet_row_id' => $rowA->id, 'lab_sheet_column_id' => $first->id, 'cost' => 74_000]);
+    LabSheetCell::factory()->create(['lab_sheet_row_id' => $rowA->id, 'lab_sheet_column_id' => $second->id, 'cost' => 90_000]);
+    LabSheetCell::factory()->create(['lab_sheet_row_id' => $rowB->id, 'lab_sheet_column_id' => $first->id, 'cost' => 50_000]);
 
-    $sheet = $this->lab->priceSheets()->sole();
+    $grid = sheetGrid($sheet);
+
+    expect(array_column($grid->get('columns'), 'label'))->toBe(['Classic', 'Digital'])
+        ->and(array_column($grid->get('rows'), 'key'))->toBe(["r{$rowA->id}", "r{$rowB->id}"]);
+    $grid->assertSet("costs.r{$rowA->id}.c{$first->id}", '74000')
+        ->assertSet("costs.r{$rowB->id}.c{$second->id}", null);
+});
+
+it('saves new columns, rows and costs and links each cell to its lens', function () {
+    $sheet = LabPriceSheet::factory()->create();
     $type = LensType::factory()->create();
     $technology = LensTechnology::factory()->create();
     $material = LensMaterial::factory()->create();
 
-    sheetManager(ColumnsRelationManager::class, $sheet)
-        ->callAction(TestAction::make('create')->table(), [
-            'label' => 'Classic', 'lens_type_id' => $type->id, 'lens_technology_id' => $technology->id, 'sort_order' => 0,
-        ])
-        ->assertHasNoFormErrors();
+    $grid = sheetGrid($sheet)->call('addColumn')->call('addRow');
+    $columnKey = $grid->get('columns')[0]['key'];
+    $rowKey = $grid->get('rows')[0]['key'];
 
-    sheetManager(RowsRelationManager::class, $sheet)
-        ->callAction(TestAction::make('create')->table(), [
-            'label' => 'Poly', 'lens_material_id' => $material->id,
-            'sphere_min' => -25, 'sphere_max' => 20, 'cylinder_min' => -8, 'cylinder_max' => 8, 'sort_order' => 0,
-        ])
-        ->assertHasNoFormErrors();
+    $grid->set('columns.0.label', 'Classic')
+        ->set('columns.0.lens_type_id', $type->id)
+        ->set('columns.0.lens_technology_id', $technology->id)
+        ->set('rows.0.label', 'Poly')
+        ->set('rows.0.lens_material_id', $material->id)
+        ->set("costs.{$rowKey}.{$columnKey}", '74000')
+        ->call('save')
+        ->assertHasNoErrors()
+        ->assertNotified();
 
-    sheetManager(CellsRelationManager::class, $sheet)
-        ->callAction(TestAction::make('create')->table(), [
-            'lab_sheet_row_id' => $sheet->rows()->sole()->id,
-            'lab_sheet_column_id' => $sheet->columns()->sole()->id,
-            'cost' => 70_000, 'is_preferred' => false, 'is_active' => true,
-        ])
-        ->assertHasNoFormErrors();
+    $cell = LabSheetCell::query()->sole();
 
-    $cell = $sheet->cells()->sole();
-    $combination = LensCombination::query()->where([
-        'lens_type_id' => $type->id, 'lens_technology_id' => $technology->id, 'lens_material_id' => $material->id,
-    ])->sole();
-
-    expect($cell->cost)->toBe(70_000)->and($cell->lens_combination_id)->toBe($combination->id);
+    expect($cell->cost)->toBe(74_000)
+        ->and($cell->lab_price_sheet_id)->toBe($sheet->id)
+        ->and($cell->lensCombination->only(['lens_type_id', 'lens_technology_id', 'lens_material_id']))
+        ->toBe(['lens_type_id' => $type->id, 'lens_technology_id' => $technology->id, 'lens_material_id' => $material->id])
+        ->and($cell->row->sphere_min)->toBe('-25.00');
 });
 
-it('rejects a second cell for the same row and column', function () {
-    $cell = LabSheetCell::factory()->create();
-    $sheet = $cell->sheet;
+it('deletes a cell when its cost is blanked', function () {
+    $lens = LensCombination::factory()->priced(180_000)->afterCreating(fn (LensCombination $c) => $c->cells()->withoutGlobalScopes()->delete())->create();
+    $cell = labCost($lens, $this->lab);
 
-    sheetManager(CellsRelationManager::class, $sheet)
-        ->callAction(TestAction::make('create')->table(), [
-            'lab_sheet_row_id' => $cell->lab_sheet_row_id,
-            'lab_sheet_column_id' => $cell->lab_sheet_column_id,
-            'cost' => 1, 'is_active' => true,
-        ])
-        ->assertHasFormErrors(['lab_sheet_column_id']);
+    expect(LensCombination::sellable()->pluck('id')->all())->toBe([$lens->id]);
 
-    expect($sheet->cells()->count())->toBe(1);
+    sheetGrid($cell->sheet)
+        ->set("costs.r{$cell->lab_sheet_row_id}.c{$cell->lab_sheet_column_id}", '')
+        ->call('save')
+        ->assertHasNoErrors();
+
+    expect(LabSheetCell::find($cell->id))->toBeNull()
+        ->and(LensCombination::sellable()->exists())->toBeFalse();
+});
+
+it('removes a column and its costs on save', function () {
+    $sheet = LabPriceSheet::factory()->create();
+    $kept = LabSheetColumn::factory()->for($sheet, 'sheet')->create();
+    $removed = LabSheetColumn::factory()->for($sheet, 'sheet')->create(['sort_order' => 1]);
+    $row = LabSheetRow::factory()->for($sheet, 'sheet')->create();
+    $keptCell = LabSheetCell::factory()->create(['lab_sheet_row_id' => $row->id, 'lab_sheet_column_id' => $kept->id]);
+    LabSheetCell::factory()->create(['lab_sheet_row_id' => $row->id, 'lab_sheet_column_id' => $removed->id]);
+
+    sheetGrid($sheet)
+        ->assertSee(__('app.lab_sheets.remove_column_confirm'))
+        ->call('removeColumn', "c{$removed->id}")
+        ->call('save')
+        ->assertHasNoErrors();
+
+    expect(LabSheetColumn::find($removed->id))->toBeNull()
+        ->and(LabSheetCell::where('lab_sheet_column_id', $removed->id)->exists())->toBeFalse()
+        ->and(LabSheetCell::find($keptCell->id))->not->toBeNull();
+});
+
+it('rejects invalid ranges and foreign ids', function () {
+    $sheet = LabPriceSheet::factory()->create();
+    $column = LabSheetColumn::factory()->for($sheet, 'sheet')->create(['label' => 'Classic']);
+    $row = LabSheetRow::factory()->for($sheet, 'sheet')->create();
+    $foreignType = LensType::factory()->create(['company_id' => Company::factory()->create()->id]);
+
+    sheetGrid($sheet)
+        ->set('columns.0.add_min', '2')
+        ->set('columns.0.add_max', '1')
+        ->set('columns.0.lens_type_id', $foreignType->id)
+        ->set('rows.0.sphere_max', '21')
+        ->call('save')
+        ->assertHasErrors(['columns.0.add_max', 'columns.0.lens_type_id', 'rows.0.sphere_max']);
+
+    expect($column->fresh()->only(['add_min', 'add_max', 'lens_type_id']))
+        ->toBe(['add_min' => null, 'add_max' => null, 'lens_type_id' => $column->lens_type_id])
+        ->and($row->fresh()->sphere_max)->toBe('20.00');
 });
 
 it('deletes the columns, rows and cells with the sheet and stops selling lenses that lose their only cost', function () {
@@ -101,8 +142,7 @@ it('deletes the columns, rows and cells with the sheet and stops selling lenses 
 
     expect(LensCombination::sellable()->count())->toBe(2);
 
-    Livewire::test(EditLabPriceSheet::class, ['record' => $sheet->getKey()])
-        ->callAction('delete');
+    sheetGrid($sheet)->callAction('delete');
 
     expect(LabPriceSheet::find($sheet->id))->toBeNull()
         ->and(LabSheetColumn::where('lab_price_sheet_id', $sheet->id)->exists())->toBeFalse()
@@ -111,7 +151,7 @@ it('deletes the columns, rows and cells with the sheet and stops selling lenses 
         ->and(LensCombination::sellable()->pluck('id')->all())->toBe([$alsoElsewhere->id]);
 });
 
-it('forbids a seller from the sheet edit page', function () {
+it('forbids a seller from the sheet grid', function () {
     $this->actingAs(User::factory()->seller()->create());
     $sheet = LabPriceSheet::factory()->create();
     $this
@@ -119,7 +159,9 @@ it('forbids a seller from the sheet edit page', function () {
         ->assertForbidden();
 });
 
-it('lets an admin open the sheet edit page', function () {
+it('lets an admin open the sheet grid', function () {
     $sheet = LabPriceSheet::factory()->create();
-    $this->get(LabPriceSheetResource::getUrl('edit', ['record' => $sheet]))->assertSuccessful();
+    $this->get(LabPriceSheetResource::getUrl('edit', ['record' => $sheet]))
+        ->assertSuccessful()
+        ->assertSee(__('app.lab_sheets.empty'));
 });
